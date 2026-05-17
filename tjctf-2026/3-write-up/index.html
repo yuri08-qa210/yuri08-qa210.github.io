@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yuri08 - TJCTF 2026: Forensics 3 Write Up</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <style>
+    :root {
+      --main: #06b6d4; --main2: #10b981; --main-light: #67e8f9;
+      --bg: #0a0e14; --bg2: #0f1419; --glass: rgba(20, 30, 40, 0.9);
+      --text: #e0e7ef; --shadow: 0 8px 32px 0 #06b6d433;
+      --glow: 0 0 20px 2px #06b6d444; --highlight: #38bdf8;
+    }
+    html, body {
+      min-height: 100%; margin: 0; font-family: 'JetBrains Mono', monospace;
+      background: radial-gradient(circle at 50% 0%, #10181e 0%, #0a0e14 100%);
+      color: var(--text); overflow: hidden; perspective: 1000px;
+    }
+    #particles-js {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;
+    }
+    .content-wrapper {
+      position: relative; z-index: 1; height: 100vh; display: flex; flex-direction: column;
+      padding: 20px; box-sizing: border-box; gap: 15px;
+    }
+    .header {
+      display: flex; align-items: center; gap: 20px; padding: 15px;
+      background: var(--glass); border-radius: 1rem; border: 1px solid #06b6d444;
+      box-shadow: var(--shadow); backdrop-filter: blur(10px); flex-shrink: 0;
+    }
+    .avatar {
+      width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--main);
+      object-fit: cover; box-shadow: 0 0 15px var(--main);
+    }
+    .header-info h1 {
+      font-size: 1.8rem; margin: 0; color: var(--main);
+      text-shadow: 0 0 10px #06b6d488; animation: neonCyan 2s infinite alternate;
+    }
+    .header-info p { margin: 5px 0 0 0; color: var(--main-light); font-size: 0.9rem; }
+    @keyframes neonCyan { to { text-shadow: 0 0 15px var(--main), 0 0 30px var(--main); } }
+    
+    .lang-toggle {
+      margin-left: auto; background: var(--main); color: #000; border: none;
+      padding: 8px 15px; border-radius: 0.5rem; cursor: pointer; font-family: inherit;
+      font-weight: bold; transition: 0.3s; box-shadow: 0 0 10px #06b6d455;
+    }
+    .lang-toggle:hover { background: #0891b2; transform: scale(1.05); }
+
+    .terminal-pro {
+      background: linear-gradient(135deg, #0f1419 80%, #06b6d411 100%);
+      border-radius: 1rem; border: 1px solid #1e3a4a55; box-shadow: var(--shadow), var(--glow);
+      display: flex; flex-direction: column; flex-grow: 1; overflow: hidden; position: relative;
+    }
+    .terminal-pro::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15), rgba(0,0,0,0.15) 1px, transparent 1px, transparent 2px);
+      pointer-events: none; z-index: 2; opacity: 0.15;
+    }
+    .terminal-bar {
+      background: #0a0e14; height: 2.5rem; display: flex; align-items: center;
+      padding: 0 1rem; border-bottom: 1px solid #1e3a4a55; flex-shrink: 0; z-index: 3;
+    }
+    .dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; }
+    .red { background: #ef4444; } .yellow { background: #facc15; } .green { background: #22c55e; }
+    .terminal-title { color: var(--main-light); margin-left: 1rem; font-weight: bold; letter-spacing: 1px; }
+    
+    .terminal-body {
+      padding: 1.5rem; flex-grow: 1; overflow-y: auto; font-size: 0.95rem;
+      line-height: 1.6; position: relative; z-index: 1; scroll-behavior: smooth;
+    }
+    #terminal-output { white-space: pre-wrap; word-break: break-word; }
+    #terminal-input-line {
+      display: flex; align-items: center; gap: 0.5em; margin-top: 1em; z-index: 3;
+    }
+    #terminal-input {
+      background: transparent; border: none; color: #a7f3d0; outline: none;
+      font-family: inherit; font-size: 1em; width: 100%; caret-color: var(--main);
+    }
+    
+    .cmd { color: #7c3aed; } .arg { color: #a78bfa; } .info { color: #38bdf8; font-weight: bold; }
+    .error { color: #ef4444; } .success { color: #10b981; } .warning { color: #facc15; }
+    .code-block {
+      background: #060a0f; border-left: 3px solid var(--main); padding: 10px 15px;
+      margin: 10px 0; border-radius: 0 5px 5px 0; font-size: 0.9rem; color: #d1d5db;
+    }
+    
+    .terminal-body::-webkit-scrollbar { width: 8px; }
+    .terminal-body::-webkit-scrollbar-track { background: #0a0e14; }
+    .terminal-body::-webkit-scrollbar-thumb { background: #06b6d4; border-radius: 4px; }
+
+    #welcome-screen {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: #0a0e14; z-index: 10000; display: flex; flex-direction: column;
+      justify-content: center; align-items: center; text-align: center; transition: opacity 0.8s;
+    }
+    #welcome-screen.hidden { opacity: 0; pointer-events: none; }
+    #start-button {
+      background: var(--main); color: #000; border: none; border-radius: 0.7rem;
+      padding: 1rem 2rem; font-size: 1.2rem; font-weight: 700; cursor: pointer;
+      font-family: inherit; transition: all 0.3s; box-shadow: 0 0 20px #06b6d488;
+    }
+    #start-button:hover { background: #0891b2; transform: translateY(-3px); }
+    
+    #mute-button {
+      position: fixed; top: 20px; right: 20px; z-index: 10001;
+      background: #0a0e14; color: var(--main-light); border: 1px solid #06b6d455;
+      border-radius: 50%; width: 40px; height: 40px; font-size: 1.2rem; cursor: pointer;
+      display: flex; justify-content: center; align-items: center; transition: all 0.3s;
+    }
+    #mute-button:hover { background: var(--main); color: #000; }
+
+    @media (max-width: 768px) {
+      .header { flex-wrap: wrap; justify-content: center; text-align: center; }
+      .lang-toggle { margin-left: 0; margin-top: 10px; width: 100%; }
+      .avatar { width: 60px; height: 60px; }
+      .header-info h1 { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="welcome-screen">
+    <h1 style="color: var(--main); text-shadow: 0 0 20px var(--main); margin-bottom: 20px;">Yuri08 CTF Terminal</h1>
+    <p style="color: #a5f3fc; margin-bottom: 30px;">TJCTF 2026 - Forensics Mega-Writeup</p>
+    <button id="start-button">Khởi tạo Terminal</button>
+  </div>
+
+  <button id="mute-button" aria-label="Toggle Sound"><i class="bi bi-volume-up-fill"></i></button>
+  <div id="particles-js"></div>
+
+  <div class="content-wrapper">
+    <header class="header">
+      <img src="https://files.catbox.moe/755fgv.png" alt="Avatar" class="avatar" />
+      <div class="header-info">
+        <h1>Yuri08</h1>
+        <p>Protocol Architect & Data Structure Parser</p>
+      </div>
+      <button class="lang-toggle" id="lang-btn" onclick="toggleLang()">Switch to English</button>
+    </header>
+
+    <section class="terminal-pro">
+      <div class="terminal-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="terminal-title">root@tjctf:~/forensics#</span>
+      </div>
+      <div class="terminal-body" id="terminal-body">
+        <pre id="terminal-output"></pre>
+        <div id="terminal-input-line">
+          <span class="cmd">root@tjctf</span>:<span class="arg">~/forensics</span>$           <input type="text" id="terminal-input" autocomplete="off" spellcheck="false" />
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+  <script>
+    let isMuted = false;
+    let currentLang = 'vi';
+    let userInteracted = false;
+    const output = document.getElementById('terminal-output');
+    const input = document.getElementById('terminal-input');
+    const tBody = document.getElementById('terminal-body');
+
+    particlesJS.load('particles-js', 'https://cdn.jsdelivr.net/gh/VincentGarreau/particles.js/particles.json');
+
+    function playAudio(src, vol=0.2) {
+      if (!userInteracted || isMuted || !src) return;
+      try { const a = new Audio(src); a.volume = vol; a.play(); } catch(e) {}
+    }
+
+    document.getElementById('mute-button').addEventListener('click', function() {
+      isMuted = !isMuted;
+      this.querySelector('i').className = isMuted ? 'bi bi-volume-mute-fill' : 'bi bi-volume-up-fill';
+    });
+
+    function print(html) {
+      const div = document.createElement('div');
+      div.innerHTML = html;
+      output.appendChild(div);
+      tBody.scrollTop = tBody.scrollHeight;
+    }
+
+    // --- TRANSLATIONS & DETAILED WRITEUP DATA ---
+    const L = {
+      vi: {
+        help: `<span class="info">[ FORENSICS Forensics 3 Write Up ]</span>
+Gõ <span class="cmd">use [module]</span> để chọn bài writeup:
+<span class="cmd">use 1</span>  : voice-in-the-packet (VoIP LSB Steganography)
+<span class="cmd">use 2</span>  : check-the-fine-print (PNG IHDR Spec Violation)
+<span class="cmd">use 3</span>  : unfinished-file (Chrome CRDL & ZIP Carving)
+
+Gõ <span class="cmd">back</span> để quay lại menu chính. Gõ <span class="cmd">clear</span> để xóa màn hình.`,
+
+        v1_help: `<span class="info">[ Module 1: voice-in-the-packet ]</span>
+<span class="cmd">overview</span>  : Tổng quan VoIP & Mồi nhử
+<span class="cmd">ulaw</span>      : Toán học G.711 µ-law Encoding
+<span class="cmd">lsb</span>       : LSB Steganography trên RTP Payload
+<span class="cmd">decode</span>    : XOR Extraction & Base64 Recovery
+<span class="cmd">code</span>      : Exploit Source Code (Python)
+<span class="cmd">back</span>      : Quay lại Menu Chính`,
+        v1_overview: `<span class="info">[ TỔNG QUAN: VOICE-IN-THE-PACKET ]</span>
+<span class="cmd">Category:</span> Network Forensics / VoIP Steganography
+<span class="cmd">Flag:</span> <span class="success">tjctf{h3y_v0ip_s73g_is_4_7hing}</span>
+
+Capture 20 giây VoIP chứa 1000 gói RTP (Real-Time Transport Protocol) mang codec G.711 µ-law. Có 2 gói "decoy" trông giống flag nhưng là mồi nhử.
+
+<span class="warning">Quan sát trọng yếu:</span> 995/1000 gói RTP có payload byte-identical (giống hệt nhau). Chỉ 5 gói đầu tiên bị lệch, và chỉ lệch ở các offset chẵn, lượng lệch chính xác là 0x01. Đây là chữ ký của LSB Stego!`,
+        v1_ulaw: `<span class="info">[ TOÁN HỌC G.711 MU-LAW ENCODING ]</span>
+G.711 µ-law là codec nén âm thanh logarit. 1 byte µ-law = 1 mẫu âm thanh (sample).
+
+<span class="cmd">Tại sao offset chẵn lại quan trọng?</span>
+Trong RTP payload, các byte được xếp liền kề: Sample 0 (Byte 0), Sample 1 (Byte 1), Sample 2 (Byte 2)...
+Sự thay đổi bằng +1/-1 ở byte µ-law gần như không tạo ra sự khác biệt nghe được đối với tai người (nó chỉ dịch chuyển biên độ rất nhỏ trong thang log). Đây là môi trường lý tưởng để giấu tin LSB (Least Significant Bit) mà không làm hỏng âm thanh.</div>`,
+        v1_lsb: `<span class="info">[ LSB STEGANOGRAPHY TRÊN RTP PAYLOAD ]</span>
+Kẻ tấn công đã thực hiện thay đổi bit thấp nhất (LSB) của các mẫu âm thanh ở offset chẵn (tương ứng với các sample 0, 2, 4...).
+
+Bởi vì delta luôn là 0x01, ta có thể trích xuất bit ẩn bằng phép XOR:
+<div class="code-block">Deviation = Anomalous_Packet[i] XOR Template_Packet[i]
+# Nếu Deviation = 0x01 -> LSB bị flip -> Bit ẩn là 1
+# Nếu Deviation = 0x00 -> Không đổi -> Bit ẩn là 0</div>
+Với 5 gói lệch, ta thu được một chuỗi bit liên tục. Các bit này được pack theo thứ tự MSB-first (Most Significant Bit first).`,
+        v1_decode: `<span class="info">[ XOR EXTRACTION & BASE64 RECOVERY ]</span>
+1. Xác định Template: Lấy payload của gói RTP số 6 (hoặc bất kỳ gói nào trong 995 gói identical) làm baseline.
+2. XOR & Pack Bits: Duyệt 5 gói đầu tiên, XOR với template, trích xuất LSB, đóng gói thành các byte MSB-first.
+3. Base64 Decode: Chuỗi byte thu được chứa một xâu Base64 ở giữa. Giải mã xâu này cho ra flag.
+
+Flag: <span class="success">tjctf{h3y_v0ip_s73g_is_4_7hing}</span>`,
+        v1_code: `<span class="info">[ EXPLOIT SOURCE CODE ]</span>
+<div class="code-block">#!/usr/bin/env python3
+from scapy.all import rdpcap, RTP
+import base64
+
+def extract_voip_lsb(pcap_path):
+    packets = rdpcap(pcap_path)
+    rtp_streams = [RTP(bytes(p[UDP].payload)).payload for p in packets if p.haslayer(UDP)]
+    
+    # 1. Lấy Template từ packet số 6 (bỏ qua 5 packet đầu)
+    template = rtp_streams[5]
+    
+    lsb_bits = []
+    # 2. Duyệt qua 5 packet bị anomalous
+    for pkt in rtp_streams[:5]:
+        for offset in range(0, len(pkt)):
+            # Chỉ lấy offset chẵn (mẫu âm thanh)
+            if offset % 2 == 0:
+                # XOR để tìm deviation
+                xor_val = pkt[offset] ^ template[offset]
+                if xor_val == 0x01:
+                    lsb_bits.append(1)
+                else:
+                    lsb_bits.append(0)
+                    
+    # 3. Pack Bits MSB-First thành bytes
+    hidden_bytes = bytearray()
+    for i in range(0, len(lsb_bits), 8):
+        byte_str = "".join(map(str, lsb_bits[i:i+8]))
+        if len(byte_str) == 8:
+            hidden_bytes.append(int(byte_str, 2))
+            
+    # 4. Decode Base64 substring
+    decoded_data = hidden_bytes.decode('ascii', errors='ignore')
+    b64_str = decoded_data.split('\\n')[0] # Trích xuất substring
+    flag = base64.b64decode(b64_str).decode()
+    print(f"[+] Flag: {flag}")
+
+if __name__ == "__main__":
+    extract_voip_lsb("voip.pcap")</div>`,
+
+        v2_help: `<span class="info">[ Module 2: check-the-fine-print ]</span>
+<span class="cmd">overview</span>  : Tổng quan & Bẫy Stego truyền thống
+<span class="cmd">ihdr</span>      : Khai phá PNG IHDR Specification
+<span class="cmd">bitex</span>     : Trích xuất Bit từ Compression Method
+<span class="cmd">code</span>      : Exploit Source Code (Python)
+<span class="cmd">back</span>      : Quay lại Menu Chính`,
+        v2_overview: `<span class="info">[ TỔNG QUAN: CHECK-THE-FINE-PRINT ]</span>
+<span class="cmd">Category:</span> Format Specification Violation / Steganography
+<span class="cmd">Flag:</span> <span class="success">tjctf{wow_you_actually_read_it}</span>
+
+Một file PNG chứa ZIP ẩn ở cuối (binwalk phát hiện ngay). ZIP giải nén ra 248 file PNG siêu nhỏ (19x9 pixels).
+
+<span class="warning">Bẫy:</span> Mọi công cụ Stego thông thường (zsteg, stegsolve, LSB extraction) đều thất bại. Flag không nằm ở pixel data. Nó nằm trong metadata bị làm ngơ!`,
+        v2_ihdr: `<span class="info">[ KHAI PHÁ PNG IHDR SPECIFICATION ]</span>
+Cấu trúc PNG chunk IHDR (Image Header) có layout cố định:
+<div class="code-block">Byte 0-3: Width (4 bytes)
+Byte 4-7: Height (4 bytes)
+Byte 8: Bit depth (1 byte)
+Byte 9: Color type (1 byte)
+Byte 10: Compression method (1 byte)
+Byte 11: Filter method (1 byte)
+Byte 12: Interlace method (1 byte)</div>
+
+Theo PNG Specification (RFC 2083), <span class="cmd">Byte 10 (Compression method)</span> LUÔN LUÔN phải là 0 (Deflate/inflate). Đây là trường bị bỏ qua nhiều thứ 2 trong Image Forensics (sau Bit-depth).
+
+<span class="error">Sự vi phạm:</span> Kẻ tấn công đã set Byte 10 thành 1 ở một số file. Đây là 1 bit ẩn!`,
+        v2_bitex: `<span class="info">[ TRÍCH XUẤT BIT TỪ COMPRESSION METHOD ]</span>
+Với 248 file, mỗi file cung cấp 1 bit (0 hoặc 1 từ Byte 10).
+248 bits / 8 = 31 bytes of ASCII data!
+
+<span class="cmd">Quy trình:</span>
+1. Sắp xếp 248 file PNG theo thứ tự tên (sorted).
+2. Đọc Byte 26 của file (Tương đương offset 10 trong IHDR chunk, cộng thêm 4 bytes length + 4 bytes chunk type 'IHDR').
+3. Lấy bit cuối cùng: <span class="arg">byte_26 & 1</span>.
+4. Ghép các bit lại theo chuẩn MSB-first, chuyển thành ký tự ASCII.
+
+Kết quả: <span class="success">tjctf{wow_you_actually_read_it}</span>`,
+        v2_code: `<span class="info">[ EXPLOIT SOURCE CODE ]</span>
+<div class="code-block">#!/usr/bin/env python3
+import glob
+
+def extract_ihdr_stego(directory_path):
+    # 1. Sắp xếp file thứ tự alphabet
+    png_files = sorted(glob.glob(f"{directory_path}/*.png"))
+    
+    bits = []
+    for f in png_files:
+        with open(f, "rb") as file:
+            data = file.read()
+            # Byte 26 trong file = Compression method trong IHDR
+            # (4 bytes len + 4 bytes 'IHDR' + 10 offset = 18... đợi, 
+            # chunk bắt đầu offset 8, length 4, type 4, data bắt đầu 16.
+            # Width 4, Height 4, Depth 1, Color 1, Compress 1 => offset 8+4+4+4+4+1+1 = 26)
+            compression_byte = data[26]
+            bits.append(compression_byte & 1) # Lấy LSB
+            
+    # 2. Pack bits MSB-first thành bytes
+    flag_chars = []
+    for i in range(0, len(bits), 8):
+        byte_str = "".join(map(str, bits[i:i+8]))
+        flag_chars.append(chr(int(byte_str, 2)))
+        
+    print("[+] Flag: " + "".join(flag_chars))
+
+if __name__ == "__main__":
+    extract_ihdr_stego("./extracted_pngs/")</div>`,
+
+        v3_help: `<span class="info">[ Module 3: unfinished-file ]</span>
+<span class="cmd">overview</span>  : Tổng quan Chrome CRDL & Incomplete ZIP
+<span class="cmd">crdl</span>      : Cấu trúc Chrome .crdownload Header
+<span class="cmd">carving</span>   : ZIP Local File Header Carving (No EOCD)
+<span class="cmd">xor</span>       : Known-Plaintext XOR Attack
+<span class="cmd">code</span>      : Exploit Source Code (Python)
+<span class="cmd">back</span>      : Quay lại Menu Chính`,
+        v3_overview: `<span class="info">[ TỔNG QUAN: UNFINISHED-FILE ]</span>
+<span class="cmd">Category:</span> File Carving / Cryptanalysis
+<span class="cmd">Flag:</span> <span class="success">tjctf{n3v3r_l3t_0ther_p30ple_t0uch_ur_c0mputer}</span>
+
+Một file .crdownload (Chrome chưa tải xong). Bên trong là dữ liệu của một file ZIP bí mật, nhưng quá trình tải bị ngắt trước khi Central Directory (EOCD) được ghi xuống.
+
+<span class="warning">Vấn đề:</span> Không có EOCD -> Lệnh unzip thông thường sẽ báo lỗi "End-of-central-directory not found" và từ chối giải nén. Ta phải tự viết Carving Logic!`,
+        v3_crdl: `<span class="info">[ CẤU TRÚC CHROME .CRDOWNLOAD HEADER ]</span>
+Chrome thêm một CRDL header ở đầu file tạm thời để theo dõi trạng thái tải. Header này chiếm khoảng 0x100 bytes (256 bytes).
+
+<span class="cmd">Cách xử lý:</span> Bỏ qua 0x100 bytes đầu tiên. Phần còn lại của file chính là "bytes-on-wire" - dữ liệu nhị phân gốc của file zip đang tải, được lưu tuần tự theo thứ tự network byte order.</div>`,
+        v3_carving: `<span class="info">[ ZIP LOCAL FILE HEADER CARVING ]</span>
+Dù không có Central Directory ở cuối file, các Local File Header vẫn nguyên vẹn ở phần đầu. Chúng hoàn toàn "self-describing" (tự mô tả).
+
+Chữ ký Local Header: <span class="cmd">PK\\x03\\x04</span>
+Cấu trúc ngay sau signature:
+- Compression Method (2 bytes): 0 nghĩa là Store (không nén)
+- Compressed Size & Uncompressed Size
+- Filename Length & Extra Field Length
+- File data nằm ngay sau.
+
+Ta scan tìm PK\\x03\\x04, parse các length, nhảy đến offset data và trích xuất file ẩn có tên <span class="arg">.flagdata</span> (47 bytes, Store method).</div>`,
+        v3_xor: `<span class="info">[ KNOWN-PLAINTEXT XOR ATTACK ]</span>
+Dữ liệu của .flagdata đã bị mã hóa bằng Single-byte XOR.
+Ta biết flag có định dạng <span class="cmd">tjctf{...}</span>.
+
+<span class="warning">Kỹ thuật Known-Plaintext:</span>
+Byte đầu tiên của encrypted data là 0x36.
+Byte đầu tiên của plaintext là 't' (0x74).
+
+<div class="code-block">Key = Ciphertext ^ Plaintext
+Key = 0x36 ^ 0x74 = 0x42</div>
+
+XOR toàn bộ 47 bytes với Key 0x42 cho ra flag:
+<span class="success">tjctf{n3v3r_l3t_0ther_p30ple_t0uch_ur_c0mputer}</span>`,
+        v3_code: `<span class="info">[ EXPLOIT SOURCE CODE ]</span>
+<div class="code-block">#!/usr/bin/env python3
+import struct
+
+def carve_crdownload(file_path):
+    with open(file_path, "rb") as f:
+        blob = f.read()
+    
+    # Bỏ qua Chrome CRDL header (0x100 bytes)
+    zip_data = blob[0x100:]
+    
+    # Scan cho Local File Headers
+    offset = 0
+    while offset < len(zip_data) - 4:
+        if zip_data[offset:offset+4] == b'PK\\x03\\x04':
+            # Parse Local Header
+            comp_method = struct.unpack('<H', zip_data[offset+8:offset+10])[0]
+            comp_size = struct.unpack('<I', zip_data[offset+18:offset+22])[0]
+            fname_len = struct.unpack('<H', zip_data[offset+26:offset+28])[0]
+            extra_len = struct.unpack('<H', zip_data[offset+28:offset+30])[0]
+            
+            fname_start = offset + 30
+            filename = zip_data[fname_start:fname_start+fname_len].decode()
+            
+            data_start = fname_start + fname_len + extra_len
+            
+            if ".flagdata" in filename and comp_method == 0:
+                encrypted_data = zip_data[data_start:data_start+comp_size]
+                
+                # Known-Plaintext XOR Attack
+                # 't' (0x74) XOR 0x36 = 0x42
+                key = 0x42
+                flag = "".join(chr(b ^ key) for b in encrypted_data)
+                print(f"[+] Flag: {flag}")
+                return
+                
+            offset = data_start + comp_size
+        else:
+            offset += 1
+
+if __name__ == "__main__":
+    carve_crdownload("unfinished.crdownload")</div>`
+      },
+      en: {
+        help: `<span class="info">[ FORENSICS Forensics 3 Write Up ]</span>
+Type <span class="cmd">use [module]</span> to select a writeup:
+<span class="cmd">use 1</span>  : voice-in-the-packet (VoIP LSB Steganography)
+<span class="cmd">use 2</span>  : check-the-fine-print (PNG IHDR Spec Violation)
+<span class="cmd">use 3</span>  : unfinished-file (Chrome CRDL & ZIP Carving)
+
+Type <span class="cmd">back</span> to return to main menu. Type <span class="cmd">clear</span> to clear screen.`,
+
+        v1_help: `<span class="info">[ Module 1: voice-in-the-packet ]</span>
+<span class="cmd">overview</span>  : VoIP Overview & Decoys
+<span class="cmd">ulaw</span>      : G.711 µ-law Encoding Math
+<span class="cmd">lsb</span>       : LSB Steganography on RTP Payload
+<span class="cmd">decode</span>    : XOR Extraction & Base64 Recovery
+<span class="cmd">code</span>      : Exploit Source Code (Python)
+<span class="cmd">back</span>      : Back to Main Menu`,
+        v1_overview: `<span class="info">[ OVERVIEW: VOICE-IN-THE-PACKET ]</span>
+<span class="cmd">Category:</span> Network Forensics / VoIP Steganography
+<span class="cmd">Flag:</span> <span class="success">tjctf{h3y_v0ip_s73g_is_4_7hing}</span>
+
+20-second VoIP capture with 1000 RTP packets carrying G.711 µ-law codec. Two decoy flag-shaped packets.
+
+<span class="warning">Crucial Observation:</span> 995/1000 RTP payloads are byte-identical. Only the first 5 deviate, and only at even offsets, by exactly 0x01. This is the signature of LSB Stego!`,
+        v1_ulaw: `<span class="info">[ G.711 MU-LAW ENCODING MATH ]</span>
+G.711 µ-law is a logarithmic audio compression codec. 1 byte µ-law = 1 audio sample.
+
+<span class="cmd">Why do even offsets matter?</span>
+In RTP payloads, bytes are contiguous: Sample 0 (Byte 0), Sample 1 (Byte 1)...
+A +1/-1 change in a µ-law byte barely creates an audible difference (it shifts amplitude slightly in the log scale). This is the perfect environment for LSB hiding without ruining audio.</div>`,
+        v1_lsb: `<span class="info">[ LSB STEGANOGRAPHY ON RTP PAYLOAD ]</span>
+The attacker modified the Least Significant Bit of audio samples at even offsets (samples 0, 2, 4...).
+
+Since delta is always 0x01, we can extract the hidden bit via XOR:
+<div class="code-block">Deviation = Anomalous_Packet[i] XOR Template_Packet[i]
+# If Deviation = 0x01 -> LSB flipped -> Hidden bit is 1
+# If Deviation = 0x00 -> Unchanged -> Hidden bit is 0</div>
+With 5 anomalous packets, we get a continuous bit string. Bits are packed MSB-first.</div>`,
+        v1_decode: `<span class="info">[ XOR EXTRACTION & BASE64 RECOVERY ]</span>
+1. Identify Template: Use payload from RTP packet #6 as baseline.
+2. XOR & Pack Bits: Iterate first 5 packets, XOR with template, extract LSB, pack into MSB-first bytes.
+3. Base64 Decode: The resulting byte array contains a Base64 substring in the middle. Decode it for the flag.
+
+Flag: <span class="success">tjctf{h3y_v0ip_s73g_is_4_7hing}</span>`,
+        v1_code: `<span class="info">[ EXPLOIT SOURCE CODE ]</span>
+<div class="code-block">#!/usr/bin/env python3
+from scapy.all import rdpcap, RTP
+import base64
+
+def extract_voip_lsb(pcap_path):
+    packets = rdpcap(pcap_path)
+    rtp_streams = [RTP(bytes(p[UDP].payload)).payload for p in packets if p.haslayer(UDP)]
+    
+    # 1. Get Template from packet 6
+    template = rtp_streams[5]
+    
+    lsb_bits = []
+    # 2. Iterate 5 anomalous packets
+    for pkt in rtp_streams[:5]:
+        for offset in range(0, len(pkt)):
+            if offset % 2 == 0:
+                xor_val = pkt[offset] ^ template[offset]
+                if xor_val == 0x01:
+                    lsb_bits.append(1)
+                else:
+                    lsb_bits.append(0)
+                    
+    # 3. Pack Bits MSB-First
+    hidden_bytes = bytearray()
+    for i in range(0, len(lsb_bits), 8):
+        byte_str = "".join(map(str, lsb_bits[i:i+8]))
+        if len(byte_str) == 8:
+            hidden_bytes.append(int(byte_str, 2))
+            
+    # 4. Decode Base64
+    decoded_data = hidden_bytes.decode('ascii', errors='ignore')
+    b64_str = decoded_data.split('\\n')[0]
+    flag = base64.b64decode(b64_str).decode()
+    print(f"[+] Flag: {flag}")
+
+if __name__ == "__main__":
+    extract_voip_lsb("voip.pcap")</div>`,
+
+        v2_help: `<span class="info">[ Module 2: check-the-fine-print ]</span>
+<span class="cmd">overview</span>  : Overview & Traditional Stego Traps
+<span class="cmd">ihdr</span>      : PNG IHDR Specification Exploitation
+<span class="cmd">bitex</span>     : Bit Extraction from Compression Method
+<span class="cmd">code</span>      : Exploit Source Code (Python)
+<span class="cmd">back</span>      : Back to Main Menu`,
+        v2_overview: `<span class="info">[ OVERVIEW: CHECK-THE-FINE-PRINT ]</span>
+<span class="cmd">Category:</span> Format Specification Violation / Steganography
+<span class="cmd">Flag:</span> <span class="success">tjctf{wow_you_actually_read_it}</span>
+
+A PNG with appended ZIP (binwalk finds it). ZIP extracts to 248 tiny 19x9 PNGs.
+
+<span class="warning">The Trap:</span> All standard stego tools (zsteg, stegsolve, LSB) fail. The flag isn't in pixel data. It's in ignored metadata!</div>`,
+        v2_ihdr: `<span class="info">[ PNG IHDR SPECIFICATION EXPLOITATION ]</span>
+PNG IHDR chunk layout:
+<div class="code-block">Byte 0-3: Width (4 bytes)
+Byte 4-7: Height (4 bytes)
+Byte 8: Bit depth
+Byte 9: Color type
+Byte 10: Compression method
+Byte 11: Filter method
+Byte 12: Interlace method</div>
+
+Per PNG Spec (RFC 2083), <span class="cmd">Byte 10 (Compression method)</span> MUST ALWAYS be 0 (Deflate). It's the 2nd most ignored field in forensics.
+
+<span class="error">Violation:</span> Attacker set Byte 10 to 1 in some files. This is a hidden bit!</div>`,
+        v2_bitex: `<span class="info">[ BIT EXTRACTION FROM COMPRESSION METHOD ]</span>
+248 files, each providing 1 bit (0 or 1 from Byte 10).
+248 bits / 8 = 31 bytes of ASCII!
+
+<span class="cmd">Process:</span>
+1. Sort 248 PNGs by filename.
+2. Read Byte 26 of file (Chunk offset 10 + 8 bytes PNG sig/len).
+3. Extract LSB: <span class="arg">byte_26 & 1</span>.
+4. Pack bits MSB-first to ASCII.
+
+Result: <span class="success">tjctf{wow_you_actually_read_it}</span>`,
+        v2_code: `<span class="info">[ EXPLOIT SOURCE CODE ]</span>
+<div class="code-block">#!/usr/bin/env python3
+import glob
+
+def extract_ihdr_stego(directory_path):
+    png_files = sorted(glob.glob(f"{directory_path}/*.png"))
+    
+    bits = []
+    for f in png_files:
+        with open(f, "rb") as file:
+            data = file.read()
+            compression_byte = data[26]
+            bits.append(compression_byte & 1)
+            
+    flag_chars = []
+    for i in range(0, len(bits), 8):
+        byte_str = "".join(map(str, bits[i:i+8]))
+        flag_chars.append(chr(int(byte_str, 2)))
+        
+    print("[+] Flag: " + "".join(flag_chars))
+
+if __name__ == "__main__":
+    extract_ihdr_stego("./extracted_pngs/")</div>`,
+
+        v3_help: `<span class="info">[ Module 3: unfinished-file ]</span>
+<span class="cmd">overview</span>  : Chrome CRDL & Incomplete ZIP Overview
+<span class="cmd">crdl</span>      : Chrome .crdownload Header Structure
+<span class="cmd">carving</span>   : ZIP Local File Header Carving (No EOCD)
+<span class="cmd">xor</span>       : Known-Plaintext XOR Attack
+<span class="cmd">code</span>      : Exploit Source Code (Python)
+<span class="cmd">back</span>      : Back to Main Menu`,
+        v3_overview: `<span class="info">[ OVERVIEW: UNFINISHED-FILE ]</span>
+<span class="cmd">Category:</span> File Carving / Cryptanalysis
+<span class="cmd">Flag:</span> <span class="success">tjctf{n3v3r_l3t_0ther_p30ple_t0uch_ur_c0mputer}</span>
+
+A Chrome .crdownload partial file. Contains data of a secret ZIP, but download was killed before Central Directory (EOCD) was written.
+
+<span class="warning">The Problem:</span> No EOCD -> standard unzip fails. We must write our own Carving Logic!</div>`,
+        v3_crdl: `<span class="info">[ CHROME .CRDOWNLOAD HEADER STRUCTURE ]</span>
+Chrome prepends a CRDL header to track download state. Takes ~0x100 bytes.
+
+<span class="cmd">Handling:</span> Skip 0x100 bytes. The rest is the sequential network byte-order binary data of the downloading zip file.</div>`,
+        v3_carving: `<span class="info">[ ZIP LOCAL FILE HEADER CARVING ]</span>
+Without Central Directory, Local File Headers at the start are intact. They are self-describing.
+
+Local Header Signature: <span class="cmd">PK\\x03\\x04</span>
+Structure:
+- Compression Method (2 bytes): 0 means Store
+- Compressed Size & Uncompressed Size
+- Filename Length & Extra Field Length
+- File data follows immediately.
+
+Scan for PK\\x03\\x04, parse lengths, jump to data offset and extract hidden <span class="arg">.flagdata</span> (47 bytes, Store method).</div>`,
+        v3_xor: `<span class="info">[ KNOWN-PLAINTEXT XOR ATTACK ]</span>
+.flagdata is encrypted with Single-byte XOR.
+We know the format: <span class="cmd">tjctf{...}</span>.
+
+<span class="warning">Known-Plaintext Technique:</span>
+First encrypted byte is 0x36.
+First plaintext char is 't' (0x74).
+
+<div class="code-block">Key = Ciphertext ^ Plaintext
+Key = 0x36 ^ 0x74 = 0x42</div>
+
+XOR all 47 bytes with Key 0x42:
+<span class="success">tjctf{n3v3r_l3t_0ther_p30ple_t0uch_ur_c0mputer}</span>`,
+        v3_code: `<span class="info">[ EXPLOIT SOURCE CODE ]</span>
+<div class="code-block">#!/usr/bin/env python3
+import struct
+
+def carve_crdownload(file_path):
+    with open(file_path, "rb") as f:
+        blob = f.read()
+    
+    zip_data = blob[0x100:]
+    offset = 0
+    
+    while offset < len(zip_data) - 4:
+        if zip_data[offset:offset+4] == b'PK\\x03\\x04':
+            comp_method = struct.unpack('<H', zip_data[offset+8:offset+10])[0]
+            comp_size = struct.unpack('<I', zip_data[offset+18:offset+22])[0]
+            fname_len = struct.unpack('<H', zip_data[offset+26:offset+28])[0]
+            extra_len = struct.unpack('<H', zip_data[offset+28:offset+30])[0]
+            
+            fname_start = offset + 30
+            filename = zip_data[fname_start:fname_start+fname_len].decode()
+            data_start = fname_start + fname_len + extra_len
+            
+            if ".flagdata" in filename and comp_method == 0:
+                encrypted_data = zip_data[data_start:data_start+comp_size]
+                
+                # Known-Plaintext XOR: 't' (0x74) ^ 0x36 = 0x42
+                key = 0x42
+                flag = "".join(chr(b ^ key) for b in encrypted_data)
+                print(f"[+] Flag: {flag}")
+                return
+                
+            offset = data_start + comp_size
+        else:
+            offset += 1
+
+if __name__ == "__main__":
+    carve_crdownload("unfinished.crdownload")</div>`
+      }
+    };
+
+    let currentModule = 'main';
+
+    function toggleLang() {
+      currentLang = currentLang === 'vi' ? 'en' : 'vi';
+      const btn = document.getElementById('lang-btn');
+      btn.textContent = currentLang === 'vi' ? 'Switch to English' : 'Chuyển sang Tiếng Việt';
+      handleCommand('clear');
+      handleCommand('help');
+      playAudio('https://www.soundjay.com/buttons/button-1.mp3', 0.3);
+    }
+
+    const cmds = {
+      help: () => { currentModule = 'main'; return L[currentLang].help; },
+      clear: () => { output.innerHTML = ''; return ''; },
+      
+      use1: () => { currentModule = 'v1'; return L[currentLang].v1_help; },
+      use2: () => { currentModule = 'v2'; return L[currentLang].v2_help; },
+      use3: () => { currentModule = 'v3'; return L[currentLang].v3_help; },
+      back: () => { currentModule = 'main'; return L[currentLang].help; },
+
+      // Module 1 Commands
+      overview: () => currentModule === 'v1' ? L[currentLang].v1_overview : `<span class="error">Select module first (use 1, 2, or 3)</span>`,
+      ulaw: () => currentModule === 'v1' ? L[currentLang].v1_ulaw : `<span class="error">Invalid command</span>`,
+      lsb: () => currentModule === 'v1' ? L[currentLang].v1_lsb : (currentModule === 'v2' ? L[currentLang].v2_bitex : `<span class="error">Invalid command</span>`),
+      decode: () => currentModule === 'v1' ? L[currentLang].v1_decode : `<span class="error">Invalid command</span>`,
+      
+      // Module 2 Commands
+      ihdr: () => currentModule === 'v2' ? L[currentLang].v2_ihdr : `<span class="error">Invalid command</span>`,
+      
+      // Module 3 Commands
+      crdl: () => currentModule === 'v3' ? L[currentLang].v3_crdl : `<span class="error">Invalid command</span>`,
+      carving: () => currentModule === 'v3' ? L[currentLang].v3_carving : `<span class="error">Invalid command</span>`,
+      xor: () => currentModule === 'v3' ? L[currentLang].v3_xor : `<span class="error">Invalid command</span>`,
+      
+      // Universal Code Command
+      code: () => {
+        if (currentModule === 'v1') return L[currentLang].v1_code;
+        if (currentModule === 'v2') return L[currentLang].v2_code;
+        if (currentModule === 'v3') return L[currentLang].v3_code;
+        return `<span class="error">Select a module first (use 1, 2, or 3)</span>`;
+      }
+    };
+
+    function handleCommand(cmd) {
+      const c = cmd.trim().toLowerCase().replace(/\s+/g, ''); // remove spaces for "use 1" -> "use1"
+      if(!c) return;
+      print(`<span class="cmd">root@tjctf</span>:<span class="arg">~/forensics</span>$ ${cmd}`);
+      playAudio('https://www.soundjay.com/buttons/button-5.mp3', 0.15);
+      
+      if (cmds[c]) {
+        const res = cmds[c]();
+        if (res) print(res);
+      } else {
+        print(`<span class="error">Command not found: ${cmd}. Type 'help' for navigation.</span>`);
+      }
+      input.value = '';
+    }
+
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); handleCommand(input.value); }
+      else playAudio('https://www.soundjay.com/buttons/button-8.mp3', 0.02);
+    });
+
+    tBody.addEventListener('click', () => input.focus());
+
+    document.getElementById('start-button').addEventListener('click', () => {
+      userInteracted = true;
+      const ws = document.getElementById('welcome-screen');
+      ws.classList.add('hidden');
+      setTimeout(() => { 
+        print(`<span class="info">
+ __  __            _            ____ _               _           
+|  \\/  | __ _ _ __| | __      / ___| |__   ___  ___| | _____   
+| |\\/| |/ _\` | '__| |/ /_____| |   | '_ \\ / _ \\/ __| |/ / __|  
+| |  | | (_| | |  |   <_____| |___| | | |  __/ (__|   <\\__ \\  
+|_|  |_|\\__,_|_|  |_|\\_\\     \\____|_| |_|\\___|\\___|_|\\_\\___/  
+                                                               </span>`);
+        handleCommand('help'); 
+        input.focus(); 
+      }, 800);
+      playAudio('https://www.soundjay.com/buttons/button-10.mp3', 0.4);
+    });
+  </script>
+</body>
+</html>
