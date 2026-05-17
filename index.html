@@ -3,266 +3,171 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cache-Control" content="public, max-age=31536000" />
     <title>Yuri08 | CTF Writeups & Hacker Profile</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
         :root {
-            --main: #7c3aed;
-            --main-light: #a78bfa;
-            --accent: #10b981;
-            --bg: #0a0b10;
-            --bg2: #12141d;
-            --glass: rgba(20, 20, 35, 0.85);
-            --text: #e0e7ef;
+            --main: #7c3aed; --main-light: #a78bfa; --accent: #10b981;
+            --bg: #0a0b10; --bg2: #12141d; --glass: rgba(20, 20, 35, 0.92); /* Tăng opacity để bù blur */
+            --text: #e0e7ef; --team-color: #f59e0b;
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         html { scroll-behavior: smooth; }
-
         body {
             font-family: 'JetBrains Mono', monospace;
-            background-color: var(--bg);
-            color: var(--text);
-            overflow-x: hidden;
+            background-color: var(--bg); color: var(--text); overflow-x: hidden;
         }
-
-        /* Three.js Canvas */
         #bg-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: -1;
-            pointer-events: none;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1; pointer-events: none;
         }
-
-        /* Navigation */
         nav {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            padding: 1rem 5%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 100;
-            background: rgba(10, 11, 16, 0.8);
-            backdrop-filter: blur(10px);
+            position: fixed; top: 0; width: 100%; padding: 1rem 5%;
+            display: flex; justify-content: space-between; align-items: center; z-index: 100;
+            background: rgba(10, 11, 16, 0.95); /* Bỏ blur, tăng opacity */
             border-bottom: 1px solid rgba(124, 58, 237, 0.3);
         }
-
         .logo {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--main);
-            text-decoration: none;
-            text-shadow: 0 0 10px rgba(124, 58, 237, 0.7);
+            font-family: 'Orbitron', sans-serif; font-size: 1.5rem; font-weight: 700;
+            color: var(--main); text-decoration: none; text-shadow: 0 0 10px rgba(124, 58, 237, 0.7);
         }
-
-        .nav-links { display: flex; gap: 1.5rem; }
+        .nav-links { display: flex; gap: 1.5rem; align-items: center; }
         .nav-links a {
-            color: var(--main-light);
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: color 0.3s;
+            color: var(--main-light); text-decoration: none; font-size: 0.9rem; transition: color 0.3s;
         }
         .nav-links a:hover { color: var(--accent); }
-
-        /* Hero Section */
+        .team-btn {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            background: rgba(245, 158, 11, 0.15); border: 1px solid var(--team-color);
+            color: var(--team-color); padding: 0.4rem 0.8rem; border-radius: 6px;
+            font-family: 'Orbitron', sans-serif; font-size: 0.8rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.2); transition: all 0.3s;
+        }
+        .team-btn:hover {
+            background: var(--team-color); color: #000;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.5); transform: translateY(-2px);
+        }
         .hero {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 2rem;
-            position: relative;
+            min-height: 100vh; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; text-align: center; padding: 2rem;
         }
-
         .avatar {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            border: 3px solid var(--main);
-            box-shadow: 0 0 30px rgba(124, 58, 237, 0.5);
-            margin-bottom: 1.5rem;
-            object-fit: cover;
-            transition: transform 0.3s;
+            width: 150px; height: 150px; border-radius: 50%; border: 3px solid var(--main);
+            box-shadow: 0 0 30px rgba(124, 58, 237, 0.5); margin-bottom: 1.5rem; object-fit: cover;
         }
-        .avatar:hover { transform: scale(1.05) rotate(5deg); }
-
         h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 3rem;
-            color: var(--main);
-            text-shadow: 0 0 20px rgba(124, 58, 237, 0.6);
-            margin-bottom: 0.5rem;
+            font-family: 'Orbitron', sans-serif; font-size: 3rem; color: var(--main);
+            text-shadow: 0 0 20px rgba(124, 58, 237, 0.6); margin-bottom: 0.5rem;
         }
-
-        .subtitle {
-            font-size: 1.1rem;
-            color: var(--main-light);
-            margin-bottom: 2rem;
-        }
-
+        .subtitle { font-size: 1.1rem; color: var(--main-light); margin-bottom: 1.5rem; }
         .typing-text {
-            color: var(--accent);
-            border-right: 2px solid var(--accent);
+            color: var(--accent); border-right: 2px solid var(--accent);
             animation: blink 1s step-end infinite;
         }
-
         @keyframes blink { 50% { border-color: transparent; } }
-
-        /* Skills Tags */
-        .skills-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 0.8rem;
-            max-width: 800px;
-            margin-bottom: 2rem;
+        .team-affiliation {
+            margin-bottom: 2.5rem; padding: 1rem 2rem;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            background: rgba(10, 11, 16, 0.8); /* Bỏ blur */
+            border-radius: 8px; display: flex; align-items: center; gap: 1rem;
         }
-
+        .team-affiliation span { color: #d1d5db; font-size: 0.9rem; }
+        .team-affiliation a {
+            color: var(--team-color); text-decoration: none; font-weight: 700;
+            font-size: 1.2rem; font-family: 'Orbitron', sans-serif; transition: text-shadow 0.3s;
+        }
+        .team-affiliation a:hover { text-shadow: 0 0 15px rgba(245, 158, 11, 0.6); }
+        .skills-container {
+            display: flex; flex-wrap: wrap; justify-content: center;
+            gap: 0.8rem; max-width: 800px; margin-bottom: 2rem;
+        }
         .skill-tag {
-            background: rgba(124, 58, 237, 0.15);
-            border: 1px solid var(--main);
-            color: var(--main-light);
-            padding: 0.4rem 0.8rem;
-            border-radius: 15px;
-            font-size: 0.8rem;
-            transition: all 0.3s;
+            background: rgba(124, 58, 237, 0.15); border: 1px solid var(--main);
+            color: var(--main-light); padding: 0.4rem 0.8rem; border-radius: 15px;
+            font-size: 0.8rem; transition: all 0.3s;
         }
         .skill-tag:hover {
-            background: var(--main);
-            color: #fff;
-            box-shadow: 0 0 15px rgba(124, 58, 237, 0.5);
+            background: var(--main); color: #fff; box-shadow: 0 0 15px rgba(124, 58, 237, 0.5);
         }
-
-        /* CTF Section */
         .section-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2rem;
-            color: var(--accent);
-            text-align: center;
-            margin: 4rem 0 2rem;
-            text-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+            font-family: 'Orbitron', sans-serif; font-size: 2rem; color: var(--accent);
+            text-align: center; margin: 4rem 0 2rem; text-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
         }
-
         .ctf-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            padding: 0 5% 4rem;
-            max-width: 1400px;
-            margin: 0 auto;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem; padding: 0 5% 4rem; max-width: 1400px; margin: 0 auto;
         }
-
         .category-card {
-            background: var(--glass);
-            border: 1px solid rgba(124, 58, 237, 0.2);
-            border-radius: 1rem;
-            padding: 1.5rem;
-            backdrop-filter: blur(5px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            transition: transform 0.3s, border-color 0.3s;
+            background: var(--glass); border: 1px solid rgba(124, 58, 237, 0.2);
+            border-radius: 1rem; padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3); transition: transform 0.3s, border-color 0.3s;
         }
-        .category-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--accent);
-        }
-
+        .category-card:hover { transform: translateY(-5px); border-color: var(--accent); }
         .category-header {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.2rem;
-            color: var(--main);
-            margin-bottom: 1rem;
-            border-bottom: 1px solid rgba(124, 58, 237, 0.3);
-            padding-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+            font-family: 'Orbitron', sans-serif; font-size: 1.2rem; color: var(--main);
+            margin-bottom: 1rem; border-bottom: 1px solid rgba(124, 58, 237, 0.3);
+            padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;
         }
-
         .challenge-list { display: flex; flex-direction: column; gap: 0.8rem; }
-
         .challenge-link {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(16, 185, 129, 0.05);
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            border-radius: 0.5rem;
-            padding: 0.8rem 1rem;
-            text-decoration: none;
-            color: var(--text);
-            transition: all 0.3s;
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 0.5rem; padding: 0.8rem 1rem; text-decoration: none;
+            color: var(--text); transition: all 0.3s;
         }
         .challenge-link:hover {
-            background: rgba(16, 185, 129, 0.15);
-            border-color: var(--accent);
-            transform: translateX(5px);
-            box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+            background: rgba(16, 185, 129, 0.15); border-color: var(--accent);
+            transform: translateX(5px); box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
         }
-
         .ch-name { font-weight: 600; font-size: 0.9rem; }
         .ch-tags { display: flex; gap: 0.5rem; }
         .ch-tag {
-            font-size: 0.7rem;
-            padding: 0.2rem 0.5rem;
-            border-radius: 4px;
-            background: rgba(124, 58, 237, 0.2);
-            color: var(--main-light);
+            font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 4px;
+            background: rgba(124, 58, 237, 0.2); color: var(--main-light);
         }
-
-        /* Footer */
         footer {
-            text-align: center;
-            padding: 2rem;
-            border-top: 1px solid rgba(124, 58, 237, 0.2);
-            color: #555;
-            font-size: 0.8rem;
+            text-align: center; padding: 2rem; border-top: 1px solid rgba(124, 58, 237, 0.2);
+            color: #555; font-size: 0.8rem;
         }
-
-        /* Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: var(--bg); }
         ::-webkit-scrollbar-thumb { background: var(--main); border-radius: 4px; }
-
         @media (max-width: 768px) {
             h1 { font-size: 2rem; }
             .ctf-grid { grid-template-columns: 1fr; }
-            nav { padding: 1rem 2%; }
+            .team-affiliation { flex-direction: column; text-align: center; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Three.js Container -->
     <canvas id="bg-canvas"></canvas>
 
-    <!-- Navbar -->
     <nav>
-        <a href="#" class="logo">&lt;Yuri08/&gt;</a>
+        <a href="/" class="logo">&lt;Yuri08/&gt;</a>
         <div class="nav-links">
             <a href="#about">About</a>
-            <a href="#tjctf2026">TJCTF 2026</a>
-            <a href="https://github.com/Yuri08loveElaina" target="_blank"><i class="bi bi-github"></i> GitHub</a>
+            <a href="#tjctf2026">Writeups</a>
+            <a href="https://github.com/Yuri08-QA210" target="_blank"><i class="bi bi-github"></i> GitHub</a>
+            <a href="https://w4llz.me/" target="_blank" class="team-btn">
+                <i class="bi bi-people-fill"></i> W4LLZ
+            </a>
         </div>
     </nav>
 
-    <!-- Hero / About -->
     <section id="about" class="hero">
         <img src="https://files.catbox.moe/755fgv.png" alt="Yuri08 Avatar" class="avatar" />
         <h1>Yuri08</h1>
-        <div class="subtitle">
-            <span id="typing-element" class="typing-text"></span>
-        </div>
+        <div class="subtitle"><span id="typing-element" class="typing-text"></span></div>
         
+        <div class="team-affiliation">
+            <span>Member of</span>
+            <a href="https://w4llz.me/" target="_blank">W4LLZ</a>
+        </div>
+
         <div class="skills-container">
             <span class="skill-tag">Reverse Engineering</span>
             <span class="skill-tag">Pwn</span>
@@ -276,27 +181,21 @@
         </div>
     </section>
 
-    <!-- CTF Writeups Section -->
     <section id="tjctf2026">
         <div class="section-title">// TJCTF 2026 WRITEUPS</div>
-        
         <div class="ctf-grid">
+            
             <!-- Web -->
             <div class="category-card">
                 <div class="category-header"><i class="bi bi-globe2"></i> Web</div>
                 <div class="challenge-list">
-                    <a href="./tjctf-2026/opening-night/index.html" class="challenge-link">
+                    <a href="/tjctf-2026/web/opening-night/index.html" class="challenge-link">
                         <span class="ch-name">Opening Night</span>
-                        <div class="ch-tags">
-                            <span class="ch-tag">SVG</span>
-                            <span class="ch-tag">XXE</span>
-                        </div>
+                        <div class="ch-tags"><span class="ch-tag">SVG</span><span class="ch-tag">XXE</span></div>
                     </a>
-                    <a href="./tjctf-2026/web/free-cloud-storage/index.html" class="challenge-link">
+                    <a href="/tjctf-2026/web/free-cloud-storage/index.html" class="challenge-link">
                         <span class="ch-name">Free Cloud Storage</span>
-                        <div class="ch-tags">
-                            <span class="ch-tag">Zip Slip</span>
-                        </div>
+                        <div class="ch-tags"><span class="ch-tag">Zip Slip</span></div>
                     </a>
                 </div>
             </div>
@@ -305,19 +204,13 @@
             <div class="category-card">
                 <div class="category-header"><i class="bi bi-key-fill"></i> Crypto</div>
                 <div class="challenge-list">
-                    <a href="./tjctf-2026/crypto/trust-issues/index.html" class="challenge-link">
+                    <a href="/tjctf-2026/crypto/trust-issues/index.html" class="challenge-link">
                         <span class="ch-name">Trust Issues</span>
-                        <div class="ch-tags">
-                            <span class="ch-tag">DNSSEC</span>
-                            <span class="ch-tag">SQLi</span>
-                        </div>
+                        <div class="ch-tags"><span class="ch-tag">DNSSEC</span><span class="ch-tag">SQLi</span></div>
                     </a>
-                    <a href="./tjctf-2026/crypto/bit-leak/index.html" class="challenge-link">
+                    <a href="/tjctf-2026/crypto/bit-leak/index.html" class="challenge-link">
                         <span class="ch-name">Bit Leak</span>
-                        <div class="ch-tags">
-                            <span class="ch-tag">RSA</span>
-                            <span class="ch-tag">Oracle</span>
-                        </div>
+                        <div class="ch-tags"><span class="ch-tag">RSA</span><span class="ch-tag">Oracle</span></div>
                     </a>
                 </div>
             </div>
@@ -326,32 +219,21 @@
             <div class="category-card">
                 <div class="category-header"><i class="bi bi-search"></i> Forensics</div>
                 <div class="challenge-list">
-                    <a href="./tjctf-2026/forensics/3-write-up/index.html" class="challenge-link">
-                        <span class="ch-name">3-Write-Up (VoIP/PNG/ZIP)</span>
-                        <div class="ch-tags">
-                            <span class="ch-tag">LSB</span>
-                            <span class="ch-tag">Spec</span>
-                        </div>
+                    <a href="/tjctf-2026/forensics/3-write-up/index.html" class="challenge-link">
+                        <span class="ch-name">3-Write-Up</span>
+                        <div class="ch-tags"><span class="ch-tag">VoIP</span><span class="ch-tag">PNG</span></div>
                     </a>
-                    <a href="./tjctf-2026/forensics/invisible-ink/index.html" class="challenge-link">
+                    <a href="/tjctf-2026/forensics/invisible-ink/index.html" class="challenge-link">
                         <span class="ch-name">Invisible Ink</span>
-                        <div class="ch-tags">
-                            <span class="ch-tag">Polyglot</span>
-                            <span class="ch-tag">PDF</span>
-                        </div>
+                        <div class="ch-tags"><span class="ch-tag">Polyglot</span><span class="ch-tag">PDF</span></div>
                     </a>
-                    <a href="./tjctf-2026/forensics/loud-packets/index.html" class="challenge-link">
+                    <a href="/tjctf-2026/forensics/loud-packets/index.html" class="challenge-link">
                         <span class="ch-name">Loud Packets</span>
-                        <div class="ch-tags">
-                            <span class="ch-tag">Bitmap</span>
-                            <span class="ch-tag">Image</span>
-                        </div>
+                        <div class="ch-tags"><span class="ch-tag">Bitmap</span></div>
                     </a>
-                    <a href="./tjctf-2026/forensics/thomas-schools-of-china/index.html" class="challenge-link">
+                    <a href="/tjctf-2026/forensics/thomas-schools-of-china/index.html" class="challenge-link">
                         <span class="ch-name">Thomas Schools of China</span>
-                        <div class="ch-tags">
-                            <span class="ch-tag">Custom Format</span>
-                        </div>
+                        <div class="ch-tags"><span class="ch-tag">Custom Format</span></div>
                     </a>
                 </div>
             </div>
@@ -360,19 +242,13 @@
             <div class="category-card">
                 <div class="category-header"><i class="bi bi-cpu-fill"></i> Reverse Engineering</div>
                 <div class="challenge-list">
-                    <a href="./tjctf-2026/rev/Polaroid/index.html" class="challenge-link">
+                    <a href="/tjctf-2026/rev/polaroid/index.html" class="challenge-link">
                         <span class="ch-name">Polaroid</span>
-                        <div class="ch-tags">
-                            <span class="ch-tag">Mach-O</span>
-                            <span class="ch-tag">XOR</span>
-                        </div>
+                        <div class="ch-tags"><span class="ch-tag">Mach-O</span><span class="ch-tag">XOR</span></div>
                     </a>
-                    <a href="./tjctf-2026/rev/Remoose/index.html" class="challenge-link">
+                    <a href="/tjctf-2026/rev/remoose/index.html" class="challenge-link">
                         <span class="ch-name">Remoose</span>
-                        <div class="ch-tags">
-                            <span class="ch-tag">ELF</span>
-                            <span class="ch-tag">Forensics</span>
-                        </div>
+                        <div class="ch-tags"><span class="ch-tag">ELF</span><span class="ch-tag">Forensics</span></div>
                     </a>
                 </div>
             </div>
@@ -381,46 +257,35 @@
             <div class="category-card">
                 <div class="category-header"><i class="bi bi-bug-fill"></i> Misc & Pwn</div>
                 <div class="challenge-list">
-                    <a href="./tjctf-2026/misc/Glich/index.html" class="challenge-link">
+                    <a href="/tjctf-2026/misc/glich/index.html" class="challenge-link">
                         <span class="ch-name">Glitch</span>
-                        <div class="ch-tags">
-                            <span class="ch-tag">Stego</span>
-                        </div>
+                        <div class="ch-tags"><span class="ch-tag">Stego</span></div>
                     </a>
-                    <a href="./tjctf-2026/misc/calculative-barracuda/index.html" class="challenge-link">
+                    <a href="/tjctf-2026/misc/calculative-barracuda/index.html" class="challenge-link">
                         <span class="ch-name">Calculative Barracuda</span>
-                        <div class="ch-tags">
-                            <span class="ch-tag">AI</span>
-                            <span class="ch-tag">Prompt</span>
-                        </div>
+                        <div class="ch-tags"><span class="ch-tag">AI</span><span class="ch-tag">Prompt</span></div>
                     </a>
-                    <a href="./tjctf-2026/pwn/hunting-field/index.html" class="challenge-link">
+                    <a href="/tjctf-2026/pwn/hunting-field/index.html" class="challenge-link">
                         <span class="ch-name">Hunting Field</span>
-                        <div class="ch-tags">
-                            <span class="ch-tag">Buffer Underflow</span>
-                        </div>
+                        <div class="ch-tags"><span class="ch-tag">Buffer Underflow</span></div>
                     </a>
                 </div>
             </div>
+
         </div>
     </section>
 
-    <footer>
-        &copy; 2026 Yuri08 - Built with Passion &amp; Caffeine
-    </footer>
+    <footer>&copy; 2026 Yuri08 - Write Up </footer>
 
-    <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        // --- Typing Effect ---
-        const texts = ["Pentester", "Kernel Exploiter", "CTF Player", "Yuri08loveElaina"];
+        // Typing Effect
+        const texts = ["Pentester", "Kernel Exploiter", "CTF Player", "Yuri08"];
         let tIdx = 0, cIdx = 0, isDel = false;
         const typeEl = document.getElementById("typing-element");
-
         function typeLoop() {
             const current = texts[tIdx];
             typeEl.textContent = current.substring(0, cIdx);
-            
             if (!isDel) {
                 cIdx++;
                 if (cIdx > current.length) { isDel = true; setTimeout(typeLoop, 1500); return; }
@@ -432,73 +297,80 @@
         }
         typeLoop();
 
-        // --- Three.js Background (Rain/Matrix Effect) ---
+        // Three.js Background - TỐI ƯU HIỆU NĂNG
         const canvas = document.getElementById('bg-canvas');
-        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false }); // Tắt antialias
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // Giới hạn pixel ratio
 
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         camera.position.z = 5;
 
-        // Create Particles
-        const particleCount = 1500;
+        // Giảm số lượng particle xuống 600 để chống lag
+        const particleCount = 600; 
         const geometry = new THREE.BufferGeometry();
         const positions = new Float32Array(particleCount * 3);
         const velocities = [];
-
         for (let i = 0; i < particleCount; i++) {
-            positions[i * 3] = (Math.random() - 0.5) * 20;     // X
-            positions[i * 3 + 1] = (Math.random() - 0.5) * 20; // Y
-            positions[i * 3 + 2] = (Math.random() - 0.5) * 10; // Z
-            velocities.push(Math.random() * 0.02 + 0.01);       // Fall speed
+            positions[i * 3] = (Math.random() - 0.5) * 20;
+            positions[i * 3 + 1] = (Math.random() - 0.5) * 20;
+            positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
+            velocities.push(Math.random() * 0.02 + 0.01);
         }
-
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-
-        const material = new THREE.PointsMaterial({
-            color: 0x7c3aed,
-            size: 0.05,
-            transparent: true,
-            opacity: 0.8
+        
+        // Tối ưu material
+        const material = new THREE.PointsMaterial({ 
+            color: 0x7c3aed, 
+            size: 0.05, 
+            transparent: true, 
+            opacity: 0.8,
+            depthWrite: false // Tối ưu cho semi-transparent objects
         });
-
+        
         const particles = new THREE.Points(geometry, material);
         scene.add(particles);
 
-        // Mouse Interaction
         let mouseX = 0, mouseY = 0;
         document.addEventListener('mousemove', (e) => {
             mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
             mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
         });
 
-        // Animation Loop
+        let isScrolling;
+        window.addEventListener('scroll', () => {
+            canvas.style.opacity = '0.5'; // Làm mờ nhẹ khi scroll để giảm tải re-paint
+            clearTimeout(isScrolling);
+            isScrolling = setTimeout(() => {
+                canvas.style.opacity = '1';
+            }, 150);
+        });
+
         function animate() {
             requestAnimationFrame(animate);
-
             const pos = particles.geometry.attributes.position.array;
             for (let i = 0; i < particleCount; i++) {
-                pos[i * 3 + 1] -= velocities[i]; // Y -= speed (Fall down)
-                
-                // Reset if out of bounds
+                pos[i * 3 + 1] -= velocities[i];
                 if (pos[i * 3 + 1] < -10) {
                     pos[i * 3 + 1] = 10;
                     pos[i * 3] = (Math.random() - 0.5) * 20;
                 }
             }
             particles.geometry.attributes.position.needsUpdate = true;
-
-            // Rotate camera slightly based on mouse
-            camera.rotation.y += (mouseX * 0.05 - camera.rotation.y) * 0.01;
-            camera.rotation.x += (mouseY * 0.05 - camera.rotation.x) * 0.01;
-
+            
+            // Chỉ render camera rotation nếu chênh lệch đủ lớn
+            const targetRotY = mouseX * 0.05;
+            const targetRotX = mouseY * 0.05;
+            if (Math.abs(camera.rotation.y - targetRotY) > 0.001 || Math.abs(camera.rotation.x - targetRotX) > 0.001) {
+                camera.rotation.y += (targetRotY - camera.rotation.y) * 0.01;
+                camera.rotation.x += (targetRotX - camera.rotation.x) * 0.01;
+            }
+            
             renderer.render(scene, camera);
         }
         animate();
 
-        // Resize Handler
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
