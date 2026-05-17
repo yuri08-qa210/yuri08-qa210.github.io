@@ -25,8 +25,7 @@
         nav {
             position: fixed; top: 0; width: 100%; padding: 1rem 5%;
             display: flex; justify-content: space-between; align-items: center; z-index: 100;
-            background: rgba(10, 11, 16, 0.95); 
-            border-bottom: 1px solid rgba(124, 58, 237, 0.3);
+            background: rgba(10, 11, 16, 0.95); border-bottom: 1px solid rgba(124, 58, 237, 0.3);
         }
         .logo {
             font-family: 'Orbitron', sans-serif; font-size: 1.5rem; font-weight: 700;
@@ -188,7 +187,6 @@
             <div class="category-card">
                 <div class="category-header"><i class="bi bi-globe2"></i> Web</div>
                 <div class="challenge-list">
-                    <!-- ĐÃ SỬA: Thêm thư mục con /web/ vào opening-night -->
                     <a href="/tjctf-2026/web/opening-night/index.html" class="challenge-link">
                         <span class="ch-name">Opening Night</span>
                         <div class="ch-tags"><span class="ch-tag">SVG</span><span class="ch-tag">XXE</span></div>
@@ -242,7 +240,6 @@
             <div class="category-card">
                 <div class="category-header"><i class="bi bi-cpu-fill"></i> Reverse Engineering</div>
                 <div class="challenge-list">
-                    <!-- ĐÃ SỬA: Đổi chữ P và R hoa thành thường để khớp với server linux -->
                     <a href="/tjctf-2026/rev/polaroid/index.html" class="challenge-link">
                         <span class="ch-name">Polaroid</span>
                         <div class="ch-tags"><span class="ch-tag">Mach-O</span><span class="ch-tag">XOR</span></div>
@@ -280,7 +277,6 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        // Typing Effect
         const texts = ["Pentester", "Kernel Exploiter", "CTF Player", "Yuri08"];
         let tIdx = 0, cIdx = 0, isDel = false;
         const typeEl = document.getElementById("typing-element");
@@ -298,17 +294,15 @@
         }
         typeLoop();
 
-        // Three.js Background - OPTIMIZED
         const canvas = document.getElementById('bg-canvas');
         const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         camera.position.z = 5;
 
-        const particleCount = 600; // Giảm particle chống lag
+        const particleCount = 600; 
         const geometry = new THREE.BufferGeometry();
         const positions = new Float32Array(particleCount * 3);
         const velocities = [];
@@ -319,9 +313,7 @@
             velocities.push(Math.random() * 0.02 + 0.01);
         }
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        const material = new THREE.PointsMaterial({ 
-            color: 0x7c3aed, size: 0.05, transparent: true, opacity: 0.8, depthWrite: false
-        });
+        const material = new THREE.PointsMaterial({ color: 0x7c3aed, size: 0.05, transparent: true, opacity: 0.8, depthWrite: false });
         const particles = new THREE.Points(geometry, material);
         scene.add(particles);
 
@@ -342,10 +334,8 @@
                 }
             }
             particles.geometry.attributes.position.needsUpdate = true;
-            
             camera.rotation.y += (mouseX * 0.05 - camera.rotation.y) * 0.01;
             camera.rotation.x += (mouseY * 0.05 - camera.rotation.x) * 0.01;
-            
             renderer.render(scene, camera);
         }
         animate();
