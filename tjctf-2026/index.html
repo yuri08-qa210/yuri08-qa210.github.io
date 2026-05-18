@@ -1,0 +1,435 @@
+OCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TJCTF 2026 — QA210 Writeups</title>
+<meta name="description" content="TJCTF 2026 CTF writeups by QA210 — Web, Crypto, Forensics, Reverse Engineering, Pwn, and Misc challenges.">
+<meta name="author" content="QA210">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{
+  --bg0:#06080c;--bg1:#0b0f17;--bg2:#111827;--bg3:#1a2234;--bg4:#222d42;
+  --border:#1e293b;--border-light:#334155;--border-glow:rgba(88,166,255,0.15);
+  --text0:#f1f5f9;--text1:#e2e8f0;--text2:#94a3b8;--text3:#64748b;--text4:#475569;
+  --accent:#3b82f6;--accent-hover:#60a5fa;--accent-dim:rgba(59,130,246,0.1);
+  --green:#22c55e;--green-dim:rgba(34,197,94,0.1);
+  --red:#ef4444;--red-dim:rgba(239,68,68,0.1);
+  --purple:#a855f7;--purple-dim:rgba(168,85,247,0.1);
+  --orange:#f97316;--orange-dim:rgba(249,115,22,0.1);
+  --yellow:#eab308;--yellow-dim:rgba(234,179,8,0.1);
+  --cyan:#06b6d4;--cyan-dim:rgba(6,182,212,0.1);
+  --rose:#f43f5e;--rose-dim:rgba(244,63,94,0.1);
+  --gradient-accent:linear-gradient(135deg,#3b82f6,#8b5cf6);
+  --gradient-green:linear-gradient(135deg,#22c55e,#06b6d4);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--border) var(--bg1)}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg0);color:var(--text1);line-height:1.65;font-size:15px;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg1)}::-webkit-scrollbar-thumb{background:var(--border-light);border-radius:3px}
+a{color:var(--accent);text-decoration:none;transition:all .2s}a:hover{color:var(--accent-hover)}
+::selection{background:rgba(34,197,94,0.3);color:var(--text0)}
+
+#bg-canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;pointer-events:none;opacity:.12}
+
+/* Header */
+.site-header{position:sticky;top:0;z-index:100;background:rgba(6,8,12,0.85);backdrop-filter:blur(20px) saturate(1.2);border-bottom:1px solid var(--border);height:58px;display:flex;align-items:center;padding:0 2.5rem;gap:2rem}
+.site-header .brand{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk','JetBrains Mono',monospace;font-weight:700;font-size:1.1rem;color:var(--text0);white-space:nowrap;letter-spacing:-.03em}
+.site-header .brand .logo-icon{width:28px;height:28px;border-radius:7px;background:var(--gradient-accent);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:#fff}
+.site-header .brand .cursor{display:inline-block;width:2px;height:1em;background:var(--green);margin-left:2px;animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.site-header .nav-main{display:flex;gap:0;align-items:center}
+.site-header .nav-main a{padding:0 1.1rem;height:58px;display:flex;align-items:center;color:var(--text3);font-size:.82rem;font-weight:500;border-bottom:2px solid transparent;transition:all .2s}
+.site-header .nav-main a:hover,.site-header .nav-main a.active{color:var(--text0);border-bottom-color:var(--accent)}
+.site-header .nav-right{margin-left:auto;display:flex;align-items:center;gap:1.1rem}
+.social-link{color:var(--text4);font-size:1.05rem;transition:all .2s;padding:4px}
+.social-link:hover{color:var(--accent);transform:translateY(-1px)}
+.mobile-toggle{display:none;background:none;border:none;color:var(--text1);font-size:1.3rem;cursor:pointer}
+
+.page-body{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:0 2.5rem}
+
+/* Hero */
+.hero-section{padding:3rem 0 2.5rem;border-bottom:1px solid var(--border);margin-bottom:2rem}
+.hero-section .greeting{font-size:.7rem;text-transform:uppercase;letter-spacing:.14em;color:var(--green);font-weight:600;margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem}
+.hero-section .greeting::before{content:'';display:inline-block;width:24px;height:1px;background:var(--green)}
+.hero-section h1{font-family:'Space Grotesk','Inter',sans-serif;font-size:2.4rem;font-weight:800;letter-spacing:-.04em;line-height:1.1;margin-bottom:.75rem;color:var(--text0)}
+.hero-section h1 span{background:var(--gradient-green);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-section .tagline{color:var(--text2);font-size:.92rem;line-height:1.8;max-width:620px;margin-bottom:1.25rem}
+.hero-badges{display:flex;flex-wrap:wrap;gap:.6rem}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;font-size:.72rem;font-weight:600;border:1px solid}
+.hero-badge.web{background:var(--cyan-dim);border-color:rgba(6,182,212,0.25);color:var(--cyan)}
+.hero-badge.crypto{background:var(--purple-dim);border-color:rgba(168,85,247,0.25);color:var(--purple)}
+.hero-badge.forensics{background:var(--orange-dim);border-color:rgba(249,115,22,0.25);color:var(--orange)}
+.hero-badge.rev{background:var(--red-dim);border-color:rgba(239,68,68,0.25);color:var(--red)}
+.hero-badge.misc{background:var(--yellow-dim);border-color:rgba(234,179,8,0.25);color:var(--yellow)}
+.hero-badge.pwn{background:var(--rose-dim);border-color:rgba(244,63,94,0.25);color:var(--rose)}
+
+/* Stats row */
+.stats-row{display:flex;gap:1.5rem;margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid var(--border)}
+.stat-box{text-align:center;padding:.75rem 1.25rem;background:var(--bg1);border:1px solid var(--border);border-radius:10px;min-width:100px}
+.stat-box .stat-val{font-family:'Space Grotesk',monospace;font-size:1.5rem;font-weight:700;color:var(--text0)}
+.stat-box .stat-val.gradient{background:var(--gradient-green);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stat-box .stat-lbl{font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text4);font-weight:600;margin-top:2px}
+
+/* Filter bar */
+.filter-bar{padding:1.25rem 0 1rem;display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;border-bottom:1px solid var(--border);margin-bottom:2rem}
+.filter-bar .filter-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text4);font-weight:700;margin-right:.25rem}
+.filter-btn{padding:5px 14px;border-radius:7px;border:1px solid var(--border);background:var(--bg1);color:var(--text2);font-size:.76rem;font-weight:500;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.filter-btn:hover{border-color:var(--border-light);color:var(--text1);background:var(--bg2)}
+.filter-btn.active{background:var(--green);border-color:var(--green);color:#fff;font-weight:600;box-shadow:0 2px 12px rgba(34,197,94,0.3)}
+.filter-btn .count{margin-left:4px;opacity:.5;font-size:.66rem}
+
+/* Section heading */
+.section-heading{font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text4);font-weight:700;margin:2rem 0 1.25rem;display:flex;align-items:center;gap:.75rem}
+.section-heading::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+.section-heading:first-of-type{margin-top:0}
+
+/* Post cards */
+.post-card{background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:.85rem;transition:all .25s;position:relative;display:block;color:inherit}
+.post-card:hover{border-color:var(--border-light);transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,0,0,0.4),0 0 0 1px var(--border-glow)}
+.post-card .post-top{display:flex;align-items:center;gap:.7rem;margin-bottom:.6rem}
+.platform-badge{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:3px 9px;border-radius:5px;white-space:nowrap}
+.platform-badge.tjctf{background:var(--green-dim);color:var(--green)}
+.platform-badge.web{background:var(--cyan-dim);color:var(--cyan)}
+.platform-badge.crypto{background:var(--purple-dim);color:var(--purple)}
+.platform-badge.forensics{background:var(--orange-dim);color:var(--orange)}
+.platform-badge.rev{background:var(--red-dim);color:var(--red)}
+.platform-badge.misc{background:var(--yellow-dim);color:var(--yellow)}
+.platform-badge.pwn{background:var(--rose-dim);color:var(--rose)}
+.diff-badge{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:3px 9px;border-radius:5px}
+.diff-badge.easy{background:var(--green-dim);color:var(--green)}
+.diff-badge.medium{background:var(--yellow-dim);color:var(--yellow)}
+.diff-badge.hard{background:var(--orange-dim);color:var(--orange)}
+.diff-badge.insane{background:var(--red-dim);color:var(--red)}
+.post-card .post-date{margin-left:auto;font-size:.7rem;color:var(--text4);font-family:'JetBrains Mono',monospace}
+.post-card h3{font-size:1.05rem;font-weight:700;margin-bottom:.4rem;color:var(--text0);letter-spacing:-.01em;transition:color .2s}
+.post-card:hover h3{color:var(--green)}
+.post-card .post-excerpt{font-size:.8rem;color:var(--text2);line-height:1.6;margin-bottom:.75rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.post-card .post-tags{display:flex;flex-wrap:wrap;gap:.3rem}
+.post-card .tag{font-size:.6rem;padding:2px 8px;border-radius:5px;background:var(--bg3);color:var(--text3);border:1px solid var(--border);font-weight:500;transition:all .2s}
+.post-card:hover .tag{border-color:var(--border-light);color:var(--text2)}
+
+/* Footer */
+.site-footer{border-top:1px solid var(--border);padding:2rem 2.5rem;position:relative;z-index:1}
+.footer-inner{max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.footer-left{font-size:.76rem;color:var(--text4)}
+.footer-left span{color:var(--text2);font-weight:600}
+.footer-links{display:flex;gap:1.5rem}
+.footer-links a{color:var(--text4);font-size:.76rem;transition:color .2s}
+.footer-links a:hover{color:var(--text1)}
+
+@media(max-width:768px){
+  .site-header{padding:0 1rem}
+  .site-header .nav-main{display:none}
+  .mobile-toggle{display:block}
+  .page-body{padding:0 1rem}
+  .hero-section h1{font-size:1.7rem}
+  .stats-row{flex-wrap:wrap;gap:.75rem}
+  .stat-box{min-width:80px;padding:.6rem .8rem}
+  .filter-bar{overflow-x:auto;flex-wrap:nowrap;padding-bottom:.5rem}
+  .footer-inner{flex-direction:column;text-align:center}
+}
+@media(max-width:480px){
+  .hero-section h1{font-size:1.4rem}
+  .post-card{padding:1rem 1.15rem}
+}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<!-- Header -->
+<header class="site-header">
+  <a href="/" class="brand">
+    <span class="logo-icon">Q</span>
+    QA210<span class="cursor"></span>
+  </a>
+  <nav class="nav-main">
+    <a href="/">Home</a>
+    <a href="/htb/">Hack The Box</a>
+    <a href="/tjctf-2026/" class="active">TJCTF</a>
+    <a href="/thm/">TryHackMe</a>
+  </nav>
+  <div class="nav-right">
+    <a href="https://github.com/Yuri08-QA210" target="_blank" class="social-link" title="GitHub"><i class="bi bi-github"></i></a>
+    <a href="https://w4llz.me/" target="_blank" class="social-link" title="W4LLZ Team" style="color:var(--yellow)"><i class="bi bi-people-fill"></i></a>
+    <button class="mobile-toggle" onclick="document.querySelector('.nav-main').style.display=document.querySelector('.nav-main').style.display==='flex'?'none':'flex'" aria-label="Menu"><i class="bi bi-list"></i></button>
+  </div>
+</header>
+
+<!-- Main -->
+<div class="page-body">
+
+<!-- Hero -->
+<section class="hero-section">
+  <div class="greeting">TJCTF 2026</div>
+  <h1>Twelve Challenges,<br><span>One Competition</span></h1>
+  <p class="tagline">Complete writeup collection for TJCTF 2026 covering Web exploitation, Cryptography, Forensics, Reverse Engineering, Pwn, and Misc categories. Each challenge broken down step by step with full exploit code and detailed explanations.</p>
+  <div class="hero-badges">
+    <span class="hero-badge web"><i class="bi bi-globe"></i> Web</span>
+    <span class="hero-badge crypto"><i class="bi bi-key"></i> Crypto</span>
+    <span class="hero-badge forensics"><i class="bi bi-search"></i> Forensics</span>
+    <span class="hero-badge rev"><i class="bi bi-cpu"></i> Rev</span>
+    <span class="hero-badge pwn"><i class="bi bi-bug"></i> Pwn</span>
+    <span class="hero-badge misc"><i class="bi bi-puzzle"></i> Misc</span>
+  </div>
+  <div class="stats-row">
+    <div class="stat-box"><div class="stat-val gradient">12</div><div class="stat-lbl">Writeups</div></div>
+    <div class="stat-box"><div class="stat-val">2</div><div class="stat-lbl">Web</div></div>
+    <div class="stat-box"><div class="stat-val">2</div><div class="stat-lbl">Crypto</div></div>
+    <div class="stat-box"><div class="stat-val">4</div><div class="stat-lbl">Forensics</div></div>
+    <div class="stat-box"><div class="stat-val">2</div><div class="stat-lbl">Rev</div></div>
+    <div class="stat-box"><div class="stat-val">2</div><div class="stat-lbl">Misc</div></div>
+  </div>
+</section>
+
+<!-- Filter -->
+<div class="filter-bar">
+  <span class="filter-label">Category:</span>
+  <button class="filter-btn active" data-filter="all" onclick="setFilter(this)">All<span class="count">12</span></button>
+  <button class="filter-btn" data-filter="web" onclick="setFilter(this)">Web<span class="count">2</span></button>
+  <button class="filter-btn" data-filter="crypto" onclick="setFilter(this)">Crypto<span class="count">2</span></button>
+  <button class="filter-btn" data-filter="forensics" onclick="setFilter(this)">Forensics<span class="count">4</span></button>
+  <button class="filter-btn" data-filter="rev" onclick="setFilter(this)">Rev<span class="count">2</span></button>
+  <button class="filter-btn" data-filter="pwn" onclick="setFilter(this)">Pwn<span class="count">1</span></button>
+  <button class="filter-btn" data-filter="misc" onclick="setFilter(this)">Misc<span class="count">2</span></button>
+</div>
+
+<!-- ═══ WEB ═══ -->
+<div class="section-heading">Web</div>
+
+<a href="/tjctf-2026/web/opening-night/index.html" class="post-card" data-platform="web" data-tags="web,svg,xxe">
+  <div class="post-top">
+    <span class="platform-badge web">Web</span>
+    <span class="diff-badge medium">Medium</span>
+    <span class="post-date">2026</span>
+  </div>
+  <h3>Opening Night</h3>
+  <p class="post-excerpt">XXE injection through SVG file upload. Exploiting XML external entity processing in a web application's image upload functionality to read arbitrary server files.</p>
+  <div class="post-tags"><span class="tag">Web</span><span class="tag">SVG</span><span class="tag">XXE</span></div>
+</a>
+
+<a href="/tjctf-2026/web/free-cloud-storage/index.html" class="post-card" data-platform="web" data-tags="web,zip-slip,file-upload">
+  <div class="post-top">
+    <span class="platform-badge web">Web</span>
+    <span class="diff-badge medium">Medium</span>
+    <span class="post-date">2026</span>
+  </div>
+  <h3>Free Cloud Storage</h3>
+  <p class="post-excerpt">Zip Slip directory traversal attack through a file upload service. Crafting a malicious ZIP archive with path traversal symlinks to write files outside the intended directory.</p>
+  <div class="post-tags"><span class="tag">Web</span><span class="tag">Zip Slip</span><span class="tag">File Upload</span></div>
+</a>
+
+<!-- ═══ CRYPTO ═══ -->
+<div class="section-heading">Crypto</div>
+
+<a href="/tjctf-2026/crypto/trust-issues/index.html" class="post-card" data-platform="crypto" data-tags="crypto,dnssec,sqli">
+  <div class="post-top">
+    <span class="platform-badge crypto">Crypto</span>
+    <span class="diff-badge hard">Hard</span>
+    <span class="post-date">2026</span>
+  </div>
+  <h3>Trust Issues</h3>
+  <p class="post-excerpt">DNSSEC validation bypass combined with SQL injection. Chaining cryptographic protocol weaknesses with database exploitation to bypass authentication mechanisms.</p>
+  <div class="post-tags"><span class="tag">Crypto</span><span class="tag">DNSSEC</span><span class="tag">SQLi</span></div>
+</a>
+
+<a href="/tjctf-2026/crypto/bit-leak/index.html" class="post-card" data-platform="crypto" data-tags="crypto,rsa,oracle">
+  <div class="post-top">
+    <span class="platform-badge crypto">Crypto</span>
+    <span class="diff-badge hard">Hard</span>
+    <span class="post-date">2026</span>
+  </div>
+  <h3>Bit Leak</h3>
+  <p class="post-excerpt">RSA partial key exposure attack using LSB oracle. Recovering full plaintext from an RSA encryption oracle that leaks individual bits through a padding oracle side-channel.</p>
+  <div class="post-tags"><span class="tag">Crypto</span><span class="tag">RSA</span><span class="tag">Oracle</span></div>
+</a>
+
+<!-- ═══ FORENSICS ═══ -->
+<div class="section-heading">Forensics</div>
+
+<a href="/tjctf-2026/forensics/3-write-up/index.html" class="post-card" data-platform="forensics" data-tags="forensics,voip,png">
+  <div class="post-top">
+    <span class="platform-badge forensics">Forensics</span>
+    <span class="diff-badge medium">Medium</span>
+    <span class="post-date">2026</span>
+  </div>
+  <h3>3-Write-Up</h3>
+  <p class="post-excerpt">VoIP packet analysis and PNG reconstruction from network capture data. Extracting hidden voice communications and embedded image files from PCAP traffic.</p>
+  <div class="post-tags"><span class="tag">Forensics</span><span class="tag">VoIP</span><span class="tag">PNG</span></div>
+</a>
+
+<a href="/tjctf-2026/forensics/invisible-ink/index.html" class="post-card" data-platform="forensics" data-tags="forensics,polyglot,pdf">
+  <div class="post-top">
+    <span class="platform-badge forensics">Forensics</span>
+    <span class="diff-badge medium">Medium</span>
+    <span class="post-date">2026</span>
+  </div>
+  <h3>Invisible Ink</h3>
+  <p class="post-excerpt">Polyglot file analysis combining PDF and alternate format parsing. Extracting hidden data layers from a document that serves as both a valid PDF and another file format.</p>
+  <div class="post-tags"><span class="tag">Forensics</span><span class="tag">Polyglot</span><span class="tag">PDF</span></div>
+</a>
+
+<a href="/tjctf-2026/forensics/loud-packets/index.html" class="post-card" data-platform="forensics" data-tags="forensics,bitmap,stego">
+  <div class="post-top">
+    <span class="platform-badge forensics">Forensics</span>
+    <span class="diff-badge medium">Medium</span>
+    <span class="post-date">2026</span>
+  </div>
+  <h3>Loud Packets</h3>
+  <p class="post-excerpt">Bitmap image reconstruction and steganographic analysis. Decoding hidden information embedded in packet payload data mapped to bitmap pixel values.</p>
+  <div class="post-tags"><span class="tag">Forensics</span><span class="tag">Bitmap</span><span class="tag">Stego</span></div>
+</a>
+
+<a href="/tjctf-2026/forensics/thomas-schools-of-china/index.html" class="post-card" data-platform="forensics" data-tags="forensics,custom-format,parsing">
+  <div class="post-top">
+    <span class="platform-badge forensics">Forensics</span>
+    <span class="diff-badge hard">Hard</span>
+    <span class="post-date">2026</span>
+  </div>
+  <h3>Thomas Schools of China</h3>
+  <p class="post-excerpt">Reverse engineering a custom binary file format. Parsing proprietary headers, custom compression schemes, and non-standard encoding to extract hidden flag data.</p>
+  <div class="post-tags"><span class="tag">Forensics</span><span class="tag">Custom Format</span><span class="tag">Parsing</span></div>
+</a>
+
+<!-- ═══ REV ═══ -->
+<div class="section-heading">Reverse Engineering</div>
+
+<a href="/tjctf-2026/rev/polaroid/index.html" class="post-card" data-platform="rev" data-tags="rev,mach-o,xor,macos">
+  <div class="post-top">
+    <span class="platform-badge rev">Rev</span>
+    <span class="diff-badge medium">Medium</span>
+    <span class="post-date">2026</span>
+  </div>
+  <h3>Polaroid</h3>
+  <p class="post-excerpt">Mach-O binary reverse engineering on macOS. XOR-based string obfuscation analysis, Objective-C method tracing, and flag extraction from a native Apple binary.</p>
+  <div class="post-tags"><span class="tag">Rev</span><span class="tag">Mach-O</span><span class="tag">XOR</span></div>
+</a>
+
+<a href="/tjctf-2026/rev/remoose/index.html" class="post-card" data-platform="rev" data-tags="rev,elf,forensics,anti-debug">
+  <div class="post-top">
+    <span class="platform-badge rev">Rev</span>
+    <span class="diff-badge hard">Hard</span>
+    <span class="post-date">2026</span>
+  </div>
+  <h3>Remoose</h3>
+  <p class="post-excerpt">ELF binary analysis with anti-debugging techniques. Bypassing ptrace-based protections, reconstructing obfuscated control flow, and extracting the flag from a hardened Linux executable.</p>
+  <div class="post-tags"><span class="tag">Rev</span><span class="tag">ELF</span><span class="tag">Anti-Debug</span></div>
+</a>
+
+<!-- ═══ PWN ═══ -->
+<div class="section-heading">Pwn</div>
+
+<a href="/tjctf-2026/pwn/hunting-field/index.html" class="post-card" data-platform="pwn" data-tags="pwn,heap,uaf,linux">
+  <div class="post-top">
+    <span class="platform-badge pwn">Pwn</span>
+    <span class="diff-badge hard">Hard</span>
+    <span class="post-date">2026</span>
+  </div>
+  <h3>Hunting Field</h3>
+  <p class="post-excerpt">Heap exploitation challenge involving use-after-free vulnerabilities. Manipulating heap metadata, corrupting freelist pointers, and achieving arbitrary write for code execution.</p>
+  <div class="post-tags"><span class="tag">Pwn</span><span class="tag">Heap</span><span class="tag">UAF</span><span class="tag">Linux</span></div>
+</a>
+
+<!-- ═══ MISC ═══ -->
+<div class="section-heading">Misc</div>
+
+<a href="/tjctf-2026/misc/glich/index.html" class="post-card" data-platform="misc" data-tags="misc,stego,image">
+  <div class="post-top">
+    <span class="platform-badge misc">Misc</span>
+    <span class="diff-badge medium">Medium</span>
+    <span class="post-date">2026</span>
+  </div>
+  <h3>Glitch</h3>
+  <p class="post-excerpt">Image steganography challenge. Extracting hidden data from visual artifacts in a glitched image file through pixel-level analysis and channel manipulation.</p>
+  <div class="post-tags"><span class="tag">Misc</span><span class="tag">Stego</span><span class="tag">Image</span></div>
+</a>
+
+<a href="/tjctf-2026/misc/calculative-barracuda/index.html" class="post-card" data-platform="misc" data-tags="misc,ai,prompt-injection">
+  <div class="post-top">
+    <span class="platform-badge misc">Misc</span>
+    <span class="diff-badge medium">Medium</span>
+    <span class="post-date">2026</span>
+  </div>
+  <h3>Calculative Barracuda</h3>
+  <p class="post-excerpt">AI/LLM prompt injection challenge. Bypassing safety guardrails and extracting hidden information from a constrained AI chatbot interface through crafted prompts.</p>
+  <div class="post-tags"><span class="tag">Misc</span><span class="tag">AI</span><span class="tag">Prompt Injection</span></div>
+</a>
+
+</div><!-- page-body -->
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-left"><span>QA210</span> &mdash; Security Research & CTF Writeups</div>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/htb/">Hack The Box</a>
+      <a href="/tjctf-2026/">TJCTF</a>
+      <a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
+    </div>
+  </div>
+</footer>
+
+<!-- Three.js -->
+<script>
+(function(){
+  const c=document.getElementById('bg-canvas'),r=new THREE.WebGLRenderer({canvas:c,alpha:true,antialias:true});
+  r.setSize(window.innerWidth,window.innerHeight);r.setPixelRatio(Math.min(devicePixelRatio,2));
+  const s=new THREE.Scene(),cam=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,0.1,1000);
+  cam.position.z=5;
+  const g=new THREE.Group();s.add(g);
+  // Double helix / DNA-like structure for CTF theme
+  const pts1=[],pts2=[];
+  for(let i=0;i<200;i++){
+    const t=i/200*Math.PI*4;
+    pts1.push(new THREE.Vector3(Math.cos(t)*2,t/2-2,Math.sin(t)*2));
+    pts2.push(new THREE.Vector3(Math.cos(t+Math.PI)*2,t/2-2,Math.sin(t+Math.PI)*2));
+  }
+  const c1=new THREE.CatmullRomCurve3(pts1),c2=new THREE.CatmullRomCurve3(pts2);
+  const t1=new THREE.TubeGeometry(c1,200,0.02,8,false),t2=new THREE.TubeGeometry(c2,200,0.02,8,false);
+  const m=new THREE.MeshBasicMaterial({color:0x22c55e,transparent:true,opacity:0.3});
+  g.add(new THREE.Mesh(t1,m));g.add(new THREE.Mesh(t2,m.clone()));
+  // Connecting rungs
+  const rungMat=new THREE.MeshBasicMaterial({color:0x06b6d4,transparent:true,opacity:0.12});
+  for(let i=0;i<40;i++){
+    const t=i/40;
+    const p1=c1.getPoint(t),p2=c2.getPoint(t);
+    const mid=p1.clone().add(p2).multiplyScalar(0.5);
+    const dir=p2.clone().sub(p1);
+    const len=dir.length();
+    const rGeo=new THREE.CylinderGeometry(0.01,0.01,len,4);
+    const rung=new THREE.Mesh(rGeo,rungMat);
+    rung.position.copy(mid);
+    rung.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());
+    g.add(rung);
+  }
+  function a(){requestAnimationFrame(a);g.rotation.y+=0.003;r.render(s,cam);}a();
+  addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();r.setSize(innerWidth,innerHeight);});
+})();
+</script>
+
+<script>
+function setFilter(btn){
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const f=btn.dataset.filter;
+  document.querySelectorAll('.post-card').forEach(c=>{
+    if(f==='all'){c.style.display='';return;}
+    c.style.display=c.dataset.platform===f?'':'none';
+  });
+  document.querySelectorAll('.section-heading').forEach(h=>{
+    let next=h.nextElementSibling;let hasVisible=false;
+    while(next&&!next.classList.contains('section-heading')){
+      if(next.classList.contains('post-card')&&next.style.display!=='none')hasVisible=true;
+      next=next.nextElementSibling;
+    }
+    h.style.display=hasVisible?'':'none';
+  });
+}
+</script>
+</body>
+</html>
