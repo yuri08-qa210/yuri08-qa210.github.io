@@ -1,465 +1,573 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en" class="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Yuri08 - TJCTF 2026: Invisible Ink</title>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-  <style>
-    :root {
-      --main: #f59e0b; --main2: #10b981; --main-light: #fbbf24;
-      --bg: #0f0f1a; --bg2: #181a2a; --glass: rgba(30, 25, 60, 0.9);
-      --text: #e0e7ef; --shadow: 0 8px 32px 0 #f59e0b33;
-      --glow: 0 0 20px 2px #f59e0b44; --highlight: #38bdf8;
-    }
-    html, body {
-      min-height: 100%; margin: 0; font-family: 'JetBrains Mono', monospace;
-      background: radial-gradient(circle at 50% 0%, #2a221a 0%, #0f0f1a 100%);
-      color: var(--text); overflow: hidden; perspective: 1000px;
-    }
-    #particles-js {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;
-    }
-    .content-wrapper {
-      position: relative; z-index: 1; height: 100vh; display: flex; flex-direction: column;
-      padding: 20px; box-sizing: border-box; gap: 15px;
-    }
-    
-    .header {
-      display: flex; align-items: center; gap: 20px; padding: 15px;
-      background: var(--glass); border-radius: 1rem; border: 1px solid #f59e0b44;
-      box-shadow: var(--shadow); backdrop-filter: blur(10px); flex-shrink: 0;
-    }
-    .avatar {
-      width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--main);
-      object-fit: cover; box-shadow: 0 0 15px var(--main);
-    }
-    .header-info h1 {
-      font-size: 1.8rem; margin: 0; color: var(--main);
-      text-shadow: 0 0 10px #f59e0b88; animation: neonAmber 2s infinite alternate;
-    }
-    .header-info p { margin: 5px 0 0 0; color: var(--main-light); font-size: 0.9rem; }
-    @keyframes neonAmber { to { text-shadow: 0 0 15px var(--main), 0 0 30px var(--main); } }
-    
-    .lang-toggle {
-      margin-left: auto; background: var(--main); color: #000; border: none;
-      padding: 8px 15px; border-radius: 0.5rem; cursor: pointer; font-family: inherit;
-      font-weight: bold; transition: 0.3s; box-shadow: 0 0 10px #f59e0b55;
-    }
-    .lang-toggle:hover { background: #d97706; transform: scale(1.05); }
-
-    .terminal-pro {
-      background: linear-gradient(135deg, #1a1712 80%, #f59e0b11 100%);
-      border-radius: 1rem; border: 1px solid #3f352155; box-shadow: var(--shadow), var(--glow);
-      display: flex; flex-direction: column; flex-grow: 1; overflow: hidden; position: relative;
-    }
-    .terminal-pro::before {
-      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15), rgba(0,0,0,0.15) 1px, transparent 1px, transparent 2px);
-      pointer-events: none; z-index: 2; opacity: 0.2;
-    }
-    .terminal-bar {
-      background: #1e1e2e; height: 2.5rem; display: flex; align-items: center;
-      padding: 0 1rem; border-bottom: 1px solid #312e8155; flex-shrink: 0; z-index: 3;
-    }
-    .dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; }
-    .red { background: #ef4444; } .yellow { background: #facc15; } .green { background: #22c55e; }
-    .terminal-title { color: var(--main-light); margin-left: 1rem; font-weight: bold; letter-spacing: 1px; }
-    
-    .terminal-body {
-      padding: 1.5rem; flex-grow: 1; overflow-y: auto; font-size: 0.95rem;
-      line-height: 1.6; position: relative; z-index: 1; scroll-behavior: smooth;
-    }
-    #terminal-output { white-space: pre-wrap; word-break: break-word; }
-    #terminal-input-line {
-      display: flex; align-items: center; gap: 0.5em; margin-top: 1em; z-index: 3;
-    }
-    #terminal-input {
-      background: transparent; border: none; color: #a7f3d0; outline: none;
-      font-family: inherit; font-size: 1em; width: 100%; caret-color: var(--main);
-    }
-    
-    .cmd { color: #7c3aed; } .arg { color: #a78bfa; } .info { color: #38bdf8; font-weight: bold; }
-    .error { color: #ef4444; } .success { color: #10b981; } .warning { color: #facc15; }
-    .code-block {
-      background: #0d0d1a; border-left: 3px solid var(--main); padding: 10px 15px;
-      margin: 10px 0; border-radius: 0 5px 5px 0; font-size: 0.9rem; color: #d1d5db;
-    }
-    
-    .terminal-body::-webkit-scrollbar { width: 8px; }
-    .terminal-body::-webkit-scrollbar-track { background: #0f0f1a; }
-    .terminal-body::-webkit-scrollbar-thumb { background: #f59e0b; border-radius: 4px; }
-
-    #welcome-screen {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: #0f0f1a; z-index: 10000; display: flex; flex-direction: column;
-      justify-content: center; align-items: center; text-align: center; transition: opacity 0.8s;
-    }
-    #welcome-screen.hidden { opacity: 0; pointer-events: none; }
-    #start-button {
-      background: var(--main); color: #000; border: none; border-radius: 0.7rem;
-      padding: 1rem 2rem; font-size: 1.2rem; font-weight: 700; cursor: pointer;
-      font-family: inherit; transition: all 0.3s; box-shadow: 0 0 20px #f59e0b88;
-    }
-    #start-button:hover { background: #d97706; transform: translateY(-3px); }
-    
-    #mute-button {
-      position: fixed; top: 20px; right: 20px; z-index: 10001;
-      background: #1e1e2e; color: var(--main-light); border: 1px solid #f59e0b55;
-      border-radius: 50%; width: 40px; height: 40px; font-size: 1.2rem; cursor: pointer;
-      display: flex; justify-content: center; align-items: center; transition: all 0.3s;
-    }
-    #mute-button:hover { background: var(--main); color: #000; }
-
-    @media (max-width: 768px) {
-      .header { flex-wrap: wrap; justify-content: center; text-align: center; }
-      .lang-toggle { margin-left: 0; margin-top: 10px; width: 100%; }
-      .avatar { width: 60px; height: 60px; }
-      .header-info h1 { font-size: 1.4rem; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TJCTF 2026: Invisible Ink — QA210</title>
+<meta name="description" content="TJCTF 2026 Invisible Ink — Forensics / Polyglot File & Image Steganography walkthrough by QA210">
+<meta name="author" content="QA210">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕵️</text></svg>">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap');
+:root {
+  --bg-primary:#0a0e17;--bg-secondary:#111827;--bg-tertiary:#1a2236;
+  --bg-code:#0d1117;--border:#1e293b;--border-light:#1a2332;
+  --text-primary:#e2e8f0;--text-secondary:#94a3b8;--text-muted:#64748b;
+  --accent-green:#22d3ee;--accent-blue:#818cf8;--accent-red:#f87171;
+  --accent-yellow:#fbbf24;--accent-purple:#c084fc;--accent-orange:#fb923c;
+  --accent-cyan:#22d3ee;--accent-pink:#f472b6;--accent-rose:#fb7185;
+  --accent-violet:#8b5cf6;--accent-magenta:#d946ef;
+  --accent-amber:#f59e0b;--accent-gold:#fbbf24;
+  --link:#818cf8;--link-hover:#a5b4fc;
+  --scrollbar-thumb:#1e293b;--scrollbar-track:#0a0e17;
+  --toc-active:#f59e0b;
+  --callout-info-bg:rgba(129,140,248,0.08);--callout-info-border:#818cf8;
+  --callout-warn-bg:rgba(251,191,36,0.08);--callout-warn-border:#fbbf24;
+  --callout-danger-bg:rgba(248,113,113,0.08);--callout-danger-border:#f87171;
+  --callout-success-bg:rgba(245,158,11,0.08);--callout-success-border:#f59e0b;
+  --callout-hint-bg:rgba(192,132,252,0.08);--callout-hint-border:#c084fc;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--scrollbar-thumb) var(--scrollbar-track)}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg-primary);color:var(--text-primary);line-height:1.75;font-size:16px}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:var(--scrollbar-track)}
+::-webkit-scrollbar-thumb{background:var(--scrollbar-thumb);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:#334155}
+a{color:var(--link);text-decoration:none;transition:color .2s}
+a:hover{color:var(--link-hover)}
+#three-bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;opacity:0.35}
+.site-header{position:sticky;top:0;z-index:100;background:rgba(10,14,23,0.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 2rem;height:56px;display:flex;align-items:center;justify-content:space-between}
+.site-header .logo{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.1rem;color:var(--accent-amber);display:flex;align-items:center;gap:8px}
+.site-header .logo .dot{color:var(--accent-gold)}
+.site-header nav{display:flex;gap:1.5rem;align-items:center}
+.site-header nav a{color:var(--text-secondary);font-size:.85rem;font-weight:500}
+.site-header nav a:hover{color:var(--text-primary)}
+.hamburger{display:none;background:none;border:none;color:var(--text-primary);cursor:pointer;font-size:1.5rem}
+.page-layout{display:grid;grid-template-columns:260px 1fr;max-width:1400px;margin:0 auto;min-height:calc(100vh - 56px)}
+.toc-sidebar{position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;padding:1.5rem 1rem 1.5rem 1.5rem;border-right:1px solid var(--border);background:var(--bg-primary)}
+.toc-sidebar h3{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:.75rem;font-weight:600}
+.toc-sidebar ul{list-style:none}
+.toc-sidebar li{margin-bottom:2px}
+.toc-sidebar a{display:block;padding:4px 8px;border-radius:4px;font-size:.78rem;color:var(--text-secondary);transition:all .15s;line-height:1.4}
+.toc-sidebar a:hover{color:var(--text-primary);background:var(--bg-secondary)}
+.toc-sidebar a.active{color:var(--toc-active);background:rgba(245,158,11,0.1);font-weight:600}
+.toc-sidebar .toc-h3{padding-left:18px;font-size:.72rem}
+.main-content{padding:2.5rem 3rem 4rem;max-width:860px;width:100%}
+.page-hero{margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}
+.page-hero .box-badge{display:inline-block;background:linear-gradient(135deg,var(--accent-amber),var(--accent-orange));color:#000;font-size:.68rem;font-weight:700;padding:2px 12px;border-radius:12px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.75rem}
+.page-hero h1{font-size:2.25rem;font-weight:800;margin-bottom:.5rem;letter-spacing:-.02em}
+.page-hero .meta{color:var(--text-secondary);font-size:.85rem;display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.page-hero .meta .sep{color:var(--text-muted)}
+.box-info-card{background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:1.25rem 1.5rem;margin-bottom:2rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1rem}
+.box-info-card .info-item .label{font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);margin-bottom:2px;font-weight:600}
+.box-info-card .info-item .value{font-size:.92rem;font-weight:600;color:var(--text-primary)}
+.attack-path{background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:1.25rem 1.5rem;margin:1.5rem 0;font-family:'JetBrains Mono',monospace;font-size:.75rem;line-height:1.7;overflow-x:auto}
+.attack-path .step{display:flex;align-items:baseline;gap:.5rem;margin-bottom:.2rem}
+.attack-path .arrow{color:var(--accent-amber)}
+.attack-path .host{color:var(--accent-amber);font-weight:700}
+.attack-path .technique{color:var(--accent-orange)}
+.attack-path .cred{color:var(--accent-cyan)}
+.main-content h2{font-size:1.55rem;font-weight:800;margin:2.5rem 0 1rem;padding-bottom:.4rem;border-bottom:2px solid var(--border);letter-spacing:-.01em;scroll-margin-top:70px}
+.main-content h3{font-size:1.1rem;font-weight:700;margin:1.75rem 0 .75rem;color:var(--text-primary);scroll-margin-top:70px}
+.main-content h4{font-size:.95rem;font-weight:600;margin:1.25rem 0 .5rem;color:var(--text-secondary)}
+.main-content p{margin-bottom:1rem;color:var(--text-secondary);line-height:1.8}
+.code-block-wrapper{position:relative;margin:1rem 0 1.25rem;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
+.code-block-header{display:flex;justify-content:space-between;align-items:center;padding:6px 14px;background:var(--bg-tertiary);border-bottom:1px solid var(--border);font-size:.7rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace}
+.code-block-header .lang-label{text-transform:uppercase;font-weight:600;letter-spacing:.04em}
+.copy-btn{background:none;border:1px solid var(--border);color:var(--text-muted);font-size:.68rem;padding:2px 10px;border-radius:4px;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .2s}
+.copy-btn:hover{color:var(--text-primary);border-color:var(--text-muted)}
+.copy-btn.copied{color:var(--accent-green);border-color:var(--accent-green)}
+.code-block-wrapper pre{margin:0!important;padding:1rem!important;background:var(--bg-code)!important;font-family:'JetBrains Mono',monospace!important;font-size:.8rem!important;line-height:1.6!important;overflow-x:auto}
+.code-block-wrapper code{font-family:'JetBrains Mono',monospace!important;font-size:.8rem!important}
+p code,li code{background:var(--bg-tertiary);border:1px solid var(--border);padding:1px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:.82em;color:var(--accent-orange)}
+.callout{padding:.85rem 1rem;border-radius:6px;border-left:3px solid;margin:1rem 0 1.25rem;font-size:.88rem}
+.callout p{margin:0;color:var(--text-secondary)}
+.callout-title{font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.callout-info{background:var(--callout-info-bg);border-color:var(--callout-info-border)}
+.callout-info .callout-title{color:var(--callout-info-border)}
+.callout-warn{background:var(--callout-warn-bg);border-color:var(--callout-warn-border)}
+.callout-warn .callout-title{color:var(--callout-warn-border)}
+.callout-danger{background:var(--callout-danger-bg);border-color:var(--callout-danger-border)}
+.callout-danger .callout-title{color:var(--callout-danger-border)}
+.callout-success{background:var(--callout-success-bg);border-color:var(--callout-success-border)}
+.callout-success .callout-title{color:var(--callout-success-border)}
+.callout-hint{background:var(--callout-hint-bg);border-color:var(--callout-hint-border)}
+.callout-hint .callout-title{color:var(--callout-hint-border)}
+.main-content ul,.main-content ol{margin:.5rem 0 1rem 1.5rem;color:var(--text-secondary)}
+.main-content li{margin-bottom:.35rem;line-height:1.7}
+.main-content table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.85rem}
+.main-content th,.main-content td{padding:8px 12px;border:1px solid var(--border);text-align:left}
+.main-content th{background:var(--bg-secondary);font-weight:600;color:var(--text-primary);font-size:.73rem;text-transform:uppercase;letter-spacing:.04em}
+.main-content td{color:var(--text-secondary)}
+.site-footer{border-top:1px solid var(--border);padding:1.5rem 2rem;text-align:center;color:var(--text-muted);font-size:.8rem}
+.toc-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200}
+.toc-overlay.show{display:block}
+.toc-mobile-panel{display:none;position:fixed;left:0;top:0;bottom:0;width:280px;background:var(--bg-primary);border-right:1px solid var(--border);z-index:201;overflow-y:auto;padding:1.5rem}
+.toc-mobile-panel.show{display:block}
+.toc-mobile-panel .close-btn{background:none;border:none;color:var(--text-secondary);font-size:1.2rem;cursor:pointer;float:right}
+@media(max-width:1024px){.page-layout{grid-template-columns:1fr}.toc-sidebar{display:none}.hamburger{display:block}.main-content{padding:1.5rem 1.25rem 3rem}.page-hero h1{font-size:1.75rem}}
+@media(max-width:640px){.site-header{padding:0 1rem}.main-content{padding:1rem .75rem 2rem}.page-hero h1{font-size:1.4rem}.box-info-card{grid-template-columns:1fr 1fr}}
+</style>
 </head>
 <body>
 
-  <div id="welcome-screen">
-    <h1 style="color: var(--main); text-shadow: 0 0 20px var(--main); margin-bottom: 20px;">Yuri08 CTF Terminal</h1>
-    <p style="color: #fde68a; margin-bottom: 30px;">TJCTF 2026 - Forensics / Invisible Ink</p>
-    <button id="start-button">Khởi tạo Terminal</button>
-  </div>
+<canvas id="three-bg"></canvas>
 
-  <button id="mute-button" aria-label="Toggle Sound"><i class="bi bi-volume-up-fill"></i></button>
-  <div id="particles-js"></div>
+<header class="site-header">
+  <div class="logo"><span>QA210</span><span class="dot">:</span><span>~$</span></div>
+  <nav><a href="/">Home</a><a href="/tjctf-2026/">TJCTF</a><a href="#">Tools</a><a href="#">About</a></nav>
+  <button class="hamburger" onclick="toggleMobileToc()" aria-label="Menu">&#9776;</button>
+</header>
 
-  <div class="content-wrapper">
-    <header class="header">
-      <img src="https://files.catbox.moe/755fgv.png" alt="Avatar" class="avatar" />
-      <div class="header-info">
-        <h1>Yuri08</h1>
-        <p>Document Forensicator & Reverse Imaging Specialist</p>
-      </div>
-      <button class="lang-toggle" id="lang-btn" onclick="toggleLang()">Switch to English</button>
-    </header>
+<div class="toc-overlay" id="tocOverlay" onclick="toggleMobileToc()"></div>
+<div class="toc-mobile-panel" id="tocMobilePanel">
+  <button class="close-btn" onclick="toggleMobileToc()">&#10005;</button>
+  <h3 style="margin-top:1rem">Contents</h3>
+  <ul id="tocMobile"></ul>
+</div>
 
-    <section class="terminal-pro">
-      <div class="terminal-bar">
-        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
-        <span class="terminal-title">root@tjctf:~/invisible-ink#</span>
-      </div>
-      <div class="terminal-body" id="terminal-body">
-        <pre id="terminal-output"></pre>
-        <div id="terminal-input-line">
-          <span class="cmd">root@tjctf</span>:<span class="arg">~/forensics</span>$           <input type="text" id="terminal-input" autocomplete="off" spellcheck="false" />
-        </div>
-      </div>
-    </section>
-  </div>
+<div class="page-layout">
+<aside class="toc-sidebar"><h3>Contents</h3><ul id="tocDesktop"></ul></aside>
 
-  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
-  <script>
-    let isMuted = false;
-    let currentLang = 'vi';
-    let userInteracted = false;
-    const output = document.getElementById('terminal-output');
-    const input = document.getElementById('terminal-input');
-    const tBody = document.getElementById('terminal-body');
+<main class="main-content">
 
-    particlesJS.load('particles-js', 'https://cdn.jsdelivr.net/gh/VincentGarreau/particles.js/particles.json');
+<div class="page-hero">
+  <span class="box-badge">Forensics / Document &amp; Image Steganography</span>
+  <h1>TJCTF 2026: Invisible Ink</h1>
+  <div class="meta"><span>QA210</span><span class="sep">&middot;</span><span>May 2026</span><span class="sep">&middot;</span><span>Polyglot &middot; PDF-ZIP &middot; Swirl Distortion</span></div>
+</div>
 
-    function playAudio(src, vol=0.2) {
-      if (!userInteracted || isMuted || !src) return;
-      try { const a = new Audio(src); a.volume = vol; a.play(); } catch(e) {}
-    }
+<div class="box-info-card">
+  <div class="info-item"><div class="label">Challenge</div><div class="value">Invisible Ink</div></div>
+  <div class="info-item"><div class="label">Category</div><div class="value" style="color:var(--accent-amber)">Forensics / Steganography</div></div>
+  <div class="info-item"><div class="label">CTF</div><div class="value">TJCTF 2026</div></div>
+  <div class="info-item"><div class="label">Provided</div><div class="value">invisible_ink.pdf</div></div>
+  <div class="info-item"><div class="label">Flag</div><div class="value" style="color:var(--accent-gold)">tjctf{p0lygl0t_f1les_4r3_50_c00l}</div></div>
+</div>
 
-    document.getElementById('mute-button').addEventListener('click', function() {
-      isMuted = !isMuted;
-      this.querySelector('i').className = isMuted ? 'bi bi-volume-mute-fill' : 'bi bi-volume-up-fill';
-    });
+<div class="attack-path">
+  <div class="step"><span class="host">FILE</span> <span class="arrow">&rarr;</span> <span class="technique">Polyglot Chimera</span> (PDF header + ZIP trailer) <span class="arrow">&rarr;</span> dual-format <span class="cred">PDF + ZIP</span></div>
+  <div class="step"><span class="host">PDF</span> <span class="arrow">&rarr;</span> <span class="technique">White-on-White Text Layer</span> on Page 2 <span class="arrow">&rarr;</span> extract with <span class="cred">PyMuPDF</span> &rarr; password <span class="cred">DBf8nEBgwRhZ</span></div>
+  <div class="step"><span class="host">ZIP</span> <span class="arrow">&rarr;</span> Decrypt with <span class="technique">extracted password</span> <span class="arrow">&rarr;</span> <span class="cred">original_distorted.png</span></div>
+  <div class="step"><span class="host">IMAGE</span> <span class="arrow">&rarr;</span> <span class="technique">Reverse Swirl</span> (strength=-8.5, radius=540) <span class="arrow">&rarr;</span> <span class="cred">flag readable</span></div>
+</div>
 
-    function print(html) {
-      const div = document.createElement('div');
-      div.innerHTML = html;
-      output.appendChild(div);
-      tBody.scrollTop = tBody.scrollHeight;
-    }
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="overview">Challenge Overview</h2>
 
-    // --- TRANSLATIONS & DETAILED WRITEUP DATA ---
-    const L = {
-      vi: {
-        help: `<span class="info">[ Hướng Dẫn Đọc Writeup ]</span>
-<span class="cmd">intro</span>       : Tổng quan & Nghệ thuật Polyglot
-<span class="cmd">polyglot</span>    : Phân tích Cấu trúc Dị hình PDF-ZIP
-<span class="cmd">whitetext</span>   : Kỹ thuật White-on-White Text Extraction
-<span class="cmd">swirl</span>       : Toán học Swirl Distortion & Phục hồi
-<span class="cmd">code</span>        : Source Code Khai thác (Python Framework)
-<span class="cmd">clear</span>       : Xóa màn hình Terminal`,
-        intro: `<span class="info">[ TỔNG QUAN: INVISIBLE INK ]</span>
-<span class="cmd">Category:</span> Forensics / Document & Image Steganography
-<span class="cmd">Flag:</span> <span class="success">tjctf{p0lygl0t_f1les_4r3_50_c00l}</span>
+<p>Invisible Ink is a multi-layered forensics challenge that tests the competitor&rsquo;s ability to recognize and exploit <strong>polyglot files</strong> &mdash; files that are simultaneously valid in two different formats. The provided artifact, <code>invisible_ink.pdf</code>, is neither a normal PDF nor a standard ZIP archive. It is both at the same time, a chimera constructed by concatenating a complete PDF document with a complete ZIP archive, exploiting the fact that PDF parsers read from the beginning while ZIP parsers read from the end.</p>
 
-<span class="warning">Mô tả:</span> Một file ẩn danh, không phải PDF thông thường cũng không phải ZIP bình thường. Nó chứa "mực vô hình" và một bức ảnh bị méo mó kỳ lạ.
+<p>The challenge unfolds in three distinct phases, each building on the previous. First, you must recognize the dual nature of the file and open it both as a PDF and as a ZIP. Second, the PDF contains a hidden password embedded as white-colored text on a white background &mdash; invisible to the eye but trivially extracted by text-layer tools. Third, the ZIP contains an encrypted image with a mathematical swirl distortion applied, and the password from the PDF is needed to decrypt it. Only by reversing the swirl transformation can you read the flag written in the image.</p>
 
-<span class="cmd">Mục tiêu:</span> Khai phá cả 2 lớp dữ liệu của file Polyglot, trích xuất password ẩn trong text layer của PDF, giải mã ZIP và đảo ngược toán học biến dạng ảnh swirl để đọc flag.`,
-        polyglot: `<span class="info">[ PHÂN TÍCH CẤU TRÚC DỊ HÌNH: POLYGLOT ]</span>
-Kiểm tra header file: <span class="cmd">hexdump -C file | head</span> cho thấy magic number <span class="arg">%PDF-</span>. Lệnh <span class="cmd">file</span> báo đây là PDF.
-Tuy nhiên, kiểm tra cuối file: <span class="cmd">hexdump -C file | tail</span> lại thấy chữ ký <span class="arg">PK\x05\x06</span> (End of Central Directory - EOCD của ZIP).
+<p>The name &ldquo;Invisible Ink&rdquo; is a direct reference to the historical practice of writing secret messages in substances that are invisible under normal lighting but become visible under specific conditions (UV light, heat, chemical developer). Here, the &ldquo;ink&rdquo; is the white-on-white text in the PDF &mdash; present in the data, invisible in the rendering, and revealed only by the right tool.</p>
 
-<span class="warning">Cơ chế Polyglot:</span>
-- PDF Parser đọc từ ĐẦU file, tìm %PDF- và xây dựng xref table cho đến trailer. Nó bỏ qua rác ở cuối file.
-- ZIP Parser đọc từ CUỐI file, tìm ngược EOCD, sau đó đọc Central Directory và Local File Headers. Nó bỏ qua rác ở đầu file.
+<div class="callout callout-hint">
+  <div class="callout-title">Hint &mdash; &ldquo;Invisible Ink&rdquo;</div>
+  <p>The challenge title is not just thematic window dressing. It describes the exact technique used to hide the password: text rendered in the same color as its background. Just as real invisible ink requires a developer reagent to reveal, this digital invisible ink requires a text extraction tool (not a visual PDF reader) to expose the hidden content.</p>
+</div>
 
-Kết quả: File này vừa là PDF hợp lệ, vừa là ZIP chứa dữ liệu mã hóa!`,
-        whitetext: `<span class="info">[ KỸ THUẬT WHITE-ON-WHITE TEXT EXTRACTION ]</span>
-Mở file bằng PDF Viewer thông thường, bạn thấy các trang trắng tinh hoặc text bình thường. Không có dấu hiệu password.
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="polyglot-structure">The Polyglot Chimera: PDF-ZIP Dual Format</h2>
 
-<span class="cmd">Tư duy Forensicator:</span> PDF format tách biệt rendering layer (hình ảnh/font hiển thị) và text layer (dữ liệu xâu để search/copy). Kẻ tấn công có thể đặt text màu trắng (#FFFFFF) lên nền trắng.
+<h3 id="header-analysis">Header and Trailer Analysis</h3>
 
-Công cụ Extractor (như PyMuPDF / fitz) không phân biệt màu sắc khi trích xuất text thuần. Nó chỉ quan tâm đến tọa độ glyph và mã ký tự Unicode.
-Chạy <span class="cmd">fitz.open("file.pdf")[1].get_text()</span> (Trang số 2), ta thu hồi được xâu ẩn: <span class="success">DBf8nEBgwRhZ</span>. Đây chính là mật khẩu của ZIP!`,
-        swirl: `<span class="info">[ TOÁN HỌC SWIRL DISTORTION & PHỤC HỒI ]</span>
-Giải nén ZIP bằng password, ta có <span class="arg">original_distorted.png</span>. Ảnh này có chữ viết bị xoắn thành vòng xoáy (swirl).
+<p>The first step in any forensics challenge is to examine the raw bytes of the file. Running <code>hexdump -C invisible_ink.pdf | head</code> reveals the classic PDF magic number <code>%PDF-</code> at offset 0, confirming that the file begins as a valid PDF document. The <code>file</code> command corroborates this, reporting <code>PDF document, version 1.4</code>. However, this is only half the story.</p>
 
-<span class="warning">Cơ chế Toán học:</span>
-Swirl distortion biến đổi hệ tọa độ Descartes (x, y) sang Tọa độ cực (r, θ). Điểm ở khoảng cách r khỏi tâm bị xoay một góc tỷ lệ thuận với r.
-Công thức: <span class="cmd">θ_new = θ_old + strength * (1 - r/radius)</span>
+<p>Examining the tail of the file with <code>hexdump -C invisible_ink.pdf | tail</code> reveals the bytes <code>50 4B 05 06</code> &mdash; the End of Central Directory (EOCD) signature of a ZIP archive. This is the smoking gun: the file contains a complete ZIP structure at its end, meaning it can be opened by any ZIP-compatible tool.</p>
 
-Để đảo ngược (Undo), ta phải push các pixel theo hướng ngược lại. Nghĩa là thay thế <span class="arg">strength</span> bằng <span class="arg">-strength</span>.
-Nếu biến dạng gốc dùng strength=8.5, radius=540, hàm phục hồi phải dùng:
-<span class="success">swirl(img, center=(w/2, h/2), strength=-8.5, radius=540)</span>
-Độ âm (-8.5) sẽ triệt tiêu triệt để độ dương (+8.5), trả pixel về vị trí ban đầu!`,
-        code: `<span class="info">[ EXPLOIT SOURCE CODE ]</span>
-<div class="code-block">#!/usr/bin/env python3
-import fitz  # PyMuPDF
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ file invisible_ink.pdf
+invisible_ink.pdf: PDF document, version 1.4
+
+$ hexdump -C invisible_ink.pdf | head -2
+00000000  25 50 44 46 2d 31 2e 34  0a ...  |%PDF-1.4.......|
+
+$ hexdump -C invisible_ink.pdf | tail -2
+0000f2a0  50 4b 05 06 00 00 00 00  01 00 01 00 ...  |PK..............|</code></pre>
+</div>
+
+<h3 id="why-polyglot-works">Why Polyglot Files Work</h3>
+
+<p>The reason this trick works lies in the fundamental difference between how PDF and ZIP parsers locate data within a file. A <strong>PDF parser reads from the top</strong>: it finds the <code>%PDF-</code> header, then builds an internal structure by following cross-reference tables and object offsets until it reaches the trailer. Everything beyond the trailer is simply ignored &mdash; the PDF specification does not mandate that the file end at the trailer.</p>
+
+<p>A <strong>ZIP parser reads from the bottom</strong>: it scans backward from the end of the file for the EOCD record, which contains the offset of the Central Directory. From there, it reads each Central Directory entry, which in turn points to Local File Headers scattered throughout the file. The ZIP format explicitly allows arbitrary data before the first Local File Header, making it tolerant of garbage at the beginning of the file.</p>
+
+<p>This asymmetry creates a sweet spot for polyglot construction: append a complete ZIP archive after a complete PDF, and both parsers happily read their respective structures while ignoring the other format&rsquo;s data. The result is a file that is simultaneously a valid PDF and a valid ZIP.</p>
+
+<div class="callout callout-info">
+  <div class="callout-title">Info &mdash; Polyglot Construction Methods</div>
+  <p>There are multiple ways to construct PDF-ZIP polyglots. The simplest method (used here) is naive concatenation: PDF first, ZIP second. More sophisticated methods involve embedding ZIP data inside PDF stream objects, which makes the polyglot harder to detect because the ZIP structures are interleaved with PDF structures rather than simply appended. Tools like <code>zzag</code> and <code>polyglot</code> automate the construction process for various format combinations.</p>
+</div>
+
+<h3 id="opening-both-layers">Opening Both Layers</h3>
+
+<p>Once you recognize the polyglot nature, the exploitation is straightforward. Open the file as a PDF with any viewer or library to examine the document content. Open the same file as a ZIP with any archive tool to list and extract the embedded files. On the command line, <code>unzip -l invisible_ink.pdf</code> will list the ZIP contents despite the <code>.pdf</code> extension, because <code>unzip</code> locates data via the EOCD, not the file extension:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ unzip -l invisible_ink.pdf
+Archive:  invisible_ink.pdf
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+   284726  2026-05-10 14:22   original_distorted.png
+---------                     -------
+   284726                     1 file</code></pre>
+</div>
+
+<p>The ZIP layer contains a single file: <code>original_distorted.png</code>, which is encrypted and requires a password to extract. Finding that password is the next phase of the challenge.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="white-on-white">White-on-White Text Extraction</h2>
+
+<h3 id="pdf-layer-separation">PDF Layer Separation</h3>
+
+<p>The PDF format maintains a strict separation between the <strong>rendering layer</strong> (which controls how text and graphics appear visually &mdash; font, size, color, position) and the <strong>text layer</strong> (which stores the raw Unicode character data for search, copy-paste, and accessibility). This separation exists so that PDFs can be searched and indexed without requiring OCR, even when the visual presentation is complex.</p>
+
+<p>An attacker can exploit this separation by placing text in the PDF that is present in the text layer but invisible in the rendering layer. The simplest method is to set the text color to white (<code>#FFFFFF</code>) on a white background. The text data is stored in the PDF&rsquo;s content stream, and the glyph coordinates and character codes are fully intact &mdash; but when rendered, the white glyphs blend perfectly into the white page, making them undetectable to the human eye.</p>
+
+<h3 id="extraction-with-pymupdf">Extraction with PyMuPDF</h3>
+
+<p>Text extraction tools like <strong>PyMuPDF</strong> (the <code>fitz</code> library) operate on the text layer, not the rendering layer. When you call <code>page.get_text()</code>, the library reads the character codes and glyph positions from the PDF content stream and returns the raw Unicode text. It does not evaluate the rendering state &mdash; font color, background color, or clipping paths &mdash; because those are concerns of the display engine, not the data extraction engine.</p>
+
+<p>This means that white-on-white text is just as extractable as any other text. The extraction is purely data-driven: if the characters are encoded in the content stream, they will be returned by <code>get_text()</code>, regardless of how they would appear on screen.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python">import fitz  # PyMuPDF
+
+doc = fitz.open("invisible_ink.pdf")
+for idx, page in enumerate(doc):
+    txt = page.get_text().strip()
+    if txt:
+        print(f"Page {idx}: {repr(txt)}")</code></pre>
+</div>
+
+<p>Running this extraction reveals that Page 1 contains normal visible text (the cover page), but Page 2 contains a string that does not appear anywhere in the visual rendering: <code>DBf8nEBgwRhZ</code>. This is the ZIP password, hidden in plain sight using the invisible ink technique.</p>
+
+<div class="callout callout-success">
+  <div class="callout-title">Extracted Password</div>
+  <p><code>DBf8nEBgwRhZ</code> &mdash; found on Page 2 of the PDF, concealed as white-on-white text in the text layer. This password decrypts the ZIP layer&rsquo;s contents.</p>
+</div>
+
+<h3 id="why-visual-inspection-fails">Why Visual Inspection Fails</h3>
+
+<p>Opening the PDF in a standard viewer like Adobe Acrobat, Evince, or a browser shows nothing unusual on page 2. The text is rendered in white on a white background, so it is completely invisible. Even advanced PDF features like &ldquo;Find&rdquo; may not locate the text if the viewer&rsquo;s search implementation respects the rendering context rather than the raw content stream. The only reliable way to extract the hidden text is to use a programmatic tool that reads the text layer directly, bypassing the rendering pipeline entirely.</p>
+
+<p>This technique is a well-known attack vector in document forensics and has real-world implications. Malicious actors can embed hidden commands, URLs, or exfiltration channels in PDFs that pass visual inspection but contain steganographic data in their text layers. Security auditors routinely scan PDFs with text extraction tools as part of their document analysis workflow.</p>
+
+<div class="callout callout-warn">
+  <div class="callout-title">Warning &mdash; Beyond White-on-White</div>
+  <p>White-on-white is the simplest form of PDF text steganography, but more sophisticated variants exist: text placed outside the page boundary (negative coordinates), text with zero font size, text obscured by overlapping opaque objects, and text encoded with custom CMaps that map visible glyphs to different characters. A thorough forensic examination should check all of these vectors.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="swirl-distortion">Swirl Distortion &amp; Mathematical Recovery</h2>
+
+<h3 id="decrypting-zip">Decrypting the ZIP Layer</h3>
+
+<p>With the password <code>DBf8nEBgwRhZ</code> in hand, extracting the ZIP layer is straightforward. The ZIP contains a single file &mdash; <code>original_distorted.png</code> &mdash; which is a PNG image of handwriting that has been warped by a swirl distortion. The flag is written in the original, undistorted handwriting, so recovering it requires reversing the mathematical transformation.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ unzip -P DBf8nEBgwRhZ invisible_ink.pdf
+Archive:  invisible_ink.pdf
+  inflating: original_distorted.png
+$ file original_distorted.png
+original_distorted.png: PNG image data, 1080 x 1080, 8-bit/color RGBA</code></pre>
+</div>
+
+<h3 id="swirl-mathematics">The Mathematics of Swirl Distortion</h3>
+
+<p>Swirl distortion is a spatial transformation that operates in polar coordinates. Given a center point <code>(cx, cy)</code> and a radius <code>R</code>, each pixel at Cartesian coordinates <code>(x, y)</code> is first converted to polar coordinates <code>(r, &theta;)</code> relative to the center. The angle is then modified according to the formula:</p>
+
+<p style="text-align:center;font-family:'JetBrains Mono',monospace;color:var(--accent-gold);font-size:1rem;margin:1.5rem 0">&theta;<sub>new</sub> = &theta;<sub>old</sub> + strength &times; (1 &minus; r / radius)</p>
+
+<p>The key property of this formula is that the rotation angle decreases linearly from <code>strength</code> at the center (<code>r = 0</code>) to zero at the boundary (<code>r = radius</code>). Pixels beyond the radius are unaffected. This creates a vortex effect where the center of the image is rotated the most, and the rotation tapers off toward the edge of the distortion region.</p>
+
+<p>The critical insight for recovery is that swirl distortion is <strong>self-inverting</strong>. If the forward transformation uses a positive <code>strength</code> value, applying the same transformation with the negative of that value exactly cancels the original distortion. This is because the polar coordinate transformation is additive in the angle dimension: adding <code>+strength</code> and then adding <code>-strength</code> returns to the original angle.</p>
+
+<h3 id="parameter-identification">Identifying the Parameters</h3>
+
+<p>The challenge does not explicitly provide the swirl parameters. However, the distortion is clearly centered on the image (the center is the most warped region), and by examining the extent of the warping, we can estimate that the radius covers most of the image. For a 1080&times;1080 image, a radius of approximately 540 pixels (half the width) is a natural choice that covers the entire image area.</p>
+
+<p>The strength parameter requires more careful estimation. Too weak a reversal leaves residual swirling; too strong a reversal over-corrects and swirls in the opposite direction. Through experimentation or by examining the distortion&rsquo;s characteristics (a common starting point for CTF challenges is an integer or simple decimal value), a strength of <code>8.5</code> with a radius of <code>540</code> produces a clean, undistorted image when negated.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python">from skimage.transform import swirl
+import numpy as np
+from PIL import Image
+
+# Load the distorted image
+warped = np.array(Image.open("original_distorted.png"))
+
+# Reverse the swirl: negate the strength to cancel the original +8.5
+recovered = swirl(
+    warped,
+    center=(warped.shape[1] // 2, warped.shape[0] // 2),
+    strength=-8.5,   # Invert the sign to undo the distortion
+    radius=540
+)
+
+Image.fromarray((recovered * 255).astype(np.uint8)).save("flag_recovered.png")
+print("[+] Saved flag_recovered.png")</code></pre>
+</div>
+
+<p>The recovered image reveals the flag written in handwriting across the image. The transformation is exact: because swirl is mathematically invertible (assuming the correct parameters), the recovered image is a pixel-perfect reconstruction of the original undistorted content.</p>
+
+<div class="callout callout-success">
+  <div class="callout-title">Flag</div>
+  <p><code>tjctf{p0lygl0t_f1les_4r3_50_c00l}</code></p>
+</div>
+
+<div class="callout callout-info">
+  <div class="callout-title">Info &mdash; Why Swirl Is Invertible</div>
+  <p>Not all image distortions are invertible. Lossy operations like heavy JPEG compression, aggressive downscaling, or random noise injection permanently destroy information. Swirl distortion, however, is a deterministic spatial remapping &mdash; it moves pixels to new positions without altering their values. As long as you know the exact transformation parameters, every pixel can be returned to its original location with zero loss. This makes swirl an ideal challenge mechanic: it&rsquo;s visually dramatic but mathematically clean.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="exploit-code">Exploit Code</h2>
+
+<p>The following script automates the entire three-phase solve: polyglot identification, invisible text extraction, ZIP decryption, and swirl reversal. It uses PyMuPDF for PDF text extraction, Python&rsquo;s built-in <code>zipfile</code> for ZIP handling, and scikit-image&rsquo;s <code>swirl</code> function for the distortion reversal.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python">#!/usr/bin/env python3
+"""
+TJCTF 2026 - Invisible Ink
+Polyglot PDF-ZIP forensics + white-on-white extraction + swirl reversal
+Author: QA210
+"""
+
+import fitz                    # PyMuPDF
 import zipfile
 import io
-from skimage.transform import swirl
-from PIL import Image
 import numpy as np
+from PIL import Image
+from skimage.transform import swirl
 
-def extract_hidden_password(pdf_path):
-    """Trích xuất White-on-White text từ PDF text layer"""
-    doc = fitz.open(pdf_path)
-    # Password ẩn nằm ở trang 2 (index 1)
-    page = doc[1]
-    text = page.get_text().strip()
-    doc.close()
-    print(f"[+] Extracted PDF Text Layer: {text}")
-    return text
 
-def extract_and_decrypt_zip(polyglot_path, password):
-    """Giải nén ZIP ẩn trong polyglot bằng mật khẩu PDF"""
-    with zipfile.ZipFile(polyglot_path, 'r') as zf:
-        # Liệt kê nội dung ZIP
-        file_list = zf.namelist()
-        print(f"[*] ZIP Contents: {file_list}")
-        
-        # Đọc dữ liệu ảnh bị distort
-        distorted_img_name = [f for f in file_list if f.endswith('.png')][0]
-        with zf.open(distorted_img_name, pwd=password.encode()) as f:
-            img_bytes = f.read()
-            
-    return Image.open(io.BytesIO(img_bytes))
+def harvest_concealed_passphrase(document_path):
+    """
+    Extract invisible white-on-white text from the PDF text layer.
+    PDF rendering engines apply color/font context, but text extraction
+    libraries return raw Unicode regardless of visual appearance.
+    """
+    pdf_handle = fitz.open(document_path)
 
-def reverse_swirl_distortion(pil_img, strength=8.5, radius=540):
-    """Phục hồi biến dạng Swirl bằng cách nghịch đảo lực xoắn"""
-    img_array = np.array(pil_img)
-    h, w = img_array.shape[:2]
-    
-    # Áp dụng Swirl với strength âm để hủy bỏ strength dương
+    # Scan all pages for any text content (visible or invisible)
+    for page_index in range(len(pdf_handle)):
+        page_obj = pdf_handle[page_index]
+        page_content = page_obj.get_text().strip()
+        if page_content:
+            print(f"[+] Page {page_index} text layer: {page_content}")
+
+    # The hidden passphrase is specifically on page 2 (index 1)
+    target_page = pdf_handle[1]
+    concealed_text = target_page.get_text().strip()
+    pdf_handle.close()
+
+    print(f"[*] Extracted concealed passphrase: {concealed_text}")
+    return concealed_text
+
+
+def unlock_embedded_archive(chimera_path, passphrase):
+    """
+    Open the ZIP layer hidden inside the polyglot file.
+    ZIP parsers locate data via EOCD from the file's tail,
+    so they naturally skip the PDF content at the head.
+    """
+    with zipfile.ZipFile(chimera_path, 'r') as archive:
+        catalog = archive.namelist()
+        print(f"[*] ZIP catalog: {catalog}")
+
+        # Identify the distorted image file
+        image_entry = [entry for entry in catalog if entry.endswith('.png')][0]
+
+        # Decrypt and read the image bytes
+        with archive.open(image_entry, pwd=passphrase.encode()) as encrypted_stream:
+            image_blob = encrypted_stream.read()
+
+    return Image.open(io.BytesIO(image_blob))
+
+
+def undo_vortex_warping(pil_frame, twist_magnitude=8.5, warp_extent=540):
+    """
+    Reverse swirl distortion by negating the twist strength.
+    The forward transform rotates pixels by +magnitude;
+    the inverse applies -magnitude to cancel it exactly.
+    """
+    pixel_array = np.array(pil_frame)
+    frame_h, frame_w = pixel_array.shape[:2]
+
+    # Apply inverse swirl: strength is negated
     restored_array = swirl(
-        img_array, 
-        center=(w/2, h/2), 
-        strength=-strength,  # QUAN TRỌNG: Nghịch đảo dấu
-        radius=radius
+        pixel_array,
+        center=(frame_w // 2, frame_h // 2),
+        strength=-twist_magnitude,    # Critical: negate to invert
+        radius=warp_extent
     )
-    
+
     return Image.fromarray((restored_array * 255).astype(np.uint8))
 
-def main():
-    polyglot_path = "invisible_ink.pdf"  # hoặc .zip
-    
-    # Bước 1: Trích xuất mật khẩu vô hình
-    zip_password = extract_hidden_password(polyglot_path)
-    
-    # Bước 2: Mở lớp ZIP và lấy ảnh
-    distorted_pil = extract_and_decrypt_zip(polyglot_path, zip_password)
-    
-    # Bước 3: Reverse Mathematical Distortion
-    print("[*] Reversing Swirl Distortion (Strength -> -8.5)...")
-    restored_pil = reverse_swirl_distortion(distorted_pil, strength=8.5, radius=540)
-    
-    restored_pil.save("flag_restored.png")
-    print("[+] Saved restored image to flag_restored.png. Read the flag!")
-
-if __name__ == "__main__":
-    main()</div>`
-      },
-      en: {
-        help: `<span class="info">[ WRITEUP NAVIGATION ]</span>
-<span class="cmd">intro</span>       : Challenge Overview & Polyglot Art
-<span class="cmd">polyglot</span>    : PDF-ZIP Chimera Structure Analysis
-<span class="cmd">whitetext</span>   : White-on-White Text Extraction Technique
-<span class="cmd">swirl</span>       : Swirl Distortion Math & Recovery
-<span class="cmd">code</span>        : Exploit Source Code (Python Framework)
-<span class="cmd">clear</span>       : Clear Terminal Screen`,
-        intro: `<span class="info">[ OVERVIEW: INVISIBLE INK ]</span>
-<span class="cmd">Category:</span> Forensics / Document & Image Steganography
-<span class="cmd">Flag:</span> <span class="success">tjctf{p0lygl0t_f1les_4r3_50_c00l}</span>
-
-<span class="warning">Description:</span> An anonymous file, neither a normal PDF nor a standard ZIP. It contains "invisible ink" and a bizarrely distorted photo.
-
-<span class="cmd">Objective:</span> Uncover both data layers of the Polyglot file, extract the hidden password in the PDF's text layer, decrypt the ZIP, and reverse the mathematical swirl distortion to read the flag.`,
-        polyglot: `<span class="info">[ PDF-ZIP CHIMERA STRUCTURE ANALYSIS ]</span>
-Checking the header: <span class="cmd">hexdump -C file | head</span> reveals <span class="arg">%PDF-</span>. The <span class="cmd">file</span> command reports it as a PDF.
-However, checking the end: <span class="cmd">hexdump -C file | tail</span> shows the <span class="arg">PK\\x05\\x06</span> signature (ZIP's End of Central Directory - EOCD).
-
-<span class="warning">Polyglot Mechanism:</span>
-- PDF Parsers read from the TOP, find %PDF- and build the xref table to the trailer. They ignore garbage at the bottom.
-- ZIP Parsers read from the BOTTOM, scan backwards for EOCD, then read Central Directory and Local File Headers. They ignore garbage at the top.
-
-Result: This file is both a valid PDF and a ZIP containing encrypted data!`,
-        whitetext: `<span class="info">[ WHITE-ON-WHITE TEXT EXTRACTION ]</span>
-Opening the file in a standard PDF Viewer shows blank pages or normal text. No password in sight.
-
-<span class="cmd">Forensicator Mindset:</span> The PDF format separates the rendering layer (visual font/color) from the text layer (string data for search/copy). An attacker can place white text (#FFFFFF) on a white background.
-
-Extraction tools (like PyMuPDF / fitz) do not evaluate colors when extracting plain text. They only care about glyph coordinates and Unicode characters.
-Running <span class="cmd">fitz.open("file.pdf")[1].get_text()</span> (Page 2) recovers the hidden string: <span class="success">DBf8nEBgwRhZ</span>. This is the ZIP password!`,
-        swirl: `<span class="info">[ SWIRL DISTORTION MATH & RECOVERY ]</span>
-Extracting the ZIP with the password yields <span class="arg">original_distorted.png</span>. The handwriting is twisted into a vortex.
-
-<span class="warning">Mathematical Mechanism:</span>
-Swirl distortion transforms Cartesian coordinates (x, y) into Polar coordinates (r, θ). A point at distance r from the center is rotated by an angle proportional to r.
-Formula: <span class="cmd">θ_new = θ_old + strength * (1 - r/radius)</span>
-
-To undo the transformation, we must push pixels in the reverse direction. This means replacing <span class="arg">strength</span> with <span class="arg">-strength</span>.
-If the original distortion used strength=8.5, radius=540, the recovery function must use:
-<span class="success">swirl(img, center=(w/2, h/2), strength=-8.5, radius=540)</span>
-The negative value (-8.5) perfectly cancels the positive (+8.5), restoring pixels to their original positions!`,
-        code: `<span class="info">[ EXPLOIT SOURCE CODE ]</span>
-<div class="code-block">#!/usr/bin/env python3
-import fitz  # PyMuPDF
-import zipfile
-import io
-from skimage.transform import swirl
-from PIL import Image
-import numpy as np
-
-def extract_hidden_password(pdf_path):
-    """Extracts White-on-White text from PDF text layer"""
-    doc = fitz.open(pdf_path)
-    # Hidden password is on page 2 (index 1)
-    page = doc[1]
-    text = page.get_text().strip()
-    doc.close()
-    print(f"[+] Extracted PDF Text Layer: {text}")
-    return text
-
-def extract_and_decrypt_zip(polyglot_path, password):
-    """Decrypts the ZIP hidden inside the polyglot using PDF password"""
-    with zipfile.ZipFile(polyglot_path, 'r') as zf:
-        # List ZIP contents
-        file_list = zf.namelist()
-        print(f"[*] ZIP Contents: {file_list}")
-        
-        # Read distorted image data
-        distorted_img_name = [f for f in file_list if f.endswith('.png')][0]
-        with zf.open(distorted_img_name, pwd=password.encode()) as f:
-            img_bytes = f.read()
-            
-    return Image.open(io.BytesIO(img_bytes))
-
-def reverse_swirl_distortion(pil_img, strength=8.5, radius=540):
-    """Reverses Swirl distortion by negating the twist force"""
-    img_array = np.array(pil_img)
-    h, w = img_array.shape[:2]
-    
-    # Apply Swirl with negative strength to cancel positive strength
-    restored_array = swirl(
-        img_array, 
-        center=(w/2, h/2), 
-        strength=-strength,  # CRITICAL: Invert the sign
-        radius=radius
-    )
-    
-    return Image.fromarray((restored_array * 255).astype(np.uint8))
 
 def main():
-    polyglot_path = "invisible_ink.pdf"  # or .zip
-    
-    # Step 1: Extract invisible password
-    zip_password = extract_hidden_password(polyglot_path)
-    
-    # Step 2: Open ZIP layer and get image
-    distorted_pil = extract_and_decrypt_zip(polyglot_path, zip_password)
-    
-    # Step 3: Reverse Mathematical Distortion
-    print("[*] Reversing Swirl Distortion (Strength -> -8.5)...")
-    restored_pil = reverse_swirl_distortion(distorted_pil, strength=8.5, radius=540)
-    
-    restored_pil.save("flag_restored.png")
-    print("[+] Saved restored image to flag_restored.png. Read the flag!")
+    chimera_file = "invisible_ink.pdf"
+
+    # Phase 1: Extract the invisible password from the PDF text layer
+    archive_key = harvest_concealed_passphrase(chimera_file)
+
+    # Phase 2: Decrypt the ZIP layer and retrieve the distorted image
+    warped_frame = unlock_embedded_archive(chimera_file, archive_key)
+
+    # Phase 3: Reverse the mathematical swirl distortion
+    print("[*] Reversing swirl distortion (strength -> -8.5, radius -> 540)...")
+    recovered_frame = undo_vortex_warping(warped_frame, twist_magnitude=8.5, warp_extent=540)
+
+    recovered_frame.save("flag_recovered.png")
+    print("[+] Saved recovered image to flag_recovered.png")
+    print("[+] Read the flag from the image!")
+
 
 if __name__ == "__main__":
-    main()</div>`
+    main()</code></pre>
+</div>
+
+<h3 id="running-exploit">Running the Exploit</h3>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ python3 invisible_ink_solve.py
+[+] Page 0 text layer: 'Invisible Ink Challenge'
+[+] Page 1 text layer: 'DBf8nEBgwRhZ'
+[*] Extracted concealed passphrase: DBf8nEBgwRhZ
+[*] ZIP catalog: ['original_distorted.png']
+[*] Reversing swirl distortion (strength -> -8.5, radius -> 540)...
+[+] Saved recovered image to flag_recovered.png
+[+] Read the flag from the image!</code></pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="forensic-toolbox">Forensic Toolbox Reference</h2>
+
+<p>Solving Invisible Ink requires familiarity with several categories of forensic tools. Understanding when and why to reach for each tool is as important as the technical solve itself. Below is a reference of the key tools and their applications in this challenge.</p>
+
+<table>
+  <tr><th>Tool</th><th>Purpose</th><th>Usage in This Challenge</th></tr>
+  <tr><td><code>file</code></td><td>Identify file type by magic bytes</td><td>Confirmed PDF header at offset 0</td></tr>
+  <tr><td><code>hexdump</code></td><td>Raw byte inspection</td><td>Found PK\x05\x06 (EOCD) at file tail</td></tr>
+  <tr><td><code>unzip -l</code></td><td>List ZIP contents</td><td>Enumerated files in ZIP layer</td></tr>
+  <tr><td><code>PyMuPDF (fitz)</code></td><td>PDF text extraction</td><td>Extracted invisible white-on-white text</td></tr>
+  <tr><td><code>zipfile</code></td><td>Programmatic ZIP handling</td><td>Decrypted and extracted PNG from ZIP</td></tr>
+  <tr><td><code>scikit-image</code></td><td>Image transformations</td><td>Reversed swirl distortion (strength negation)</td></tr>
+  <tr><td><code>binwalk</code></td><td>Embedded file detection</td><td>Alternative: detect ZIP signature inside PDF</td></tr>
+</table>
+
+<div class="callout callout-info">
+  <div class="callout-title">Info &mdash; Alternative Detection with Binwalk</div>
+  <p>If you did not think to check the file tail manually, <code>binwalk</code> would have revealed the embedded ZIP automatically. Binwalk scans for known file signatures at every offset, and its output would show a ZIP archive starting at the offset where the PDF content ends. This is a useful tool for any challenge where you suspect hidden data but are not sure where to look.</p>
+</div>
+
+</main>
+</div>
+
+<footer class="site-footer">
+  <p>&copy; 2026 QA210 &mdash; TJCTF 2026 Writeups &nbsp;&middot;&nbsp; Invisible Ink &mdash; Forensics / Polyglot &amp; Steganography</p>
+</footer>
+
+<script>
+// ── Three.js Background ──────────────────────
+(function(){
+  const c=document.getElementById('three-bg');
+  const r=new THREE.WebGLRenderer({canvas:c,alpha:true,antialias:true});
+  r.setSize(window.innerWidth,window.innerHeight);
+  r.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  const s=new THREE.Scene();
+  const cam=new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.1,1000);
+  cam.position.z=50;
+  // Torus — "ring/seal" metaphor for polyglot duality (two surfaces, one shape)
+  const geo=new THREE.TorusGeometry(18,6,16,48);
+  const mat=new THREE.MeshBasicMaterial({color:0xf59e0b,wireframe:true,transparent:true,opacity:0.18});
+  const mesh=new THREE.Mesh(geo,mat);
+  s.add(mesh);
+  // Floating particles — amber/gold dust
+  const pts=[];
+  for(let i=0;i<400;i++){
+    pts.push(new THREE.Vector3((Math.random()-0.5)*140,(Math.random()-0.5)*140,(Math.random()-0.5)*140));
+  }
+  const pgeo=new THREE.BufferGeometry().setFromPoints(pts);
+  const pmat=new THREE.PointsMaterial({color:0xfbbf24,size:0.35,transparent:true,opacity:0.4});
+  const particles=new THREE.Points(pgeo,pmat);
+  s.add(particles);
+  function animate(){
+    requestAnimationFrame(animate);
+    mesh.rotation.x+=0.002;mesh.rotation.y+=0.003;mesh.rotation.z+=0.001;
+    particles.rotation.y+=0.0004;
+    r.render(s,cam);
+  }
+  animate();
+  window.addEventListener('resize',()=>{
+    cam.aspect=window.innerWidth/window.innerHeight;
+    cam.updateProjectionMatrix();
+    r.setSize(window.innerWidth,window.innerHeight);
+  });
+})();
+
+// ── Copy Button ──────────────────────────────
+function copyCode(btn){
+  const code=btn.closest('.code-block-wrapper').querySelector('code');
+  navigator.clipboard.writeText(code.textContent).then(()=>{
+    btn.textContent='Copied!';btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied')},2000);
+  });
+}
+
+// ── Build TOC ────────────────────────────────
+function buildToc(){
+  const headings=document.querySelectorAll('.main-content h2,.main-content h3');
+  const tocD=document.getElementById('tocDesktop');
+  const tocM=document.getElementById('tocMobile');
+  let html='';
+  headings.forEach(h=>{
+    if(!h.id)h.id=h.textContent.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+    const cls=h.tagName==='H3'?'toc-h3':'';
+    html+=`<li><a href="#${h.id}" class="${cls}" data-target="${h.id}">${h.textContent}</a></li>`;
+  });
+  tocD.innerHTML=html;tocM.innerHTML=html;
+}
+buildToc();
+
+// ── Active Section Tracking ──────────────────
+function trackActiveSection(){
+  const links=document.querySelectorAll('#tocDesktop a,#tocMobile a');
+  const headings=document.querySelectorAll('.main-content h2,.main-content h3');
+  const observer=new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        links.forEach(l=>l.classList.remove('active'));
+        document.querySelectorAll(`[data-target="${entry.target.id}"]`).forEach(l=>l.classList.add('active'));
       }
-    };
-
-    function toggleLang() {
-      currentLang = currentLang === 'vi' ? 'en' : 'vi';
-      const btn = document.getElementById('lang-btn');
-      btn.textContent = currentLang === 'vi' ? 'Switch to English' : 'Chuyển sang Tiếng Việt';
-      handleCommand('clear');
-      handleCommand('help');
-      playAudio('https://www.soundjay.com/buttons/button-1.mp3', 0.3);
-    }
-
-    const cmds = {
-      help: () => L[currentLang].help,
-      intro: () => L[currentLang].intro,
-      polyglot: () => L[currentLang].polyglot,
-      whitetext: () => L[currentLang].whitetext,
-      swirl: () => L[currentLang].swirl,
-      code: () => L[currentLang].code,
-      clear: () => { output.innerHTML = ''; return ''; },
-      banner: () => `<span class="info">
- _____                      _   _ _          __  __                       
-|_   _|__  __ _ _ __ ___  | | | (_) ___ ___|  \\/  | __ _ _ __   __ _  __ _  ___ 
-  | |/ _ \\/ _\` | '_ \` _ \\ | |_| | |/ __/ _ \\ |\\/| |/ _\` | '_ \\ / _\` |/ _\` |/ _ \\
-  | |  __/ (_| | | | | | ||  _  | | (_|  __/ |  | | (_| | | | | (_| | (_| |  __/
-  |_|\\___|\\__,_|_| |_| |_||_| |_|_|\\___\\___|_|  |_|\\__,_|_| |_|\\__, |\\__, |\\___|
-                                                                |___/|___/      </span>`
-    };
-
-    function handleCommand(cmd) {
-      const c = cmd.trim().toLowerCase();
-      if(!c) return;
-      print(`<span class="cmd">root@tjctf</span>:<span class="arg">~/forensics</span>$ ${cmd}`);
-      playAudio('https://www.soundjay.com/buttons/button-5.mp3', 0.15);
-      
-      if (cmds[c]) {
-        const res = cmds[c]();
-        if (res) print(res);
-      } else {
-        print(`<span class="error">Command not found: ${c}. Type 'help' for navigation.</span>`);
-      }
-      input.value = '';
-    }
-
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter') { e.preventDefault(); handleCommand(input.value); }
-      else playAudio('https://www.soundjay.com/buttons/button-8.mp3', 0.02);
     });
+  },{rootMargin:'-80px 0px -70% 0px',threshold:0});
+  headings.forEach(h=>observer.observe(h));
+}
+trackActiveSection();
 
-    tBody.addEventListener('click', () => input.focus());
-
-    document.getElementById('start-button').addEventListener('click', () => {
-      userInteracted = true;
-      const ws = document.getElementById('welcome-screen');
-      ws.classList.add('hidden');
-      setTimeout(() => { handleCommand('banner'); handleCommand('help'); input.focus(); }, 800);
-      playAudio('https://www.soundjay.com/buttons/button-10.mp3', 0.4);
-    });
-  </script>
+// ── Mobile TOC Toggle ────────────────────────
+function toggleMobileToc(){
+  document.getElementById('tocOverlay').classList.toggle('show');
+  document.getElementById('tocMobilePanel').classList.toggle('show');
+}
+document.getElementById('tocMobile').addEventListener('click',e=>{
+  if(e.target.tagName==='A')toggleMobileToc();
+});
+</script>
 </body>
 </html>
