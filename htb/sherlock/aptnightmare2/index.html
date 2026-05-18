@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTB Sherlock: APTNightmare2 — QA210</title>
+<meta name="description" content="Hack The Box Sherlock APTNightmare2 — Linux memory forensics & rootkit analysis walkthrough by QA210">
+<meta name="author" content="QA210">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔬</text></svg>">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg-primary: #0d1117;
+  --bg-secondary: #161b22;
+  --bg-tertiary: #1c2333;
+  --bg-code: #0d1117;
+  --border: #30363d;
+  --border-light: #21262d;
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --text-muted: #6e7681;
+  --accent-green: #3fb950;
+  --accent-blue: #58a6ff;
+  --accent-red: #f85149;
+  --accent-yellow: #d29922;
+  --accent-purple: #bc8cff;
+  --accent-orange: #f0883e;
+  --accent-cyan: #39d353;
+  --accent-crimson: #dc143c;
+  --accent-rose: #e11d48;
+  --link: #58a6ff;
+  --link-hover: #79c0ff;
+  --scrollbar-thumb: #30363d;
+  --scrollbar-track: #161b22;
+  --toc-active: #f85149;
+  --callout-info-bg: rgba(56,139,253,0.1);
+  --callout-info-border: #388bfd;
+  --callout-warn-bg: rgba(210,153,34,0.1);
+  --callout-warn-border: #d29922;
+  --callout-danger-bg: rgba(248,81,73,0.1);
+  --callout-danger-border: #f85149;
+  --callout-success-bg: rgba(63,185,80,0.1);
+  --callout-success-border: #3fb950;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.75;
+  font-size: 16px;
+}
+
+#three-bg {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  z-index: -1; pointer-events: none; opacity: 0.35;
+}
+
+::-webkit-scrollbar { width:8px; height:8px; }
+::-webkit-scrollbar-track { background:var(--scrollbar-track); }
+::-webkit-scrollbar-thumb { background:var(--scrollbar-thumb); border-radius:4px; }
+::-webkit-scrollbar-thumb:hover { background:#484f58; }
+
+a { color:var(--link); text-decoration:none; transition:color .2s; }
+a:hover { color:var(--link-hover); }
+
+/* ── Header ───────────────────────────── */
+.site-header {
+  position:sticky; top:0; z-index:100;
+  background:rgba(13,17,23,0.85);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:0 2rem;
+  height:56px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.site-header .logo {
+  font-family:'JetBrains Mono',monospace;
+  font-weight:700; font-size:1.15rem;
+  color:var(--accent-green);
+  display:flex; align-items:center; gap:8px;
+}
+.site-header .logo .dot { color:var(--accent-red); }
+.site-header nav { display:flex; gap:1.5rem; align-items:center; }
+.site-header nav a { color:var(--text-secondary); font-size:.875rem; font-weight:500; }
+.site-header nav a:hover { color:var(--text-primary); }
+
+.hamburger {
+  display:none; background:none; border:none; color:var(--text-primary);
+  cursor:pointer; font-size:1.5rem;
+}
+
+/* ── Layout ───────────────────────────── */
+.page-layout {
+  display:grid;
+  grid-template-columns:260px 1fr;
+  max-width:1400px;
+  margin:0 auto;
+  min-height:calc(100vh - 56px);
+}
+
+/* ── TOC Sidebar ──────────────────────── */
+.toc-sidebar {
+  position:sticky; top:56px;
+  height:calc(100vh - 56px);
+  overflow-y:auto;
+  padding:1.5rem 1rem 1.5rem 1.5rem;
+  border-right:1px solid var(--border);
+  background:var(--bg-primary);
+}
+.toc-sidebar h3 {
+  font-size:.75rem;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:var(--text-muted);
+  margin-bottom:.75rem;
+  font-weight:600;
+}
+.toc-sidebar ul { list-style:none; }
+.toc-sidebar li { margin-bottom:2px; }
+.toc-sidebar a {
+  display:block;
+  padding:4px 8px;
+  border-radius:4px;
+  font-size:.8rem;
+  color:var(--text-secondary);
+  transition:all .15s;
+  line-height:1.4;
+}
+.toc-sidebar a:hover {
+  color:var(--text-primary);
+  background:var(--bg-secondary);
+}
+.toc-sidebar a.active {
+  color:var(--toc-active);
+  background:rgba(248,81,73,0.1);
+  font-weight:600;
+}
+.toc-sidebar .toc-h3 { padding-left:18px; font-size:.75rem; }
+
+/* ── Main Content ─────────────────────── */
+.main-content {
+  padding:2.5rem 3rem 4rem;
+  max-width:860px;
+  width:100%;
+}
+
+/* ── Page Hero ────────────────────────── */
+.page-hero {
+  margin-bottom:2.5rem;
+  padding-bottom:2rem;
+  border-bottom:1px solid var(--border);
+}
+.page-hero .box-badge {
+  display:inline-block;
+  background:var(--accent-red);
+  color:#fff;
+  font-size:.7rem;
+  font-weight:700;
+  padding:2px 10px;
+  border-radius:12px;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  margin-bottom:.75rem;
+}
+.page-hero .box-badge.sherlock {
+  background:var(--accent-crimson);
+}
+.page-hero h1 {
+  font-size:2.25rem;
+  font-weight:800;
+  margin-bottom:.5rem;
+  letter-spacing:-.02em;
+}
+.page-hero .meta {
+  color:var(--text-secondary);
+  font-size:.875rem;
+  display:flex; flex-wrap:wrap; gap:.75rem; align-items:center;
+}
+.page-hero .meta .sep { color:var(--text-muted); }
+
+/* ── Breadcrumbs ──────────────────────── */
+.breadcrumbs {
+  font-size:.75rem;
+  color:var(--text-muted);
+  margin-bottom:1rem;
+  font-family:'JetBrains Mono',monospace;
+}
+.breadcrumbs a { color:var(--text-secondary); }
+.breadcrumbs a:hover { color:var(--link); }
+.breadcrumbs .sep { margin:0 .4rem; }
+
+/* ── Box Info Card ────────────────────── */
+.box-info-card {
+  background:var(--bg-secondary);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:1.25rem 1.5rem;
+  margin-bottom:2rem;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:1rem;
+}
+.box-info-card .info-item .label {
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:var(--text-muted);
+  margin-bottom:2px;
+  font-weight:600;
+}
+.box-info-card .info-item .value {
+  font-size:.95rem;
+  font-weight:600;
+  color:var(--text-primary);
+}
+
+/* ── Section Headings ─────────────────── */
+.main-content h2 {
+  font-size:1.6rem;
+  font-weight:800;
+  margin:2.5rem 0 1rem;
+  padding-bottom:.4rem;
+  border-bottom:2px solid var(--border);
+  letter-spacing:-.01em;
+  scroll-margin-top:70px;
+}
+.main-content h3 {
+  font-size:1.15rem;
+  font-weight:700;
+  margin:1.75rem 0 .75rem;
+  color:var(--text-primary);
+  scroll-margin-top:70px;
+}
+.main-content h4 {
+  font-size:1rem;
+  font-weight:600;
+  margin:1.25rem 0 .5rem;
+  color:var(--text-secondary);
+}
+.main-content p {
+  margin-bottom:1rem;
+  color:var(--text-secondary);
+  line-height:1.8;
+}
+
+/* ── Code Blocks ──────────────────────── */
+.code-block-wrapper {
+  position:relative;
+  margin:1rem 0 1.25rem;
+  border-radius:8px;
+  overflow:hidden;
+  border:1px solid var(--border);
+}
+.code-block-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:6px 14px;
+  background:var(--bg-tertiary);
+  border-bottom:1px solid var(--border);
+  font-size:.72rem;
+  color:var(--text-muted);
+  font-family:'JetBrains Mono',monospace;
+}
+.code-block-header .lang-label { text-transform:uppercase; font-weight:600; letter-spacing:.04em; }
+.copy-btn {
+  background:none; border:1px solid var(--border);
+  color:var(--text-muted);
+  font-size:.7rem;
+  padding:2px 10px;
+  border-radius:4px;
+  cursor:pointer;
+  font-family:'JetBrains Mono',monospace;
+  transition:all .2s;
+}
+.copy-btn:hover { color:var(--text-primary); border-color:var(--text-muted); }
+.copy-btn.copied { color:var(--accent-green); border-color:var(--accent-green); }
+
+.code-block-wrapper pre {
+  margin:0!important;
+  padding:1rem!important;
+  background:var(--bg-code)!important;
+  font-family:'JetBrains Mono',monospace!important;
+  font-size:.82rem!important;
+  line-height:1.6!important;
+  overflow-x:auto;
+}
+.code-block-wrapper code {
+  font-family:'JetBrains Mono',monospace!important;
+  font-size:.82rem!important;
+}
+
+p code, li code {
+  background:var(--bg-tertiary);
+  border:1px solid var(--border);
+  padding:1px 6px;
+  border-radius:4px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:.82em;
+  color:var(--accent-orange);
+}
+
+/* ── Callouts ──────────────────────────── */
+.callout {
+  padding:.85rem 1rem;
+  border-radius:6px;
+  border-left:3px solid;
+  margin:1rem 0 1.25rem;
+  font-size:.9rem;
+}
+.callout p { margin:0; color:var(--text-secondary); }
+.callout-title {
+  font-weight:700;
+  font-size:.8rem;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  margin-bottom:4px;
+}
+.callout-info { background:var(--callout-info-bg); border-color:var(--callout-info-border); }
+.callout-info .callout-title { color:var(--callout-info-border); }
+.callout-warn { background:var(--callout-warn-bg); border-color:var(--callout-warn-border); }
+.callout-warn .callout-title { color:var(--callout-warn-border); }
+.callout-danger { background:var(--callout-danger-bg); border-color:var(--callout-danger-border); }
+.callout-danger .callout-title { color:var(--callout-danger-border); }
+.callout-success { background:var(--callout-success-bg); border-color:var(--callout-success-border); }
+.callout-success .callout-title { color:var(--callout-success-border); }
+
+/* ── Investigation Flow Diagram ────────── */
+.attack-path {
+  background:var(--bg-secondary);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:1.25rem 1.5rem;
+  margin:1.5rem 0;
+  font-family:'JetBrains Mono',monospace;
+  font-size:.78rem;
+  line-height:1.7;
+  overflow-x:auto;
+}
+.attack-path .step {
+  display:flex;
+  align-items:baseline;
+  gap:.5rem;
+  margin-bottom:.25rem;
+}
+.attack-path .arrow { color:var(--accent-red); }
+.attack-path .host { color:var(--accent-cyan); font-weight:700; }
+.attack-path .technique { color:var(--accent-orange); }
+.attack-path .cred { color:var(--accent-purple); }
+.attack-path .finding { color:var(--accent-green); }
+
+/* ── Answer Box ────────────────────────── */
+.answer-box {
+  background:rgba(248,81,73,0.06);
+  border:1px solid rgba(248,81,73,0.25);
+  border-radius:8px;
+  padding:1rem 1.25rem;
+  margin:1rem 0 1.5rem;
+  font-family:'JetBrains Mono',monospace;
+}
+.answer-box .answer-label {
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:var(--accent-red);
+  font-weight:700;
+  margin-bottom:.35rem;
+}
+.answer-box .answer-value {
+  font-size:1rem;
+  font-weight:700;
+  color:var(--text-primary);
+  word-break:break-all;
+}
+
+/* ── Lists ─────────────────────────────── */
+.main-content ul, .main-content ol {
+  margin:.5rem 0 1rem 1.5rem;
+  color:var(--text-secondary);
+}
+.main-content li { margin-bottom:.35rem; line-height:1.7; }
+
+/* ── Tables ────────────────────────────── */
+.main-content table {
+  width:100%;
+  border-collapse:collapse;
+  margin:1rem 0;
+  font-size:.85rem;
+}
+.main-content th, .main-content td {
+  padding:8px 12px;
+  border:1px solid var(--border);
+  text-align:left;
+}
+.main-content th {
+  background:var(--bg-secondary);
+  font-weight:600;
+  color:var(--text-primary);
+  font-size:.75rem;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+.main-content td { color:var(--text-secondary); }
+
+/* ── Footer ────────────────────────────── */
+.site-footer {
+  border-top:1px solid var(--border);
+  padding:1.5rem 2rem;
+  text-align:center;
+  color:var(--text-muted);
+  font-size:.8rem;
+}
+
+/* ── Mobile Overlay ────────────────────── */
+.toc-overlay {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.5);
+  z-index:200;
+}
+.toc-overlay.show { display:block; }
+.toc-mobile-panel {
+  display:none;
+  position:fixed;
+  left:0; top:0; bottom:0;
+  width:280px;
+  background:var(--bg-primary);
+  border-right:1px solid var(--border);
+  z-index:201;
+  overflow-y:auto;
+  padding:1.5rem;
+}
+.toc-mobile-panel.show { display:block; }
+.toc-mobile-panel .close-btn {
+  background:none; border:none;
+  color:var(--text-secondary);
+  font-size:1.2rem;
+  cursor:pointer;
+  float:right;
+}
+
+/* ── Responsive ────────────────────────── */
+@media (max-width:1024px) {
+  .page-layout { grid-template-columns:1fr; }
+  .toc-sidebar { display:none; }
+  .hamburger { display:block; }
+  .main-content { padding:1.5rem 1.25rem 3rem; }
+  .page-hero h1 { font-size:1.75rem; }
+}
+@media (max-width:640px) {
+  .site-header { padding:0 1rem; }
+  .main-content { padding:1rem .75rem 2rem; }
+  .page-hero h1 { font-size:1.4rem; }
+  .box-info-card { grid-template-columns:1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ Three.js Background ═══ -->
+<canvas id="three-bg"></canvas>
+
+<!-- ═══ Header ═══ -->
+<header class="site-header">
+  <div class="logo">
+    <span>QA210</span><span class="dot">:</span><span>~$</span>
+  </div>
+  <nav>
+    <a href="/">Home</a>
+    <a href="/htb/sherlock/">Sherlock</a>
+    <a href="#">Tools</a>
+    <a href="#">About</a>
+  </nav>
+  <button class="hamburger" onclick="toggleMobileToc()" aria-label="Menu">&#9776;</button>
+</header>
+
+<!-- ═══ Mobile TOC ═══ -->
+<div class="toc-overlay" id="tocOverlay" onclick="toggleMobileToc()"></div>
+<div class="toc-mobile-panel" id="tocMobilePanel">
+  <button class="close-btn" onclick="toggleMobileToc()">&#10005;</button>
+  <h3 style="margin-top:1rem">Table of Contents</h3>
+  <ul id="tocMobile"></ul>
+</div>
+
+<!-- ═══ Layout ═══ -->
+<div class="page-layout">
+
+<!-- ── TOC Sidebar ── -->
+<aside class="toc-sidebar">
+  <h3>Contents</h3>
+  <ul id="tocDesktop"></ul>
+</aside>
+
+<!-- ── Main Content ── -->
+<main class="main-content">
+
+<!-- ═══ HERO ═══ -->
+<div class="page-hero">
+  <div class="breadcrumbs">
+    <a href="/">Home</a><span class="sep">/</span>
+    <a href="/htb/sherlock/">HTB Sherlock</a><span class="sep">/</span>
+    APTNightmare2
+  </div>
+  <span class="box-badge sherlock">Sherlock</span>
+  <h1>HTB: APTNightmare2</h1>
+  <div class="meta">
+    <span>QA210</span>
+    <span class="sep">&middot;</span>
+    <span>Mar 2025</span>
+    <span class="sep">&middot;</span>
+    <span>Memory Forensics &middot; Rootkit Analysis &middot; Linux</span>
+  </div>
+</div>
+
+<!-- ═══ BOX INFO ═══ -->
+<div class="box-info-card">
+  <div class="info-item"><div class="label">Sherlock</div><div class="value">APTNightmare2</div></div>
+  <div class="info-item"><div class="label">Category</div><div class="value" style="color:var(--accent-red)">Forensics</div></div>
+  <div class="info-item"><div class="label">OS</div><div class="value">Linux</div></div>
+  <div class="info-item"><div class="label">Artifact</div><div class="value">Memory Dump</div></div>
+  <div class="info-item"><div class="label">Tool</div><div class="value">Volatility 2</div></div>
+  <div class="info-item"><div class="label">Key Theme</div><div class="value">Rootkit / LKM</div></div>
+</div>
+
+<!-- ═══ INVESTIGATION FLOW ═══ -->
+<div class="attack-path">
+  <div class="step"><span class="host">MEMORY.IMG</span> <span class="arrow">&rarr;</span> Volatility profile setup <span class="arrow">&rarr;</span> <span class="technique">netscan</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> Identify reverse shell <span class="arrow">&rarr;</span> <span class="finding">10.0.2.6:443</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> psscan for hidden PPID <span class="arrow">&rarr;</span> <span class="finding">PPID 3623</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> linux_check_modules <span class="arrow">&rarr;</span> <span class="finding">nfnetlink rootkit</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> Extract syslog from memory <span class="arrow">&rarr;</span> <span class="finding">Load timestamp</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> Locate &amp; recover .ko file <span class="arrow">&rarr;</span> <span class="technique">strings + MD5</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> Analyze rootkit internals <span class="arrow">&rarr;</span> <span class="finding">Signal 64 process hiding</span></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="overview">Challenge Overview</h2>
+
+<p>APTNightmare2 is a Hack The Box Sherlock challenge that plunges you into the aftermath of a sophisticated APT intrusion. The scenario states that upon completing a server recovery process, the incident response team uncovered persistent traffic, covert communication channels, and resilient processes that resisted termination efforts. The scope of the incident clearly exceeds the initial breach of servers and clients, and your task as a forensic investigator is to illuminate the shadows concealing these clandestine activities.</p>
+
+<p>We are provided with a ZIP archive containing a Linux memory dump image along with the necessary Volatility profile for analysis. Given the nature of the scenario &mdash; persistent processes that refuse to die, hidden communication channels, and the fact that our only artifact is a raw memory dump &mdash; we can immediately infer that we are dealing with a rootkit. Rootkits operate at the kernel level, intercepting system calls and manipulating kernel data structures to hide their presence from userland tools. Memory forensics is the most reliable technique to unmask such threats, as the rootkit cannot easily tamper with the memory image once it has been captured.</p>
+
+<div class="callout callout-danger">
+  <div class="callout-title">Key Insight</div>
+  <p>The challenge name "APTNightmare2" and the scenario language about resilient processes that survive termination are strong indicators of kernel-level rootkit activity. Unlike userland malware, rootkits hook into the kernel itself, making them invisible to standard process listing tools but discoverable through memory forensics techniques like cross-view detection.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="volatility-setup">Volatility Profile Setup</h2>
+
+<p>Before we can begin analyzing the memory dump, we need to configure Volatility with the correct Linux profile. The profile maps kernel symbol addresses and data structure offsets specific to the kernel version that was running on the compromised system. Without the correct profile, Volatility cannot interpret the memory structures properly. Fortunately, the required profile file is included in the challenge ZIP archive.</p>
+
+<h3 id="adding-profile">Adding the Profile</h3>
+
+<p>The profile needs to be copied into Volatility's Linux overlay directory. This directory contains custom profiles that extend Volatility's built-in support for various Linux kernel versions. Once the profile file is in place, Volatility can parse the memory dump's kernel structures correctly, enabling us to use Linux-specific plugins like <code>linux_psscan</code>, <code>linux_check_modules</code>, and <code>linux_netscan</code>.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Copy the profile to Volatility's Linux overlay directory
+cp Ubuntu_5.3.0-70-generic.zip /opt/volatility/plugins/overlays/linux/
+
+# Verify the profile was added correctly
+volatility --info | grep Ubuntu_5_3_0_70</code></pre>
+</div>
+
+<h3 id="initial-collection">Initial Evidence Collection</h3>
+
+<p>Before diving into specific questions, it is good practice to run several basic Volatility plugins and save their output to individual files. This approach allows us to quickly reference results without having to re-run the often time-consuming memory analysis commands. Key plugins to run initially include <code>linux_psscan</code>, <code>linux_pslist</code>, <code>linux_netscan</code>, <code>linux_check_modules</code>, and <code>linux_enumerate_files</code>. Having these outputs readily available saves significant time as we progress through the investigation.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Run baseline collection of Volatility outputs
+volatility -f memory.img --profile=LinuxUbuntu_5_3_0_70-genericx64 linux_pslist > pslist.txt
+volatility -f memory.img --profile=LinuxUbuntu_5_3_0_70-genericx64 linux_psscan > psscan.txt
+volatility -f memory.img --profile=LinuxUbuntu_5_3_0_70-genericx64 linux_netscan > netscan.txt
+volatility -f memory.img --profile=LinuxUbuntu_5_3_0_70-genericx64 linux_check_modules > check_modules.txt
+volatility -f memory.img --profile=LinuxUbuntu_5_3_0_70-genericx64 linux_enumerate_files > enum_files.txt</code></pre>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="task1-reverse-shell">Task 1 &mdash; Reverse Shell Connection</h2>
+
+<p>The first task asks us to identify the IP address and port of the attacker's reverse shell. Since we are looking for network connections, the logical starting point is the <code>linux_netscan</code> plugin output. This plugin scans the memory image for network socket structures and reconstructs active connections, listening sockets, and established sessions that existed at the time of the memory capture.</p>
+
+<p>When reviewing the netscan output, we need to look for suspicious outbound connections &mdash; particularly those originating from shell processes like <code>bash</code>. A reverse shell typically manifests as an established TCP connection from a bash or similar process connecting out to an external IP address. In legitimate systems, bash processes rarely initiate network connections, so any such connection is inherently suspicious and warrants immediate investigation.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ volatility -f memory.img --profile=LinuxUbuntu_5_3_0_70-genericx64 linux_netscan</code></pre>
+</div>
+
+<p>Immediately, a suspicious connection stands out in the output. A bash process with PID 3633 has an established TCP connection to an external IP address on port 443. This is a textbook reverse shell indicator &mdash; the attacker likely chose port 443 because HTTPS traffic is commonly allowed through firewalls and blends in with legitimate encrypted web traffic. The use of bash as the connecting process confirms this is a command shell being piped over the network, providing the attacker with interactive access to the compromised system.</p>
+
+<div class="answer-box">
+  <div class="answer-label">Task 1 Answer</div>
+  <div class="answer-value">10.0.2.6:443</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="task2-hidden-ppid">Task 2 &mdash; Hidden Parent Process</h2>
+
+<p>The next task requires us to identify the true parent process ID (PPID) of the reverse shell. To find this, we first examine the <code>linux_pslist</code> output, filtering for the PID we discovered in the previous task (PID 3633). The <code>pslist</code> plugin walks the kernel's linked list of active processes, which is the same list that tools like <code>ps</code> and <code>top</code> read from. However, rootkits can manipulate this list to hide processes.</p>
+
+<p>When we look up PID 3633 in the pslist output, the PPID appears as <strong>1</strong>, which belongs to the init process. While it is possible for processes to be re-parented to PID 1 when their true parent exits, this is highly suspicious in the context of a reverse shell. An attacker's shell would typically be spawned by an exploit process, not directly by init. Furthermore, the pslist shows multiple bash processes, but none of them have a PPID that logically matches as the parent of the reverse shell.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ grep 3633 pslist.txt
+0xffffffff8a012300 bash            3633    1       1      0x0000000000000000 0x0</code></pre>
+</div>
+
+<p>The PPID of 1 is suspicious because it suggests the parent process is either being misrepresented or intentionally hidden from the active process list. This is a classic rootkit technique &mdash; the rootkit unlinks the parent process from the kernel's task list, making it invisible to <code>pslist</code> and any tool that reads from that list. However, the process still exists in memory; it has simply been removed from the linked list.</p>
+
+<h3 id="psscan-reveal">Uncovering Hidden Processes with psscan</h3>
+
+<p>The <code>linux_psscan</code> plugin takes a fundamentally different approach: instead of walking the kernel's linked list, it scans the entire memory image for process structures by looking for specific kernel data structure signatures. This cross-view detection technique can find processes that have been unlinked from the active list by a rootkit. When we run <code>psscan</code>, we discover a previously hidden bash process that was not visible in the <code>pslist</code> output.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ volatility -f memory.img --profile=LinuxUbuntu_5_3_0_70-genericx64 linux_psscan | grep bash
+0xffffffff8a011c00 bash            3623   3622       1      0x0000000000000000 0x0
+0xffffffff8a012300 bash            3633   3623       1      0x0000000000000000 0x0</code></pre>
+</div>
+
+<p>The <code>psscan</code> output reveals the hidden bash process with PID 3623, which is the true parent of our reverse shell (PID 3633). This process was deliberately unlinked from the kernel's task list by the rootkit, but its memory structures remain intact and discoverable through scanning. The discrepancy between <code>pslist</code> and <code>psscan</code> is a definitive indicator of rootkit activity &mdash; this cross-view difference is one of the most reliable methods for detecting process hiding in memory forensics.</p>
+
+<div class="callout callout-warn">
+  <div class="callout-title">Technique &mdash; Cross-View Detection</div>
+  <p>The difference between <code>pslist</code> (which walks the kernel's linked list) and <code>psscan</code> (which scans memory for process structures) is the foundation of rootkit detection in memory forensics. Any process visible in <code>psscan</code> but absent from <code>pslist</code> has been deliberately hidden, typically by a DKOM (Direct Kernel Object Manipulation) attack that unlinks the process from the active list.</p>
+</div>
+
+<div class="answer-box">
+  <div class="answer-label">Task 2 Answer</div>
+  <div class="answer-value">3623</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="task3-kernel-module">Task 3 &mdash; Malicious Kernel Module</h2>
+
+<p>With strong evidence of a rootkit, the next task asks us to identify the name of the malicious kernel module. Kernel modules (also called Loadable Kernel Modules, or LKMs) are the primary mechanism rootkits use to inject code into the Linux kernel. Once loaded, a kernel module runs with full kernel privileges and can hook system calls, manipulate process lists, hide files, and intercept network traffic.</p>
+
+<p>The <code>linux_check_modules</code> Volatility plugin is specifically designed to detect rootkits that unlist themselves from the kernel module list. It works by comparing two sources of module information: the kernel's linked list of loaded modules (which can be tampered with) and the sysfs filesystem (which is harder to hide from). If a module appears in sysfs but not in the module list, it has been deliberately unlisted &mdash; a classic rootkit hiding technique.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ volatility -f memory.img --profile=LinuxUbuntu_5_3_0_70-genericx64 linux_check_modules</code></pre>
+</div>
+
+<p>The plugin output reveals a suspicious module named <strong>nfnetlink</strong>. At first glance, this name might appear legitimate &mdash; <code>nfnetlink</code> is a real Netfilter module responsible for Netfilter/netlink interface communication. However, the legitimate <code>nfnetlink</code> module is a core part of the Netfilter subsystem and should be properly listed in both the kernel module list and sysfs. The fact that this module is detected by <code>linux_check_modules</code> as being unlisted strongly suggests that the attacker has loaded a malicious kernel module that masquerades under the name of a legitimate Netfilter component, then unlisted it to avoid detection.</p>
+
+<div class="callout callout-info">
+  <div class="callout-title">Info &mdash; Name Mimicry Technique</div>
+  <p>Advanced rootkits often choose module names that closely resemble legitimate kernel modules. By naming their malicious module <code>nfnetlink</code>, the attacker hopes that even if an administrator notices it, they will dismiss it as a standard Netfilter component. This is a common stealth technique that exploits the complexity and obscurity of kernel module naming conventions.</p>
+</div>
+
+<div class="answer-box">
+  <div class="answer-label">Task 3 Answer</div>
+  <div class="answer-value">nfnetlink</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="task4-load-timestamp">Task 4 &mdash; Module Load Timestamp</h2>
+
+<p>Identifying when the malicious kernel module was loaded is crucial for building a forensic timeline. The module load timestamp helps correlate the rootkit deployment with other events in the attack chain, such as the initial compromise, privilege escalation, or lateral movement. To find this information, we need to examine system logs that were present in memory at the time of the capture.</p>
+
+<h3 id="extract-syslog">Extracting Syslog from Memory</h3>
+
+<p>The <code>linux_enumerate_files</code> plugin lists all files that the kernel had open or cached at the time of the memory capture. This includes log files, which often contain valuable forensic evidence. We search through the enumerated files for the syslog file, which records kernel events including module loading.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Enumerate all files cached in memory
+volatility -f memory.img --profile=LinuxUbuntu_5_3_0_70-genericx64 \
+  linux_enumerate_files > files.txt
+
+# Search for syslog
+grep -i syslog files.txt</code></pre>
+</div>
+
+<p>Once we locate the syslog file entry, we note its inode number and offset. We can then use the <code>linux_find_file</code> plugin to recover the actual file contents from the memory image. This is a powerful technique that allows us to extract files that existed on the filesystem at the time of the memory capture, even if the original disk is not available.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Recover the syslog file using its inode offset
+volatility -f memory.img --profile=LinuxUbuntu_5_3_0_70-genericx64 \
+  linux_find_file -i 0xffff88007a1c2d40 -O syslog_dump.txt</code></pre>
+</div>
+
+<p>Searching through the recovered syslog reveals the exact moment the malicious <code>nfnetlink</code> kernel module was loaded. The kernel logs a message whenever a module is inserted via <code>insmod</code> or <code>modprobe</code>, including the module name and timestamp. This gives us a precise point in time to correlate with other forensic artifacts.</p>
+
+<div class="answer-box">
+  <div class="answer-label">Task 4 Answer</div>
+  <div class="answer-value">2024-05-01 20:42:57</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="task5-module-location">Task 5 &mdash; Module File Location</h2>
+
+<p>Now we need to find where the malicious kernel module file is stored on the filesystem. Legitimate Netfilter modules are typically located under <code>/lib/modules/&lt;kernel-version&gt;/kernel/net/netfilter/</code>, which is the standard path for netfilter-related kernel modules in Linux. If the attacker placed their malicious module in an unusual location, this would be a clear indicator of tampering.</p>
+
+<p>By examining the filesystem structure through the <code>linux_enumerate_files</code> output, we can locate all files with <code>nfnetlink</code> in their path. The legitimate nfnetlink module resides in its expected location under the <code>net/netfilter/</code> subdirectory. However, we also discover an anomalous copy of the module file located in the <strong>drivers</strong> directory, which is an unusual location for a netfilter module. Netfilter modules belong in the <code>net/</code> subtree, not in <code>drivers/</code>. This misplaced file is the malicious kernel module.</p>
+
+<div class="callout callout-warn">
+  <div class="callout-title">Anomaly Detection</div>
+  <p>The placement of a netfilter module in the <code>drivers/net/</code> directory is a significant red flag. Kernel modules are organized by subsystem in the <code>/lib/modules/</code> directory tree, and netfilter modules should always be under <code>net/netfilter/</code>. The attacker placed their malicious .ko file in the drivers directory to make it less conspicuous, but this very inconsistency is what gives it away during forensic analysis.</p>
+</div>
+
+<div class="answer-box">
+  <div class="answer-label">Task 5 Answer</div>
+  <div class="answer-value">/lib/modules/5.3.0-70-generic/kernel/drivers/net/nfnetlink.ko</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="task6-md5-hash">Task 6 &mdash; MD5 Hash of the Module</h2>
+
+<p>With the file path identified, we can recover the actual kernel module binary from the memory dump and compute its cryptographic hash. The <code>linux_find_file</code> plugin allows us to extract the file contents from memory, just as we did with the syslog. Once extracted, we can run standard file analysis tools against it, including hashing algorithms and string extraction.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Recover the malicious kernel module file
+volatility -f memory.img --profile=LinuxUbuntu_5_3_0_70-genericx64 \
+  linux_find_file -i 0xffff88007b3f4e20 -O nfnetlink_malicious.ko
+
+# Compute the MD5 hash
+md5sum nfnetlink_malicious.ko</code></pre>
+</div>
+
+<p>The MD5 hash serves as a unique fingerprint for this specific variant of the rootkit. It can be used to search threat intelligence databases, cross-reference with other incidents, or verify whether the same malware has been deployed elsewhere in the environment. The hash also provides integrity verification if the extracted file needs to be shared with other analysts or submitted to malware repositories for further analysis.</p>
+
+<div class="answer-box">
+  <div class="answer-label">Task 6 Answer</div>
+  <div class="answer-value">35bd8e64b021b862a0e650b13e0a57f7</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="task8-misspelling">Task 8 &mdash; Author Misspelling</h2>
+
+<p>Running the <code>strings</code> command on the extracted kernel module file immediately reveals suspicious content. Kernel modules contain metadata including the module author, description, and license, which are set via <code>MODULE_AUTHOR</code>, <code>MODULE_DESCRIPTION</code>, and <code>MODULE_LICENSE</code> macros respectively. When an attacker creates a rootkit that masquerades as a legitimate module, they often copy this metadata from the original module &mdash; but subtle mistakes can give them away.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Extract readable strings from the malicious module
+strings nfnetlink_malicious.ko | grep -i author
+author=Harald Welte &lt;laforge@netfiter.org&gt;</code></pre>
+</div>
+
+<p>Comparing this with the legitimate <code>nfnetlink</code> module reveals the critical difference. The original module's author field contains the email <code>laforge@netfilter.org</code>, but the malicious module has the email <code>laforge@netfiter.org</code> &mdash; the letter <strong>"i"</strong> is missing from "netfilter", resulting in "netfiter". This is a subtle but telling mistake that the attacker made when copying the module metadata. It demonstrates that even sophisticated attackers can introduce small errors when replicating legitimate module information, and these errors become valuable forensic artifacts during investigation.</p>
+
+<div class="answer-box">
+  <div class="answer-label">Task 8 Answer</div>
+  <div class="answer-value">i</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="task9-init-function">Task 9 &mdash; Initialization Function</h2>
+
+<p>Every Linux kernel module must define an initialization function that is called when the module is loaded via <code>insmod</code> or <code>modprobe</code>. This function is registered using the <code>module_init()</code> macro and serves as the entry point for the module's code. For a rootkit, the init function is where the malicious setup occurs &mdash; hooking system calls, creating hidden communication channels, and establishing persistence mechanisms.</p>
+
+<p>By examining the strings in the extracted module, we can identify the initialization function name. The <code>strings</code> output includes symbol names and function identifiers that are embedded in the ELF binary. The init function name reveals what the rootkit calls its entry point, which can provide insights into the attacker's code structure and intent.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Look for the init function name in module strings
+strings nfnetlink_malicious.ko | grep -i init
+nfnetlink_init</code></pre>
+</div>
+
+<p>The initialization function is named <code>nfnetlink_init</code>, which further demonstrates the attacker's attempt to maintain the illusion of legitimacy. By using a name that closely follows kernel module naming conventions (<code>&lt;modulename&gt;_init</code>), the rootkit blends in with the kernel's module loading infrastructure. However, the function's actual behavior &mdash; installing hooks and hiding processes &mdash; is far from legitimate.</p>
+
+<div class="answer-box">
+  <div class="answer-label">Task 9 Answer</div>
+  <div class="answer-value">nfnetlink_init</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="task10-syscall">Task 10 &mdash; Last Hooked System Call</h2>
+
+<p>A critical aspect of rootkit analysis is understanding which system calls the rootkit has hooked. System call hooking is the primary mechanism by which rootkits intercept and manipulate the operating system's behavior. By replacing legitimate system call handlers with custom functions, the rootkit can filter results (hiding processes, files, or network connections), log sensitive data (like passwords), or modify behavior (elevating privileges).</p>
+
+<p>The <code>strings</code> output from the extracted module reveals function names that correspond to system call handlers. Of particular interest is the last entry in what appears to be a system call table &mdash; this represents the final system call that the rootkit hooks, which is often the most critical one for understanding the rootkit's primary functionality.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Extract syscall-related strings
+strings nfnetlink_malicious.ko | grep -i sys
+__x64_sys_kill</code></pre>
+</div>
+
+<p>The presence of <code>__x64_sys_kill</code> is highly significant. The <code>kill</code> system call is used to send signals to processes, and by hooking it, the rootkit can intercept signal delivery and implement custom behavior. This is the key to understanding how the rootkit hides processes: instead of simply unlinking processes from the task list (which is what we observed earlier), the rootkit uses the <code>kill</code> system call as a control interface. When a specific signal number is sent to a target PID, the hooked <code>sys_kill</code> handler adds that PID to the hidden process list rather than actually delivering the signal.</p>
+
+<div class="callout callout-danger">
+  <div class="callout-title">Rootkit Architecture</div>
+  <p>The hooking of <code>__x64_sys_kill</code> reveals a sophisticated design pattern. Rather than hardcoding which PIDs to hide, the rootkit uses a signal-based interface that allows the attacker to dynamically hide any process at runtime. This makes the rootkit far more flexible and harder to detect through static analysis, since the list of hidden PIDs is not embedded in the module but is populated dynamically through the signal mechanism.</p>
+</div>
+
+<div class="answer-box">
+  <div class="answer-label">Task 10 Answer</div>
+  <div class="answer-value">__x64_sys_kill</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="task11-signal64">Task 11 &mdash; Process Hiding via Signal 64</h2>
+
+<p>The final and most revealing task asks us to identify the specific signal number that the rootkit uses to hide processes. This ties together everything we have learned: the rootkit hooks the <code>__x64_sys_kill</code> system call, and within the hooked handler, it checks whether the incoming signal matches a specific value. If it does, the target PID is added to a global variable (often called <code>global_PID</code>) that stores the process ID to be hidden, and the signal is never actually delivered to the process.</p>
+
+<h3 id="signal-background">Understanding Linux Real-Time Signals</h3>
+
+<p>Linux signals are divided into two categories. Standard signals (1 through 31) have predefined meanings: <code>SIGKILL</code> (9) terminates a process, <code>SIGTERM</code> (15) requests termination, <code>SIGSTOP</code> (19) pauses a process, and so on. These are the signals that administrators and developers use daily. However, the POSIX standard also defines real-time signals (32 through 64), which are reserved for application-defined purposes. Unlike standard signals, real-time signals have no predefined semantics &mdash; their meaning is entirely determined by the application (or in this case, the rootkit) that handles them.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-c">/* Simplified rootkit sys_kill hook logic */
+static int global_pid = 0;
+
+asmlinkage long hooked_sys_kill(pid_t pid, int sig) {
+    if (sig == 64) {
+        /* Signal 64 = hide this PID */
+        global_pid = pid;
+        return 0;  /* Swallow the signal */
+    }
+    /* Otherwise, pass through to original sys_kill */
+    return orig_sys_kill(pid, sig);
+}</code></pre>
+</div>
+
+<p>The rootkit uses <strong>signal 64</strong> as its control channel. When the attacker sends signal 64 to any process ID using <code>kill -64 &lt;PID&gt;</code>, the hooked <code>sys_kill</code> handler intercepts the call, stores the target PID in the <code>global_PID</code> variable, and returns success without actually delivering the signal. The rootkit's process enumeration hooks then filter out any process whose PID matches <code>global_PID</code>, effectively making it invisible to all userland process listing tools.</p>
+
+<p>This approach is elegant from the attacker's perspective because it provides a simple, command-line interface for hiding and unhiding processes dynamically. The attacker can hide any process with a single command, and the change takes effect immediately across the entire system. No special tools or custom binaries are required &mdash; the standard <code>kill</code> command is sufficient to control the rootkit's behavior.</p>
+
+<div class="callout callout-info">
+  <div class="callout-title">Reference &mdash; Linux Rootkits Series</div>
+  <p>For a deeper understanding of how Linux rootkits implement process hiding via signal hooking, the xcellerator blog post series on Linux rootkits provides excellent technical detail: <a href="https://xcellerator.github.io/posts/linux_rootkits_07/" target="_blank">Linux Rootkits Part 7 &mdash; Hiding Processes</a>. This resource covers the exact technique used in APTNightmare2, including the signal-based control interface and the kernel data structure manipulation required to make processes vanish from userland tools.</p>
+</div>
+
+<div class="answer-box">
+  <div class="answer-label">Task 11 Answer</div>
+  <div class="answer-value">64</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="summary">Investigation Summary</h2>
+
+<p>APTNightmare2 takes us through a complete rootkit investigation using Linux memory forensics. Starting from a raw memory dump, we methodically uncovered the attacker's infrastructure and techniques using Volatility's specialized plugins. The investigation followed a logical progression: identifying the reverse shell connection, discovering hidden processes through cross-view detection, pinpointing the malicious kernel module, extracting forensic artifacts from memory, and ultimately understanding the rootkit's internal mechanism for process hiding.</p>
+
+<p>The rootkit demonstrates several sophisticated techniques that make it a formidable forensic challenge. Its use of name mimicry (masquerading as the legitimate <code>nfnetlink</code> module), strategic file placement in an unusual directory, process unlinking from the kernel task list, and the elegant signal-based control interface via <code>__x64_sys_kill</code> hook all represent real-world rootkit design patterns. However, each technique leaves traces in memory that can be uncovered through careful forensic analysis &mdash; demonstrating that no matter how stealthy a rootkit attempts to be, memory forensics provides a powerful lens for revealing the truth.</p>
+
+<table>
+  <tr>
+    <th>Task</th>
+    <th>Question</th>
+    <th>Answer</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>Reverse shell IP &amp; port</td>
+    <td><code>10.0.2.6:443</code></td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>True PPID of reverse shell</td>
+    <td><code>3623</code></td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>Malicious kernel module name</td>
+    <td><code>nfnetlink</code></td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>Module load timestamp</td>
+    <td><code>2024-05-01 20:42:57</code></td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>Module file path</td>
+    <td><code>/lib/modules/5.3.0-70-generic/kernel/drivers/net/nfnetlink.ko</code></td>
+  </tr>
+  <tr>
+    <td>6</td>
+    <td>MD5 hash of module</td>
+    <td><code>35bd8e64b021b862a0e650b13e0a57f7</code></td>
+  </tr>
+  <tr>
+    <td>8</td>
+    <td>Missing letter in author email</td>
+    <td><code>i</code></td>
+  </tr>
+  <tr>
+    <td>9</td>
+    <td>Module init function</td>
+    <td><code>nfnetlink_init</code></td>
+  </tr>
+  <tr>
+    <td>10</td>
+    <td>Last syscall in hook table</td>
+    <td><code>__x64_sys_kill</code></td>
+  </tr>
+  <tr>
+    <td>11</td>
+    <td>Signal used to hide processes</td>
+    <td><code>64</code></td>
+  </tr>
+</table>
+
+</main>
+</div>
+
+<!-- ═══ Footer ═══ -->
+<footer class="site-footer">
+  &copy; 2025 QA210 &mdash; Yuri08 CTF Writeups
+</footer>
+
+<!-- ═══ Scripts ═══ -->
+<script>
+// ── Copy Code ──
+function copyCode(btn) {
+  const pre = btn.closest('.code-block-wrapper').querySelector('pre');
+  const text = pre.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ── Mobile TOC ──
+function toggleMobileToc() {
+  document.getElementById('tocOverlay').classList.toggle('show');
+  document.getElementById('tocMobilePanel').classList.toggle('show');
+}
+
+// ── Build TOC ──
+function buildTOC() {
+  const headings = document.querySelectorAll('.main-content h2, .main-content h3');
+  const desktopUL = document.getElementById('tocDesktop');
+  const mobileUL = document.getElementById('tocMobile');
+  desktopUL.innerHTML = '';
+  mobileUL.innerHTML = '';
+
+  headings.forEach(h => {
+    if (!h.id) h.id = h.textContent.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.href = '#' + h.id;
+    a.textContent = h.textContent;
+    if (h.tagName === 'H3') a.classList.add('toc-h3');
+    li.appendChild(a);
+    desktopUL.appendChild(li);
+    mobileUL.appendChild(li.cloneNode(true));
+  });
+}
+buildTOC();
+
+// ── Scroll Spy ──
+const spyHeadings = document.querySelectorAll('.main-content h2, .main-content h3');
+const spyLinks = document.querySelectorAll('#tocDesktop a, #tocMobile a');
+function updateSpy() {
+  let current = '';
+  spyHeadings.forEach(h => { if (h.getBoundingClientRect().top <= 80) current = h.id; });
+  spyLinks.forEach(a => { a.classList.toggle('active', a.getAttribute('href') === '#' + current); });
+}
+window.addEventListener('scroll', updateSpy, { passive: true });
+updateSpy();
+
+// ── Three.js Background ──
+(function() {
+  const canvas = document.getElementById('three-bg');
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.z = 5;
+
+  // Icosahedron wireframe — matches the rootkit "faceted threat" theme
+  const icoGeo = new THREE.IcosahedronGeometry(2.2, 1);
+  const icoMat = new THREE.MeshBasicMaterial({
+    color: 0xdc143c,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.35
+  });
+  const ico = new THREE.Mesh(icoGeo, icoMat);
+  scene.add(ico);
+
+  // Particles scattered around
+  const pCount = 600;
+  const pGeo = new THREE.BufferGeometry();
+  const pPos = new Float32Array(pCount * 3);
+  const pVel = [];
+  for (let i = 0; i < pCount; i++) {
+    pPos[i*3]   = (Math.random() - 0.5) * 14;
+    pPos[i*3+1] = (Math.random() - 0.5) * 14;
+    pPos[i*3+2] = (Math.random() - 0.5) * 8;
+    pVel.push(Math.random() * 0.012 + 0.004);
+  }
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+  const pMat = new THREE.PointsMaterial({
+    color: 0xe11d48,
+    size: 0.04,
+    transparent: true,
+    opacity: 0.7
+  });
+  const particles = new THREE.Points(pGeo, pMat);
+  scene.add(particles);
+
+  let mX = 0, mY = 0;
+  document.addEventListener('mousemove', e => {
+    mX = (e.clientX / window.innerWidth - 0.5) * 2;
+    mY = (e.clientY / window.innerHeight - 0.5) * 2;
+  });
+
+  function animate() {
+    requestAnimationFrame(animate);
+    ico.rotation.x += 0.003;
+    ico.rotation.y += 0.005;
+    const pos = particles.geometry.attributes.position.array;
+    for (let i = 0; i < pCount; i++) {
+      pos[i*3+1] -= pVel[i];
+      if (pos[i*3+1] < -7) {
+        pos[i*3+1] = 7;
+        pos[i*3]   = (Math.random() - 0.5) * 14;
+      }
+    }
+    particles.geometry.attributes.position.needsUpdate = true;
+    camera.rotation.y += (mX * 0.04 - camera.rotation.y) * 0.01;
+    camera.rotation.x += (mY * 0.04 - camera.rotation.x) * 0.01;
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+})();
+</script>
+</body>
+</html>
