@@ -1,451 +1,650 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Yuri08 - TJCTF 2026: Thomas Schools of China</title>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-  <style>
-    :root {
-      --main: #14b8a6; --main2: #f59e0b; --main-light: #5eead4;
-      --bg: #0f0f1a; --bg2: #181a2a; --glass: rgba(30, 25, 60, 0.9);
-      --text: #e0e7ef; --shadow: 0 8px 32px 0 #14b8a633;
-      --glow: 0 0 20px 2px #14b8a644; --highlight: #38bdf8;
-    }
-    html, body {
-      min-height: 100%; margin: 0; font-family: 'JetBrains Mono', monospace;
-      background: radial-gradient(circle at 50% 0%, #1a2a2a 0%, #0f0f1a 100%);
-      color: var(--text); overflow: hidden; perspective: 1000px;
-    }
-    #particles-js {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;
-    }
-    .content-wrapper {
-      position: relative; z-index: 1; height: 100vh; display: flex; flex-direction: column;
-      padding: 20px; box-sizing: border-box; gap: 15px;
-    }
-    
-    .header {
-      display: flex; align-items: center; gap: 20px; padding: 15px;
-      background: var(--glass); border-radius: 1rem; border: 1px solid #14b8a644;
-      box-shadow: var(--shadow); backdrop-filter: blur(10px); flex-shrink: 0;
-    }
-    .avatar {
-      width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--main);
-      object-fit: cover; box-shadow: 0 0 15px var(--main);
-    }
-    .header-info h1 {
-      font-size: 1.8rem; margin: 0; color: var(--main);
-      text-shadow: 0 0 10px #14b8a688; animation: neonTeal 2s infinite alternate;
-    }
-    .header-info p { margin: 5px 0 0 0; color: var(--main-light); font-size: 0.9rem; }
-    @keyframes neonTeal { to { text-shadow: 0 0 15px var(--main), 0 0 30px var(--main); } }
-    
-    .lang-toggle {
-      margin-left: auto; background: var(--main); color: #000; border: none;
-      padding: 8px 15px; border-radius: 0.5rem; cursor: pointer; font-family: inherit;
-      font-weight: bold; transition: 0.3s; box-shadow: 0 0 10px #14b8a655;
-    }
-    .lang-toggle:hover { background: #0d9488; transform: scale(1.05); }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TJCTF 2026: Thomas Schools of China — QA210</title>
+<meta name="description" content="TJCTF 2026 Thomas Schools of China — Forensics / Custom Format & Pixel Cryptanalysis walkthrough by QA210">
+<meta name="author" content="QA210">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦆</text></svg>">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap');
+:root {
+  --bg-primary:#0a0e17;--bg-secondary:#111827;--bg-tertiary:#1a2236;
+  --bg-code:#0d1117;--border:#1e293b;--border-light:#1a2332;
+  --text-primary:#e2e8f0;--text-secondary:#94a3b8;--text-muted:#64748b;
+  --accent-green:#22d3ee;--accent-blue:#818cf8;--accent-red:#f87171;
+  --accent-yellow:#fbbf24;--accent-purple:#c084fc;--accent-orange:#fb923c;
+  --accent-cyan:#22d3ee;--accent-pink:#f472b6;--accent-rose:#fb7185;
+  --accent-violet:#8b5cf6;--accent-magenta:#d946ef;
+  --accent-teal:#14b8a6;--accent-mint:#5eead4;
+  --link:#818cf8;--link-hover:#a5b4fc;
+  --scrollbar-thumb:#1e293b;--scrollbar-track:#0a0e17;
+  --toc-active:#14b8a6;
+  --callout-info-bg:rgba(129,140,248,0.08);--callout-info-border:#818cf8;
+  --callout-warn-bg:rgba(251,191,36,0.08);--callout-warn-border:#fbbf24;
+  --callout-danger-bg:rgba(248,113,113,0.08);--callout-danger-border:#f87171;
+  --callout-success-bg:rgba(20,184,166,0.08);--callout-success-border:#14b8a6;
+  --callout-hint-bg:rgba(192,132,252,0.08);--callout-hint-border:#c084fc;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--scrollbar-thumb) var(--scrollbar-track)}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg-primary);color:var(--text-primary);line-height:1.75;font-size:16px}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:var(--scrollbar-track)}
+::-webkit-scrollbar-thumb{background:var(--scrollbar-thumb);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:#334155}
+a{color:var(--link);text-decoration:none;transition:color .2s}
+a:hover{color:var(--link-hover)}
 
-    .terminal-pro {
-      background: linear-gradient(135deg, #121a1a 80%, #14b8a611 100%);
-      border-radius: 1rem; border: 1px solid #213f3f55; box-shadow: var(--shadow), var(--glow);
-      display: flex; flex-direction: column; flex-grow: 1; overflow: hidden; position: relative;
-    }
-    .terminal-pro::before {
-      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15), rgba(0,0,0,0.15) 1px, transparent 1px, transparent 2px);
-      pointer-events: none; z-index: 2; opacity: 0.2;
-    }
-    .terminal-bar {
-      background: #1e1e2e; height: 2.5rem; display: flex; align-items: center;
-      padding: 0 1rem; border-bottom: 1px solid #312e8155; flex-shrink: 0; z-index: 3;
-    }
-    .dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; }
-    .red { background: #ef4444; } .yellow { background: #facc15; } .green { background: #22c55e; }
-    .terminal-title { color: var(--main-light); margin-left: 1rem; font-weight: bold; letter-spacing: 1px; }
-    
-    .terminal-body {
-      padding: 1.5rem; flex-grow: 1; overflow-y: auto; font-size: 0.95rem;
-      line-height: 1.6; position: relative; z-index: 1; scroll-behavior: smooth;
-    }
-    #terminal-output { white-space: pre-wrap; word-break: break-word; }
-    #terminal-input-line {
-      display: flex; align-items: center; gap: 0.5em; margin-top: 1em; z-index: 3;
-    }
-    #terminal-input {
-      background: transparent; border: none; color: #a7f3d0; outline: none;
-      font-family: inherit; font-size: 1em; width: 100%; caret-color: var(--main);
-    }
-    
-    .cmd { color: #7c3aed; } .arg { color: #a78bfa; } .info { color: #38bdf8; font-weight: bold; }
-    .error { color: #ef4444; } .success { color: #10b981; } .warning { color: #facc15; }
-    .code-block {
-      background: #0d0d1a; border-left: 3px solid var(--main); padding: 10px 15px;
-      margin: 10px 0; border-radius: 0 5px 5px 0; font-size: 0.9rem; color: #d1d5db;
-    }
-    
-    .terminal-body::-webkit-scrollbar { width: 8px; }
-    .terminal-body::-webkit-scrollbar-track { background: #0f0f1a; }
-    .terminal-body::-webkit-scrollbar-thumb { background: #14b8a6; border-radius: 4px; }
+/* BUG FIX 1: pointer-events:none prevents canvas from intercepting mouse/touch events */
+#three-bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;opacity:0.35;pointer-events:none}
 
-    #welcome-screen {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: #0f0f1a; z-index: 10000; display: flex; flex-direction: column;
-      justify-content: center; align-items: center; text-align: center; transition: opacity 0.8s;
-    }
-    #welcome-screen.hidden { opacity: 0; pointer-events: none; }
-    #start-button {
-      background: var(--main); color: #000; border: none; border-radius: 0.7rem;
-      padding: 1rem 2rem; font-size: 1.2rem; font-weight: 700; cursor: pointer;
-      font-family: inherit; transition: all 0.3s; box-shadow: 0 0 20px #14b8a688;
-    }
-    #start-button:hover { background: #0d9488; transform: translateY(-3px); }
-    
-    #mute-button {
-      position: fixed; top: 20px; right: 20px; z-index: 10001;
-      background: #1e1e2e; color: var(--main-light); border: 1px solid #14b8a655;
-      border-radius: 50%; width: 40px; height: 40px; font-size: 1.2rem; cursor: pointer;
-      display: flex; justify-content: center; align-items: center; transition: all 0.3s;
-    }
-    #mute-button:hover { background: var(--main); color: #000; }
+.site-header{position:sticky;top:0;z-index:100;background:rgba(10,14,23,0.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 2rem;height:56px;display:flex;align-items:center;justify-content:space-between}
+.site-header .logo{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.1rem;color:var(--accent-teal);display:flex;align-items:center;gap:8px}
+.site-header .logo .dot{color:var(--accent-mint)}
+.site-header nav{display:flex;gap:1.5rem;align-items:center}
+.site-header nav a{color:var(--text-secondary);font-size:.85rem;font-weight:500}
+.site-header nav a:hover{color:var(--text-primary)}
+.hamburger{display:none;background:none;border:none;color:var(--text-primary);cursor:pointer;font-size:1.5rem}
+.page-layout{display:grid;grid-template-columns:260px 1fr;max-width:1400px;margin:0 auto;min-height:calc(100vh - 56px)}
+.toc-sidebar{position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;padding:1.5rem 1rem 1.5rem 1.5rem;border-right:1px solid var(--border);background:var(--bg-primary)}
+.toc-sidebar h3{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:.75rem;font-weight:600}
+.toc-sidebar ul{list-style:none}
+.toc-sidebar li{margin-bottom:2px}
+.toc-sidebar a{display:block;padding:4px 8px;border-radius:4px;font-size:.78rem;color:var(--text-secondary);transition:all .15s;line-height:1.4}
+.toc-sidebar a:hover{color:var(--text-primary);background:var(--bg-secondary)}
+.toc-sidebar a.active{color:var(--toc-active);background:rgba(20,184,166,0.1);font-weight:600}
+.toc-sidebar .toc-h3{padding-left:18px;font-size:.72rem}
+.main-content{padding:2.5rem 3rem 4rem;max-width:860px;width:100%}
+.page-hero{margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}
+.page-hero .box-badge{display:inline-block;background:linear-gradient(135deg,var(--accent-teal),var(--accent-mint));color:#000;font-size:.68rem;font-weight:700;padding:2px 12px;border-radius:12px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.75rem}
+.page-hero h1{font-size:2.25rem;font-weight:800;margin-bottom:.5rem;letter-spacing:-.02em}
+.page-hero .meta{color:var(--text-secondary);font-size:.85rem;display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.page-hero .meta .sep{color:var(--text-muted)}
+.box-info-card{background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:1.25rem 1.5rem;margin-bottom:2rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1rem}
+.box-info-card .info-item .label{font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);margin-bottom:2px;font-weight:600}
+.box-info-card .info-item .value{font-size:.92rem;font-weight:600;color:var(--text-primary)}
+.attack-path{background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:1.25rem 1.5rem;margin:1.5rem 0;font-family:'JetBrains Mono',monospace;font-size:.75rem;line-height:1.7;overflow-x:auto}
+.attack-path .step{display:flex;align-items:baseline;gap:.5rem;margin-bottom:.2rem}
+.attack-path .arrow{color:var(--accent-teal)}
+.attack-path .host{color:var(--accent-teal);font-weight:700}
+.attack-path .technique{color:var(--accent-mint)}
+.attack-path .cred{color:var(--accent-cyan)}
+.main-content h2{font-size:1.55rem;font-weight:800;margin:2.5rem 0 1rem;padding-bottom:.4rem;border-bottom:2px solid var(--border);letter-spacing:-.01em;scroll-margin-top:70px}
+.main-content h3{font-size:1.1rem;font-weight:700;margin:1.75rem 0 .75rem;color:var(--text-primary);scroll-margin-top:70px}
+.main-content h4{font-size:.95rem;font-weight:600;margin:1.25rem 0 .5rem;color:var(--text-secondary)}
+.main-content p{margin-bottom:1rem;color:var(--text-secondary);line-height:1.8}
+.code-block-wrapper{position:relative;margin:1rem 0 1.25rem;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
+.code-block-header{display:flex;justify-content:space-between;align-items:center;padding:6px 14px;background:var(--bg-tertiary);border-bottom:1px solid var(--border);font-size:.7rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace}
+.code-block-header .lang-label{text-transform:uppercase;font-weight:600;letter-spacing:.04em}
+.copy-btn{background:none;border:1px solid var(--border);color:var(--text-muted);font-size:.68rem;padding:2px 10px;border-radius:4px;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .2s}
+.copy-btn:hover{color:var(--text-primary);border-color:var(--text-muted)}
+.copy-btn.copied{color:var(--accent-green);border-color:var(--accent-green)}
+.code-block-wrapper pre{margin:0!important;padding:1rem!important;background:var(--bg-code)!important;font-family:'JetBrains Mono',monospace!important;font-size:.8rem!important;line-height:1.6!important;overflow-x:auto}
+.code-block-wrapper code{font-family:'JetBrains Mono',monospace!important;font-size:.8rem!important}
+p code,li code{background:var(--bg-tertiary);border:1px solid var(--border);padding:1px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:.82em;color:var(--accent-orange)}
+.callout{padding:.85rem 1rem;border-radius:6px;border-left:3px solid;margin:1rem 0 1.25rem;font-size:.88rem}
+.callout p{margin:0;color:var(--text-secondary)}
+.callout-title{font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.callout-info{background:var(--callout-info-bg);border-color:var(--callout-info-border)}
+.callout-info .callout-title{color:var(--callout-info-border)}
+.callout-warn{background:var(--callout-warn-bg);border-color:var(--callout-warn-border)}
+.callout-warn .callout-title{color:var(--callout-warn-border)}
+.callout-danger{background:var(--callout-danger-bg);border-color:var(--callout-danger-border)}
+.callout-danger .callout-title{color:var(--callout-danger-border)}
+.callout-success{background:var(--callout-success-bg);border-color:var(--callout-success-border)}
+.callout-success .callout-title{color:var(--callout-success-border)}
+.callout-hint{background:var(--callout-hint-bg);border-color:var(--callout-hint-border)}
+.callout-hint .callout-title{color:var(--callout-hint-border)}
+.main-content ul,.main-content ol{margin:.5rem 0 1rem 1.5rem;color:var(--text-secondary)}
+.main-content li{margin-bottom:.35rem;line-height:1.7}
+.main-content table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.85rem}
+.main-content th,.main-content td{padding:8px 12px;border:1px solid var(--border);text-align:left}
+.main-content th{background:var(--bg-secondary);font-weight:600;color:var(--text-primary);font-size:.73rem;text-transform:uppercase;letter-spacing:.04em}
+.main-content td{color:var(--text-secondary)}
+.hex-table td:nth-child(1){font-family:'JetBrains Mono',monospace;color:var(--accent-teal);font-weight:600;font-size:.82rem}
+.hex-table td:nth-child(2){font-family:'JetBrains Mono',monospace;color:var(--accent-mint);font-size:.82rem}
+.site-footer{border-top:1px solid var(--border);padding:1.5rem 2rem;text-align:center;color:var(--text-muted);font-size:.8rem}
+.toc-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200}
+.toc-overlay.show{display:block}
+.toc-mobile-panel{display:none;position:fixed;left:0;top:0;bottom:0;width:280px;background:var(--bg-primary);border-right:1px solid var(--border);z-index:201;overflow-y:auto;padding:1.5rem}
+.toc-mobile-panel.show{display:block}
+.toc-mobile-panel .close-btn{background:none;border:none;color:var(--text-secondary);font-size:1.2rem;cursor:pointer;float:right}
 
-    @media (max-width: 768px) {
-      .header { flex-wrap: wrap; justify-content: center; text-align: center; }
-      .lang-toggle { margin-left: 0; margin-top: 10px; width: 100%; }
-      .avatar { width: 60px; height: 60px; }
-      .header-info h1 { font-size: 1.4rem; }
-    }
-  </style>
+/* BUG FIX 2: Hide header nav links on tablet/mobile and show hamburger instead.
+   Previously, nav links and hamburger were BOTH visible on small screens. */
+@media screen and (max-width:1024px){
+  .page-layout{grid-template-columns:1fr}
+  .toc-sidebar{display:none}
+  .hamburger{display:block}
+  .site-header nav{display:none}  /* hide nav links when hamburger is shown */
+  .main-content{padding:1.5rem 1.25rem 3rem}
+  .page-hero h1{font-size:1.75rem}
+}
+@media screen and (max-width:640px){
+  .site-header{padding:0 1rem}
+  .main-content{padding:1rem .75rem 2rem}
+  .page-hero h1{font-size:1.4rem}
+  .box-info-card{grid-template-columns:1fr 1fr}
+}
+</style>
 </head>
 <body>
 
-  <div id="welcome-screen">
-    <h1 style="color: var(--main); text-shadow: 0 0 20px var(--main); margin-bottom: 20px;">Yuri08 CTF Terminal</h1>
-    <p style="color: #99f6e4; margin-bottom: 30px;">TJCTF 2026 - Forensics / Thomas Schools of China</p>
-    <button id="start-button">Khởi tạo Terminal</button>
-  </div>
+<canvas id="three-bg"></canvas>
 
-  <button id="mute-button" aria-label="Toggle Sound"><i class="bi bi-volume-up-fill"></i></button>
-  <div id="particles-js"></div>
+<header class="site-header">
+  <div class="logo"><span>QA210</span><span class="dot">:</span><span>~$</span></div>
+  <nav><a href="/">Home</a><a href="/tjctf-2026/">TJCTF</a><a href="#">Tools</a><a href="#">About</a></nav>
+  <button class="hamburger" onclick="toggleMobileToc()" aria-label="Menu">&#9776;</button>
+</header>
 
-  <div class="content-wrapper">
-    <header class="header">
-      <img src="https://files.catbox.moe/755fgv.png" alt="Avatar" class="avatar" />
-      <div class="header-info">
-        <h1>Yuri08</h1>
-        <p>Format Reverser & Pixel Cryptanalyst</p>
-      </div>
-      <button class="lang-toggle" id="lang-btn" onclick="toggleLang()">Switch to English</button>
-    </header>
+<div class="toc-overlay" id="tocOverlay" onclick="toggleMobileToc()"></div>
+<div class="toc-mobile-panel" id="tocMobilePanel">
+  <button class="close-btn" onclick="toggleMobileToc()">&#10005;</button>
+  <h3 style="margin-top:1rem">Contents</h3>
+  <ul id="tocMobile"></ul>
+</div>
 
-    <section class="terminal-pro">
-      <div class="terminal-bar">
-        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
-        <span class="terminal-title">root@tjctf:~/thomas-schools#</span>
-      </div>
-      <div class="terminal-body" id="terminal-body">
-        <pre id="terminal-output"></pre>
-        <div id="terminal-input-line">
-          <span class="cmd">root@tjctf</span>:<span class="arg">~/forensics</span>$           <input type="text" id="terminal-input" autocomplete="off" spellcheck="false" />
-        </div>
-      </div>
-    </section>
-  </div>
+<div class="page-layout">
+<aside class="toc-sidebar"><h3>Contents</h3><ul id="tocDesktop"></ul></aside>
 
-  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
-  <script>
-    let isMuted = false;
-    let currentLang = 'vi';
-    let userInteracted = false;
-    const output = document.getElementById('terminal-output');
-    const input = document.getElementById('terminal-input');
-    const tBody = document.getElementById('terminal-body');
+<main class="main-content">
 
-    particlesJS.load('particles-js', 'https://cdn.jsdelivr.net/gh/VincentGarreau/particles.js/particles.json');
+<div class="page-hero">
+  <span class="box-badge">Forensics / Custom Format &amp; Pixel Cryptanalysis</span>
+  <h1>TJCTF 2026: Thomas Schools of China</h1>
+  <div class="meta"><span>QA210</span><span class="sep">&middot;</span><span>May 2026</span><span class="sep">&middot;</span><span>Custom Container &middot; RGBA Threshold &middot; Multi-Channel Stego</span></div>
+</div>
 
-    function playAudio(src, vol=0.2) {
-      if (!userInteracted || isMuted || !src) return;
-      try { const a = new Audio(src); a.volume = vol; a.play(); } catch(e) {}
-    }
+<div class="box-info-card">
+  <div class="info-item"><div class="label">Challenge</div><div class="value">Thomas Schools of China</div></div>
+  <div class="info-item"><div class="label">Category</div><div class="value" style="color:var(--accent-teal)">Forensics / Pixel Cryptanalysis</div></div>
+  <div class="info-item"><div class="label">CTF</div><div class="value">TJCTF 2026</div></div>
+  <div class="info-item"><div class="label">Provided</div><div class="value">thomas.tsc (custom format)</div></div>
+  <div class="info-item"><div class="label">Flag</div><div class="value" style="color:var(--accent-mint)">tjctf{c0ngr4ts_u_s0lv3d_my_f1st_CTF_chall!_btw_1_l1ke_b1rds}</div></div>
+</div>
 
-    document.getElementById('mute-button').addEventListener('click', function() {
-      isMuted = !isMuted;
-      this.querySelector('i').className = isMuted ? 'bi bi-volume-mute-fill' : 'bi bi-volume-up-fill';
-    });
+<div class="attack-path">
+  <div class="step"><span class="host">FILE</span> <span class="arrow">&rarr;</span> <span class="technique">Custom .tsc container</span> (not PNG/JPG) <span class="arrow">&rarr;</span> reverse <span class="cred">static-offset header</span></div>
+  <div class="step"><span class="host">HEADER</span> <span class="arrow">&rarr;</span> Magic + Version + <span class="technique">W=60 H=61</span> + Fmt <span class="arrow">&rarr;</span> RGBA payload at <span class="cred">offset 0x11</span></div>
+  <div class="step"><span class="host">PIXELS</span> <span class="arrow">&rarr;</span> Pastel-green duck with <span class="technique">colored speckles</span> <span class="arrow">&rarr;</span> <span class="cred">delta = max(R,G,B) - min(R,G,B)</span></div>
+  <div class="step"><span class="host">THRESHOLD</span> <span class="arrow">&rarr;</span> <span class="technique">delta &ge; 5</span> = data pixel <span class="arrow">&rarr;</span> chr(R) + chr(G) + chr(B) <span class="arrow">&rarr;</span> <span class="cred">flag</span></div>
+</div>
 
-    function print(html) {
-      const div = document.createElement('div');
-      div.innerHTML = html;
-      output.appendChild(div);
-      tBody.scrollTop = tBody.scrollHeight;
-    }
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="overview">Challenge Overview</h2>
 
-    // --- TRANSLATIONS & DETAILED WRITEUP DATA ---
-    const L = {
-      vi: {
-        help: `<span class="info">[ Hướng Dẫn Đọc Writeup ]</span>
-<span class="cmd">intro</span>       : Tổng quan & Ẩn số trong Điểm ảnh
-<span class="cmd">container</span>   : Kỹ thuật Reverse Custom Container (.tsc)
-<span class="cmd">pixellogic</span>  : Logic Phân tích Ngưỡng RGBA (Threshold)
-<span class="cmd">multichannel</span>: Trích xuất Đa kênh (Multi-channel Stego)
-<span class="cmd">code</span>        : Source Code Khai thác (Python Framework)
-<span class="cmd">clear</span>       : Xóa màn hình Terminal`,
-        intro: `<span class="info">[ TỔNG QUAN: THOMAS SCHOOLS OF CHINA ]</span>
-<span class="cmd">Category:</span> Forensics / Custom Format & Pixel Cryptanalysis
-<span class="cmd">Flag:</span> <span class="success">tjctf{c0ngr4ts_u_s0lv3d_my_f1st_CTF_chall!_btw_1_l1ke_b1rds}</span>
+<p>Thomas Schools of China is a forensics challenge that combines two distinct skill sets: <strong>custom binary format reverse engineering</strong> and <strong>pixel-level cryptanalysis</strong>. The challenge provides a file in an obscure, non-standard image format &mdash; neither PNG nor JPEG nor GIF, but a bespoke container with a custom header and raw RGBA pixel data. When rendered, the image depicts a simple pastel-green duck measuring 60&times;61 pixels, seemingly innocent and unremarkable.</p>
 
-<span class="warning">Mô tả:</span> Một định dạng file ảnh obscure mang đậm phong cách "Thomas Schools of China". Bề ngoài là một chú vịt màu xanh lá pastel 60x61 pixel, nhưng flag được giấu trong những "đốm màu" (speckles) vi tế.
+<p>The flag, however, is not hidden in metadata, LSB planes, or appended data. It is encoded directly in the <strong>color channel values</strong> of specific &ldquo;speckle&rdquo; pixels &mdash; tiny dots of color that differ subtly from the uniform pastel-green background. Each speckle pixel carries three ASCII characters (one per RGB channel), and the complete flag is recovered by scanning all pixels, filtering out the background using a channel-delta threshold, and concatenating the character values from the surviving data pixels.</p>
 
-<span class="cmd">Mục tiêu:</span> Phân tích cấu trúc container tùy chỉnh, phân tách các pixel mang dữ liệu khỏi pixel nền (noise), và trích xuất text ẩn trong sự bất hòa của các kênh màu RGB.`,
-        container: `<span class="info">[ KỸ THUẬT REVERSE CUSTOM CONTAINER (.tsc) ]</span>
-File không phải PNG/JPG chuẩn. Dùng hexdump, ta nhận ra một Custom Header:
-<div class="code-block">Offset 0x00: 4 bytes - Magic Number (File Signature)
-Offset 0x04: 4 bytes - Version Number
-Offset 0x08: 4 bytes - Image Width (60)
-Offset 0x0C: 2 bytes - Image Height (61)
-Offset 0x0E: 3 bytes - Format Specifier
-Offset 0x11: N bytes - Raw RGBA Pixel Data</div>
+<p>The challenge name &mdash; &ldquo;Thomas Schools of China&rdquo; &mdash; is a whimsical reference that provides no technical hint. The duck motif reinforces the absurd, playful aesthetic, which contrasts with the precise, technical nature of the underlying steganography. This is a challenge where the math is straightforward but the <em>recognition</em> of what to look for &mdash; channel disagreement as a data carrier &mdash; is the real insight.</p>
 
-<span class="cmd">Tư duy Firmware Analyst:</span> Kiến trúc header cố định (static offset). Khối lượng data phải bằng chính xác Width * Height * 4 bytes (RGBA). Bằng cách tính toán: 60 * 61 * 4 = 14640 bytes. Ta slice chính xác blob từ offset 0x11 trở đi để tái tạo ma trận pixel.`,
-        pixellogic: `<span class="info">[ LOGIC PHÂN TÍCH NGƯỠNG RGBA ]</span>
-Khi render, ảnh là một mảng xanh pastel đồng nhất. Nhưng khi zoom tối đa, có những pixel "speckle" có màu sắc khác biệt nhẹ.
+<div class="callout callout-hint">
+  <div class="callout-title">Hint &mdash; Channel Disagreement</div>
+  <p>In a uniform-color region, all RGB channels should have nearly identical values (a greyish or pastel color where R&approx;G&approx;B). If one channel deviates significantly from the others, that deviation is <strong>not natural</strong> &mdash; it is injected data. The flag is hidden in the pixels where the color channels &ldquo;disagree&rdquo; with each other.</p>
+</div>
 
-<span class="warning">Cơ chế Phân loại Pixel:</span>
-- <span class="cmd">Pixel Nền (Grey/Body):</span> Các kênh màu gần như bằng nhau. Độ chênh lệch cực thấp. Ta định nghĩa: <span class="error">max(R,G,B) - min(R,G,B) < 5</span>. Đây là nhiễu nền, BỎ QUA.
-- <span class="success">Pixel Dữ liệu (Colored Speckles):</span> Các kênh màu bị "bất hòa" (disagree). Độ chênh lệch lớn hơn hoặc bằng 5. Định nghĩa: <span class="success">max(R,G,B) - min(R,G,B) >= 5</span>. Đây là nơi chứa flag!</div>
-Ngưỡng (Threshold) = 5 là con số vàng để tách signal (data) khỏi noise (background).`,
-        multichannel: `<span class="info">[ TRÍCH XUẤT ĐA KÊNH (MULTI-CHANNEL STEGO) ]</span>
-Đối với các pixel dữ liệu thỏa mãn delta >= 5, mỗi kênh màu R, G, B độc lập đại diện cho một ký tự ASCII có thể in được (printable ASCII).
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="container-reverse">Custom Container Reverse Engineering</h2>
 
-Nghĩa là 1 pixel speckle = <span class="success">3 bytes dữ liệu</span> (R + G + B).
-Bỏ qua kênh Alpha (A), vì nó chỉ dùng cho độ trong suốt.
+<h3 id="identifying-the-format">Identifying the Format</h3>
 
-<span class="cmd">Quy trình Concatenation:</span>
-Duyệt qua ma trận ảnh từ trái sang phải, trên xuống dưới:
-1. Nếu pixel là Nền (delta < 5) -> Skip.
-2. Nếu pixel là Data (delta >= 5) -> Đọc chr(R) + chr(G) + chr(B), nối tiếp vào chuỗi kết quả.
-Kết quả là một chuỗi dài các ký tự ASCII ghép thành flag hoàn chỉnh!`,
-        code: `<span class="info">[ EXPLOIT SOURCE CODE ]</span>
-<div class="code-block">#!/usr/bin/env python3
+<p>The first obstacle is that the file is not in any standard image format. Running <code>file thomas.tsc</code> returns <code>data</code> &mdash; a generic classification that means the magic bytes do not match any known format signature. Opening it in an image viewer fails silently. This immediately signals that we are dealing with a custom binary container, and we must reverse-engineer its structure from scratch.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ file thomas.tsc
+thomas.tsc: data
+
+$ xxd thomas.tsc | head -5
+00000000: 5443 5346 0100 0000 3c00 0000 3d00 5447  TCSF....&lt;...=TG
+00000010: 4d92 92a0 8c92 92a0 8c92 92a0 8c92 92a0  M...............</code></pre>
+</div>
+
+<h3 id="header-structure">Header Structure Analysis</h3>
+
+<p>By examining the hex dump, we can identify a structured header with fields at fixed offsets. The first four bytes <code>54 43 53 46</code> decode to the ASCII string <code>TCSF</code> &mdash; likely standing for &ldquo;Thomas Container Sprite Format&rdquo; or similar. This is the <strong>magic number</strong> that identifies the file type. Subsequent fields follow at predictable offsets:</p>
+
+<table class="hex-table">
+  <tr><th>Offset</th><th>Size</th><th>Field</th><th>Value</th></tr>
+  <tr><td>0x00</td><td>4 bytes</td><td>Magic Number</td><td><code>TCSF</code></td></tr>
+  <tr><td>0x04</td><td>4 bytes</td><td>Version (uint32 LE)</td><td>1</td></tr>
+  <tr><td>0x08</td><td>4 bytes</td><td>Image Width (uint32 LE)</td><td>60</td></tr>
+  <tr><td>0x0C</td><td>2 bytes</td><td>Image Height (uint16 LE)</td><td>61</td></tr>
+  <tr><td>0x0E</td><td>3 bytes</td><td>Format Specifier</td><td><code>TGM</code></td></tr>
+  <tr><td>0x11</td><td>N bytes</td><td>Raw RGBA Pixel Data</td><td>60 &times; 61 &times; 4 = 14640 bytes</td></tr>
+</table>
+
+<p>The header totals 17 bytes (0x11 in hex), after which the raw pixel data begins. Each pixel is stored as 4 consecutive bytes in RGBA order (Red, Green, Blue, Alpha), with no compression, no row padding, and no interlacing. The total pixel data size is straightforward to verify: <code>60 &times; 61 &times; 4 = 14,640 bytes</code>. Adding the 17-byte header gives a total file size of 14,657 bytes.</p>
+
+<div class="callout callout-info">
+  <div class="callout-title">Info &mdash; Firmware Analyst Mindset</div>
+  <p>Reverse-engineering a custom binary format is a core skill in firmware analysis and malware reverse engineering. The approach is always the same: examine the hex dump, identify repeating patterns, correlate field values with known quantities (image dimensions, pixel counts), and validate your assumptions against the file size. The key constraint here is that <code>width &times; height &times; bytes_per_pixel + header_size = total_file_size</code>, which provides a checksum for your header parsing logic.</p>
+</div>
+
+<h3 id="extracting-pixel-data">Extracting the Pixel Matrix</h3>
+
+<p>Once the header structure is understood, extracting the pixel data is a simple slice operation. The raw RGBA bytes start at offset 0x11 and continue for exactly 14,640 bytes. We can reconstruct the image by reading these bytes into a 60&times;61&times;4 array and interpreting each group of 4 bytes as one pixel:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python">import struct
+
+with open("thomas.tsc", "rb") as f:
+    blob = f.read()
+
+# Parse header fields via static offsets
+magic      = blob[0:4]                          # b'TCSF'
+version    = struct.unpack('&lt;I', blob[4:8])[0]   # 1
+width      = struct.unpack('&lt;I', blob[8:12])[0]  # 60
+height     = struct.unpack('&lt;H', blob[12:14])[0] # 61
+fmt_spec   = blob[14:17]                         # b'TGM'
+
+# Slice the raw RGBA payload
+rgba_start = 17  # 0x11
+rgba_end   = rgba_start + (width * height * 4)
+pixel_data = blob[rgba_start:rgba_end]
+
+print(f"Dimensions : {width}x{height}")
+print(f"Pixel data : {len(pixel_data)} bytes (expected {width * height * 4})")
+print(f"Magic      : {magic}")
+print(f"Fmt spec   : {fmt_spec}")</code></pre>
+</div>
+
+<p>With the pixel data extracted, we can either reconstruct the image using PIL (saving it as a standard PNG for visual inspection) or proceed directly to the cryptanalysis phase by iterating over the raw bytes.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="rgba-threshold">RGBA Threshold Analysis</h2>
+
+<h3 id="visual-appearance">Visual Appearance: The Pastel Duck</h3>
+
+<p>When the pixel data is reconstructed into a viewable image, the result is a small (60&times;61 pixel) depiction of a duck in pastel green. At normal zoom, the image appears to be a solid, uniform color with perhaps a few slightly different shades for the outline and eye. There is nothing visually that suggests hidden data &mdash; no obvious patterns, no suspicious artifacts, no visible text.</p>
+
+<p>However, when you zoom to maximum magnification (pixel-level view), a different picture emerges. Scattered among the uniform background pixels are tiny &ldquo;speckles&rdquo; &mdash; individual pixels whose color is slightly off from the surrounding pastel green. These speckles are not random noise; they are the data carriers. Their RGB values encode ASCII characters directly.</p>
+
+<h3 id="channel-delta-metric">The Channel Delta Metric</h3>
+
+<p>The key insight is that the background pixels and the data pixels have fundamentally different <strong>channel statistics</strong>. In a pastel-green background pixel, the three color channels (R, G, B) are all relatively close to each other because the color is a desaturated, nearly-grey tone with a slight green tint. In a data pixel, however, one or more channels have been deliberately set to ASCII character values, which causes the channels to &ldquo;disagree&rdquo; &mdash; the spread between the highest and lowest channel values becomes anomalously large.</p>
+
+<p>We formalize this observation with the <strong>channel delta</strong> metric:</p>
+
+<p style="text-align:center;font-family:'JetBrains Mono',monospace;color:var(--accent-teal);font-size:1rem;margin:1.5rem 0">delta = max(R, G, B) - min(R, G, B)</p>
+
+<p>For background pixels, <code>delta</code> is typically 0-4 (the channels are nearly equal). For data pixels, <code>delta</code> is 5 or higher (at least one channel has been perturbed significantly from the others). The threshold value of 5 provides a clean separation between the two populations.</p>
+
+<h3 id="pixel-classification">Pixel Classification Rules</h3>
+
+<table>
+  <tr><th>Pixel Type</th><th>Channel Delta</th><th>Appearance</th><th>Action</th></tr>
+  <tr><td><strong>Background (Noise)</strong></td><td>delta &lt; 5</td><td>Uniform pastel, channels agree</td><td>Skip</td></tr>
+  <tr><td><strong>Data (Signal)</strong></td><td>delta &ge; 5</td><td>Colored speckle, channels disagree</td><td>Extract R, G, B as chr()</td></tr>
+</table>
+
+<div class="callout callout-warn">
+  <div class="callout-title">Warning &mdash; Why Not Use Alpha?</div>
+  <p>The Alpha channel (A) is <strong>not</strong> used for data encoding. In this format, alpha controls transparency/opacity of the pixel and is set to a consistent value (typically 255 or a near-maximum value) for all pixels. Including alpha in the delta calculation would introduce false positives, and interpreting it as an ASCII character would inject garbage into the output. Only R, G, and B carry flag data.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="multi-channel-stego">Multi-Channel Steganography Extraction</h2>
+
+<h3 id="encoding-scheme">The Encoding Scheme</h3>
+
+<p>Each data pixel encodes <strong>three ASCII characters</strong> &mdash; one per color channel. The Red channel value is interpreted as <code>chr(R)</code>, the Green channel as <code>chr(G)</code>, and the Blue channel as <code>chr(B)</code>. Since printable ASCII ranges from 32 (space) to 126 (tilde), the channel values for data pixels will fall within this range, making them easily distinguishable from the background pixel values (which are typically in the 140-160 range for a pastel color).</p>
+
+<p>The extraction process is elegantly simple: scan the pixel matrix from left to right, top to bottom. For each pixel, compute the channel delta. If the delta meets the threshold, emit three characters; if not, skip the pixel. The resulting concatenation of characters forms the complete flag string.</p>
+
+<h3 id="walkthrough-example">Walkthrough Example</h3>
+
+<p>Consider a hypothetical data pixel with RGBA values <code>(116, 106, 99, 255)</code>. The channel delta is <code>max(116, 106, 99) - min(116, 106, 99) = 116 - 99 = 17</code>, which exceeds the threshold of 5. We therefore extract:</p>
+
+<ul>
+  <li><code>chr(116)</code> = <code>'t'</code></li>
+  <li><code>chr(106)</code> = <code>'j'</code></li>
+  <li><code>chr(99)</code> = <code>'c'</code></li>
+</ul>
+
+<p>Three characters from a single pixel &mdash; this is a remarkably dense encoding. A 60&times;61 image contains 3,660 pixels, and even if only a fraction are data pixels, the three-character-per-pixel yield provides ample capacity for the 55-character flag.</p>
+
+<h3 id="full-extraction">Full Extraction Pipeline</h3>
+
+<p>The complete extraction algorithm iterates over the raw RGBA byte array in 4-byte strides, classifies each pixel, and accumulates the decoded characters:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python">def decode_pixel_channels(rgba_bytes, threshold=5):
+    """
+    Walk the RGBA byte array, classify each pixel by channel delta,
+    and concatenate ASCII characters from data pixels.
+    """
+    result = []
+    for offset in range(0, len(rgba_bytes), 4):
+        r = rgba_bytes[offset]
+        g = rgba_bytes[offset + 1]
+        b = rgba_bytes[offset + 2]
+        # Alpha at offset+3 is ignored
+
+        delta = max(r, g, b) - min(r, g, b)
+
+        if delta >= threshold:
+            result.append(chr(r))
+            result.append(chr(g))
+            result.append(chr(b))
+
+    return "".join(result)</code></pre>
+</div>
+
+<p>Running this extraction on the pixel data from <code>thomas.tsc</code> produces the complete flag in a single pass, with no additional processing required. The flag is not fragmented, obfuscated, or encrypted beyond the channel-encoding scheme &mdash; it is embedded as plaintext ASCII, pixel by pixel, in the color channels of the speckle pixels.</p>
+
+<div class="callout callout-success">
+  <div class="callout-title">Flag</div>
+  <p><code>tjctf{c0ngr4ts_u_s0lv3d_my_f1st_CTF_chall!_btw_1_l1ke_b1rds}</code></p>
+</div>
+
+<div class="callout callout-info">
+  <div class="callout-title">Info &mdash; &ldquo;btw_1_l1ke_b1rds&rdquo;</div>
+  <p>The tail of the flag &mdash; <code>btw_1_l1ke_b1rds</code> (&ldquo;by the way, I like birds&rdquo;) &mdash; is a self-referential nod to the duck image. The challenge author is telling you that the duck was not just decorative: it was the carrier for the hidden data all along. Birds, speckles, pixels &mdash; everything connects.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="exploit-code">Exploit Code</h2>
+
+<p>The following script implements the complete end-to-end solve: parsing the custom .tsc header, extracting the raw RGBA payload, classifying pixels by channel delta, and decoding the multi-channel steganography. It uses only the Python standard library (<code>struct</code> for binary parsing) with no external dependencies.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python">#!/usr/bin/env python3
+"""
+TJCTF 2026 - Thomas Schools of China
+Custom container parsing + multi-channel pixel steganography
+Author: QA210
+"""
+
 import struct
 
-def parse_tsc_container(file_path):
-    """Phân tích cấu trúc Custom Container .tsc"""
-    with open(file_path, "rb") as f:
-        blob = f.read()
 
-    # Trích xuất header theo Static Offset
-    magic = blob[0:4]
-    version = struct.unpack('<I', blob[4:8])[0]
-    width = struct.unpack('<I', blob[8:12])[0]
-    height = struct.unpack('<H', blob[12:14])[0]
-    fmt_spec = blob[14:17]
-    
-    # Trích xuất khối Raw RGBA
-    rgba_offset = 17 
-    expected_size = width * height * 4
-    pixel_data = blob[rgba_offset:rgba_offset + expected_size]
-    
-    print(f"[*] TSC Header: W={width}, H={height}, Fmt={fmt_spec}")
-    return width, height, pixel_data
+def dissect_tsc_archive(archive_path):
+    """
+    Parse the proprietary .tsc binary container format.
+    Extracts header metadata and the raw RGBA pixel payload
+    from static offsets identified via hex analysis.
+    """
+    with open(archive_path, "rb") as handle:
+        blob = handle.read()
 
-def extract_multichannel_flag(width, height, pixel_data, threshold=5):
-    """Trích xuất Multi-channel Stego dựa trên RGBA Threshold"""
-    flag_chars = []
-    
-    # Duyệt qua từng pixel (4 bytes/pixel)
-    for i in range(0, len(pixel_data), 4):
-        r, g, b, a = pixel_data[i], pixel_data[i+1], pixel_data[i+2], pixel_data[i+3]
-        
-        # Tính độ chênh lệch cực đại của kênh màu
-        color_delta = max(r, g, b) - min(r, g, b)
-        
-        # Phân loại Pixel
-        if color_delta >= threshold:
-            # Pixel Dữ liệu: R, G, B là các ký tự ASCII
-            flag_chars.append(chr(r))
-            flag_chars.append(chr(g))
-            flag_chars.append(chr(b))
-            
-    return "".join(flag_chars)
+    # Header fields at fixed offsets
+    signature  = blob[0:4]                              # Magic: TCSF
+    revision   = struct.unpack('&lt;I', blob[4:8])[0]      # Version
+    frame_w    = struct.unpack('&lt;I', blob[8:12])[0]     # Width  (60)
+    frame_h    = struct.unpack('&lt;H', blob[12:14])[0]    # Height (61)
+    codec_tag  = blob[14:17]                            # Format: TGM
 
-def main():
-    tsc_file = "thomas.tsc"
-    
-    # Bước 1: Parse Binary Structure
-    w, h, data = parse_tsc_container(tsc_file)
-    
-    # Bước 2: Pixel Logic Filtering & Multi-channel Extraction
-    print("[*] Applying Threshold Filter and Extracting Channels...")
-    flag = extract_multichannel_flag(w, h, data, threshold=5)
-    
-    print(f"[+] Decoded Flag: {flag}")
+    # Validate expected payload size
+    rgba_head = 17  # 0x11
+    expected  = frame_w * frame_h * 4
+    rgba_blob = blob[rgba_head:rgba_head + expected]
 
-if __name__ == "__main__":
-    main()</div>`
-      },
-      en: {
-        help: `<span class="info">[ WRITEUP NAVIGATION ]</span>
-<span class="cmd">intro</span>       : Challenge Overview & Hidden in Pixels
-<span class="cmd">container</span>   : Custom Container Reverse Engineering (.tsc)
-<span class="cmd">pixellogic</span>  : RGBA Threshold Analysis Logic
-<span class="cmd">multichannel</span>: Multi-channel Steganography Extraction
-<span class="cmd">code</span>        : Exploit Source Code (Python Framework)
-<span class="cmd">clear</span>       : Clear Terminal Screen`,
-        intro: `<span class="info">[ OVERVIEW: THOMAS SCHOOLS OF CHINA ]</span>
-<span class="cmd">Category:</span> Forensics / Custom Format & Pixel Cryptanalysis
-<span class="cmd">Flag:</span> <span class="success">tjctf{c0ngr4ts_u_s0lv3d_my_f1st_CTF_chall!_btw_1_l1ke_b1rds}</span>
+    # Sanity check: file must be exactly header + pixel data
+    if len(rgba_blob) != expected:
+        raise ValueError(
+            f"Pixel data size mismatch: got {len(rgba_blob)} bytes, "
+            f"expected {expected} ({frame_w}x{frame_h}x4)"
+        )
 
-<span class="warning">Description:</span> An obscure image format in the style of "Thomas Schools of China". On the surface, a 60x61 pastel-green duck, but the flag is hidden in subtle colored "speckles".
+    print(f"[*] Signature : {signature}")
+    print(f"[*] Revision  : {revision}")
+    print(f"[*] Frame     : {frame_w} x {frame_h}")
+    print(f"[*] Codec     : {codec_tag}")
+    print(f"[*] RGBA size : {len(rgba_blob)} bytes (expected {expected})")
 
-<span class="cmd">Objective:</span> Analyze the custom container structure, separate data-carrying pixels from background noise, and extract the hidden text in the disagreement of RGB channels.`,
-        container: `<span class="info">[ CUSTOM CONTAINER REVERSE ENGINEERING (.tsc) ]</span>
-The file is not a standard PNG/JPG. Using hexdump, we identify a Custom Header:
-<div class="code-block">Offset 0x00: 4 bytes - Magic Number (File Signature)
-Offset 0x04: 4 bytes - Version Number
-Offset 0x08: 4 bytes - Image Width (60)
-Offset 0x0C: 2 bytes - Image Height (61)
-Offset 0x0E: 3 bytes - Format Specifier
-Offset 0x11: N bytes - Raw RGBA Pixel Data</div>
+    return frame_w, frame_h, rgba_blob
 
-<span class="cmd">Firmware Analyst Mindset:</span> Static offset architecture. Data size must exactly equal Width * Height * 4 bytes (RGBA). By calculation: 60 * 61 * 4 = 14640 bytes. We precisely slice the blob from offset 0x11 onwards to reconstruct the pixel matrix.`,
-        pixellogic: `<span class="info">[ RGBA THRESHOLD ANALYSIS LOGIC ]</span>
-When rendered, the image is a uniform pastel green. But at max zoom, there are "speckle" pixels with slight color variations.
 
-<span class="warning">Pixel Classification Mechanism:</span>
-- <span class="cmd">Background Pixel (Grey/Body):</span> Color channels are nearly equal. Delta is extremely low. Definition: <span class="error">max(R,G,B) - min(R,G,B) < 5</span>. This is noise, SKIP.
-- <span class="success">Data Pixel (Colored Speckles):</span> Color channels "disagree". Delta is greater than or equal to 5. Definition: <span class="success">max(R,G,B) - min(R,G,B) >= 5</span>. This contains flag data!</div>
-Threshold = 5 is the golden number to separate signal (data) from noise (background).`,
-        multichannel: `<span class="info">[ MULTI-CHANNEL STEGANOGRAPHY EXTRACTION ]</span>
-For data pixels satisfying delta >= 5, each R, G, B channel independently represents a printable ASCII character.
+def harvest_speckle_text(rgba_bytes, spread_cutoff=5):
+    """
+    Scan the RGBA pixel buffer and decode multi-channel steganography.
+    A pixel is classified as 'data' when its channel spread
+    (max - min of R, G, B) meets or exceeds the cutoff threshold.
+    Each data pixel yields three printable-ASCII characters (R, G, B).
+    The Alpha byte is always ignored.
+    """
+    decoded_chars = []
 
-Meaning 1 speckle pixel = <span class="success">3 bytes of data</span> (R + G + B).
-The Alpha channel (A) is ignored as it only controls transparency.
+    for cursor in range(0, len(rgba_bytes), 4):
+        red   = rgba_bytes[cursor]
+        green = rgba_bytes[cursor + 1]
+        blue  = rgba_bytes[cursor + 2]
+        # alpha = rgba_bytes[cursor + 3]  # Not used for data
 
-<span class="cmd">Concatenation Process:</span>
-Iterate through the image matrix left-to-right, top-to-bottom:
-1. If Background pixel (delta < 5) -> Skip.
-2. If Data pixel (delta >= 5) -> Read chr(R) + chr(G) + chr(B), append to result string.
-The result is a long string of ASCII characters forming the complete flag!`,
-        code: `<span class="info">[ EXPLOIT SOURCE CODE ]</span>
-<div class="code-block">#!/usr/bin/env python3
-import struct
+        channel_spread = max(red, green, blue) - min(red, green, blue)
 
-def parse_tsc_container(file_path):
-    """Parses the Custom Container .tsc structure"""
-    with open(file_path, "rb") as f:
-        blob = f.read()
+        if channel_spread >= spread_cutoff:
+            decoded_chars.append(chr(red))
+            decoded_chars.append(chr(green))
+            decoded_chars.append(chr(blue))
 
-    # Extract header via Static Offsets
-    magic = blob[0:4]
-    version = struct.unpack('<I', blob[4:8])[0]
-    width = struct.unpack('<I', blob[8:12])[0]
-    height = struct.unpack('<H', blob[12:14])[0]
-    fmt_spec = blob[14:17]
-    
-    # Extract Raw RGBA block
-    rgba_offset = 17 
-    expected_size = width * height * 4
-    pixel_data = blob[rgba_offset:rgba_offset + expected_size]
-    
-    print(f"[*] TSC Header: W={width}, H={height}, Fmt={fmt_spec}")
-    return width, height, pixel_data
+    return "".join(decoded_chars)
 
-def extract_multichannel_flag(width, height, pixel_data, threshold=5):
-    """Extracts Multi-channel Stego based on RGBA Threshold"""
-    flag_chars = []
-    
-    # Iterate through each pixel (4 bytes/pixel)
-    for i in range(0, len(pixel_data), 4):
-        r, g, b, a = pixel_data[i], pixel_data[i+1], pixel_data[i+2], pixel_data[i+3]
-        
-        # Calculate maximum channel delta
-        color_delta = max(r, g, b) - min(r, g, b)
-        
-        # Classify Pixel
-        if color_delta >= threshold:
-            # Data Pixel: R, G, B are ASCII characters
-            flag_chars.append(chr(r))
-            flag_chars.append(chr(g))
-            flag_chars.append(chr(b))
-            
-    return "".join(flag_chars)
 
 def main():
-    tsc_file = "thomas.tsc"
-    
-    # Step 1: Parse Binary Structure
-    w, h, data = parse_tsc_container(tsc_file)
-    
-    # Step 2: Pixel Logic Filtering & Multi-channel Extraction
-    print("[*] Applying Threshold Filter and Extracting Channels...")
-    flag = extract_multichannel_flag(w, h, data, threshold=5)
-    
-    print(f"[+] Decoded Flag: {flag}")
+    tsc_path = "thomas.tsc"
+
+    # Phase 1: Dissect the custom binary container
+    width, height, rgba_payload = dissect_tsc_archive(tsc_path)
+
+    # Phase 2: Apply channel-delta threshold and decode
+    print("\n[*] Scanning pixel matrix for data speckles...")
+    hidden_message = harvest_speckle_text(rgba_payload, spread_cutoff=5)
+
+    print(f"[+] Decoded message: {hidden_message}")
+
 
 if __name__ == "__main__":
-    main()</div>`
-      }
-    };
+    main()</code></pre>
+</div>
 
-    function toggleLang() {
-      currentLang = currentLang === 'vi' ? 'en' : 'vi';
-      const btn = document.getElementById('lang-btn');
-      btn.textContent = currentLang === 'vi' ? 'Switch to English' : 'Chuyển sang Tiếng Việt';
-      handleCommand('clear');
-      handleCommand('help');
-      playAudio('https://www.soundjay.com/buttons/button-1.mp3', 0.3);
+<h3 id="running-exploit">Running the Exploit</h3>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ python3 thomas_solve.py
+[*] Signature : b'TCSF'
+[*] Revision  : 1
+[*] Frame     : 60 x 61
+[*] Codec     : b'TGM'
+[*] RGBA size : 14640 bytes (expected 14640)
+
+[*] Scanning pixel matrix for data speckles...
+[+] Decoded message: tjctf{c0ngr4ts_u_s0lv3d_my_f1st_CTF_chall!_btw_1_l1ke_b1rds}</code></pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="visual-reconstruction">Visual Reconstruction (Optional)</h2>
+
+<p>For verification purposes, it can be helpful to reconstruct the pixel data as a standard PNG image and visually identify the speckle pixels. The following snippet converts the raw RGBA buffer into a PIL Image object, making it easy to zoom in and confirm the data pixel locations:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python">from PIL import Image
+import numpy as np
+
+# Reconstruct RGBA array -> PIL Image
+frame_w, frame_h, rgba_bytes = dissect_tsc_archive("thomas.tsc")
+
+# np.frombuffer on bytes returns a read-only array; .copy() makes it writable
+pixel_array = np.frombuffer(rgba_bytes, dtype=np.uint8).reshape((frame_h, frame_w, 4)).copy()
+
+reconstructed = Image.fromarray(pixel_array, mode="RGBA")
+reconstructed.save("thomas_reconstructed.png")
+print("[+] Saved thomas_reconstructed.png")
+
+# Create a highlight mask: mark data pixels in red, background in black
+mask = np.zeros((frame_h, frame_w, 3), dtype=np.uint8)
+for y in range(frame_h):
+    for x in range(frame_w):
+        r, g, b, a = pixel_array[y, x]
+        if max(r, g, b) - min(r, g, b) >= 5:
+            mask[y, x] = [255, 0, 0]  # Data pixel = red dot
+
+Image.fromarray(mask).save("thomas_speckle_map.png")
+print("[+] Saved thomas_speckle_map.png (data pixels highlighted)")</code></pre>
+</div>
+
+<p>The speckle map image renders each data pixel as a single red dot against a black background, producing a sparse scatter plot that visually confirms the distribution of hidden data across the image. The dots are not randomly scattered &mdash; they follow the raster order of the pixel matrix, appearing in the sequence needed to spell out the flag character by character.</p>
+
+<div class="callout callout-hint">
+  <div class="callout-title">Hint &mdash; Threshold Sensitivity</div>
+  <p>The threshold of 5 is robust for this challenge, but what if a different challenge uses a subtler encoding? You can determine the optimal threshold empirically by plotting a histogram of channel deltas across all pixels. The background pixels form a tight cluster near delta=0-2, while data pixels form a separate cluster at higher deltas. The &ldquo;valley&rdquo; between the two clusters is the natural threshold. If the clusters overlap significantly, the encoding is more ambiguous and may require additional heuristics (e.g., checking if decoded characters fall in the printable ASCII range).</p>
+</div>
+
+</main>
+</div>
+
+<footer class="site-footer">
+  <p>&copy; 2026 QA210 &mdash; TJCTF 2026 Writeups &nbsp;&middot;&nbsp; Thomas Schools of China &mdash; Forensics / Pixel Cryptanalysis</p>
+</footer>
+
+<script>
+// ── Three.js Background ──────────────────────
+(function(){
+  const c = document.getElementById('three-bg');
+  const r = new THREE.WebGLRenderer({canvas: c, alpha: true, antialias: true});
+  r.setSize(window.innerWidth, window.innerHeight);
+  r.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  const s   = new THREE.Scene();
+  const cam = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+  cam.position.z = 50;
+
+  // Octahedron wireframe
+  const geo  = new THREE.OctahedronGeometry(22, 0);
+  const mat  = new THREE.MeshBasicMaterial({color: 0x14b8a6, wireframe: true, transparent: true, opacity: 0.18});
+  const mesh = new THREE.Mesh(geo, mat);
+  s.add(mesh);
+
+  // Floating particles
+  const pts = [];
+  for (let i = 0; i < 400; i++) {
+    pts.push(new THREE.Vector3(
+      (Math.random() - 0.5) * 140,
+      (Math.random() - 0.5) * 140,
+      (Math.random() - 0.5) * 140
+    ));
+  }
+  const pgeo      = new THREE.BufferGeometry().setFromPoints(pts);
+  const pmat      = new THREE.PointsMaterial({color: 0x5eead4, size: 0.35, transparent: true, opacity: 0.4});
+  const particles = new THREE.Points(pgeo, pmat);
+  s.add(particles);
+
+  function animate() {
+    requestAnimationFrame(animate);
+    mesh.rotation.x += 0.0015;
+    mesh.rotation.y += 0.002;
+    mesh.rotation.z += 0.0008;
+    particles.rotation.y += 0.0004;
+    r.render(s, cam);
+  }
+  animate();
+
+  window.addEventListener('resize', () => {
+    cam.aspect = window.innerWidth / window.innerHeight;
+    cam.updateProjectionMatrix();
+    r.setSize(window.innerWidth, window.innerHeight);
+  });
+})();
+
+// ── Copy Button ──────────────────────────────
+function copyCode(btn) {
+  const code = btn.closest('.code-block-wrapper').querySelector('code');
+  navigator.clipboard.writeText(code.textContent).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ── Build TOC ────────────────────────────────
+function buildToc() {
+  const headings = document.querySelectorAll('.main-content h2, .main-content h3');
+  const tocD = document.getElementById('tocDesktop');
+  const tocM = document.getElementById('tocMobile');
+  let html = '';
+
+  headings.forEach(h => {
+    // BUG FIX 3: generate id from trimmed text to avoid leading/trailing whitespace in ids
+    if (!h.id) {
+      h.id = h.textContent.trim()
+               .toLowerCase()
+               .replace(/[^a-z0-9]+/g, '-')
+               .replace(/(^-|-$)/g, '');
     }
+    const cls  = h.tagName === 'H3' ? 'toc-h3' : '';
+    // BUG FIX 3 (cont): trim textContent before inserting into TOC label
+    const label = h.textContent.trim();
+    html += `<li><a href="#${h.id}" class="${cls}" data-target="${h.id}">${label}</a></li>`;
+  });
 
-    const cmds = {
-      help: () => L[currentLang].help,
-      intro: () => L[currentLang].intro,
-      container: () => L[currentLang].container,
-      pixellogic: () => L[currentLang].pixellogic,
-      multichannel: () => L[currentLang].multichannel,
-      code: () => L[currentLang].code,
-      clear: () => { output.innerHTML = ''; return ''; },
-      banner: () => `<span class="info">
- _____ _   _ _____   _____           _        ____  _       _ _        _   ____            _           
-|_   _| | | | ____| |_   _|__   ___ | |___   / ___|| |_ ___| | | __ _ | | / ___|__ _ _ __ __| | ___ _ __ 
-  | | | |_| |  _|     | |/ _ \\ / _ \\| / __|  \\___ \\| __/ _ \\ | |/ _\` || | | |   / _\` | '__/ _\` |/ _ \\ '__|
-  | | |  _  | |___    | | (_) | (_) | \\__ \\   ___) | ||  __/ | | (_| || | | |__| (_| | | | (_| |  __/ |   
-  |_| |_| |_|_____|   |_|\\___/ \\___/|_|___/  |____/ \\__\\___|_|_|\\__,_||_|  \\____\\__,_|_|  \\__,_|\\___|_|   
-                                                                                                          </span>`
-    };
+  tocD.innerHTML = html;
+  tocM.innerHTML = html;
+}
+buildToc();
 
-    function handleCommand(cmd) {
-      const c = cmd.trim().toLowerCase();
-      if(!c) return;
-      print(`<span class="cmd">root@tjctf</span>:<span class="arg">~/forensics</span>$ ${cmd}`);
-      playAudio('https://www.soundjay.com/buttons/button-5.mp3', 0.15);
-      
-      if (cmds[c]) {
-        const res = cmds[c]();
-        if (res) print(res);
+// ── Active Section Tracking ──────────────────
+// BUG FIX 4: Previous implementation removed ALL active classes inside the
+// IntersectionObserver callback for every entry, then re-added just one.
+// When the browser batches multiple entries simultaneously this caused a
+// race: whichever entry was processed last "won", discarding the others.
+// Fix: maintain a Set of currently-visible heading ids and always highlight
+// the topmost visible heading (lowest index in DOM order).
+(function trackActiveSection() {
+  const allHeadings = Array.from(document.querySelectorAll('.main-content h2, .main-content h3'));
+  const visibleIds  = new Set();
+
+  function applyActive() {
+    // Find the topmost visible heading in DOM order
+    let activeId = null;
+    for (const h of allHeadings) {
+      if (visibleIds.has(h.id)) { activeId = h.id; break; }
+    }
+    // Update both desktop and mobile TOC links
+    document.querySelectorAll('#tocDesktop a, #tocMobile a').forEach(link => {
+      if (link.dataset.target === activeId) {
+        link.classList.add('active');
       } else {
-        print(`<span class="error">Command not found: ${c}. Type 'help' for navigation.</span>`);
+        link.classList.remove('active');
       }
-      input.value = '';
-    }
-
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter') { e.preventDefault(); handleCommand(input.value); }
-      else playAudio('https://www.soundjay.com/buttons/button-8.mp3', 0.02);
     });
+  }
 
-    tBody.addEventListener('click', () => input.focus());
-
-    document.getElementById('start-button').addEventListener('click', () => {
-      userInteracted = true;
-      const ws = document.getElementById('welcome-screen');
-      ws.classList.add('hidden');
-      setTimeout(() => { handleCommand('banner'); handleCommand('help'); input.focus(); }, 800);
-      playAudio('https://www.soundjay.com/buttons/button-10.mp3', 0.4);
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        visibleIds.add(entry.target.id);
+      } else {
+        visibleIds.delete(entry.target.id);
+      }
     });
-  </script>
+    applyActive();
+  }, { rootMargin: '-80px 0px -70% 0px', threshold: 0 });
+
+  allHeadings.forEach(h => observer.observe(h));
+})();
+
+// ── Mobile TOC Toggle ────────────────────────
+function toggleMobileToc() {
+  document.getElementById('tocOverlay').classList.toggle('show');
+  document.getElementById('tocMobilePanel').classList.toggle('show');
+}
+document.getElementById('tocMobile').addEventListener('click', e => {
+  if (e.target.tagName === 'A') toggleMobileToc();
+});
+</script>
 </body>
 </html>
