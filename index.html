@@ -35,7 +35,6 @@ a{color:var(--accent);text-decoration:none;transition:all .2s}a:hover{color:var(
 img{max-width:100%;display:block}
 ::selection{background:rgba(59,130,246,0.3);color:var(--text0)}
 
-/* ═══ THREE.JS ═══ */
 #bg-canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;pointer-events:none;opacity:.15}
 
 /* ═══ HEADER ═══ */
@@ -83,16 +82,45 @@ img{max-width:100%;display:block}
 .stat-item .stat-lbl{font-size:.68rem;color:var(--text4);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-top:3px}
 .stat-item.highlight .stat-val{background:var(--gradient-accent);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 
+/* ═══ INFO STRIP (About + Tags + Techniques at top) ═══ */
+.info-strip{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:1.25rem;padding:2rem 0 2.25rem;border-bottom:1px solid var(--border)}
+.info-card{background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.4rem;transition:border-color .2s}
+.info-card:hover{border-color:var(--border-light)}
+.info-card .ic-title{font-size:.62rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text4);font-weight:700;margin-bottom:1rem;display:flex;align-items:center;gap:7px}
+.info-card .ic-title i{font-size:.78rem;color:var(--accent)}
+
+/* About inside info-strip */
+.about-inline{display:flex;align-items:center;gap:1rem}
+.about-inline .avatar{width:52px;height:52px;border-radius:50%;border:2px solid var(--border);object-fit:cover;flex-shrink:0;transition:border-color .3s}
+.about-inline .avatar:hover{border-color:var(--accent)}
+.about-inline .about-meta .author-name{font-family:'Space Grotesk',sans-serif;font-size:.95rem;font-weight:700;color:var(--text0)}
+.about-inline .about-meta .author-role{font-size:.7rem;color:var(--text3);margin-top:1px}
+.about-inline .about-meta .author-links{display:flex;gap:.6rem;margin-top:4px}
+.about-inline .about-meta .author-links a{color:var(--text4);font-size:.9rem;transition:all .2s}
+.about-inline .about-meta .author-links a:hover{color:var(--accent)}
+.about-bio{font-size:.76rem;color:var(--text2);line-height:1.7;margin-top:.75rem}
+.about-quote{font-size:.7rem;color:var(--text3);font-style:italic;line-height:1.6;padding:.5rem .85rem;border-left:2px solid var(--accent);margin-top:.6rem;background:var(--accent-dim);border-radius:0 6px 6px 0}
+
+/* Tag cloud */
+.tag-cloud{display:flex;flex-wrap:wrap;gap:.35rem}
+.tag-cloud .tc-tag{font-size:.66rem;padding:3px 10px;border-radius:6px;background:var(--bg2);color:var(--text2);border:1px solid var(--border);cursor:pointer;transition:all .2s;font-weight:500}
+.tag-cloud .tc-tag:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+.tc-tag.hot{background:var(--red-dim);border-color:rgba(239,68,68,0.2);color:var(--red)}
+
+/* Technique list */
+.technique-list{display:flex;flex-direction:column;gap:.45rem}
+.technique-item{display:flex;align-items:center;gap:.6rem;padding:.35rem 0;font-size:.76rem;color:var(--text2);transition:color .2s}
+.technique-item i{color:var(--accent);font-size:.6rem;width:14px;text-align:center}
+.technique-item:hover{color:var(--text0)}
+.technique-item .tc{margin-left:auto;font-size:.6rem;color:var(--text4);font-family:'JetBrains Mono',monospace}
+
 /* ═══ FILTER BAR ═══ */
-.filter-bar{padding:1.75rem 0 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+.filter-bar{padding:1.75rem 0 1.25rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
 .filter-bar .filter-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text4);font-weight:700;margin-right:.25rem}
 .filter-btn{padding:6px 16px;border-radius:8px;border:1px solid var(--border);background:var(--bg1);color:var(--text2);font-size:.78rem;font-weight:500;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
 .filter-btn:hover{border-color:var(--border-light);color:var(--text1);background:var(--bg2)}
 .filter-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;box-shadow:0 2px 12px rgba(59,130,246,0.3)}
 .filter-btn .count{margin-left:5px;opacity:.5;font-size:.68rem}
-
-/* ═══ CONTENT GRID ═══ */
-.content-grid{padding:2.5rem 0 4rem;display:grid;grid-template-columns:1fr 290px;gap:3rem}
 
 /* ═══ POST CARDS ═══ */
 .posts-section .section-heading{font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text4);font-weight:700;margin-bottom:1.5rem;display:flex;align-items:center;gap:.75rem}
@@ -103,6 +131,7 @@ img{max-width:100%;display:block}
 .post-card .platform-badge{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:3px 9px;border-radius:5px;white-space:nowrap}
 .platform-badge.htb{background:var(--red-dim);color:var(--red)}
 .platform-badge.tjctf{background:var(--green-dim);color:var(--green)}
+.platform-badge.thm{background:var(--teal);color:#fff;background:rgba(20,184,166,0.15);color:var(--teal)}
 .platform-badge.prolab{background:var(--orange-dim);color:var(--orange)}
 .platform-badge.endgame{background:var(--purple-dim);color:var(--purple)}
 .platform-badge.sherlock{background:var(--cyan-dim);color:var(--cyan)}
@@ -120,41 +149,9 @@ img{max-width:100%;display:block}
 .post-card .tag{font-size:.62rem;padding:2px 9px;border-radius:5px;background:var(--bg3);color:var(--text3);border:1px solid var(--border);font-weight:500;transition:all .2s;letter-spacing:.02em}
 .post-card:hover .tag{border-color:var(--border-light);color:var(--text2)}
 
-/* ═══ PINNED POST ═══ */
+/* PINNED */
 .post-card.pinned{border-color:rgba(249,115,22,0.25);background:linear-gradient(135deg,rgba(249,115,22,0.04),var(--bg1))}
 .post-card.pinned::after{content:'Pinned';position:absolute;top:0;right:1.6rem;background:var(--gradient-warm);color:#fff;font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:3px 12px 5px;border-radius:0 0 6px 6px}
-
-/* ═══ SIDEBAR ═══ */
-.sidebar{display:flex;flex-direction:column;gap:1.75rem}
-.sidebar-card{background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:1.35rem 1.5rem;transition:border-color .2s}
-.sidebar-card:hover{border-color:var(--border-light)}
-.sidebar-card .sb-title{font-size:.62rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text4);font-weight:700;margin-bottom:1.1rem;display:flex;align-items:center;gap:7px}
-.sidebar-card .sb-title i{font-size:.78rem;color:var(--accent)}
-
-/* Author card */
-.author-card{display:flex;flex-direction:column;align-items:center;text-align:center;gap:.8rem}
-.author-card .avatar{width:80px;height:80px;border-radius:50%;border:2px solid var(--border);object-fit:cover;transition:border-color .3s}
-.author-card .avatar:hover{border-color:var(--accent)}
-.author-card .author-name{font-family:'Space Grotesk',sans-serif;font-size:1.1rem;font-weight:700;color:var(--text0)}
-.author-card .author-role{font-size:.75rem;color:var(--text3);margin-top:-.3rem}
-.author-card .author-links{display:flex;gap:.8rem;margin-top:.15rem}
-.author-card .author-links a{color:var(--text4);font-size:1.05rem;transition:all .2s;padding:4px}
-.author-card .author-bio{font-size:.78rem;color:var(--text2);line-height:1.7;text-align:center}
-.author-card .author-quote{font-size:.72rem;color:var(--text3);font-style:italic;text-align:center;line-height:1.7;padding:.75rem 1rem;border-left:2px solid var(--accent);margin-top:.3rem;opacity:.9;background:var(--accent-dim);border-radius:0 8px 8px 0}
-.author-card .author-links a:hover{color:var(--accent);transform:translateY(-2px)}
-
-/* Tag cloud */
-.tag-cloud{display:flex;flex-wrap:wrap;gap:.4rem}
-.tag-cloud .tc-tag{font-size:.68rem;padding:4px 11px;border-radius:6px;background:var(--bg2);color:var(--text2);border:1px solid var(--border);cursor:pointer;transition:all .2s;font-weight:500}
-.tag-cloud .tc-tag:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
-.tc-tag.hot{background:var(--red-dim);border-color:rgba(239,68,68,0.2);color:var(--red)}
-
-/* Technique list */
-.technique-list{display:flex;flex-direction:column;gap:.55rem}
-.technique-item{display:flex;align-items:center;gap:.7rem;padding:.45rem 0;font-size:.8rem;color:var(--text2);transition:color .2s}
-.technique-item i{color:var(--accent);font-size:.65rem;width:16px;text-align:center}
-.technique-item:hover{color:var(--text0)}
-.technique-item .tc{margin-left:auto;font-size:.62rem;color:var(--text4);font-family:'JetBrains Mono',monospace}
 
 /* ═══ FOOTER ═══ */
 .site-footer{border-top:1px solid var(--border);padding:2.5rem 2.5rem;position:relative;z-index:1}
@@ -168,8 +165,7 @@ img{max-width:100%;display:block}
 /* ═══ RESPONSIVE ═══ */
 @media(max-width:1024px){
   .hero-section{grid-template-columns:1fr;gap:2rem}
-  .content-grid{grid-template-columns:1fr}
-  .sidebar{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+  .info-strip{grid-template-columns:1fr}
 }
 @media(max-width:768px){
   .site-header{padding:0 1rem}
@@ -179,7 +175,6 @@ img{max-width:100%;display:block}
   .page-body{padding:0 1rem}
   .hero-text h1{font-size:1.85rem}
   .hero-card{order:-1}
-  .sidebar{grid-template-columns:1fr}
   .filter-bar{overflow-x:auto;flex-wrap:nowrap;padding-bottom:.5rem}
   .footer-inner{flex-direction:column;text-align:center}
 }
@@ -187,9 +182,10 @@ img{max-width:100%;display:block}
   .hero-text h1{font-size:1.5rem}
   .stat-grid{grid-template-columns:1fr 1fr}
   .post-card{padding:1rem 1.25rem}
+  .about-inline{flex-direction:column;text-align:center}
 }
 
-/* ═══ MOBILE NAV OVERLAY ═══ */
+/* ═══ MOBILE NAV ═══ */
 .mobile-nav-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;backdrop-filter:blur(4px)}
 .mobile-nav-overlay.show{display:block}
 .mobile-nav-panel{display:none;position:fixed;right:0;top:0;bottom:0;width:300px;background:var(--bg1);border-left:1px solid var(--border);z-index:201;padding:1.5rem;overflow-y:auto}
@@ -211,10 +207,9 @@ img{max-width:100%;display:block}
   </a>
   <nav class="nav-main">
     <a href="/" class="active">Home</a>
-    <a href="#writeups">Writeups</a>
-    <a href="#htb-section">Hack The Box</a>
-    <a href="#tjctf-section">TJCTF</a>
-    <a href="#about-section">About</a>
+    <a href="/htb/">Hack The Box</a>
+    <a href="/tjctf/">TJCTF</a>
+    <a href="/thm/">TryHackMe</a>
   </nav>
   <div class="nav-right">
     <div class="search-box">
@@ -233,10 +228,9 @@ img{max-width:100%;display:block}
   <button class="mnp-close" onclick="toggleMobileNav()"><i class="bi bi-x-lg"></i></button>
   <nav>
     <a href="/">Home</a>
-    <a href="#writeups">Writeups</a>
-    <a href="#htb-section">Hack The Box</a>
-    <a href="#tjctf-section">TJCTF</a>
-    <a href="#about-section">About</a>
+    <a href="/htb/">Hack The Box</a>
+    <a href="/tjctf/">TJCTF</a>
+    <a href="/thm/">TryHackMe</a>
     <a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
     <a href="https://w4llz.me/" target="_blank">W4LLZ Team</a>
   </nav>
@@ -263,7 +257,7 @@ img{max-width:100%;display:block}
     <div class="card-label">Quick Stats</div>
     <div class="stat-grid">
       <div class="stat-item highlight">
-        <div class="stat-val">20+</div>
+        <div class="stat-val">26</div>
         <div class="stat-lbl">Writeups</div>
       </div>
       <div class="stat-item">
@@ -275,27 +269,89 @@ img{max-width:100%;display:block}
         <div class="stat-lbl">Pro Labs</div>
       </div>
       <div class="stat-item">
-        <div class="stat-val">11</div>
+        <div class="stat-val">13</div>
         <div class="stat-lbl">TJCTF 2026</div>
       </div>
     </div>
   </div>
 </section>
 
+<!-- ═══ INFO STRIP: About + Tags + Techniques ═══ -->
+<section class="info-strip">
+
+  <!-- About -->
+  <div class="info-card">
+    <div class="ic-title"><i class="bi bi-person-circle"></i> About</div>
+    <div class="about-inline">
+      <img src="https://files.catbox.moe/755fgv.png" alt="QA210" class="avatar">
+      <div class="about-meta">
+        <div class="author-name">QA210</div>
+        <div class="author-role">10th Grade &bull; Vietnam</div>
+        <div class="author-links">
+          <a href="https://github.com/Yuri08-QA210" target="_blank" title="GitHub"><i class="bi bi-github"></i></a>
+          <a href="https://w4llz.me/" target="_blank" title="W4LLZ"><i class="bi bi-people-fill"></i></a>
+        </div>
+      </div>
+    </div>
+    <p class="about-bio">High school student from Vietnam passionate about offensive security, binary exploitation, and Active Directory attacks. Member of <a href="https://w4llz.me/" target="_blank" style="color:var(--yellow);font-weight:600">W4LLZ</a> CTF team.</p>
+    <div class="about-quote">&ldquo;Nothing is secure, everything has bugs, and humans are the biggest vulnerability.&rdquo;</div>
+  </div>
+
+  <!-- Popular Tags -->
+  <div class="info-card">
+    <div class="ic-title"><i class="bi bi-tags"></i> Popular Tags</div>
+    <div class="tag-cloud">
+      <span class="tc-tag hot">Active Directory</span>
+      <span class="tc-tag hot">Kerberoast</span>
+      <span class="tc-tag hot">Pwn</span>
+      <span class="tc-tag">NTLM Relay</span>
+      <span class="tc-tag">Format String</span>
+      <span class="tc-tag">Docker</span>
+      <span class="tc-tag">Forensics</span>
+      <span class="tc-tag">XXE</span>
+      <span class="tc-tag">RSA</span>
+      <span class="tc-tag">Pivoting</span>
+      <span class="tc-tag">SeBackupPriv</span>
+      <span class="tc-tag">Linux</span>
+      <span class="tc-tag">Windows</span>
+      <span class="tc-tag">Stego</span>
+      <span class="tc-tag">Reverse</span>
+      <span class="tc-tag">Kernel</span>
+      <span class="tc-tag">Prompt Injection</span>
+      <span class="tc-tag">Zip Slip</span>
+      <span class="tc-tag">ELF</span>
+      <span class="tc-tag">Mach-O</span>
+    </div>
+  </div>
+
+  <!-- Key Techniques -->
+  <div class="info-card">
+    <div class="ic-title"><i class="bi bi-lightning-charge"></i> Key Techniques</div>
+    <div class="technique-list">
+      <div class="technique-item"><i class="bi bi-arrow-right"></i> AD Chain Attacks <span class="tc">4 posts</span></div>
+      <div class="technique-item"><i class="bi bi-arrow-right"></i> Kerberos Exploitation <span class="tc">3 posts</span></div>
+      <div class="technique-item"><i class="bi bi-arrow-right"></i> Binary Exploitation <span class="tc">3 posts</span></div>
+      <div class="technique-item"><i class="bi bi-arrow-right"></i> Container Escapes <span class="tc">2 posts</span></div>
+      <div class="technique-item"><i class="bi bi-arrow-right"></i> Cryptographic Attacks <span class="tc">2 posts</span></div>
+      <div class="technique-item"><i class="bi bi-arrow-right"></i> Network Pivoting <span class="tc">3 posts</span></div>
+      <div class="technique-item"><i class="bi bi-arrow-right"></i> Forensics & RE <span class="tc">6 posts</span></div>
+      <div class="technique-item"><i class="bi bi-arrow-right"></i> Web Exploitation <span class="tc">3 posts</span></div>
+    </div>
+  </div>
+
+</section>
+
 <!-- ═══ FILTER BAR ═══ -->
 <div class="filter-bar" id="writeups">
   <span class="filter-label">Filter:</span>
-  <button class="filter-btn active" data-filter="all" onclick="setFilter(this)">All<span class="count">21</span></button>
-  <button class="filter-btn" data-filter="htb" onclick="setFilter(this)">Hack The Box<span class="count">9</span></button>
+  <button class="filter-btn active" data-filter="all" onclick="setFilter(this)">All<span class="count">26</span></button>
+  <button class="filter-btn" data-filter="htb" onclick="setFilter(this)">Hack The Box<span class="count">6</span></button>
   <button class="filter-btn" data-filter="prolab" onclick="setFilter(this)">Pro Labs<span class="count">4</span></button>
-  <button class="filter-btn" data-filter="aptlab" onclick="setFilter(this)">APT Labs<span class="count">1</span></button>
-  <button class="filter-btn" data-filter="tjctf" onclick="setFilter(this)">TJCTF<span class="count">11</span></button>
-  <button class="filter-btn" data-filter="ad" onclick="setFilter(this)">AD<span class="count">4</span></button>
+  <button class="filter-btn" data-filter="tjctf" onclick="setFilter(this)">TJCTF<span class="count">13</span></button>
+  <button class="filter-btn" data-filter="thm" onclick="setFilter(this)">TryHackMe<span class="count">5</span></button>
+  <button class="filter-btn" data-filter="ad" onclick="setFilter(this)">AD<span class="count">5</span></button>
   <button class="filter-btn" data-filter="pwn" onclick="setFilter(this)">Pwn<span class="count">3</span></button>
 </div>
-
-<!-- ═══ CONTENT ═══ -->
-<div class="content-grid">
 
 <!-- ═══ POSTS ═══ -->
 <div class="posts-section">
@@ -343,14 +399,13 @@ img{max-width:100%;display:block}
     </div>
   </a>
 
-  <!-- APT LABS -->
   <a href="/htb/prolabs/aptlabs/" class="post-card" data-platform="aptlab" data-tags="apt-labs,red-team,ad,pivoting,credential-harvesting">
     <div class="post-top">
-      <span class="platform-badge aptlab">Pro Lab</span>
+      <span class="platform-badge aptlab">APT Lab</span>
       <span class="diff-badge insane">Insane</span>
       <span class="post-date">2026</span>
     </div>
-    <h3>HTB Pro Lab:APTLabs</h3>
+    <h3>HTB Pro Lab: APTLabs</h3>
     <p class="post-excerpt">Advanced Persistent Threat simulation environment. Realistic enterprise AD attack scenarios involving credential harvesting, lateral movement, C2 infrastructure, and full domain compromise across hardened networks.</p>
     <div class="post-tags">
       <span class="tag">APT</span><span class="tag">Red Team</span><span class="tag">AD</span><span class="tag">Pivoting</span><span class="tag">Credential Harvest</span>
@@ -358,7 +413,8 @@ img{max-width:100%;display:block}
   </a>
 
   <!-- INSANE BOXES -->
-  <div class="section-heading" id="insane-section" style="margin-top:.5rem">Hack The Box Insane</div>
+  <div class="section-heading" id="insane-section" style="margin-top:.5rem">Hack The Box — Insane Machines</div>
+
   <a href="/htb/insane/darkcorp/" class="post-card" data-platform="htb" data-tags="ad,ntlm-relay,gpo-abuse,windows,kerberos">
     <div class="post-top">
       <span class="platform-badge htb">HTB</span>
@@ -563,6 +619,17 @@ img{max-width:100%;display:block}
     <div class="post-tags"><span class="tag">Rev</span><span class="tag">ELF</span><span class="tag">Anti-Debug</span></div>
   </a>
 
+  <a href="/tjctf-2026/pwn/hunting-field/index.html" class="post-card" data-platform="tjctf" data-tags="pwn,buffer-underflow,linux">
+    <div class="post-top">
+      <span class="platform-badge tjctf">TJCTF</span>
+      <span class="diff-badge hard">Hard</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>Hunting Field</h3>
+    <p class="post-excerpt">Buffer underflow exploitation on a Linux binary. Unconventional memory corruption through negative indexing, hijacking execution flow via stack manipulation and GOT overwrite.</p>
+    <div class="post-tags"><span class="tag">Pwn</span><span class="tag">Buffer Underflow</span><span class="tag">Linux</span></div>
+  </a>
+
   <a href="/tjctf-2026/misc/glich/index.html" class="post-card" data-platform="tjctf" data-tags="misc,stego,image">
     <div class="post-top">
       <span class="platform-badge tjctf">TJCTF</span>
@@ -585,75 +652,31 @@ img{max-width:100%;display:block}
     <div class="post-tags"><span class="tag">Misc</span><span class="tag">AI</span><span class="tag">Prompt Injection</span></div>
   </a>
 
-  <a href="/tjctf-2026/pwn/hunting-field/index.html" class="post-card" data-platform="tjctf" data-tags="pwn,buffer-underflow,linux">
+  <!-- ═══ TRYHACKME ═══ -->
+  <div class="section-heading" id="thm-section" style="margin-top:.5rem">TryHackMe</div>
+
+  <a href="/thm/crocc-crew/" class="post-card" data-platform="thm" data-tags="ad,kerberoasting,constrained-delegation,secrets-dump,smb,ldap">
     <div class="post-top">
-      <span class="platform-badge tjctf">TJCTF</span>
+      <span class="platform-badge thm">TryHackMe</span>
       <span class="diff-badge hard">Hard</span>
       <span class="post-date">2026</span>
     </div>
-    <h3>Hunting Field</h3>
-    <p class="post-excerpt">Buffer underflow exploitation on a Linux binary. Unconventional memory corruption through negative indexing, hijacking execution flow via stack manipulation and GOT overwrite.</p>
-    <div class="post-tags"><span class="tag">Pwn</span><span class="tag">Buffer Underflow</span><span class="tag">Linux</span></div>
+    <h3>Crocc Crew</h3>
+    <p class="post-excerpt">Full Active Directory attack chain from web enumeration through SMB and LDAP enumeration, Kerberoasting, Constrained Delegation abuse, and Secrets Dump to achieve Domain Admin on a TryHackMe AD lab.</p>
+    <div class="post-tags"><span class="tag">AD</span><span class="tag">Kerberoasting</span><span class="tag">Constrained Delegation</span><span class="tag">Secrets Dump</span><span class="tag">SMB</span></div>
   </a>
 
-</div>
-
-<!-- ═══ SIDEBAR ═══ -->
-<aside class="sidebar">
-
-  <!-- About -->
-  <div class="sidebar-card">
-    <div class="sb-title"><i class="bi bi-person-circle"></i> About</div>
-    <div class="author-card">
-      <img src="https://files.catbox.moe/755fgv.png" alt="QA210" class="avatar">
-      <div class="author-name">QA210</div>
-      <div class="author-role">10th Grade &bull; Vietnam</div>
-      <div class="author-bio">A high school student from Vietnam passionate about offensive security, binary exploitation, and Active Directory attacks. Member of <a href="https://w4llz.me/" target="_blank" style="color:var(--yellow);font-weight:600">W4LLZ</a> CTF team.</div>
-      <div class="author-quote">&ldquo;Nothing is secure, everything has bugs, and humans are the biggest vulnerability.&rdquo;</div>
-      <div class="author-links">
-        <a href="https://github.com/Yuri08-QA210" target="_blank" title="GitHub"><i class="bi bi-github"></i></a>
-        <a href="https://w4llz.me/" target="_blank" title="W4LLZ"><i class="bi bi-people-fill"></i></a>
-      </div>
+  <a href="/thm/cct2019/" class="post-card" data-platform="thm" data-tags="forensics,rev,crypto,pcap">
+    <div class="post-top">
+      <span class="platform-badge thm">TryHackMe</span>
+      <span class="diff-badge medium">Medium</span>
+      <span class="post-date">2026</span>
     </div>
-  </div>
+    <h3>CCT 2019</h3>
+    <p class="post-excerpt">Cyber Competition Team 2019 challenges including Forensics, Reverse Engineering, PCAP analysis, and Cryptography. Multi-category CTF walkthrough with detailed analysis of each challenge.</p>
+    <div class="post-tags"><span class="tag">Forensics</span><span class="tag">Rev</span><span class="tag">Crypto</span><span class="tag">PCAP</span></div>
+  </a>
 
-  <!-- Tags -->
-  <div class="sidebar-card">
-    <div class="sb-title"><i class="bi bi-tags"></i> Popular Tags</div>
-    <div class="tag-cloud">
-      <span class="tc-tag hot">Active Directory</span>
-      <span class="tc-tag hot">Kerberoast</span>
-      <span class="tc-tag hot">Pwn</span>
-      <span class="tc-tag">NTLM Relay</span>
-      <span class="tc-tag">Format String</span>
-      <span class="tc-tag">Docker</span>
-      <span class="tc-tag">Forensics</span>
-      <span class="tc-tag">XXE</span>
-      <span class="tc-tag">RSA</span>
-      <span class="tc-tag">Pivoting</span>
-      <span class="tc-tag">SeBackupPriv</span>
-      <span class="tc-tag">Linux</span>
-      <span class="tc-tag">Windows</span>
-      <span class="tc-tag">Stego</span>
-      <span class="tc-tag">Reverse</span>
-      <span class="tc-tag">Kernel</span>
-    </div>
-  </div>
-
-  <!-- Techniques -->
-  <div class="sidebar-card">
-    <div class="sb-title"><i class="bi bi-lightning-charge"></i> Key Techniques</div>
-    <div class="technique-list">
-      <div class="technique-item"><i class="bi bi-arrow-right"></i> AD Chain Attacks <span class="tc">4 posts</span></div>
-      <div class="technique-item"><i class="bi bi-arrow-right"></i> Kerberos Exploitation <span class="tc">3 posts</span></div>
-      <div class="technique-item"><i class="bi bi-arrow-right"></i> Binary Exploitation <span class="tc">3 posts</span></div>
-      <div class="technique-item"><i class="bi bi-arrow-right"></i> Container Escapes <span class="tc">2 posts</span></div>
-      <div class="technique-item"><i class="bi bi-arrow-right"></i> Cryptographic Attacks <span class="tc">2 posts</span></div>
-      <div class="technique-item"><i class="bi bi-arrow-right"></i> Network Pivoting <span class="tc">3 posts</span></div>
-      <div class="technique-item"><i class="bi bi-arrow-right"></i> Forensics & RE <span class="tc">6 posts</span></div>
-    </div>
-  </div>
-</aside>
 </div>
 
 </div><!-- /page-body -->
@@ -664,6 +687,9 @@ img{max-width:100%;display:block}
     <div class="footer-left">&copy; 2026 <span>QA210</span> &mdash; Security Research & CTF Writeups</div>
     <div class="footer-links">
       <a href="/">Home</a>
+      <a href="/htb/">Hack The Box</a>
+      <a href="/tjctf/">TJCTF</a>
+      <a href="/thm/">TryHackMe</a>
       <a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
       <a href="https://w4llz.me/" target="_blank">W4LLZ</a>
     </div>
@@ -682,17 +708,14 @@ function setFilter(btn){
   document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   const f=btn.dataset.filter;
-  // Show/hide section headings based on visible cards
   document.querySelectorAll('.post-card').forEach(card=>{
     if(f==='all'){card.style.display='';return}
     const p=card.dataset.platform||'';
     const t=(card.dataset.tags||'').split(',');
     if(p===f||t.includes(f)){card.style.display=''}else{card.style.display='none'}
   });
-  // Show/hide section headings
   document.querySelectorAll('.section-heading').forEach(heading=>{
     if(f==='all'){heading.style.display='';return}
-    // Check if any visible cards follow this heading
     let el=heading.nextElementSibling;
     let hasVisible=false;
     while(el&&!el.classList.contains('section-heading')&&el.tagName!=='ASIDE'){
@@ -712,9 +735,9 @@ function filterPosts(){
     const tags=(card.dataset.tags||'').toLowerCase();
     card.style.display=(txt.includes(q)||tags.includes(q))?'':'none';
   });
-  // Reset active filter
   document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
   document.querySelector('.filter-btn[data-filter="all"]').classList.add('active');
+  document.querySelectorAll('.section-heading').forEach(h=>h.style.display='');
 }
 
 // ═══ Three.js Background ═══
@@ -727,7 +750,6 @@ function filterPosts(){
   const camera=new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.1,1000);
   camera.position.z=5;
 
-  // Particle field
   const pCount=1500;
   const geo=new THREE.BufferGeometry();
   const pos=new Float32Array(pCount*3);
@@ -743,13 +765,11 @@ function filterPosts(){
   const pts=new THREE.Points(geo,mat);
   scene.add(pts);
 
-  // Subtle wireframe geometry
   const sGeo=new THREE.IcosahedronGeometry(2.8,1);
   const sMat=new THREE.MeshBasicMaterial({color:0x3b82f6,wireframe:true,transparent:true,opacity:0.03});
   const sphere=new THREE.Mesh(sGeo,sMat);
   scene.add(sphere);
 
-  // Second ring geometry
   const rGeo=new THREE.TorusGeometry(3.5,0.02,8,64);
   const rMat=new THREE.MeshBasicMaterial({color:0x8b5cf6,wireframe:true,transparent:true,opacity:0.025});
   const ring=new THREE.Mesh(rGeo,rMat);
