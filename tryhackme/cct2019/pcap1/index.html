@@ -1,0 +1,1555 @@
+OCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CCT2019 — pcap1 | QA210 Writeup</title>
+    <meta name="description" content="CTF writeup for CCT2019 pcap1 challenge — Forensics / PCAP Analysis — by QA210">
+    <meta name="author" content="QA210">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Prism.js -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg0: #06080c;
+            --bg1: #0b0f17;
+            --bg2: #111827;
+            --bg3: #1a2234;
+            --border: #1e293b;
+            --border-light: #334155;
+            --text0: #f1f5f9;
+            --text1: #e2e8f0;
+            --text2: #94a3b8;
+            --text3: #64748b;
+            --accent: #3b82f6;
+            --accent-dim: rgba(59, 130, 246, 0.15);
+            --accent-glow: rgba(59, 130, 246, 0.3);
+            --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+            --font-display: 'Space Grotesk', 'Inter', sans-serif;
+            --sidebar-width: 260px;
+            --content-max: 860px;
+        }
+
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-light) var(--bg1);
+        }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg0);
+            color: var(--text1);
+            line-height: 1.75;
+            font-size: 16px;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg1);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-light);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text3);
+        }
+
+        /* Three.js Canvas */
+        #three-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.35;
+        }
+
+        /* Top Navigation Bar */
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(6, 8, 12, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .top-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .top-bar-logo {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: -0.5px;
+        }
+
+        .top-bar-logo span {
+            color: var(--text0);
+        }
+
+        .top-bar-sep {
+            color: var(--border-light);
+            font-size: 20px;
+        }
+
+        .top-bar-title {
+            font-size: 14px;
+            color: var(--text2);
+            font-weight: 500;
+        }
+
+        .top-bar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .top-bar-link {
+            color: var(--text3);
+            font-size: 13px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .top-bar-link:hover {
+            color: var(--accent);
+        }
+
+        /* Breadcrumbs */
+        .breadcrumbs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 0;
+            font-size: 13px;
+            color: var(--text3);
+        }
+
+        .breadcrumbs a {
+            color: var(--text2);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .breadcrumbs a:hover {
+            color: var(--accent);
+        }
+
+        .breadcrumbs .sep {
+            font-size: 10px;
+        }
+
+        .breadcrumbs .current {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* Main Layout */
+        .layout {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: center;
+            max-width: calc(var(--content-max) + var(--sidebar-width) + 80px);
+            margin: 0 auto;
+            padding: 0 24px;
+            gap: 48px;
+        }
+
+        /* Content Area */
+        .content {
+            flex: 1;
+            max-width: var(--content-max);
+            min-width: 0;
+            padding-bottom: 80px;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 48px 0 40px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 40px;
+        }
+
+        .hero-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-category {
+            background: var(--accent-dim);
+            color: var(--accent);
+            border: 1px solid rgba(59, 130, 246, 0.25);
+        }
+
+        .badge-difficulty {
+            background: rgba(239, 68, 68, 0.12);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.25);
+        }
+
+        .badge-platform {
+            background: rgba(16, 185, 129, 0.12);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }
+
+        .hero h1 {
+            font-family: var(--font-display);
+            font-size: clamp(32px, 5vw, 48px);
+            font-weight: 800;
+            color: var(--text0);
+            line-height: 1.15;
+            margin-bottom: 12px;
+            letter-spacing: -1px;
+        }
+
+        .hero h1 .accent {
+            color: var(--accent);
+        }
+
+        .hero-subtitle {
+            font-size: 17px;
+            color: var(--text2);
+            line-height: 1.6;
+            max-width: 640px;
+        }
+
+        .hero-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .hero-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text3);
+        }
+
+        .hero-meta-item i {
+            font-size: 15px;
+            color: var(--accent);
+        }
+
+        .hero-meta-item strong {
+            color: var(--text1);
+            font-weight: 600;
+        }
+
+        /* Section Headers */
+        .section {
+            margin-bottom: 48px;
+            scroll-margin-top: 80px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: var(--accent-dim);
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            color: var(--accent);
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .section-header h2 {
+            font-family: var(--font-display);
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text0);
+            letter-spacing: -0.3px;
+        }
+
+        /* Paragraphs */
+        .section p {
+            margin-bottom: 16px;
+            color: var(--text1);
+            line-height: 1.8;
+        }
+
+        .section strong {
+            color: var(--text0);
+            font-weight: 600;
+        }
+
+        .section em {
+            color: var(--accent);
+            font-style: italic;
+        }
+
+        /* Key Hints Box */
+        .key-hints {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px 24px;
+            margin: 20px 0;
+        }
+
+        .key-hints-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            color: var(--accent);
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .key-hints ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .key-hints li {
+            position: relative;
+            padding-left: 20px;
+            margin-bottom: 8px;
+            color: var(--text1);
+            font-size: 14px;
+        }
+
+        .key-hints li::before {
+            content: '›';
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        /* Code Blocks */
+        .code-block-wrapper {
+            position: relative;
+            margin: 20px 0;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .code-block-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 16px;
+            background: var(--bg3);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .code-block-lang {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text3);
+        }
+
+        .code-block-copy {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            color: var(--text3);
+            font-family: var(--font-mono);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .code-block-copy:hover {
+            background: var(--accent-dim);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .code-block-copy.copied {
+            background: rgba(16, 185, 129, 0.12);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: #34d399;
+        }
+
+        .code-block-wrapper pre {
+            margin: 0 !important;
+            padding: 16px !important;
+            background: var(--bg1) !important;
+            border-radius: 0 !important;
+            overflow-x: auto;
+        }
+
+        .code-block-wrapper code {
+            font-family: var(--font-mono) !important;
+            font-size: 13px !important;
+            line-height: 1.7 !important;
+        }
+
+        /* Inline code */
+        :not(pre) > code {
+            font-family: var(--font-mono);
+            font-size: 0.875em;
+            background: var(--bg3);
+            color: var(--accent);
+            padding: 2px 7px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        /* Callout Boxes */
+        .callout {
+            display: flex;
+            gap: 14px;
+            padding: 16px 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .callout-icon {
+            flex-shrink: 0;
+            font-size: 18px;
+            margin-top: 2px;
+        }
+
+        .callout-content {
+            flex: 1;
+        }
+
+        .callout-content strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .callout-info {
+            background: rgba(59, 130, 246, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .callout-info .callout-icon { color: #60a5fa; }
+        .callout-info .callout-content strong { color: #60a5fa; }
+        .callout-info .callout-content { color: var(--text1); }
+
+        .callout-warning {
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .callout-warning .callout-icon { color: #fbbf24; }
+        .callout-warning .callout-content strong { color: #fbbf24; }
+        .callout-warning .callout-content { color: var(--text1); }
+
+        .callout-danger {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .callout-danger .callout-icon { color: #f87171; }
+        .callout-danger .callout-content strong { color: #f87171; }
+        .callout-danger .callout-content { color: var(--text1); }
+
+        /* Ordered List */
+        .step-list {
+            list-style: none;
+            padding: 0;
+            margin: 16px 0;
+        }
+
+        .step-list li {
+            position: relative;
+            padding-left: 28px;
+            margin-bottom: 10px;
+            color: var(--text1);
+        }
+
+        .step-list li::before {
+            content: counter(step-counter);
+            counter-increment: step-counter;
+            position: absolute;
+            left: 0;
+            top: 1px;
+            width: 20px;
+            height: 20px;
+            border-radius: 5px;
+            background: var(--accent-dim);
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            color: var(--accent);
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .step-list {
+            counter-reset: step-counter;
+        }
+
+        /* IRC conversation */
+        .irc-log {
+            background: var(--bg1);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px 24px;
+            margin: 20px 0;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 2;
+            color: var(--text2);
+            overflow-x: auto;
+        }
+
+        .irc-log .irc-line {
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .irc-log .irc-line.highlight {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .irc-log .irc-line.warning {
+            color: #fbbf24;
+            font-weight: 600;
+        }
+
+        /* Key Takeaways */
+        .takeaways {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .takeaways-title {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--text0);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .takeaways-title i {
+            color: var(--accent);
+        }
+
+        .takeaways-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 12px;
+        }
+
+        .takeaway-item {
+            display: flex;
+            gap: 10px;
+            padding: 12px 14px;
+            background: var(--bg1);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .takeaway-item .takeaway-label {
+            font-weight: 700;
+            color: var(--accent);
+            white-space: nowrap;
+        }
+
+        .takeaway-item .takeaway-desc {
+            color: var(--text2);
+        }
+
+        /* TOC Sidebar */
+        .toc-sidebar {
+            position: sticky;
+            top: 72px;
+            width: var(--sidebar-width);
+            flex-shrink: 0;
+            max-height: calc(100vh - 88px);
+            overflow-y: auto;
+            padding-bottom: 24px;
+        }
+
+        .toc-title {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text3);
+            margin-bottom: 16px;
+            padding-left: 12px;
+        }
+
+        .toc-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .toc-list li {
+            margin-bottom: 2px;
+        }
+
+        .toc-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            font-size: 13px;
+            color: var(--text3);
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.2s;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text1);
+            background: var(--bg2);
+        }
+
+        .toc-link.active {
+            color: var(--accent);
+            background: var(--accent-dim);
+            border-left-color: var(--accent);
+        }
+
+        .toc-link .toc-num {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 11px;
+            color: var(--text3);
+            width: 18px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .toc-link.active .toc-num {
+            color: var(--accent);
+        }
+
+        /* Author Footer */
+        .author-footer {
+            margin-top: 48px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .author-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .author-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-display);
+            font-weight: 800;
+            font-size: 16px;
+            color: white;
+        }
+
+        .author-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .author-name {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--text0);
+        }
+
+        .author-team {
+            font-size: 12px;
+            color: var(--text3);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 12px;
+        }
+
+        .footer-link {
+            color: var(--text3);
+            font-size: 16px;
+            transition: color 0.2s;
+        }
+
+        .footer-link:hover {
+            color: var(--accent);
+        }
+
+        /* Flag Display */
+        .flag-display {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            border-radius: 10px;
+            padding: 20px 24px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .flag-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text3);
+            margin-bottom: 8px;
+        }
+
+        .flag-value {
+            font-family: var(--font-mono);
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 1px;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 1100px) {
+            .toc-sidebar {
+                display: none;
+            }
+
+            .layout {
+                max-width: var(--content-max);
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                font-size: 15px;
+            }
+
+            .hero h1 {
+                font-size: 28px;
+            }
+
+            .section-header h2 {
+                font-size: 19px;
+            }
+
+            .layout {
+                padding: 0 16px;
+            }
+
+            .top-bar {
+                padding: 0 16px;
+            }
+
+            .takeaways-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Fade-in animation */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(16px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- Three.js Background Canvas -->
+    <canvas id="three-bg"></canvas>
+
+    <!-- Top Navigation Bar -->
+    <nav class="top-bar">
+        <div class="top-bar-left">
+            <a href="#" class="top-bar-logo">QA<span>210</span></a>
+            <span class="top-bar-sep">|</span>
+            <span class="top-bar-title">CTF Writeups</span>
+        </div>
+        <div class="top-bar-right">
+            <a href="#" class="top-bar-link"><i class="bi bi-journal-code"></i> Blog</a>
+            <a href="#" class="top-bar-link"><i class="bi bi-github"></i> GitHub</a>
+        </div>
+    </nav>
+
+    <!-- Main Layout -->
+    <div class="layout">
+        <!-- Content -->
+        <main class="content">
+            <!-- Breadcrumbs -->
+            <nav class="breadcrumbs">
+                <a href="#">Home</a>
+                <span class="sep"><i class="bi bi-chevron-right"></i></span>
+                <a href="#">CCT2019</a>
+                <span class="sep"><i class="bi bi-chevron-right"></i></span>
+                <span class="current">pcap1</span>
+            </nav>
+
+            <!-- Hero Section -->
+            <header class="hero fade-in">
+                <div class="hero-badges">
+                    <span class="badge badge-category"><i class="bi bi-bug"></i> Forensics / PCAP Analysis</span>
+                    <span class="badge badge-difficulty"><i class="bi bi-fire"></i> Hard</span>
+                    <span class="badge badge-platform"><i class="bi bi-cloud"></i> TryHackMe</span>
+                </div>
+                <h1>CCT2019 — <span class="accent">pcap1</span></h1>
+                <p class="hero-subtitle">
+                    A multi-stage PCAP challenge from the U.S. Navy Cyber Competition Team 2019 Assessment. Extract hidden data from USB captures, decrypt cryptcat traffic, and connect to an IRC server to retrieve the flag.
+                </p>
+                <div class="hero-meta">
+                    <div class="hero-meta-item">
+                        <i class="bi bi-calendar3"></i>
+                        <span><strong>CCT2019</strong> Assessment</span>
+                    </div>
+                    <div class="hero-meta-item">
+                        <i class="bi bi-shield-lock"></i>
+                        <span>7 Stages</span>
+                    </div>
+                    <div class="hero-meta-item">
+                        <i class="bi bi-clock-history"></i>
+                        <span>Est. 4-6 hours</span>
+                    </div>
+                    <div class="hero-meta-item">
+                        <i class="bi bi-tools"></i>
+                        <span>Wireshark, tshark, cryptcat, InspIRCd</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Challenge Overview -->
+            <section id="overview" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number">0</div>
+                    <h2>Challenge Overview</h2>
+                </div>
+                <p>
+                    The challenge starts with a PCAP file containing USB packets. Through careful analysis, we need to extract embedded files, decrypt encrypted network traffic, and ultimately connect to an IRC server to receive the flag.
+                </p>
+                <div class="key-hints">
+                    <div class="key-hints-title"><i class="bi bi-lightbulb"></i> Key Hints</div>
+                    <ul>
+                        <li>It's a PCAP challenge — don't go down stego/RE rabbit holes</li>
+                        <li>It's critical to recover the first file completely</li>
+                        <li>The final binary runs on amd64 Kali Linux</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Stage 1 -->
+            <section id="stage-1" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number">1</div>
+                    <h2>USB Packet Analysis</h2>
+                </div>
+                <p>
+                    The capture file <code>pcap2.pcapng</code> contains USB packets captured with USBPcap. Opening in Wireshark reveals USB encapsulation with only 20 packets but approximately 2,308 kB of data.
+                </p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">bash</span>
+                        <button class="code-block-copy" onclick="copyCode(this)">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                    </div>
+                    <pre><code class="language-bash">file pcap2.pcapng
+# pcapng capture file - version 1.0</code></pre>
+                </div>
+
+                <p>Filtering for the target device in Wireshark:</p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">wireshark-filter</span>
+                        <button class="code-block-copy" onclick="copyCode(this)">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                    </div>
+                    <pre><code class="language-bash">usb.device_address==7 &amp;&amp; usb.capdata</code></pre>
+                </div>
+
+                <p>
+                    The interesting data is in the <strong>'Leftover Capture Data'</strong> field. Extract it using tshark:
+                </p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">bash</span>
+                        <button class="code-block-copy" onclick="copyCode(this)">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                    </div>
+                    <pre><code class="language-bash">tshark -r pcap2.pcapng -Y 'usb.capdata and usb.device_address==7' \
+  -T fields -e usb.capdata &gt; raw</code></pre>
+                </div>
+
+                <p>Convert the hex dump to binary:</p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">bash</span>
+                        <button class="code-block-copy" onclick="copyCode(this)">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                    </div>
+                    <pre><code class="language-bash">xxd -r -p raw output2.bin</code></pre>
+                </div>
+            </section>
+
+            <!-- Stage 2 -->
+            <section id="stage-2" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number">2</div>
+                    <h2>StegoVeritas Extraction</h2>
+                </div>
+                <p>
+                    Running StegoVeritas on the extracted binary reveals an embedded PCAP file:
+                </p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">bash</span>
+                        <button class="code-block-copy" onclick="copyCode(this)">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                    </div>
+                    <pre><code class="language-bash">stegoveritas output2.bin</code></pre>
+                </div>
+
+                <p>
+                    Inside the results, we find <code>pcap_chal.pcap</code> — a second PCAP file with <strong>4,588 packets</strong> confirming we're on the right track (matching HINT2).
+                </p>
+
+                <div class="callout callout-info">
+                    <div class="callout-icon"><i class="bi bi-info-circle"></i></div>
+                    <div class="callout-content">
+                        <strong>Note</strong>
+                        StegoVeritas can process non-image files to extract embedded content. Don't limit your steganography tools to just image files — they often work on arbitrary binary data.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Stage 3 -->
+            <section id="stage-3" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number">3</div>
+                    <h2>ICMP Data Extraction</h2>
+                </div>
+                <p>
+                    Opening <code>pcap_chal.pcap</code> in Wireshark and filtering for small ICMP packets:
+                </p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">wireshark-filter</span>
+                        <button class="code-block-copy" onclick="copyCode(this)">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                    </div>
+                    <pre><code class="language-bash">frame.len &lt; 98 &amp;&amp; icmp</code></pre>
+                </div>
+
+                <p>Extract the data fields:</p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">bash</span>
+                        <button class="code-block-copy" onclick="copyCode(this)">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                    </div>
+                    <pre><code class="language-bash">tshark -r pcap_chal.pcap -Y 'frame.len lt 98 and icmp' \
+  -T fields -e data.data &gt; raw</code></pre>
+                </div>
+
+                <p>Converting the hex reveals an IRC-style conversation:</p>
+
+                <div class="irc-log">
+                    <div class="irc-line">bro, what you up to?</div>
+                    <div class="irc-line">n2mh</div>
+                    <div class="irc-line">why?</div>
+                    <div class="irc-line">you didn't send that thing yet</div>
+                    <div class="irc-line">oh... well, not over this</div>
+                    <div class="irc-line">if not this, then what?</div>
+                    <div class="irc-line warning">let's use cryptcat instead</div>
+                    <div class="irc-line">another thing to install?</div>
+                    <div class="irc-line">man... no one can see this</div>
+                    <div class="irc-line">still... rather use encryption</div>
+                    <div class="irc-line warning">we need to pick a key to use</div>
+                    <div class="irc-line">I know just the one</div>
+                    <div class="irc-line">What? Oh, that old thing?</div>
+                    <div class="irc-line">Hang on, lemme look it up</div>
+                    <div class="irc-line">okay, I found it. use the metasploit port to receive</div>
+                    <div class="irc-line warning">listener is up. send it.</div>
+                    <div class="irc-line">okay, it's sent</div>
+                    <div class="irc-line highlight">7181f4d45de00ae35b6cf8201c8d852b</div>
+                    <div class="irc-line">hash is good</div>
+                </div>
+
+                <div class="callout callout-warning">
+                    <div class="callout-icon"><i class="bi bi-exclamation-triangle"></i></div>
+                    <div class="callout-content">
+                        <strong>Key Takeaways</strong>
+                        They're using <strong>cryptcat</strong> on the <strong>metasploit port (4444)</strong> and the hash <code>7181f4d45de00ae35b6cf8201c8d852b</code> is confirmed as a checksum for verification.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Stage 4 -->
+            <section id="stage-4" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number">4</div>
+                    <h2>Finding the Encryption Key</h2>
+                </div>
+                <p>
+                    Examining ICMP packets reveals a hidden message in a "Response not found" packet:
+                </p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">text</span>
+                        <button class="code-block-copy" onclick="copyCode(this)">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                    </div>
+                    <pre><code class="language-plain">Angela Bennett uses it to log into the Bethesda Naval Hospital</code></pre>
+                </div>
+
+                <p>
+                    This is a reference to the movie <strong>"The Net" (1995)</strong>. In the movie's hacker terminal scene, we can see:
+                </p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">text</span>
+                        <button class="code-block-copy" onclick="copyCode(this)">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                    </div>
+                    <pre><code class="language-plain">/Password:/ natoar23ae</code></pre>
+                </div>
+
+                <div class="callout callout-danger">
+                    <div class="callout-icon"><i class="bi bi-x-octagon"></i></div>
+                    <div class="callout-content">
+                        <strong>Dead End</strong>
+                        <code>natoar23ae</code> is <strong>NOT</strong> the correct key. This is a common trap — the visible password from the movie scene doesn't work for cryptcat decryption.
+                    </div>
+                </div>
+
+                <p>
+                    Further analysis of the IRC traffic reveals the actual key is <strong>BER5348833</strong> — referenced from the movie's Gatekeeper backdoor password.
+                </p>
+            </section>
+
+            <!-- Stage 5 -->
+            <section id="stage-5" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number">5</div>
+                    <h2>Extracting ICMP Type 8 Data</h2>
+                </div>
+                <p>
+                    Filter for ICMP echo requests and extract the first 2 bytes of each packet:
+                </p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">bash</span>
+                        <button class="code-block-copy" onclick="copyCode(this)">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                    </div>
+                    <pre><code class="language-bash">tshark -r pcap_chal.pcap -Y 'icmp.type == 8' \
+  -T fields -e data.data | cut -c -4 | xxd -r -p &gt; data.bin</code></pre>
+                </div>
+
+                <p>
+                    The resulting file is identified as an <strong>OpenPGP Secret Key</strong> — this is the encrypted data that needs to be decrypted with cryptcat.
+                </p>
+
+                <div class="callout callout-info">
+                    <div class="callout-icon"><i class="bi bi-info-circle"></i></div>
+                    <div class="callout-content">
+                        <strong>Why cryptcat?</strong>
+                        Cryptcat is an encrypted variant of netcat that uses Blowfish encryption. The data was sent through cryptcat on port 4444, so we need to use cryptcat with the correct key to decrypt it.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Stage 6 -->
+            <section id="stage-6" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number">6</div>
+                    <h2>Decrypting with Cryptcat</h2>
+                </div>
+                <p>
+                    Set up cryptcat listener with the correct key on the metasploit port:
+                </p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">bash</span>
+                        <button class="code-block-copy" onclick="copyCode(this)">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                    </div>
+                    <pre><code class="language-bash">cryptcat -k BER5348833 -l -p 4444 &gt; decrypted_file</code></pre>
+                </div>
+
+                <p>Then send the encrypted data through:</p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">bash</span>
+                        <button class="code-block-copy" onclick="copyCode(this)">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                    </div>
+                    <pre><code class="language-bash">cat data.bin | nc 10.8.19.103 4444</code></pre>
+                </div>
+
+                <p>Verify the decrypted file:</p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">bash</span>
+                        <button class="code-block-copy" onclick="copyCode(this)">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                    </div>
+                    <pre><code class="language-bash">file decrypted_file
+# ELF 64-bit LSB pie executable, x86-64
+
+md5sum decrypted_file
+# 7181f4d45de00ae35b6cf8201c8d852b  &lt;-- matches the hash from IRC!</code></pre>
+                </div>
+
+                <div class="callout callout-info">
+                    <div class="callout-icon"><i class="bi bi-check-circle"></i></div>
+                    <div class="callout-content">
+                        <strong>Hash Verified!</strong>
+                        The MD5 hash <code>7181f4d45de00ae35b6cf8201c8d852b</code> matches the one from the IRC conversation, confirming we've correctly decrypted the file.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Stage 7 -->
+            <section id="stage-7" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number">7</div>
+                    <h2>IRC Server Setup &amp; Flag Retrieval</h2>
+                </div>
+                <p>
+                    The ELF binary connects to <code>irc.cct</code>. We need to set up a local IRC server to intercept the connection:
+                </p>
+
+                <ol class="step-list">
+                    <li>Install InspIRCd: <code>sudo apt install inspircd</code></li>
+                    <li>Add to <code>/etc/hosts</code>: <code>127.0.0.1 irc.cct</code></li>
+                    <li>Configure <code>/etc/inspircd/inspircd.conf</code> with <code>name="irc.cct"</code></li>
+                    <li>Start the server and join with Irssi</li>
+                </ol>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">bash</span>
+                        <button class="code-block-copy" onclick="copyCode(this)">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                    </div>
+                    <pre><code class="language-bash">irssi
+/connect irc.cct
+/join #flag</code></pre>
+                </div>
+
+                <p>Then run the binary:</p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">bash</span>
+                        <button class="code-block-copy" onclick="copyCode(this)">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                    </div>
+                    <pre><code class="language-bash">chmod +x decrypted_file
+./decrypted_file</code></pre>
+                </div>
+
+                <p>
+                    The binary connects to the IRC server, joins <code>#flag</code>, and the flag is delivered:
+                </p>
+
+                <div class="flag-display">
+                    <div class="flag-label">Flag</div>
+                    <div class="flag-value">CCT{flag}</div>
+                </div>
+            </section>
+
+            <!-- Key Takeaways -->
+            <section id="takeaways" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number"><i class="bi bi-trophy" style="font-size:14px"></i></div>
+                    <h2>Key Takeaways</h2>
+                </div>
+
+                <div class="takeaways">
+                    <div class="takeaways-title"><i class="bi bi-lightning-charge"></i> Skills &amp; Techniques</div>
+                    <div class="takeaways-grid">
+                        <div class="takeaway-item">
+                            <span class="takeaway-label">USB PCAP</span>
+                            <span class="takeaway-desc">Extracting data from USB captures using tshark filters and field extraction</span>
+                        </div>
+                        <div class="takeaway-item">
+                            <span class="takeaway-label">StegoVeritas</span>
+                            <span class="takeaway-desc">Can process non-image files to extract embedded PCAP content</span>
+                        </div>
+                        <div class="takeaway-item">
+                            <span class="takeaway-label">Cryptcat</span>
+                            <span class="takeaway-desc">Encrypted netcat variant using Blowfish; requires the correct key</span>
+                        </div>
+                        <div class="takeaway-item">
+                            <span class="takeaway-label">Pop Culture</span>
+                            <span class="takeaway-desc">Movie quotes can contain passwords/keys — "The Net" (1995)</span>
+                        </div>
+                        <div class="takeaway-item">
+                            <span class="takeaway-label">IRC Protocol</span>
+                            <span class="takeaway-desc">Understanding IRC for CTF bot interactions and flag delivery</span>
+                        </div>
+                        <div class="takeaway-item">
+                            <span class="takeaway-label">Local Simulation</span>
+                            <span class="takeaway-desc">Setting up services locally (InspIRCd) to interact with challenge binaries</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Author Footer -->
+            <footer class="author-footer">
+                <div class="author-info">
+                    <div class="author-avatar">Q</div>
+                    <div class="author-details">
+                        <span class="author-name">QA210</span>
+                        <span class="author-team">w4llz CTF Team</span>
+                    </div>
+                </div>
+                <div class="footer-links">
+                    <a href="#" class="footer-link" title="GitHub"><i class="bi bi-github"></i></a>
+                    <a href="#" class="footer-link" title="Twitter"><i class="bi bi-twitter-x"></i></a>
+                    <a href="#" class="footer-link" title="Discord"><i class="bi bi-discord"></i></a>
+                </div>
+            </footer>
+        </main>
+
+        <!-- TOC Sidebar -->
+        <aside class="toc-sidebar">
+            <div class="toc-title">On This Page</div>
+            <ul class="toc-list">
+                <li>
+                    <a href="#overview" class="toc-link">
+                        <span class="toc-num">0</span>
+                        Challenge Overview
+                    </a>
+                </li>
+                <li>
+                    <a href="#stage-1" class="toc-link">
+                        <span class="toc-num">1</span>
+                        USB Packet Analysis
+                    </a>
+                </li>
+                <li>
+                    <a href="#stage-2" class="toc-link">
+                        <span class="toc-num">2</span>
+                        StegoVeritas Extraction
+                    </a>
+                </li>
+                <li>
+                    <a href="#stage-3" class="toc-link">
+                        <span class="toc-num">3</span>
+                        ICMP Data Extraction
+                    </a>
+                </li>
+                <li>
+                    <a href="#stage-4" class="toc-link">
+                        <span class="toc-num">4</span>
+                        Finding the Encryption Key
+                    </a>
+                </li>
+                <li>
+                    <a href="#stage-5" class="toc-link">
+                        <span class="toc-num">5</span>
+                        Extracting ICMP Type 8 Data
+                    </a>
+                </li>
+                <li>
+                    <a href="#stage-6" class="toc-link">
+                        <span class="toc-num">6</span>
+                        Decrypting with Cryptcat
+                    </a>
+                </li>
+                <li>
+                    <a href="#stage-7" class="toc-link">
+                        <span class="toc-num">7</span>
+                        IRC Server &amp; Flag
+                    </a>
+                </li>
+                <li>
+                    <a href="#takeaways" class="toc-link">
+                        <span class="toc-num"><i class="bi bi-trophy" style="font-size:10px"></i></span>
+                        Key Takeaways
+                    </a>
+                </li>
+            </ul>
+        </aside>
+    </div>
+
+    <!-- Prism.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-plain.min.js"></script>
+
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // ========== Copy Button ==========
+        function copyCode(btn) {
+            const wrapper = btn.closest('.code-block-wrapper');
+            const code = wrapper.querySelector('code');
+            const text = code.textContent;
+
+            navigator.clipboard.writeText(text).then(() => {
+                btn.classList.add('copied');
+                btn.innerHTML = '<i class="bi bi-check2"></i> Copied!';
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    btn.innerHTML = '<i class="bi bi-clipboard"></i> Copy';
+                }, 2000);
+            }).catch(() => {
+                // Fallback
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                btn.classList.add('copied');
+                btn.innerHTML = '<i class="bi bi-check2"></i> Copied!';
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    btn.innerHTML = '<i class="bi bi-clipboard"></i> Copy';
+                }, 2000);
+            });
+        }
+
+        // ========== TOC Active State ==========
+        function updateTOC() {
+            const sections = document.querySelectorAll('.section');
+            const tocLinks = document.querySelectorAll('.toc-link');
+            const scrollTop = window.scrollY + 120;
+
+            let currentId = '';
+            sections.forEach(section => {
+                if (section.offsetTop <= scrollTop) {
+                    currentId = section.id;
+                }
+            });
+
+            tocLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + currentId) {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+        window.addEventListener('scroll', updateTOC, { passive: true });
+        updateTOC();
+
+        // ========== Fade-in Animation ==========
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+        // ========== Three.js Background ==========
+        (function() {
+            const canvas = document.getElementById('three-bg');
+            const renderer = new THREE.WebGLRenderer({
+                canvas: canvas,
+                alpha: true,
+                antialias: true
+            });
+
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 30;
+
+            // TorusKnot wireframe
+            const geometry = new THREE.TorusKnotGeometry(8, 2.5, 128, 16, 2, 3);
+            const material = new THREE.MeshBasicMaterial({
+                color: 0x3b82f6,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.25
+            });
+            const torusKnot = new THREE.Mesh(geometry, material);
+            scene.add(torusKnot);
+
+            // Smaller secondary torus knot
+            const geometry2 = new THREE.TorusKnotGeometry(4, 1.2, 64, 8, 3, 5);
+            const material2 = new THREE.MeshBasicMaterial({
+                color: 0x3b82f6,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.12
+            });
+            const torusKnot2 = new THREE.Mesh(geometry2, material2);
+            torusKnot2.position.set(12, -6, -5);
+            scene.add(torusKnot2);
+
+            // Mouse interaction
+            let mouseX = 0;
+            let mouseY = 0;
+
+            document.addEventListener('mousemove', (e) => {
+                mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+                mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+            });
+
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+
+                const time = Date.now() * 0.0003;
+
+                torusKnot.rotation.x = time * 0.3 + mouseY * 0.1;
+                torusKnot.rotation.y = time * 0.5 + mouseX * 0.1;
+                torusKnot.rotation.z = time * 0.15;
+
+                torusKnot2.rotation.x = -time * 0.4;
+                torusKnot2.rotation.y = -time * 0.6;
+                torusKnot2.rotation.z = time * 0.2;
+
+                renderer.render(scene, camera);
+            }
+
+            animate();
+
+            // Resize handler
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        })();
+    </script>
+</body>
+</html>
