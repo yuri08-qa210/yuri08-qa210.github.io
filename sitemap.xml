@@ -163,8 +163,104 @@
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
+
+  <!-- TJCTF 2026 -->
   <url>
-    <loc>https://yuri08-qa210.github.io/</loc>
+    <loc>https://yuri08-qa210.github.io/tjctf-2026/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
-  </urlset>
+  <url>
+    <loc>https://yuri08-qa210.github.io/tjctf-2026/web/opening-night/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/tjctf-2026/web/free-cloud-storage/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/tjctf-2026/crypto/trust-issues/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/tjctf-2026/crypto/bit-leak/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/tjctf-2026/forensics/3-write-up/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/tjctf-2026/forensics/invisible-ink/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/tjctf-2026/forensics/loud-packets/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/tjctf-2026/forensics/thomas-schools-of-china/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/tjctf-2026/rev/polaroid/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/tjctf-2026/rev/remoose/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/tjctf-2026/pwn/hunting-field/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/tjctf-2026/misc/calculative-barracuda/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/tjctf-2026/misc/glich/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- ═══════════ RESEARCH ═══════════ -->
+  <url>
+    <loc>https://yuri08-qa210.github.io/research/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/research/kernel/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/research/kernel/dirtydecrypt/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/research/gpo/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/research/gpo/shadowpolicy/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
 </urlset>
