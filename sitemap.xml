@@ -1,202 +1,170 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://sitemaps.org">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
-  <!-- 1. Trang chủ -->
+  <!-- ═══════════ ROOT ═══════════ -->
   <url>
-    <loc>https://github.io</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>daily</changefreq>
+    <loc>https://yuri08-qa210.github.io/</loc>
+    <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
 
-  <!-- 2. Mục Nghiên cứu bảo mật (Research) -->
+  <!-- ═══════════ HACK THE BOX ═══════════ -->
   <url>
-    <loc>https://github.ioresearch/kernel/dirtydecrypt/</loc>
-    <lastmod>2026-05-19</lastmod>
+    <loc>https://yuri08-qa210.github.io/htb/</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
-  <url>
-    <loc>https://github.ioresearch/active-directory/shadowpolicy/</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
 
-  <!-- 3. Giải đấu TJCTF 2026 (13 Bài) -->
+  <!-- Pro Labs -->
   <url>
-    <loc>https://github.iotjctf2026/web/opening-night/</loc>
-    <lastmod>2026-05-19</lastmod>
+    <loc>https://yuri08-qa210.github.io/htb/prolabs/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://github.iotjctf2026/web/free-cloud-storage/</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://github.iotjctf2026/crypto/trust-issues/</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://github.iotjctf2026/crypto/bit-leak/</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://github.iotjctf2026/forensics/3-write-up/</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://github.iotjctf2026/forensics/invisible-ink/</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://github.iotjctf2026/forensics/loud-packets/</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://github.iotjctf2026/forensics/thomas-schools-of-china/</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://github.iotjctf2026/reverse/polaroid/</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://github.iotjctf2026/reverse/remoose/</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://github.iotjctf2026/pwn/hunting-field/</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://github.iotjctf2026/misc/glitch/</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://github.iotjctf2026/misc/calculative-barracuda/</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <!-- 4. Hack The Box - Pro Labs (5 Bài) -->
-  <url>
-    <loc>https://github.iohtb/prolabs/dante/</loc>
-    <lastmod>2026-05-19</lastmod>
+    <loc>https://yuri08-qa210.github.io/htb/prolabs/xen/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://github.iohtb/prolabs/cybernetics/</loc>
-    <lastmod>2026-05-19</lastmod>
+    <loc>https://yuri08-qa210.github.io/htb/prolabs/dante/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://github.iohtb/prolabs/rastalabs/</loc>
-    <lastmod>2026-05-19</lastmod>
+    <loc>https://yuri08-qa210.github.io/htb/prolabs/cybernetics/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://github.iohtb/prolabs/aptlabs/</loc>
-    <lastmod>2026-05-19</lastmod>
+    <loc>https://yuri08-qa210.github.io/htb/prolabs/rastalabs/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://github.iohtb/endgame/xen/</loc>
-    <lastmod>2026-05-19</lastmod>
+    <loc>https://yuri08-qa210.github.io/htb/prolabs/aptlabs/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
-  <!-- 5. Hack The Box - Insane Boxes & Sherlocks (8 Bài) -->
+  <!-- APT Labs (legacy path) -->
   <url>
-    <loc>https://github.iohtb/boxes/darkcorp/</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://github.iohtb/boxes/sorcery/</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://github.iohtb/boxes/brainfuck/</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://github.iohtb/boxes/apt/</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://github.iohtb/boxes/rope/</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://github.iohtb/boxes/rope2/</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://github.iohtb/sherlocks/aptnightmare2/</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://github.iohtb/sherlocks/salinebreeze-1/</loc>
-    <lastmod>2026-05-19</lastmod>
+    <loc>https://yuri08-qa210.github.io/htb/aptlabs/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
-  <!-- 6. TryHackMe (2 Bài) -->
+  <!-- Insane Machines -->
   <url>
-    <loc>https://github.iotryhackme/crocc-crew/</loc>
-    <lastmod>2026-05-19</lastmod>
+    <loc>https://yuri08-qa210.github.io/htb/insane/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/htb/insane/darkcorp/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/htb/insane/sorcery/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/htb/insane/brainfuck/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/htb/insane/apt/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/htb/insane/rope/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/htb/insane/ropetwo/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Sherlocks -->
+  <url>
+    <loc>https://yuri08-qa210.github.io/htb/sherlock/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/htb/sherlock/aptnightmare2/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/htb/sherlock/salinebreeze-1/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Business CTF 2025 -->
+  <url>
+    <loc>https://yuri08-qa210.github.io/htb/business-2025/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/htb/business-2025/drivers-shadow/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- ═══════════ TRYHACKME ═══════════ -->
+  <url>
+    <loc>https://yuri08-qa210.github.io/tryhackme/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/tryhackme/cct2019/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/tryhackme/cct2019/crypto1/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://github.iotryhackme/cct-2019/</loc>
-    <lastmod>2026-05-19</lastmod>
+    <loc>https://yuri08-qa210.github.io/tryhackme/cct2019/for1/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/tryhackme/cct2019/pcap1/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/tryhackme/cct2019/re3/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/tryhackme/insane/crocc-crew/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
 
+  <!-- ═══════════ TJCTF ═══════════ -->
+  <url>
+    <loc>https://yuri08-qa210.github.io/tjctf/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://yuri08-qa210.github.io/</loc>
+  </url>
+  </urlset>
 </urlset>
