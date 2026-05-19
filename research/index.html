@@ -399,7 +399,7 @@ img{max-width:100%;display:block}
       <span class="post-date">May 2026</span>
     </div>
     <h3>DirtyDecrypt / DirtyCBC — CVE-2026-31635</h3>
-    <p class="post-excerpt">Khai thác leo quyền root qua rxgk_decrypt_skb — lỗ hổng Missing COW Guard trong Linux kernel module rxgk cho phép bypass Copy-On-Write protection và ghi trực tiếp vào page cache. Bài nghiên cứu phân tích root cause, exploit chain 5 bước từ unprivileged user đến root shell, so sánh với họ lỗ hổng Page Cache (Copy Fail, Dirty Frag, Fragnesia), timeline khai báo, mitigation và góc nhìn Red Team. Ảnh hưởng: Fedora, Arch Linux, openSUSE. PoC công khai, chưa ghi nhận khai thác in-the-wild.</p>
+    <p class="post-excerpt">Local privilege escalation to root via rxgk_decrypt_skb — a missing COW guard vulnerability in the Linux kernel rxgk module that allows bypassing Copy-On-Write protection and writing directly into the page cache. This research analyzes the root cause, a 5-step exploit chain from unprivileged user to root shell, comparison with the Page Cache vulnerability family (Copy Fail, Dirty Frag, Fragnesia), disclosure timeline, mitigation, and a Red Team perspective. Affected distros: Fedora, Arch Linux, openSUSE. Public PoC available, no in-the-wild exploitation recorded yet.</p>
     <div class="post-tags">
       <span class="tag">CVE-2026-31635</span><span class="tag">LPE</span><span class="tag">Page Cache</span><span class="tag">COW Bypass</span><span class="tag">rxgk</span><span class="tag">Kernel</span><span class="tag">Red Team</span><span class="tag">Detection</span><span class="tag">Fedora</span><span class="tag">Arch Linux</span><span class="tag">Mitigation</span>
     </div>
