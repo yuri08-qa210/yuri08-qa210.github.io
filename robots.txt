@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://yuri08-qa210.github.io/sitemap.xml
+
+# QA210 — Security Research & CTF Writeups
+# https://yuri08-qa210.github.io/
