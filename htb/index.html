@@ -258,7 +258,7 @@ img{max-width:100%;display:block}
     <div class="card-label">Quick Stats</div>
     <div class="stat-grid">
       <div class="stat-item highlight">
-        <div class="stat-val">14</div>
+        <div class="stat-val">16</div>
         <div class="stat-lbl">Writeups</div>
       </div>
       <div class="stat-item">
@@ -266,7 +266,7 @@ img{max-width:100%;display:block}
         <div class="stat-lbl">Insane</div>
       </div>
       <div class="stat-item highlight">
-        <div class="stat-val">5</div>
+        <div class="stat-val">7</div>
         <div class="stat-lbl">Pro Labs</div>
       </div>
       <div class="stat-item">
@@ -328,11 +328,11 @@ img{max-width:100%;display:block}
   <div class="info-card">
     <div class="ic-title"><i class="bi bi-lightning-charge"></i> Key Techniques</div>
     <div class="technique-list">
-      <div class="technique-item"><i class="bi bi-arrow-right"></i> AD Chain Attacks <span class="tc">3 posts</span></div>
+      <div class="technique-item"><i class="bi bi-arrow-right"></i> AD Chain Attacks <span class="tc">4 posts</span></div>
       <div class="technique-item"><i class="bi bi-arrow-right"></i> Kerberos Exploitation <span class="tc">3 posts</span></div>
       <div class="technique-item"><i class="bi bi-arrow-right"></i> Binary Exploitation <span class="tc">3 posts</span></div>
       <div class="technique-item"><i class="bi bi-arrow-right"></i> Container Escapes <span class="tc">2 posts</span></div>
-      <div class="technique-item"><i class="bi bi-arrow-right"></i> Network Pivoting <span class="tc">3 posts</span></div>
+      <div class="technique-item"><i class="bi bi-arrow-right"></i> Network Pivoting <span class="tc">4 posts</span></div>
       <div class="technique-item"><i class="bi bi-arrow-right"></i> Memory Forensics <span class="tc">2 posts</span></div>
       <div class="technique-item"><i class="bi bi-arrow-right"></i> Threat Intelligence <span class="tc">1 post</span></div>
       <div class="technique-item"><i class="bi bi-arrow-right"></i> C2 & OPSEC <span class="tc">1 post</span></div>
@@ -345,9 +345,9 @@ img{max-width:100%;display:block}
 <!-- ═══ FILTER BAR ═══ -->
 <div class="filter-bar">
   <span class="filter-label">Filter:</span>
-  <button class="filter-btn active" data-filter="all" onclick="setFilter(this)">All<span class="count">14</span></button>
+  <button class="filter-btn active" data-filter="all" onclick="setFilter(this)">All<span class="count">16</span></button>
   <button class="filter-btn" data-filter="ctf" onclick="setFilter(this)">Business CTF<span class="count">1</span></button>
-  <button class="filter-btn" data-filter="prolab" onclick="setFilter(this)">Pro Labs<span class="count">5</span></button>
+  <button class="filter-btn" data-filter="prolab" onclick="setFilter(this)">Pro Labs<span class="count">7</span></button>
   <button class="filter-btn" data-filter="aptlab" onclick="setFilter(this)">APT Labs<span class="count">1</span></button>
   <button class="filter-btn" data-filter="htb" onclick="setFilter(this)">Insane<span class="count">6</span></button>
   <button class="filter-btn" data-filter="sherlock" onclick="setFilter(this)">Sherlock<span class="count">2</span></button>
@@ -356,7 +356,7 @@ img{max-width:100%;display:block}
 <!-- ═══ POSTS ═══ -->
 <div class="posts-section">
 
-  <!-- PRO LABS -->
+  <!-- PRO LABS & ENDGAMES -->
   <div class="section-heading">Pro Labs & Endgames</div>
 
   <a href="/htb/prolabs/xen/" class="post-card pinned" data-platform="prolab" data-tags="endgame,citrix,kerberoast,ad,password-spray,sebackupprivilege">
@@ -385,6 +385,32 @@ img{max-width:100%;display:block}
     </div>
   </a>
 
+  <a href="/htb/prolabs/zephyr/" class="post-card" data-platform="prolab" data-tags="red-team,ad,assumed-breach,kerberoast,delegation,dcsync,lateral-movement">
+    <div class="post-top">
+      <span class="platform-badge prolab">Pro Lab</span>
+      <span class="diff-badge hard">Hard</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>HTB Pro Lab: Zephyr</h3>
+    <p class="post-excerpt">Red Team Operator Level I. Assumed breach Active Directory environment starting with a standard domain user. Escalate through Kerberoasting, delegation abuse, constrained delegation, ACL attacks, and DCSync to achieve full Domain Admin compromise across a hardened enterprise network.</p>
+    <div class="post-tags">
+      <span class="tag">Assumed Breach</span><span class="tag">Kerberoast</span><span class="tag">Delegation</span><span class="tag">DCSync</span><span class="tag">Lateral Movement</span><span class="tag">AD</span>
+    </div>
+  </a>
+
+  <a href="/htb/prolabs/offshore/" class="post-card" data-platform="prolab" data-tags="red-team,pivoting,ad,web-exploitation,grafana,privilege-escalation,tunneling">
+    <div class="post-top">
+      <span class="platform-badge prolab">Pro Lab</span>
+      <span class="diff-badge insane">Insane</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>HTB Pro Lab: Offshore</h3>
+    <p class="post-excerpt">Red Team Operator Level II. Advanced corporate network penetration testing requiring deep pivoting across multiple subnets, exploiting web vulnerabilities, Grafana exploitation, complex privilege escalation paths, and tunneling deep into the internal AD environment to compromise the domain.</p>
+    <div class="post-tags">
+      <span class="tag">Pivoting</span><span class="tag">Web Exploit</span><span class="tag">Grafana</span><span class="tag">AD</span><span class="tag">Tunneling</span><span class="tag">Privesc</span>
+    </div>
+  </a>
+
   <a href="/htb/prolabs/cybernetics/" class="post-card" data-platform="prolab" data-tags="red-team,ad,5-domains,kerberos,gpo">
     <div class="post-top">
       <span class="platform-badge prolab">Pro Lab</span>
@@ -405,22 +431,22 @@ img{max-width:100%;display:block}
       <span class="post-date">2026</span>
     </div>
     <h3>HTB Pro Lab: RastaLabs</h3>
-    <p class="post-excerpt">Red Team Operator Level II with OPSEC emphasis. Realistic enterprise AD attack chain from phishing initial access through C2 infrastructure, credential harvesting, lateral movement, and domain dominance. 14 machines, 27 flags.</p>
+    <p class="post-excerpt">Red Team Operator Level III. The most advanced HTB Pro Lab featuring realistic APT-style operations — Cobalt Strike C2 infrastructure, Citrix VDI exploitation, network pivoting through multiple trust boundaries, and full enterprise domain takeover with 30+ flags.</p>
     <div class="post-tags">
-      <span class="tag">OPSEC</span><span class="tag">C2</span><span class="tag">AD</span><span class="tag">Lateral Movement</span><span class="tag">27 Flags</span>
+      <span class="tag">OPSEC</span><span class="tag">C2</span><span class="tag">Cobalt Strike</span><span class="tag">Citrix</span><span class="tag">Credential Harvest</span><span class="tag">AD</span>
     </div>
   </a>
 
-  <a href="/htb/prolabs/aptlabs/" class="post-card" data-platform="aptlab" data-tags="apt-labs,red-team,ad,pivoting,credential-harvesting">
+  <a href="/htb/prolabs/aptlabs/" class="post-card" data-platform="aptlab" data-tags="apt-labs,red-team,ad,pivoting,credential-harvesting,forest-trust,phishing">
     <div class="post-top">
       <span class="platform-badge aptlab">APT Lab</span>
       <span class="diff-badge insane">Insane</span>
       <span class="post-date">2026</span>
     </div>
     <h3>HTB APT Labs</h3>
-    <p class="post-excerpt">Advanced Persistent Threat simulation environment. Realistic enterprise AD attack scenarios involving credential harvesting, lateral movement, C2 infrastructure, and full domain compromise across hardened networks.</p>
+    <p class="post-excerpt">Advanced Persistent Threat simulation environment. 18 machines across 3 AD forests — phishing initial access, Kerberoasting, RBCD, DCSync, Golden Tickets, cross-forest trust exploitation, and full domain compromise. 20 flags, 24h daily reset.</p>
     <div class="post-tags">
-      <span class="tag">APT</span><span class="tag">Red Team</span><span class="tag">AD</span><span class="tag">Pivoting</span><span class="tag">Credential Harvest</span>
+      <span class="tag">APT</span><span class="tag">Red Team</span><span class="tag">3 Forests</span><span class="tag">Phishing</span><span class="tag">RBCD</span><span class="tag">Forest Trust</span>
     </div>
   </a>
 
