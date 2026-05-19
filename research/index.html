@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Research — QA210 Security Research</title>
-<meta name="description" content="Deep security research by QA210 — threat modeling, defensive architecture, Active Directory hardening, and blue team frameworks. GPO exploitation, DSC configurations, and SIEM detection.">
+<meta name="description" content="Deep security research by QA210 — threat modeling, defensive architecture, Active Directory hardening, kernel exploitation, and blue team frameworks. GPO exploitation, DSC configurations, Linux LPE, and SIEM detection.">
 <meta name="author" content="QA210">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -131,6 +131,8 @@ img{max-width:100%;display:block}
 .platform-badge.ad{background:var(--purple-dim);color:var(--purple)}
 .platform-badge.detection{background:var(--orange-dim);color:var(--orange)}
 .platform-badge.hardening{background:var(--green-dim);color:var(--green)}
+.platform-badge.kernel{background:var(--yellow-dim);color:var(--yellow)}
+.platform-badge.lpe{background:var(--red-dim);color:var(--red)}
 .diff-badge{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:3px 9px;border-radius:5px}
 .diff-badge.critical{background:var(--red-dim);color:var(--red)}
 .diff-badge.high{background:var(--orange-dim);color:var(--orange)}
@@ -214,7 +216,7 @@ img{max-width:100%;display:block}
   <nav class="nav-main">
     <a href="/">Home</a>
     <a href="/htb/">Hack The Box</a>
-    <a href="/tjctf-2026/">TJCTF</a>
+    <a href="/tjctf/">TJCTF</a>
     <a href="/tryhackme/">TryHackMe</a>
     <a href="/research/" class="active">Research</a>
   </nav>
@@ -237,7 +239,7 @@ img{max-width:100%;display:block}
     <a href="/">Home</a>
     <a href="/htb/">Hack The Box</a>
     <a href="/tjctf/">TJCTF</a>
-    <a href="/thm/">TryHackMe</a>
+    <a href="/tryhackme/">TryHackMe</a>
     <a href="/research/">Research</a>
     <a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
     <a href="https://w4llz.me/" target="_blank">W4LLZ Team</a>
@@ -252,28 +254,29 @@ img{max-width:100%;display:block}
   <div class="hero-text">
     <div class="greeting">Security Research</div>
     <h1>Deep Threat Modeling &<br><span>Defensive Architecture</span></h1>
-    <p class="tagline">Original security research focusing on Active Directory attack surfaces, GPO exploitation paths, detection engineering, and defense-in-depth hardening frameworks. Blue Team perspective on emerging threat models with DSC configurations, SACL auditing, and SIEM detection rules.</p>
+    <p class="tagline">Original security research focusing on Active Directory attack surfaces, GPO exploitation paths, Linux kernel vulnerabilities, detection engineering, and defense-in-depth hardening frameworks. Blue Team perspective on emerging threat models with DSC configurations, SACL auditing, page cache exploitation, and SIEM detection rules.</p>
     <div class="hero-badges">
       <span class="hero-badge threat-model"><i class="bi bi-bug-fill"></i> Threat Modeling</span>
       <span class="hero-badge blue-team"><i class="bi bi-shield-check"></i> Blue Team</span>
       <span class="hero-badge ad-research"><i class="bi bi-diagram-3-fill"></i> AD Research</span>
       <span class="hero-badge detection"><i class="bi bi-eye-fill"></i> Detection Eng</span>
       <span class="hero-badge hardening"><i class="bi bi-lock-fill"></i> Hardening</span>
+      <span class="hero-badge" style="background:var(--yellow-dim);border-color:rgba(234,179,8,0.25);color:var(--yellow)"><i class="bi bi-cpu"></i> Kernel Exploit</span>
     </div>
   </div>
   <div class="hero-card">
     <div class="card-label">Research Stats</div>
     <div class="stat-grid">
       <div class="stat-item highlight">
-        <div class="stat-val">1</div>
+        <div class="stat-val">2</div>
         <div class="stat-lbl">Papers</div>
       </div>
       <div class="stat-item">
-        <div class="stat-val">4</div>
+        <div class="stat-val">5</div>
         <div class="stat-lbl">Logic Flaws</div>
       </div>
       <div class="stat-item highlight">
-        <div class="stat-val">2</div>
+        <div class="stat-val">3</div>
         <div class="stat-lbl">Attack Vectors</div>
       </div>
       <div class="stat-item">
@@ -310,8 +313,13 @@ img{max-width:100%;display:block}
     <div class="ic-title"><i class="bi bi-tags"></i> Research Topics</div>
     <div class="tag-cloud">
       <span class="tc-tag hot">GPO Abuse</span>
+      <span class="tc-tag hot">Kernel Exploit</span>
+      <span class="tc-tag hot">Page Cache</span>
       <span class="tc-tag hot">SYSVOL</span>
       <span class="tc-tag hot">SACL Auditing</span>
+      <span class="tc-tag">LPE</span>
+      <span class="tc-tag">rxgk</span>
+      <span class="tc-tag">COW Bypass</span>
       <span class="tc-tag">DSC Hardening</span>
       <span class="tc-tag">SIEM Detection</span>
       <span class="tc-tag">LOLBin</span>
@@ -333,12 +341,13 @@ img{max-width:100%;display:block}
     <div class="ic-title"><i class="bi bi-lightning-charge"></i> Research Areas</div>
     <div class="technique-list">
       <div class="technique-item"><i class="bi bi-arrow-right"></i> GPO Preference Exploitation <span class="tc">1 paper</span></div>
+      <div class="technique-item"><i class="bi bi-arrow-right"></i> Linux Kernel LPE <span class="tc">1 paper</span></div>
+      <div class="technique-item"><i class="bi bi-arrow-right"></i> Page Cache Vulnerabilities <span class="tc">1 paper</span></div>
       <div class="technique-item"><i class="bi bi-arrow-right"></i> State-Injection Attacks <span class="tc">1 paper</span></div>
       <div class="technique-item"><i class="bi bi-arrow-right"></i> Detection Engineering <span class="tc">1 paper</span></div>
       <div class="technique-item"><i class="bi bi-arrow-right"></i> DSC Hardening Frameworks <span class="tc">1 paper</span></div>
       <div class="technique-item"><i class="bi bi-arrow-right"></i> SIEM Rule Development <span class="tc">1 paper</span></div>
       <div class="technique-item"><i class="bi bi-arrow-right"></i> Active Directory Security <span class="tc">1 paper</span></div>
-      <div class="technique-item"><i class="bi bi-arrow-right"></i> Threat Modeling <span class="tc">1 paper</span></div>
     </div>
   </div>
 
@@ -366,10 +375,12 @@ img{max-width:100%;display:block}
 <!-- ═══ FILTER BAR ═══ -->
 <div class="filter-bar">
   <span class="filter-label">Filter:</span>
-  <button class="filter-btn active" data-filter="all" onclick="setFilter(this)">All<span class="count">1</span></button>
+  <button class="filter-btn active" data-filter="all" onclick="setFilter(this)">All<span class="count">2</span></button>
+  <button class="filter-btn" data-filter="kernel" onclick="setFilter(this)">Kernel<span class="count">1</span></button>
   <button class="filter-btn" data-filter="gpo" onclick="setFilter(this)">GPO<span class="count">1</span></button>
   <button class="filter-btn" data-filter="blue-team" onclick="setFilter(this)">Blue Team<span class="count">1</span></button>
   <button class="filter-btn" data-filter="ad" onclick="setFilter(this)">Active Directory<span class="count">1</span></button>
+  <button class="filter-btn" data-filter="lpe" onclick="setFilter(this)">LPE<span class="count">1</span></button>
   <button class="filter-btn" data-filter="detection" onclick="setFilter(this)">Detection<span class="count">1</span></button>
   <button class="filter-btn" data-filter="hardening" onclick="setFilter(this)">Hardening<span class="count">1</span></button>
 </div>
@@ -377,10 +388,27 @@ img{max-width:100%;display:block}
 <!-- ═══ POSTS ═══ -->
 <div class="posts-section">
 
+  <!-- KERNEL RESEARCH -->
+  <div class="section-heading">Linux Kernel Exploitation</div>
+
+  <a href="/research/kernel/dirtydecrypt/" class="post-card pinned" data-platform="kernel" data-tags="kernel,lpe,page-cache,cow-bypass,rxgk,dirtydecrypt,cve-2026-31635,red-team,detection,hardening,fedora,arch-linux">
+    <div class="post-top">
+      <span class="platform-badge kernel"><i class="bi bi-cpu"></i> Kernel Research</span>
+      <span class="platform-badge lpe"><i class="bi bi-arrow-up-circle-fill"></i> LPE</span>
+      <span class="diff-badge critical">Critical</span>
+      <span class="post-date">May 2026</span>
+    </div>
+    <h3>DirtyDecrypt / DirtyCBC — CVE-2026-31635</h3>
+    <p class="post-excerpt">Khai thác leo quyền root qua rxgk_decrypt_skb — lỗ hổng Missing COW Guard trong Linux kernel module rxgk cho phép bypass Copy-On-Write protection và ghi trực tiếp vào page cache. Bài nghiên cứu phân tích root cause, exploit chain 5 bước từ unprivileged user đến root shell, so sánh với họ lỗ hổng Page Cache (Copy Fail, Dirty Frag, Fragnesia), timeline khai báo, mitigation và góc nhìn Red Team. Ảnh hưởng: Fedora, Arch Linux, openSUSE. PoC công khai, chưa ghi nhận khai thác in-the-wild.</p>
+    <div class="post-tags">
+      <span class="tag">CVE-2026-31635</span><span class="tag">LPE</span><span class="tag">Page Cache</span><span class="tag">COW Bypass</span><span class="tag">rxgk</span><span class="tag">Kernel</span><span class="tag">Red Team</span><span class="tag">Detection</span><span class="tag">Fedora</span><span class="tag">Arch Linux</span><span class="tag">Mitigation</span>
+    </div>
+  </a>
+
   <!-- GPO RESEARCH -->
   <div class="section-heading">GPO Preference Exploitation</div>
 
-  <a href="/research/gpo/shadowpolicy/" class="post-card pinned" data-platform="gpo" data-tags="gpo,scheduled-tasks,sysvol,sacl,dsc,blue-team,lolbin,mitre-t1484.001,mitre-t1053.005,detection,hardening,ad">
+  <a href="/research/gpo/shadowpolicy/" class="post-card" data-platform="gpo" data-tags="gpo,scheduled-tasks,sysvol,sacl,dsc,blue-team,lolbin,mitre-t1484.001,mitre-t1053.005,detection,hardening,ad">
     <div class="post-top">
       <span class="platform-badge gpo"><i class="bi bi-file-earmark-code-fill"></i> GPO Research</span>
       <span class="platform-badge blue-team"><i class="bi bi-shield-check"></i> Blue Team</span>
@@ -405,7 +433,7 @@ img{max-width:100%;display:block}
     <div class="footer-links">
       <a href="/">Home</a>
       <a href="/htb/">Hack The Box</a>
-      <a href="/tjctf-2026/">TJCTF</a>
+      <a href="/tjctf/">TJCTF</a>
       <a href="/tryhackme/">TryHackMe</a>
       <a href="/research/">Research</a>
       <a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
