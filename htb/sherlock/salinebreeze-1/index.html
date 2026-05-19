@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SalineBreeze-1 — Threat Intelligence Deep Dive | QA210 Writeup</title>
+    <meta name="description" content="TryHackMe SalineBreeze-1 writeup — Investigating Salt Typhoon and GhostEmperor APT groups, threat actor profiling, malware analysis, MITRE ATT&CK mapping, and CVE exploitation — by QA210">
+    <meta name="author" content="QA210">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Prism.js -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg0: #06080c;
+            --bg1: #0b0f17;
+            --bg2: #111827;
+            --bg3: #1a2234;
+            --border: #1e293b;
+            --border-light: #334155;
+            --text0: #f1f5f9;
+            --text1: #e2e8f0;
+            --text2: #94a3b8;
+            --text3: #64748b;
+            --accent: #3b82f6;
+            --accent-dim: rgba(59, 130, 246, 0.15);
+            --accent-glow: rgba(59, 130, 246, 0.3);
+            --green: #22c55e;
+            --green-dim: rgba(34, 197, 94, 0.15);
+            --red: #ef4444;
+            --red-dim: rgba(239, 68, 68, 0.15);
+            --orange: #f97316;
+            --orange-dim: rgba(249, 115, 22, 0.15);
+            --cyan: #06b6d4;
+            --cyan-dim: rgba(6, 182, 212, 0.15);
+            --purple: #a855f7;
+            --purple-dim: rgba(168, 85, 247, 0.15);
+            --yellow: #eab308;
+            --yellow-dim: rgba(234, 179, 8, 0.15);
+            --rose: #f43f5e;
+            --rose-dim: rgba(244, 63, 94, 0.15);
+            --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+            --font-display: 'Space Grotesk', 'Inter', sans-serif;
+            --sidebar-width: 260px;
+            --content-max: 860px;
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; scrollbar-width: thin; scrollbar-color: var(--border-light) var(--bg1); }
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg0);
+            color: var(--text1);
+            line-height: 1.75;
+            font-size: 16px;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg1); }
+        ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+        /* Three.js Canvas */
+        #three-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.3; }
+
+        /* Top Navigation Bar */
+        .top-bar {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(6, 8, 12, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px; height: 56px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .top-bar-left { display: flex; align-items: center; gap: 12px; }
+        .top-bar-logo { font-family: var(--font-display); font-weight: 700; font-size: 18px; color: var(--accent); text-decoration: none; letter-spacing: -0.5px; }
+        .top-bar-logo span { color: var(--text0); }
+        .top-bar-sep { color: var(--border-light); font-size: 20px; }
+        .top-bar-title { font-size: 14px; color: var(--text2); font-weight: 500; }
+        .top-bar-right { display: flex; align-items: center; gap: 16px; }
+        .top-bar-link { color: var(--text3); font-size: 13px; text-decoration: none; font-weight: 500; transition: color 0.2s; }
+        .top-bar-link:hover { color: var(--accent); }
+
+        /* Breadcrumbs */
+        .breadcrumbs { display: flex; align-items: center; gap: 8px; padding: 16px 0; font-size: 13px; color: var(--text3); }
+        .breadcrumbs a { color: var(--text2); text-decoration: none; transition: color 0.2s; }
+        .breadcrumbs a:hover { color: var(--accent); }
+        .breadcrumbs .sep { font-size: 10px; }
+        .breadcrumbs .current { color: var(--accent); font-weight: 600; }
+
+        /* Main Layout */
+        .layout {
+            position: relative; z-index: 1;
+            display: flex; justify-content: center;
+            max-width: calc(var(--content-max) + var(--sidebar-width) + 80px);
+            margin: 0 auto; padding: 0 24px; gap: 48px;
+        }
+
+        /* Content Area */
+        .content { flex: 1; max-width: var(--content-max); min-width: 0; padding-bottom: 80px; }
+
+        /* Hero Section */
+        .hero { padding: 48px 0 40px; border-bottom: 1px solid var(--border); margin-bottom: 40px; }
+        .hero-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+        .badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .badge-category { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(59, 130, 246, 0.25); }
+        .badge-difficulty { background: var(--cyan-dim); color: var(--cyan); border: 1px solid rgba(6, 182, 212, 0.25); }
+        .badge-platform { background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.25); }
+        .badge-threat { background: var(--red-dim); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.25); }
+
+        .hero h1 { font-family: var(--font-display); font-size: clamp(32px, 5vw, 48px); font-weight: 800; color: var(--text0); line-height: 1.15; margin-bottom: 12px; letter-spacing: -1px; }
+        .hero h1 .accent { color: var(--accent); }
+        .hero-subtitle { font-size: 17px; color: var(--text2); line-height: 1.6; max-width: 640px; }
+
+        .hero-meta { display: flex; flex-wrap: wrap; gap: 24px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+        .hero-meta-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text3); }
+        .hero-meta-item i { font-size: 15px; color: var(--accent); }
+        .hero-meta-item strong { color: var(--text1); font-weight: 600; }
+
+        /* Section Headers */
+        .section { margin-bottom: 48px; scroll-margin-top: 80px; }
+        .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+        .section-number { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; background: var(--accent-dim); border: 1px solid rgba(59, 130, 246, 0.25); color: var(--accent); font-family: var(--font-display); font-weight: 700; font-size: 14px; flex-shrink: 0; }
+        .section-header h2 { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--text0); letter-spacing: -0.3px; }
+
+        /* Paragraphs */
+        .section p { margin-bottom: 16px; color: var(--text1); line-height: 1.8; }
+        .section strong { color: var(--text0); font-weight: 600; }
+        .section em { color: var(--accent); font-style: italic; }
+
+        /* Key Hints Box */
+        .key-hints { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin: 20px 0; }
+        .key-hints-title { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--accent); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+        .key-hints ul { list-style: none; padding: 0; }
+        .key-hints li { position: relative; padding-left: 20px; margin-bottom: 8px; color: var(--text1); font-size: 14px; }
+        .key-hints li::before { content: '\203A'; position: absolute; left: 0; color: var(--accent); font-weight: 700; font-size: 16px; }
+
+        /* Code Blocks */
+        .code-block-wrapper { position: relative; margin: 20px 0; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+        .code-block-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; background: var(--bg3); border-bottom: 1px solid var(--border); }
+        .code-block-lang { font-family: var(--font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text3); }
+        .code-block-copy { display: flex; align-items: center; gap: 5px; padding: 4px 10px; background: transparent; border: 1px solid var(--border); border-radius: 5px; color: var(--text3); font-family: var(--font-mono); font-size: 11px; cursor: pointer; transition: all 0.2s; }
+        .code-block-copy:hover { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+        .code-block-wrapper pre { margin: 0 !important; padding: 16px !important; background: var(--bg1) !important; border-radius: 0 !important; overflow-x: auto; }
+        .code-block-wrapper code { font-family: var(--font-mono) !important; font-size: 13px !important; line-height: 1.7 !important; }
+
+        /* Inline code */
+        :not(pre) > code { font-family: var(--font-mono); font-size: 0.875em; background: var(--bg3); color: var(--accent); padding: 2px 7px; border-radius: 4px; border: 1px solid var(--border); }
+
+        /* Callout Boxes */
+        .callout { display: flex; gap: 14px; padding: 16px 20px; border-radius: 10px; margin: 20px 0; font-size: 14px; line-height: 1.7; }
+        .callout-icon { flex-shrink: 0; font-size: 18px; margin-top: 2px; }
+        .callout-content { flex: 1; }
+        .callout-content strong { display: block; margin-bottom: 4px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .callout-info { background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); }
+        .callout-info .callout-icon { color: #60a5fa; }
+        .callout-info .callout-content strong { color: #60a5fa; }
+        .callout-warning { background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2); }
+        .callout-warning .callout-icon { color: #fbbf24; }
+        .callout-warning .callout-content strong { color: #fbbf24; }
+        .callout-danger { background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); }
+        .callout-danger .callout-icon { color: #f87171; }
+        .callout-danger .callout-content strong { color: #f87171; }
+        .callout-success { background: rgba(34, 197, 94, 0.08); border: 1px solid rgba(34, 197, 94, 0.2); }
+        .callout-success .callout-icon { color: #4ade80; }
+        .callout-success .callout-content strong { color: #4ade80; }
+        .callout-hint { background: rgba(168, 85, 247, 0.08); border: 1px solid rgba(168, 85, 247, 0.2); }
+        .callout-hint .callout-icon { color: #a78bfa; }
+        .callout-hint .callout-content strong { color: #a78bfa; }
+
+        /* Answer Box */
+        .answer-box { background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1)); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 10px; padding: 20px 24px; margin: 20px 0; display: flex; align-items: center; gap: 16px; }
+        .answer-box .answer-icon { font-size: 20px; flex-shrink: 0; }
+        .answer-box .answer-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); margin-bottom: 4px; }
+        .answer-box .answer-value { font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--green); letter-spacing: 0.5px; word-break: break-all; }
+
+        /* Attack Flow */
+        .attack-flow { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin: 20px 0; }
+        .attack-flow-title { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--orange); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; }
+        .flow-steps { display: flex; flex-direction: column; gap: 0; }
+        .flow-step { display: flex; align-items: center; gap: 12px; padding: 10px 0; font-size: 14px; color: var(--text1); }
+        .flow-step .flow-num { width: 26px; height: 26px; border-radius: 50%; background: var(--accent-dim); border: 1px solid rgba(59, 130, 246, 0.3); color: var(--accent); font-family: var(--font-display); font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .flow-step .flow-arrow { color: var(--text3); font-size: 12px; margin-left: auto; }
+        .flow-connector { width: 1px; height: 12px; background: var(--border-light); margin-left: 13px; }
+
+        /* Intelligence Table */
+        .intel-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+        .intel-table th { background: var(--bg3); color: var(--text2); font-weight: 600; text-align: left; padding: 10px 14px; border: 1px solid var(--border); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .intel-table td { padding: 10px 14px; border: 1px solid var(--border); color: var(--text1); }
+        .intel-table tr:nth-child(even) td { background: var(--bg1); }
+        .intel-table td:first-child { font-weight: 600; color: var(--text0); white-space: nowrap; }
+        .intel-table code { font-family: var(--font-mono); font-size: 0.85em; background: var(--bg2); color: var(--cyan); padding: 2px 6px; border-radius: 3px; }
+
+        /* TOC Sidebar */
+        .toc-sidebar { position: sticky; top: 72px; width: var(--sidebar-width); flex-shrink: 0; max-height: calc(100vh - 88px); overflow-y: auto; padding-bottom: 24px; }
+        .toc-title { font-family: var(--font-display); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); margin-bottom: 16px; padding-left: 12px; }
+        .toc-list { list-style: none; padding: 0; }
+        .toc-list li { margin-bottom: 2px; }
+        .toc-link { display: flex; align-items: center; gap: 8px; padding: 6px 12px; font-size: 13px; color: var(--text3); text-decoration: none; border-radius: 6px; transition: all 0.2s; border-left: 2px solid transparent; }
+        .toc-link:hover { color: var(--text1); background: var(--bg2); }
+        .toc-link.active { color: var(--accent); background: var(--accent-dim); border-left-color: var(--accent); }
+        .toc-link .toc-num { font-family: var(--font-display); font-weight: 700; font-size: 11px; color: var(--text3); width: 18px; text-align: center; flex-shrink: 0; }
+        .toc-link.active .toc-num { color: var(--accent); }
+        .toc-link.toc-sub { padding-left: 32px; font-size: 12px; }
+
+        /* Author Footer */
+        .author-footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .author-info { display: flex; align-items: center; gap: 12px; }
+        .author-avatar { width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), #8b5cf6); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 800; font-size: 16px; color: white; }
+        .author-details { display: flex; flex-direction: column; }
+        .author-name { font-weight: 700; font-size: 14px; color: var(--text0); }
+        .author-team { font-size: 12px; color: var(--text3); }
+        .footer-links { display: flex; gap: 12px; }
+        .footer-link { color: var(--text3); font-size: 16px; transition: color 0.2s; }
+        .footer-link:hover { color: var(--accent); }
+
+        /* Key Takeaways */
+        .takeaways { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 24px; margin: 24px 0; }
+        .takeaways-title { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: var(--text0); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .takeaways-title i { color: var(--accent); }
+        .takeaways-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+        .takeaway-item { display: flex; gap: 10px; padding: 12px 14px; background: var(--bg1); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; line-height: 1.6; }
+        .takeaway-item .takeaway-label { font-weight: 700; color: var(--accent); white-space: nowrap; }
+        .takeaway-item .takeaway-desc { color: var(--text2); }
+
+        /* MITRE Tag */
+        .mitre-tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 5px; font-family: var(--font-mono); font-size: 12px; font-weight: 600; background: var(--orange-dim); color: var(--orange); border: 1px solid rgba(249, 115, 22, 0.25); }
+
+        /* Mobile Responsive */
+        @media (max-width: 1100px) { .toc-sidebar { display: none; } .layout { max-width: var(--content-max); } }
+        @media (max-width: 640px) {
+            body { font-size: 15px; }
+            .hero h1 { font-size: 28px; }
+            .section-header h2 { font-size: 19px; }
+            .layout { padding: 0 16px; }
+            .top-bar { padding: 0 16px; }
+            .takeaways-grid { grid-template-columns: 1fr; }
+            .intel-table { font-size: 12px; }
+            .intel-table td, .intel-table th { padding: 8px 10px; }
+        }
+
+        /* Fade-in animation */
+        .fade-in { opacity: 0; transform: translateY(16px); transition: opacity 0.5s ease, transform 0.5s ease; }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+<body>
+    <!-- Three.js Background Canvas -->
+    <canvas id="three-bg"></canvas>
+
+    <!-- Top Navigation Bar -->
+    <nav class="top-bar">
+        <div class="top-bar-left">
+            <a href="/" class="top-bar-logo">QA<span>210</span></a>
+            <span class="top-bar-sep">|</span>
+            <span class="top-bar-title">CTF Writeups</span>
+        </div>
+        <div class="top-bar-right">
+            <a href="/" class="top-bar-link"><i class="bi bi-arrow-left"></i> Home</a>
+            <a href="/tryhackme/" class="top-bar-link">TryHackMe</a>
+            <a href="https://github.com/Yuri08-QA210" target="_blank" class="top-bar-link"><i class="bi bi-github"></i> GitHub</a>
+        </div>
+    </nav>
+
+    <!-- Main Layout -->
+    <div class="layout">
+        <!-- Content -->
+        <main class="content">
+            <!-- Breadcrumbs -->
+            <nav class="breadcrumbs">
+                <a href="/">Home</a>
+                <span class="sep"><i class="bi bi-chevron-right"></i></span>
+                <a href="/tryhackme/">TryHackMe</a>
+                <span class="sep"><i class="bi bi-chevron-right"></i></span>
+                <span class="current">SalineBreeze-1</span>
+            </nav>
+
+            <!-- Hero Section -->
+            <header class="hero fade-in">
+                <div class="hero-badges">
+                    <span class="badge badge-category"><i class="bi bi-bug"></i> Threat Intel</span>
+                    <span class="badge badge-difficulty"><i class="bi bi-bar-chart"></i> Medium</span>
+                    <span class="badge badge-platform"><i class="bi bi-cloud"></i> TryHackMe</span>
+                    <span class="badge badge-threat"><i class="bi bi-shield-fill-exclamation"></i> APT Groups</span>
+                </div>
+                <h1>SalineBreeze-1 — <span class="accent">Tracking the Shadows</span></h1>
+                <p class="hero-subtitle">
+                    A deep-dive threat intelligence challenge dissecting two sophisticated nation-state actors: Salt Typhoon's network-device espionage toolkit and GhostEmperor's kernel-mode rootkit pipeline. Open-source intelligence, MITRE ATT&CK mapping, and malware taxonomy — all in one room.
+                </p>
+                <div class="hero-meta">
+                    <div class="hero-meta-item">
+                        <i class="bi bi-calendar3"></i>
+                        <span><strong>TryHackMe</strong> Room</span>
+                    </div>
+                    <div class="hero-meta-item">
+                        <i class="bi bi-shield-lock"></i>
+                        <span>13 Questions</span>
+                    </div>
+                    <div class="hero-meta-item">
+                        <i class="bi bi-clock-history"></i>
+                        <span>Est. 1-2 hours</span>
+                    </div>
+                    <div class="hero-meta-item">
+                        <i class="bi bi-tools"></i>
+                        <span>OSINT, MITRE ATT&CK, CVE DB</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Investigation Flow -->
+            <section id="overview" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number">0</div>
+                    <h2>Investigation Flow</h2>
+                </div>
+                <p>
+                    SalineBreeze-1 is a pure threat intelligence room — no machines to hack, no exploits to run. Instead, the challenge tests your ability to correlate publicly available intelligence reports, identify attribution links between APT groups and their tooling, and map observed behaviors to the MITRE ATT&CK framework. The room is split into two halves: the first focuses on <strong>Salt Typhoon</strong> (a Chinese state-sponsored group targeting network infrastructure), and the second examines <strong>GhostEmperor</strong> (an actor leveraging kernel-level rootkits after initial access via ProxyLogon).
+                </p>
+
+                <div class="attack-flow">
+                    <div class="attack-flow-title"><i class="bi bi-lightning-charge"></i> Investigation Chain</div>
+                    <div class="flow-steps">
+                        <div class="flow-step">
+                            <span class="flow-num">1</span>
+                            <span>Salt Typhoon — Attribution & Origin</span>
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step">
+                            <span class="flow-num">2</span>
+                            <span>Salt Typhoon — Custom Malware (JumbledPath)</span>
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step">
+                            <span class="flow-num">3</span>
+                            <span>Salt Typhoon — MITRE ATT&CK Mapping</span>
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step">
+                            <span class="flow-num">4</span>
+                            <span>Salt Typhoon — CVE Exploitation & Backdoor</span>
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step">
+                            <span class="flow-num">5</span>
+                            <span>Salt Typhoon — Alternate Names & Tooling</span>
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step">
+                            <span class="flow-num">6</span>
+                            <span>GhostEmperor — Demodex Rootkit Analysis</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="key-hints">
+                    <div class="key-hints-title"><i class="bi bi-lightbulb"></i> Key Sources</div>
+                    <ul>
+                        <li>MITRE ATT&CK page for Salt Typhoon (also catalogued as <code>UNC2286</code>)</li>
+                        <li>TrendMicro "Earth Estries" research blog</li>
+                        <li>Kaspersky Securelist: "GhostEmperor: From ProxyLogon to Kernel Mode"</li>
+                        <li>Picus Security CVE analysis for Salt Typhoon</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Part 1: Salt Typhoon — Attribution -->
+            <section id="salt-typhoon-origin" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number">1</div>
+                    <h2>Salt Typhoon — Nation-State Attribution</h2>
+                </div>
+                <p>
+                    The first set of questions tasks us with identifying the basic profile of the threat actor known as "Salt Typhoon." This is a Chinese state-sponsored espionage group that has been active in the cyber threat landscape for several years. Their operations primarily target network infrastructure — routers, switches, and firewall appliances — making them a significant concern for telecommunications providers and enterprise network operators alike.
+                </p>
+                <p>
+                    To confirm the country of origin, the MITRE ATT&CK page for this group explicitly lists China as the sponsoring nation. This attribution is backed by multiple intelligence agencies and security vendors who have tracked the group's infrastructure and operational patterns over time. The group's targeting of network devices is consistent with Chinese strategic intelligence priorities — gaining persistent access to data flowing through critical communications infrastructure.
+                </p>
+
+                <div class="callout callout-info">
+                    <div class="callout-icon"><i class="bi bi-info-circle"></i></div>
+                    <div class="callout-content">
+                        <strong>Research Method</strong>
+                        Navigate to the MITRE ATT&CK group page and check the "Associated Groups" section. The <code>Country</code> field in the group's profile on the MITRE site, as well as corroborating sources from CISA advisories, confirm the attribution. Multiple security vendors (Microsoft, Volexity, etc.) have independently assessed this group's origin with high confidence.
+                    </div>
+                </div>
+
+                <div class="answer-box">
+                    <span class="answer-icon"><i class="bi bi-geo-alt-fill" style="color:var(--accent)"></i></span>
+                    <div>
+                        <div class="answer-label">Country Behind Salt Typhoon</div>
+                        <div class="answer-value">China</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Salt Typhoon — Active Since -->
+            <section id="salt-typhoon-active" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number">2</div>
+                    <h2>Salt Typhoon — Operational Timeline</h2>
+                </div>
+                <p>
+                    Understanding when a threat actor first became active helps establish the scope and maturity of their operations. Salt Typhoon has been tracked since around 2019, according to the MITRE ATT&CK group profile and various threat intelligence reports. This relatively long operational history suggests a well-resourced, persistent group that has had time to develop and refine multiple custom malware families and operational tradecraft.
+                </p>
+                <p>
+                    The 2019 start date aligns with the first observed campaigns targeting telecom and network infrastructure providers. While some earlier activity may have gone undetected, 2019 is the earliest confirmed year of operation reported by the security community. The group's longevity — operating for over five years without significant public exposure until recent advisories — speaks to their operational security discipline.
+                </p>
+
+                <div class="answer-box">
+                    <span class="answer-icon"><i class="bi bi-clock-fill" style="color:var(--accent)"></i></span>
+                    <div>
+                        <div class="answer-label">Active Since</div>
+                        <div class="answer-value">2019</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Salt Typhoon — Target Infrastructure -->
+            <section id="salt-typhoon-target" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number">3</div>
+                    <h2>Salt Typhoon — Target Infrastructure</h2>
+                </div>
+                <p>
+                    One of the distinguishing characteristics of Salt Typhoon compared to other Chinese APT groups is their primary target: <strong>network devices</strong>. While groups like APT41 or APT10 focus on enterprise endpoints and cloud services, Salt Typhoon specializes in compromising the network layer itself — routers, switches, firewalls, and other appliances that form the backbone of telecommunications and enterprise connectivity.
+                </p>
+                <p>
+                    This targeting strategy is strategic: by compromising network devices, the group gains visibility into all traffic flowing through those devices, enabling large-scale surveillance and data collection without needing to compromise individual endpoints. It's a "listen at the pipe" approach rather than "hack each endpoint" — far more efficient for intelligence collection purposes. This is why their custom malware, such as JumbledPath, is specifically designed to function as a network sniffer on compromised Cisco devices.
+                </p>
+
+                <div class="answer-box">
+                    <span class="answer-icon"><i class="bi bi-router-fill" style="color:var(--accent)"></i></span>
+                    <div>
+                        <div class="answer-label">Target Infrastructure</div>
+                        <div class="answer-value">Network devices</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Salt Typhoon — JumbledPath -->
+            <section id="salt-typhoon-malware" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number">4</div>
+                    <h2>Salt Typhoon — Custom Malware: JumbledPath</h2>
+                </div>
+                <p>
+                    Salt Typhoon has been linked to several custom-built malware families throughout their operational history. One particularly notable piece of malware carries the MITRE software identifier <strong>S1206</strong> and is known by the name <strong>JumbledPath</strong>. This is a Go-based implant specifically designed to target Linux-based network devices, and its capabilities include acting as a network sniffer on compromised Cisco infrastructure.
+                </p>
+                <p>
+                    The choice of Go as the programming language is telling — Go binaries are statically compiled and cross-platform, making them easy to deploy across heterogeneous network device environments. Go's built-in concurrency primitives also make it well-suited for the kind of high-throughput packet capture and processing that a network sniffer requires. On Cisco devices specifically, JumbledPath operates as a passive traffic collector, silently gathering sensitive communications data without disrupting normal device operations — a hallmark of sophisticated espionage-focused malware.
+                </p>
+
+                <div class="intel-table" style="margin-top:16px">
+                    <table class="intel-table">
+                        <tr><th>Attribute</th><th>Value</th></tr>
+                        <tr><td>Malware Name</td><td>JumbledPath</td></tr>
+                        <tr><td>MITRE Software ID</td><td><code>S1206</code></td></tr>
+                        <tr><td>Language</td><td>Go</td></tr>
+                        <tr><td>Target OS</td><td>Linux</td></tr>
+                        <tr><td>Primary Function (Cisco)</td><td>Network sniffer</td></tr>
+                    </table>
+                </div>
+
+                <div class="callout callout-hint">
+                    <div class="callout-icon"><i class="bi bi-lightbulb"></i></div>
+                    <div class="callout-content">
+                        <strong>Why Go?</strong>
+                        Go's static compilation model means a single binary runs across diverse Linux environments without dependency issues — critical for network appliances with minimal package ecosystems. The language's goroutine model enables efficient parallel packet processing, which is essential when sniffing traffic on high-throughput network links.
+                    </div>
+                </div>
+
+                <div class="answer-box">
+                    <span class="answer-icon"><i class="bi bi-bug-fill" style="color:var(--accent)"></i></span>
+                    <div>
+                        <div class="answer-label">Malware Associated with Salt Typhoon (ID S1206)</div>
+                        <div class="answer-value">JumbledPath</div>
+                    </div>
+                </div>
+
+                <div class="answer-box">
+                    <span class="answer-icon"><i class="bi bi-code-slash" style="color:var(--accent)"></i></span>
+                    <div>
+                        <div class="answer-label">Programming Language</div>
+                        <div class="answer-value">Go</div>
+                    </div>
+                </div>
+
+                <div class="answer-box">
+                    <span class="answer-icon"><i class="bi bi-hdd-network" style="color:var(--accent)"></i></span>
+                    <div>
+                        <div class="answer-label">Target OS</div>
+                        <div class="answer-value">Linux</div>
+                    </div>
+                </div>
+
+                <div class="answer-box">
+                    <span class="answer-icon"><i class="bi bi-ethernet" style="color:var(--accent)"></i></span>
+                    <div>
+                        <div class="answer-label">Function on Cisco Devices</div>
+                        <div class="answer-value">Network sniffer</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Salt Typhoon — MITRE ATT&CK -->
+            <section id="salt-typhoon-mitre" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number">5</div>
+                    <h2>Salt Typhoon — MITRE ATT&CK Techniques</h2>
+                </div>
+                <p>
+                    Mapping a threat actor's behavior to the MITRE ATT&CK framework is one of the most valuable outputs of threat intelligence analysis. It translates qualitative observations about adversary behavior into a structured, standardized taxonomy that defenders can use to prioritize detection and mitigation efforts. Salt Typhoon employs a range of techniques, but two stand out as particularly significant in their operational playbook.
+                </p>
+                <p>
+                    The first technique is <strong>Indicator Removal: File Deletion</strong> — classified under <span class="mitre-tag"><i class="bi bi-tag"></i> T1070.002</span>. This technique involves deleting logs and other forensic artifacts to cover tracks after an intrusion. Salt Typhoon systematically erases evidence of their activity on compromised network devices, making post-incident forensics significantly harder. On Linux-based network appliances, this often involves clearing <code>/var/log</code> entries and modifying syslog configurations to prevent recording of unauthorized access.
+                </p>
+                <p>
+                    The second technique is <strong>Modify Registry</strong> — classified under <span class="mitre-tag"><i class="bi bi-tag"></i> T1112</span>. While Salt Typhoon primarily targets Linux network devices, they also maintain persistence on Windows infrastructure they encounter during campaigns. Specifically, they modify the Windows Registry key at <code>HKCU\Software\Microsoft\Windows\CurrentVersion\Run</code> to ensure their backdoor executables start automatically on boot. This is a classic persistence mechanism that provides survivability across reboots and user logouts, ensuring continuous access to compromised Windows hosts that serve as secondary infrastructure or lateral movement waypoints.
+                </p>
+
+                <div class="callout callout-warning">
+                    <div class="callout-icon"><i class="bi bi-exclamation-triangle"></i></div>
+                    <div class="callout-content">
+                        <strong>Detection Opportunity</strong>
+                        Monitoring the <code>HKCU\...\CurrentVersion\Run</code> registry key for unauthorized modifications is a well-established detection point. Any new entries in this key from untrusted binaries should trigger immediate investigation. Similarly, unexpected log deletion activity on network devices (rapid decrease in log file sizes, gaps in syslog timestamps) should be flagged as potential anti-forensics behavior.
+                    </div>
+                </div>
+
+                <div class="answer-box">
+                    <span class="answer-icon"><i class="bi bi-eraser-fill" style="color:var(--accent)"></i></span>
+                    <div>
+                        <div class="answer-label">Technique for Indicator Removal (Erasing Logs)</div>
+                        <div class="answer-value">T1070.002</div>
+                    </div>
+                </div>
+
+                <div class="answer-box">
+                    <span class="answer-icon"><i class="bi bi-pencil-square" style="color:var(--accent)"></i></span>
+                    <div>
+                        <div class="answer-label">Persistence via Registry Modification</div>
+                        <div class="answer-value">T1112</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Salt Typhoon — CVE & Backdoor -->
+            <section id="salt-typhoon-cve" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number">6</div>
+                    <h2>Salt Typhoon — CVE Exploitation & Backdoor</h2>
+                </div>
+                <p>
+                    One of the key initial access vectors used by Salt Typhoon involves exploiting a known vulnerability in Sophos Firewall products. The vulnerability, catalogued as <strong>CVE-2022-3236</strong>, is a remote code execution flaw in the Sophos Firewall web administration interface that allows unauthenticated attackers to execute arbitrary code on the affected appliance. This CVE has been widely documented in security advisories and threat intelligence reports detailing Salt Typhoon's operations.
+                </p>
+                <p>
+                    After gaining initial access through this vulnerability, the group deploys a custom backdoor known as <strong>Crowdoor</strong>. This backdoor maintains persistent access to compromised hosts and specifically leverages the Windows Registry for persistence — writing entries to the <code>CurrentVersion\Run</code> key to ensure it survives system reboots. The name "Crowdoor" is a play on "backdoor" combined with the group's branding, and its functionality includes command execution, file exfiltration, and lateral movement capabilities.
+                </p>
+
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-block-lang">text</span>
+                        <button class="code-block-copy" onclick="copyCode(this)"><i class="bi bi-clipboard"></i> Copy</button>
+                    </div>
+                    <pre><code class="language-plain">CVE-2022-3236  —  Sophos Firewall RCE
+Severity: Critical (CVSS 9.8)
+Attack Vector: Network (unauthenticated)
+Impact: Remote code execution on Sophos Firewall
+Exploited by: Salt Typhoon (initial access)
+Backdoor deployed: Crowdoor
+Persistence: HKCU\...\CurrentVersion\Run registry key</code></pre>
+                </div>
+
+                <div class="answer-box">
+                    <span class="answer-icon"><i class="bi bi-shield-fill-exclamation" style="color:var(--accent)"></i></span>
+                    <div>
+                        <div class="answer-label">Sophos Firewall Vulnerability</div>
+                        <div class="answer-value">CVE-2022-3236</div>
+                    </div>
+                </div>
+
+                <div class="answer-box">
+                    <span class="answer-icon"><i class="bi bi-door-open-fill" style="color:var(--accent)"></i></span>
+                    <div>
+                        <div class="answer-label">Backdoor with Registry Persistence</div>
+                        <div class="answer-value">Crowdoor</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Salt Typhoon — Alternate Names & GhostSpider -->
+            <section id="salt-typhoon-aliases" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number">7</div>
+                    <h2>Salt Typhoon — Alternate Names & GhostSpider</h2>
+                </div>
+                <p>
+                    A critical skill in threat intelligence is recognizing that the same threat actor may be tracked under different names by different security vendors. This happens because each vendor discovers and tracks the group independently, often through different campaigns, before the intelligence community correlates the activity to a single actor. Salt Typhoon is no exception — TrendMicro tracks this group under the alternate name <strong>Earth Estries</strong>, documented extensively in their research blog on the group's activities.
+                </p>
+                <p>
+                    Beyond the alias question, TrendMicro's research also reveals another piece of malware in Salt Typhoon's arsenal: <strong>GhostSpider</strong>. This is a sophisticated multi-modular backdoor that communicates using custom protocols protected by TLS encryption. The modular architecture means the core implant can dynamically load additional capabilities as needed — a design pattern that makes the malware highly flexible and difficult to fully characterize, since different victims may observe different module combinations depending on the operator's objectives.
+                </p>
+
+                <div class="intel-table" style="margin-top:16px">
+                    <table class="intel-table">
+                        <tr><th>Vendor</th><th>Group Name</th><th>Additional Malware</th></tr>
+                        <tr><td>Microsoft / MITRE</td><td>Salt Typhoon</td><td>JumbledPath, Crowdoor</td></tr>
+                        <tr><td>TrendMicro</td><td>Earth Estries</td><td>GhostSpider</td></tr>
+                    </table>
+                </div>
+
+                <div class="callout callout-info">
+                    <div class="callout-icon"><i class="bi bi-info-circle"></i></div>
+                    <div class="callout-content">
+                        <strong>Why Multiple Names Matter</strong>
+                        When correlating threat intelligence across multiple sources, you need to map aliases to avoid gaps in your understanding. A report on "Earth Estries" and another on "Salt Typhoon" may describe complementary aspects of the same campaigns. Failing to recognize the alias relationship means you miss the complete picture.
+                    </div>
+                </div>
+
+                <div class="answer-box">
+                    <span class="answer-icon"><i class="bi bi-people-fill" style="color:var(--accent)"></i></span>
+                    <div>
+                        <div class="answer-label">Alternate Name (TrendMicro)</div>
+                        <div class="answer-value">Earth Estries</div>
+                    </div>
+                </div>
+
+                <div class="answer-box">
+                    <span class="answer-icon"><i class="bi bi-globe2" style="color:var(--accent)"></i></span>
+                    <div>
+                        <div class="answer-label">Multi-Modular Backdoor (Custom Protocol + TLS)</div>
+                        <div class="answer-value">GhostSpider</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- GhostEmperor — Demodex Rootkit -->
+            <section id="ghostemperor" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number">8</div>
+                    <h2>GhostEmperor — Demodex Kernel Rootkit</h2>
+                </div>
+                <p>
+                    The second half of the challenge shifts focus to <strong>GhostEmperor</strong>, a threat actor extensively documented by Kaspersky in their Securelist report titled "GhostEmperor: From ProxyLogon to Kernel Mode." This group is notable for their use of kernel-mode rootkits — one of the most powerful and stealthy categories of malware — and their ability to chain ProxyLogon (a well-known Microsoft Exchange vulnerability) with deep system-level implants to create persistent, nearly undetectable footholds on compromised servers.
+                </p>
+                <p>
+                    The centerpiece of GhostEmperor's toolkit is a kernel-mode rootkit called <strong>Demodex</strong>. The name itself is a clever reference — Demodex are microscopic mites that live in human hair follicles, largely undetected by their hosts. This biological metaphor perfectly captures the rootkit's design philosophy: live deep within the system, remain invisible to the host's defenses, and silently siphon data. Demodex is exactly 7 letters long, fitting the challenge question's constraint, and operates at the kernel level to intercept, modify, and conceal system operations.
+                </p>
+                <p>
+                    The first stage of GhostEmperor's infection chain begins with a <strong>malicious PowerShell dropper</strong>. This dropper is typically delivered via the ProxyLogon exploit chain against Microsoft Exchange servers. Once executed, the PowerShell script downloads and executes subsequent stages of the malware, eventually loading the Demodex rootkit into kernel space. The use of PowerShell as the initial vector is strategic — it's a legitimate Windows component that's commonly used by administrators, making it less likely to trigger security alerts compared to standalone executables.
+                </p>
+                <p>
+                    To protect the payload and configuration data within the dropper, GhostEmperor employs <strong>AES encryption</strong>. This symmetric encryption algorithm provides strong confidentiality for the embedded strings, C2 addresses, and secondary payloads. Unlike simple XOR obfuscation (which is trivially reversible), AES requires the correct key to decrypt, making static analysis significantly harder. Security researchers typically need to extract the key from the PowerShell script's logic before they can decrypt the actual payload.
+                </p>
+                <p>
+                    One of Demodex's most sophisticated capabilities is its ability to hide services from the Windows Service Control Manager. It achieves this by intercepting a specific IOCTL code: <strong>0x220300</strong>. When the Services MMC snap-in (<code>services.msc</code>) or the <code>sc query</code> command enumerates services, they issue this IOCTL to <code>services.exe</code>. Demodex's kernel driver hooks this IOCTL and filters out entries matching the malicious service, making it invisible to standard system administration tools. This is a remarkably clean technique — rather than modifying the service registry keys (which could be detected by file integrity monitoring), the rootkit intercepts the query at the kernel level before the results reach userspace.
+                </p>
+
+                <div class="intel-table" style="margin-top:16px">
+                    <table class="intel-table">
+                        <tr><th>Attribute</th><th>Value</th></tr>
+                        <tr><td>Rootkit Name</td><td>Demodex (7 letters)</td></tr>
+                        <tr><td>Type</td><td>Kernel-mode rootkit</td></tr>
+                        <tr><td>First Stage</td><td>Malicious PowerShell dropper</td></tr>
+                        <tr><td>Encryption</td><td>AES</td></tr>
+                        <tr><td>Service-Hiding IOCTL</td><td><code>0x220300</code></td></tr>
+                        <tr><td>Initial Access Vector</td><td>ProxyLogon (Microsoft Exchange)</td></tr>
+                        <tr><td>Target Process</td><td><code>services.exe</code></td></tr>
+                    </table>
+                </div>
+
+                <div class="callout callout-danger">
+                    <div class="callout-icon"><i class="bi bi-shield-fill-exclamation"></i></div>
+                    <div class="callout-content">
+                        <strong>Kernel-Mode Hiding</strong>
+                        The <code>0x220300</code> IOCTL interception is particularly insidious because it operates below the visibility of all userspace monitoring tools. Traditional endpoint detection and response (EDR) solutions that monitor service creation via ETW (Event Tracing for Windows) or registry key modifications may not catch this — the service exists in the registry, but queries to <code>services.exe</code> are silently filtered. Detection requires examining the kernel driver load order or using memory forensics tools that bypass the live OS's syscall layer entirely.
+                    </div>
+                </div>
+
+                <div class="answer-box">
+                    <span class="answer-icon"><i class="bi bi-bug-fill" style="color:var(--accent)"></i></span>
+                    <div>
+                        <div class="answer-label">Rootkit Name (7-letter word)</div>
+                        <div class="answer-value">Demodex</div>
+                    </div>
+                </div>
+
+                <div class="answer-box">
+                    <span class="answer-icon"><i class="bi bi-terminal-fill" style="color:var(--accent)"></i></span>
+                    <div>
+                        <div class="answer-label">First Stage</div>
+                        <div class="answer-value">Malicious PowerShell dropper</div>
+                    </div>
+                </div>
+
+                <div class="answer-box">
+                    <span class="answer-icon"><i class="bi bi-lock-fill" style="color:var(--accent)"></i></span>
+                    <div>
+                        <div class="answer-label">Encryption Used for Obfuscation</div>
+                        <div class="answer-value">AES</div>
+                    </div>
+                </div>
+
+                <div class="answer-box">
+                    <span class="answer-icon"><i class="bi bi-eye-slash-fill" style="color:var(--accent)"></i></span>
+                    <div>
+                        <div class="answer-label">IOCTL to Hide Service in services.exe</div>
+                        <div class="answer-value">0x220300</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Summary -->
+            <section id="summary" class="section fade-in">
+                <div class="section-header">
+                    <div class="section-number">9</div>
+                    <h2>Intelligence Summary</h2>
+                </div>
+                <p>
+                    This room demonstrates the critical importance of threat intelligence literacy in modern cybersecurity operations. By systematically researching two APT groups across multiple intelligence sources — vendor reports, MITRE ATT&CK, CVE databases, and security blogs — we've built comprehensive profiles of both Salt Typhoon and GhostEmperor. The key takeaway is that threat intelligence is not a passive discipline; it requires active correlation across sources, understanding of alias relationships, and the ability to map observed behaviors to structured frameworks like MITRE ATT&CK.
+                </p>
+
+                <div class="takeaways">
+                    <div class="takeaways-title"><i class="bi bi-bookmark-star"></i> Key Takeaways</div>
+                    <div class="takeaways-grid">
+                        <div class="takeaway-item">
+                            <span class="takeaway-label">Alias Correlation</span>
+                            <span class="takeaway-desc">Salt Typhoon = Earth Estries (TrendMicro). Always cross-reference vendor-specific names.</span>
+                        </div>
+                        <div class="takeaway-item">
+                            <span class="takeaway-label">Network-Layer Targeting</span>
+                            <span class="takeaway-desc">Salt Typhoon's focus on network devices (not endpoints) is a strategic choice for mass surveillance.</span>
+                        </div>
+                        <div class="takeaway-item">
+                            <span class="takeaway-label">Custom Tooling</span>
+                            <span class="takeaway-desc">JumbledPath (Go-based sniffer), Crowdoor (registry persistence), GhostSpider (modular TLS backdoor).</span>
+                        </div>
+                        <div class="takeaway-item">
+                            <span class="takeaway-label">CVE Chaining</span>
+                            <span class="takeaway-desc">CVE-2022-3236 (Sophos) for initial access; ProxyLogon for GhostEmperor entry.</span>
+                        </div>
+                        <div class="takeaway-item">
+                            <span class="takeaway-label">Kernel Persistence</span>
+                            <span class="takeaway-desc">Demodex uses IOCTL 0x220300 to hide services — bypasses all userspace detection.</span>
+                        </div>
+                        <div class="takeaway-item">
+                            <span class="takeaway-label">MITRE Mapping</span>
+                            <span class="takeaway-desc">T1070.002 (log deletion) + T1112 (registry persistence) — both detectable with proper monitoring.</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Author Footer -->
+            <div class="author-footer">
+                <div class="author-info">
+                    <div class="author-avatar">Q</div>
+                    <div class="author-details">
+                        <div class="author-name">QA210</div>
+                        <div class="author-team">w4llz CTF Team</div>
+                    </div>
+                </div>
+                <div class="footer-links">
+                    <a href="https://github.com/Yuri08-QA210" target="_blank" class="footer-link"><i class="bi bi-github"></i></a>
+                    <a href="https://w4llz.me/" target="_blank" class="footer-link"><i class="bi bi-people-fill"></i></a>
+                </div>
+            </div>
+        </main>
+
+        <!-- TOC Sidebar -->
+        <aside class="toc-sidebar">
+            <div class="toc-title"><i class="bi bi-list-nested"></i> Table of Contents</div>
+            <ul class="toc-list">
+                <li><a href="#overview" class="toc-link active"><span class="toc-num">0</span> Investigation Flow</a></li>
+                <li><a href="#salt-typhoon-origin" class="toc-link"><span class="toc-num">1</span> Nation-State Attribution</a></li>
+                <li><a href="#salt-typhoon-active" class="toc-link"><span class="toc-num">2</span> Operational Timeline</a></li>
+                <li><a href="#salt-typhoon-target" class="toc-link"><span class="toc-num">3</span> Target Infrastructure</a></li>
+                <li><a href="#salt-typhoon-malware" class="toc-link"><span class="toc-num">4</span> Custom Malware: JumbledPath</a></li>
+                <li><a href="#salt-typhoon-mitre" class="toc-link"><span class="toc-num">5</span> MITRE ATT&CK Mapping</a></li>
+                <li><a href="#salt-typhoon-cve" class="toc-link"><span class="toc-num">6</span> CVE & Backdoor</a></li>
+                <li><a href="#salt-typhoon-aliases" class="toc-link"><span class="toc-num">7</span> Aliases & GhostSpider</a></li>
+                <li><a href="#ghostemperor" class="toc-link"><span class="toc-num">8</span> GhostEmperor — Demodex</a></li>
+                <li><a href="#summary" class="toc-link"><span class="toc-num">9</span> Intelligence Summary</a></li>
+            </ul>
+        </aside>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Three.js animated background
+        (function() {
+            const canvas = document.getElementById('three-bg');
+            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 50;
+
+            const geometry = new THREE.BufferGeometry();
+            const count = 800;
+            const positions = new Float32Array(count * 3);
+            for (let i = 0; i < count * 3; i++) {
+                positions[i] = (Math.random() - 0.5) * 100;
+            }
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const material = new THREE.PointsMaterial({ size: 0.3, color: 0x3b82f6, transparent: true, opacity: 0.5 });
+            const points = new THREE.Points(geometry, material);
+            scene.add(points);
+
+            function animate() {
+                requestAnimationFrame(animate);
+                points.rotation.y += 0.0003;
+                points.rotation.x += 0.0001;
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        })();
+
+        // Copy code button
+        function copyCode(btn) {
+            const wrapper = btn.closest('.code-block-wrapper');
+            const code = wrapper.querySelector('code');
+            navigator.clipboard.writeText(code.textContent).then(() => {
+                btn.innerHTML = '<i class="bi bi-check2"></i> Copied';
+                btn.style.color = '#4ade80';
+                btn.style.borderColor = 'rgba(34, 197, 94, 0.3)';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="bi bi-clipboard"></i> Copy';
+                    btn.style.color = '';
+                    btn.style.borderColor = '';
+                }, 2000);
+            });
+        }
+
+        // Fade-in on scroll
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+        // Active TOC tracking
+        const tocLinks = document.querySelectorAll('.toc-link');
+        const sections = document.querySelectorAll('.section');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop - 100;
+                if (window.scrollY >= sectionTop) {
+                    current = section.getAttribute('id');
+                }
+            });
+            tocLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
