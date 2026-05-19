@@ -93,6 +93,837 @@ img{max-width:100%;display:block}
 .about-inline{display:flex;align-items:center;gap:1rem}
 .about-inline .avatar{width:52px;height:52px;border-radius:50%;border:2px solid var(--border);object-fit:cover;flex-shrink:0;transition:border-color .3s}
 .about-inline .avatar:hover{border-color:var(--accent)}
+.about-inline .avatar.logo{border-color:var(--accent);box-shadow:0 0 12px rgba(59,130,246,0.25)}
+.about-inline .about-meta .author-name{font-family:'Space Grotesk',sans-serif;font-size:.95rem;font-weight:700;color:var(--text0)}
+.about-inline .about-meta .author-role{font-size:.7rem;color:var(--text3);margin-top:1px}
+.about-inline .about-meta .author-links{display:flex;gap:.6rem;margin-top:4px}
+.about-inline .about-meta .author-links a{color:var(--text4);font-size:.9rem;transition:all .2s}
+.about-inline .about-meta .author-links a:hover{color:var(--accent)}
+.about-bio{font-size:.76rem;color:var(--text2);line-height:1.7;margin-top:.75rem}
+.about-quote{font-size:.7rem;color:var(--text3);font-style:italic;line-height:1.6;padding:.5rem .85rem;border-left:2px solid var(--accent);margin-top:.6rem;background:var(--accent-dim);border-radius:0 6px 6px 0}
+
+/* Tag cloud */
+.tag-cloud{display:flex;flex-wrap:wrap;gap:.35rem}
+.tag-cloud .tc-tag{font-size:.66rem;padding:3px 10px;border-radius:6px;background:var(--bg2);color:var(--text2);border:1px solid var(--border);cursor:pointer;transition:all .2s;font-weight:500}
+.tag-cloud .tc-tag:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+.tc-tag.hot{background:var(--red-dim);border-color:rgba(239,68,68,0.2);color:var(--red)}
+
+/* Technique list */
+.technique-list{display:flex;flex-direction:column;gap:.45rem}
+.technique-item{display:flex;align-items:center;gap:.6rem;padding:.35rem 0;font-size:.76rem;color:var(--text2);transition:color .2s}
+.technique-item i{color:var(--accent);font-size:.6rem;width:14px;text-align:center}
+.technique-item:hover{color:var(--text0)}
+.technique-item .tc{margin-left:auto;font-size:.6rem;color:var(--text4);font-family:'JetBrains Mono',monospace}
+
+/* ═══ FILTER BAR ═══ */
+.filter-bar{padding:1.75rem 0 1.25rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+.filter-bar .filter-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text4);font-weight:700;margin-right:.25rem}
+.filter-btn{padding:6px 16px;border-radius:8px;border:1px solid var(--border);background:var(--bg1);color:var(--text2);font-size:.78rem;font-weight:500;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.filter-btn:hover{border-color:var(--border-light);color:var(--text1);background:var(--bg2)}
+.filter-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;box-shadow:0 2px 12px rgba(59,130,246,0.3)}
+.filter-btn .count{margin-left:5px;opacity:.5;font-size:.68rem}
+
+/* ═══ POST CARDS ═══ */
+.posts-section .section-heading{font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text4);font-weight:700;margin-bottom:1.5rem;display:flex;align-items:center;gap:.75rem}
+.posts-section .section-heading::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+.post-card{background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:1.35rem 1.6rem;margin-bottom:1rem;transition:all .25s;position:relative;display:block;color:inherit}
+.post-card:hover{border-color:var(--border-light);transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,0.4),0 0 0 1px var(--border-glow)}
+.post-card .post-top{display:flex;align-items:center;gap:.75rem;margin-bottom:.7rem}
+.post-card .platform-badge{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:3px 9px;border-radius:5px;white-space:nowrap}
+.platform-badge.htb{background:var(--red-dim);color:var(--red)}
+.platform-badge.tjctf{background:var(--green-dim);color:var(--green)}
+.platform-badge.thm{background:var(--teal);color:#fff;background:rgba(20,184,166,0.15);color:var(--teal)}
+.platform-badge.prolab{background:var(--orange-dim);color:var(--orange)}
+.platform-badge.endgame{background:var(--purple-dim);color:var(--purple)}
+.platform-badge.sherlock{background:var(--cyan-dim);color:var(--cyan)}
+.platform-badge.aptlab{background:var(--rose-dim);color:var(--rose)}
+.platform-badge.research{background:var(--purple-dim);color:var(--purple)}
+.post-card .diff-badge{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:3px 9px;border-radius:5px;background:var(--red-dim);color:var(--red)}
+.diff-badge.easy{background:var(--green-dim);color:var(--green)}
+.diff-badge.medium{background:var(--yellow-dim);color:var(--yellow)}
+.diff-badge.hard{background:var(--orange-dim);color:var(--orange)}
+.diff-badge.insane{background:var(--red-dim);color:var(--red)}
+.post-card .post-date{margin-left:auto;font-size:.7rem;color:var(--text4);font-family:'JetBrains Mono',monospace}
+.post-card h3{font-size:1.08rem;font-weight:700;margin-bottom:.45rem;color:var(--text0);letter-spacing:-.01em;transition:color .2s}
+.post-card:hover h3{color:var(--accent)}
+.post-card .post-excerpt{font-size:.82rem;color:var(--text2);line-height:1.65;margin-bottom:.85rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.post-card .post-tags{display:flex;flex-wrap:wrap;gap:.35rem}
+.post-card .tag{font-size:.62rem;padding:2px 9px;border-radius:5px;background:var(--bg3);color:var(--text3);border:1px solid var(--border);font-weight:500;transition:all .2s;letter-spacing:.02em}
+.post-card:hover .tag{border-color:var(--border-light);color:var(--text2)}
+
+/* PINNED */
+.post-card.pinned{border-color:rgba(249,115,22,0.25);background:linear-gradient(135deg,rgba(249,115,22,0.04),var(--bg1))}
+.post-card.pinned::after{content:'Pinned';position:absolute;top:0;right:1.6rem;background:var(--gradient-warm);color:#fff;font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:3px 12px 5px;border-radius:0 0 6px 6px}
+
+/* ═══ FOOTER ═══ */
+.site-footer{border-top:1px solid var(--border);padding:2.5rem 2.5rem;position:relative;z-index:1}
+.footer-inner{max-width:1320px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.footer-left{font-size:.76rem;color:var(--text4)}
+.footer-left span{color:var(--text2);font-weight:600}
+.footer-links{display:flex;gap:1.5rem}
+.footer-links a{color:var(--text4);font-size:.76rem;transition:color .2s}
+.footer-links a:hover{color:var(--text1)}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:1024px){
+  .hero-section{grid-template-columns:1fr;gap:2rem}
+  .info-strip{grid-template-columns:1fr}
+}
+@media(max-width:768px){
+  .site-header{padding:0 1rem}
+  .site-header .nav-main{display:none}
+  .search-box{display:none}
+  .mobile-toggle{display:block}
+  .page-body{padding:0 1rem}
+  .hero-text h1{font-size:1.85rem}
+  .hero-card{order:-1}
+  .filter-bar{overflow-x:auto;flex-wrap:nowrap;padding-bottom:.5rem}
+  .footer-inner{flex-direction:column;text-align:center}
+}
+@media(max-width:480px){
+  .hero-text h1{font-size:1.5rem}
+  .stat-grid{grid-template-columns:1fr 1fr}
+  .post-card{padding:1rem 1.25rem}
+  .about-inline{flex-direction:column;text-align:center}
+}
+
+/* ═══ MOBILE NAV ═══ */
+.mobile-nav-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;backdrop-filter:blur(4px)}
+.mobile-nav-overlay.show{display:block}
+.mobile-nav-panel{display:none;position:fixed;right:0;top:0;bottom:0;width:300px;background:var(--bg1);border-left:1px solid var(--border);z-index:201;padding:1.5rem;overflow-y:auto}
+.mobile-nav-panel.show{display:block}
+.mobile-nav-panel .mnp-close{background:none;border:none;color:var(--text2);font-size:1.2rem;cursor:pointer;float:right}
+.mobile-nav-panel nav{display:flex;flex-direction:column;gap:.5rem;clear:both;margin-top:1rem}
+.mobile-nav-panel nav a{padding:.75rem 0;border-bottom:1px solid var(--border);color:var(--text1);font-size:.9rem;font-weight:500}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<!-- ═══════════ HEADER ═══════════ -->
+<header class="site-header">
+  <a href="/" class="brand">
+    <span class="logo-icon">Q</span>
+    QA210<span class="cursor"></span>
+  </a>
+  <nav class="nav-main">
+    <a href="/" class="active">Home</a>
+    <a href="/htb/">Hack The Box</a>
+    <a href="/tjctf-2026/">TJCTF</a>
+    <a href="/tryhackme/">TryHackMe</a>
+    <a href="/research/">Research</a>
+  </nav>
+  <div class="nav-right">
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+      <input type="text" placeholder="Search writeups..." id="searchInput" oninput="filterPosts()">
+    </div>
+    <a href="https://github.com/Yuri08-QA210" target="_blank" class="social-link" title="GitHub"><i class="bi bi-github"></i></a>
+    <a href="https://w4llz.me/" target="_blank" class="social-link" title="W4LLZ Team" style="color:var(--yellow)"><i class="bi bi-people-fill"></i></a>
+    <button class="mobile-toggle" onclick="toggleMobileNav()" aria-label="Menu"><i class="bi bi-list"></i></button>
+  </div>
+</header>
+
+<!-- Mobile Nav -->
+<div class="mobile-nav-overlay" id="mobileOverlay" onclick="toggleMobileNav()"></div>
+<div class="mobile-nav-panel" id="mobilePanel">
+  <button class="mnp-close" onclick="toggleMobileNav()"><i class="bi bi-x-lg"></i></button>
+  <nav>
+    <a href="/">Home</a>
+    <a href="/htb/">Hack The Box</a>
+    <a href="/tjctf-2026/">TJCTF</a>
+    <a href="/tryhackme/">TryHackMe</a>
+    <a href="/research/">Research</a>
+    <a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
+    <a href="https://w4llz.me/" target="_blank">W4LLZ Team</a>
+  </nav>
+</div>
+
+<!-- ═══════════ MAIN ═══════════ -->
+<div class="page-body">
+
+<!-- ═══ HERO ═══ -->
+<section class="hero-section" id="about-section">
+  <div class="hero-text">
+    <div class="greeting">Security Research & CTF Writeups</div>
+    <h1>Offensive Security<br><span>Notes & Walkthroughs</span></h1>
+    <p class="tagline">Detailed writeups for Hack The Box machines, Pro Labs, APT Labs, Endgames, and CTF challenges. Focused on Active Directory, binary exploitation, and red team operations.</p>
+    <div class="hero-badges">
+      <span class="hero-badge hackthebox"><i class="bi bi-skull"></i> Hack The Box</span>
+      <span class="hero-badge team"><i class="bi bi-people-fill"></i> W4LLZ</span>
+      <span class="hero-badge pwn"><i class="bi bi-bug-fill"></i> Pwn / RE</span>
+      <span class="hero-badge ad"><i class="bi bi-diagram-3-fill"></i> Active Directory</span>
+      <span class="hero-badge aptlab"><i class="bi bi-shield-lock-fill"></i> APT Labs</span>
+    </div>
+  </div>
+  <div class="hero-card">
+    <div class="card-label">Quick Stats</div>
+    <div class="stat-grid">
+      <div class="stat-item highlight">
+        <div class="stat-val">29</div>
+        <div class="stat-lbl">Writeups</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-val">6</div>
+        <div class="stat-lbl">Insane Boxes</div>
+      </div>
+      <div class="stat-item highlight">
+        <div class="stat-val">5</div>
+        <div class="stat-lbl">Pro Labs</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-val">13</div>
+        <div class="stat-lbl">TJCTF 2026</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ INFO STRIP: About + Tags + Techniques ═══ -->
+<section class="info-strip">
+
+  <!-- About -->
+  <div class="info-card">
+    <div class="ic-title"><i class="bi bi-person-circle"></i> About</div>
+    <div class="about-inline">
+      <img src="https://files.catbox.moe/755fgv.png" alt="QA210" class="avatar logo">
+      <div class="about-meta">
+        <div class="author-name">QA210</div>
+        <div class="author-role">10th Grade &bull; Vietnam</div>
+        <div class="author-links">
+          <a href="https://github.com/Yuri08-QA210" target="_blank" title="GitHub"><i class="bi bi-github"></i></a>
+          <a href="https://w4llz.me/" target="_blank" title="W4LLZ"><i class="bi bi-people-fill"></i></a>
+        </div>
+      </div>
+    </div>
+    <p class="about-bio">High school student from Vietnam passionate about offensive security, binary exploitation, and Active Directory attacks. Member of <a href="https://w4llz.me/" target="_blank" style="color:var(--yellow);font-weight:600">W4LLZ</a> CTF team.</p>
+    <div class="about-quote">&ldquo;Nothing is secure, everything has bugs, and humans are the biggest vulnerability.&rdquo;</div>
+  </div>
+
+  <!-- Popular Tags -->
+  <div class="info-card">
+    <div class="ic-title"><i class="bi bi-tags"></i> Popular Tags</div>
+    <div class="tag-cloud">
+      <span class="tc-tag hot">Active Directory</span>
+      <span class="tc-tag hot">Kerberoast</span>
+      <span class="tc-tag hot">Pwn</span>
+      <span class="tc-tag">NTLM Relay</span>
+      <span class="tc-tag">Format String</span>
+      <span class="tc-tag">Docker</span>
+      <span class="tc-tag">Forensics</span>
+      <span class="tc-tag">XXE</span>
+      <span class="tc-tag">RSA</span>
+      <span class="tc-tag">Pivoting</span>
+      <span class="tc-tag">SeBackupPriv</span>
+      <span class="tc-tag">Linux</span>
+      <span class="tc-tag">Windows</span>
+      <span class="tc-tag">Stego</span>
+      <span class="tc-tag">Reverse</span>
+      <span class="tc-tag">Kernel</span>
+      <span class="tc-tag">Prompt Injection</span>
+      <span class="tc-tag">Zip Slip</span>
+      <span class="tc-tag">ELF</span>
+      <span class="tc-tag">Mach-O</span>
+    </div>
+  </div>
+
+  <!-- Key Techniques -->
+  <div class="info-card">
+    <div class="ic-title"><i class="bi bi-lightning-charge"></i> Key Techniques</div>
+    <div class="technique-list">
+      <div class="technique-item"><i class="bi bi-arrow-right"></i> AD Chain Attacks <span class="tc">4 posts</span></div>
+      <div class="technique-item"><i class="bi bi-arrow-right"></i> Kerberos Exploitation <span class="tc">3 posts</span></div>
+      <div class="technique-item"><i class="bi bi-arrow-right"></i> Binary Exploitation <span class="tc">3 posts</span></div>
+      <div class="technique-item"><i class="bi bi-arrow-right"></i> Container Escapes <span class="tc">2 posts</span></div>
+      <div class="technique-item"><i class="bi bi-arrow-right"></i> Cryptographic Attacks <span class="tc">2 posts</span></div>
+      <div class="technique-item"><i class="bi bi-arrow-right"></i> Network Pivoting <span class="tc">3 posts</span></div>
+      <div class="technique-item"><i class="bi bi-arrow-right"></i> Forensics & RE <span class="tc">6 posts</span></div>
+      <div class="technique-item"><i class="bi bi-arrow-right"></i> Web Exploitation <span class="tc">3 posts</span></div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ═══ FILTER BAR ═══ -->
+<div class="filter-bar" id="writeups">
+  <span class="filter-label">Filter:</span>
+  <button class="filter-btn active" data-filter="all" onclick="setFilter(this)">All<span class="count">29</span></button>
+  <button class="filter-btn" data-filter="htb" onclick="setFilter(this)">Hack The Box<span class="count">8</span></button>
+  <button class="filter-btn" data-filter="prolab" onclick="setFilter(this)">Pro Labs<span class="count">5</span></button>
+  <button class="filter-btn" data-filter="aptlab" onclick="setFilter(this)">APT Labs<span class="count">1</span></button>
+  <button class="filter-btn" data-filter="tjctf" onclick="setFilter(this)">TJCTF<span class="count">13</span></button>
+  <button class="filter-btn" data-filter="thm" onclick="setFilter(this)">TryHackMe<span class="count">5</span></button>
+  <button class="filter-btn" data-filter="ad" onclick="setFilter(this)">AD<span class="count">5</span></button>
+  <button class="filter-btn" data-filter="pwn" onclick="setFilter(this)">Pwn<span class="count">3</span></button>
+  <button class="filter-btn" data-filter="research" onclick="setFilter(this)">Research<span class="count">2</span></button>
+</div>
+
+<!-- ═══ POSTS ═══ -->
+<div class="posts-section">
+
+  <!-- HTB SECTION -->
+  <div class="section-heading" id="htb-section">Hack The Box</div>
+
+  <!-- PRO LABS -->
+  <a href="/htb/prolabs/xen/" class="post-card pinned" data-platform="prolab" data-tags="endgame,citrix,kerberoast,ad,password-spray,sebackupprivilege">
+    <div class="post-top">
+      <span class="platform-badge endgame">Endgame</span>
+      <span class="diff-badge insane">Insane</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>HTB Endgame: XEN</h3>
+    <p class="post-excerpt">Complete domain compromise through Citrix VDI breakout, Kerberoasting, NetScaler PCAP analysis, password spraying, and SeBackupPrivilege abuse to extract ntds.dit from the Domain Controller. Six flags across the entire kill chain.</p>
+    <div class="post-tags">
+      <span class="tag">Citrix Breakout</span><span class="tag">Kerberoast</span><span class="tag">PCAP</span><span class="tag">Password Spray</span><span class="tag">SeBackupPrivilege</span><span class="tag">AD</span>
+    </div>
+  </a>
+
+  <a href="/htb/prolabs/dante/" class="post-card" data-platform="prolab" data-tags="red-team,pivoting,ad,wordpress,buffer-overflow,keepass">
+    <div class="post-top">
+      <span class="platform-badge prolab">Pro Lab</span>
+      <span class="diff-badge hard">Hard</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>HTB Pro Lab: Dante</h3>
+    <p class="post-excerpt">Red Team Operator Level I lab walkthrough. Pivoting through 14 machines across three subnets using Ligolo-ng, WordPress exploitation, LLMNR poisoning, buffer overflows, and KeePass credential extraction to achieve domain dominance.</p>
+    <div class="post-tags">
+      <span class="tag">Pivoting</span><span class="tag">WordPress</span><span class="tag">AD</span><span class="tag">Buffer Overflow</span><span class="tag">KeePass</span><span class="tag">27 Flags</span>
+    </div>
+  </a>
+
+  <a href="/htb/prolabs/cybernetics/" class="post-card" data-platform="prolab" data-tags="red-team,ad,5-domains,kerberos,gpo">
+    <div class="post-top">
+      <span class="platform-badge prolab">Pro Lab</span>
+      <span class="diff-badge insane">Insane</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>HTB Pro Lab: Cybernetics</h3>
+    <p class="post-excerpt">Red Team Operator Level II. Advanced Active Directory attacks across five domains including Kerberos delegation abuse, GPO exploitation, forest trust pivoting, and cross-domain compromise with 25 flags.</p>
+    <div class="post-tags">
+      <span class="tag">5 Domains</span><span class="tag">Kerberos</span><span class="tag">GPO Abuse</span><span class="tag">Forest Trust</span><span class="tag">25 Flags</span>
+    </div>
+  </a>
+
+  <a href="/htb/prolabs/rastalabs/" class="post-card" data-platform="prolab" data-tags="red-team,opsec,c2,ad,lateral-movement">
+    <div class="post-top">
+      <span class="platform-badge prolab">Pro Lab</span>
+      <span class="diff-badge insane">Insane</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>HTB Pro Lab: RastaLabs</h3>
+    <p class="post-excerpt">Red Team Operator Level II with OPSEC emphasis. Phishing initial access, C2 infrastructure, credential harvesting, lateral movement, and domain dominance. 14 machines, 27 flags.</p>
+    <div class="post-tags">
+      <span class="tag">OPSEC</span><span class="tag">C2</span><span class="tag">AD</span><span class="tag">Lateral Movement</span><span class="tag">27 Flags</span>
+    </div>
+  </a>
+
+  <!-- APT LABS -->
+  <a href="/htb/prolabs/aptlabs/" class="post-card" data-platform="aptlab" data-tags="apt-labs,red-team,ad,pivoting,credential-harvesting">
+    <div class="post-top">
+      <span class="platform-badge aptlab">Pro Labs</span>
+      <span class="diff-badge insane">Insane</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>HTB Pro Labs: APTLabs</h3>
+    <p class="post-excerpt">Advanced Persistent Threat simulation environment. Realistic enterprise AD attack scenarios involving credential harvesting, lateral movement, C2 infrastructure, and full domain compromise across hardened networks.</p>
+    <div class="post-tags">
+      <span class="tag">APT</span><span class="tag">Red Team</span><span class="tag">AD</span><span class="tag">Pivoting</span><span class="tag">Credential Harvest</span>
+    </div>
+  </a>
+
+  <!-- INSANE BOXES -->
+  <div class="section-heading" id="insane-section" style="margin-top:.5rem">Hack The Box — Insane Machines</div>
+
+  <a href="/htb/insane/darkcorp/" class="post-card" data-platform="htb" data-tags="ad,ntlm-relay,gpo-abuse,windows,kerberos">
+    <div class="post-top">
+      <span class="platform-badge htb">HTB</span>
+      <span class="diff-badge insane">Insane</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>DarkCorp</h3>
+    <p class="post-excerpt">Full Active Directory chain attack including NTLM relay, GPO abuse, Silver Ticket forgery, and Shadow Credential exploitation on a hardened Windows domain environment.</p>
+    <div class="post-tags">
+      <span class="tag">AD</span><span class="tag">NTLM Relay</span><span class="tag">GPO Abuse</span><span class="tag">Silver Ticket</span><span class="tag">Windows</span>
+    </div>
+  </a>
+
+  <a href="/htb/insane/sorcery/" class="post-card" data-platform="htb" data-tags="docker,kafka,rce,ssrf,freeipa">
+    <div class="post-top">
+      <span class="platform-badge htb">HTB</span>
+      <span class="diff-badge insane">Insane</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>Sorcery</h3>
+    <p class="post-excerpt">Docker escape through Kafka RCE combined with SSRF chain exploitation, leading to FreeIPA domain compromise through container breakout and privilege escalation.</p>
+    <div class="post-tags">
+      <span class="tag">Docker</span><span class="tag">Kafka RCE</span><span class="tag">SSRF</span><span class="tag">FreeIPA</span>
+    </div>
+  </a>
+
+  <a href="/htb/insane/brainfuck/" class="post-card" data-platform="htb" data-tags="wordpress,rsa,cryptography,linux">
+    <div class="post-top">
+      <span class="platform-badge htb">HTB</span>
+      <span class="diff-badge insane">Insane</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>Brainfuck</h3>
+    <p class="post-excerpt">WordPress exploitation combined with RSA cryptographic attacks. From web application foothold through custom cipher decryption to root access on a hardened Linux system.</p>
+    <div class="post-tags">
+      <span class="tag">WordPress</span><span class="tag">RSA</span><span class="tag">Cryptography</span><span class="tag">Linux</span>
+    </div>
+  </a>
+
+  <a href="/htb/insane/apt/" class="post-card" data-platform="htb" data-tags="ad,dc,ntlmv1,windows,privilege-escalation">
+    <div class="post-top">
+      <span class="platform-badge htb">HTB</span>
+      <span class="diff-badge insane">Insane</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>APT</h3>
+    <p class="post-excerpt">Advanced persistent threat simulation on a Windows Domain Controller. NTLMv1 downgrade attacks, DC exploitation, and multi-stage privilege escalation in a hardened AD environment.</p>
+    <div class="post-tags">
+      <span class="tag">DC</span><span class="tag">NTLMv1</span><span class="tag">AD</span><span class="tag">Windows</span>
+    </div>
+  </a>
+
+  <a href="/htb/insane/rope/" class="post-card" data-platform="htb" data-tags="pwn,format-string,rop,linux,binary-exploitation">
+    <div class="post-top">
+      <span class="platform-badge htb">HTB</span>
+      <span class="diff-badge insane">Insane</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>Rope</h3>
+    <p class="post-excerpt">Binary exploitation through format string vulnerability to ROP chain construction. Stack-based buffer overflow with custom exploit development on a 64-bit Linux binary with protections.</p>
+    <div class="post-tags">
+      <span class="tag">Format String</span><span class="tag">ROP</span><span class="tag">Pwn</span><span class="tag">Linux</span>
+    </div>
+  </a>
+
+  <a href="/htb/insane/ropetwo/" class="post-card" data-platform="htb" data-tags="pwn,v8-oob,kernel-pwn,browser-exploitation">
+    <div class="post-top">
+      <span class="platform-badge htb">HTB</span>
+      <span class="diff-badge insane">Insane</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>RopeTwo</h3>
+    <p class="post-excerpt">V8 engine out-of-bounds exploitation leading to browser sandbox escape and kernel-level privilege escalation. Advanced pwn chain from JavaScript engine to root on Linux.</p>
+    <div class="post-tags">
+      <span class="tag">v8 OOB</span><span class="tag">Kernel PWN</span><span class="tag">Browser</span><span class="tag">Pwn</span>
+    </div>
+  </a>
+
+  <!-- SHERLOCK -->
+  <a href="/htb/sherlock/aptnightmare2/" class="post-card" data-platform="htb" data-tags="forensics,rootkit,memory-forensics,malware">
+    <div class="post-top">
+      <span class="platform-badge sherlock">Sherlock</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>APTNightmare2</h3>
+    <p class="post-excerpt">Memory forensics investigation of an APT intrusion. Rootkit analysis, process reconstruction, and indicator extraction from a compromised Windows memory dump.</p>
+    <div class="post-tags">
+      <span class="tag">Rootkit</span><span class="tag">Memory Forensics</span><span class="tag">Malware Analysis</span>
+    </div>
+  </a>
+
+  <a href="/htb/sherlock/salinebreeze-1/" class="post-card" data-platform="htb" data-tags="threat-intel,apt,salt-typhoon,ghostemperor,mitre-attck">
+    <div class="post-top">
+      <span class="platform-badge sherlock">Sherlock</span>
+      <span class="diff-badge medium">Medium</span>
+      <span class="post-date">2025</span>
+    </div>
+    <h3>SalineBreeze-1</h3>
+    <p class="post-excerpt">Threat intelligence deep dive into Salt Typhoon's network-device espionage toolkit and GhostEmperor's kernel-mode Demodex rootkit. MITRE ATT&CK mapping, CVE analysis, and APT profiling.</p>
+    <div class="post-tags">
+      <span class="tag">Threat Intel</span><span class="tag">APT</span><span class="tag">MITRE ATT&CK</span><span class="tag">Salt Typhoon</span><span class="tag">GhostEmperor</span>
+    </div>
+  </a>
+
+  <!-- ═══ TJCTF ═══ -->
+  <div class="section-heading" id="tjctf-section" style="margin-top:.5rem">TJCTF 2026</div>
+
+  <a href="/tjctf-2026/web/opening-night/index.html" class="post-card" data-platform="tjctf" data-tags="web,svg,xxe">
+    <div class="post-top">
+      <span class="platform-badge tjctf">TJCTF</span>
+      <span class="diff-badge medium">Medium</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>Opening Night</h3>
+    <p class="post-excerpt">XXE injection through SVG file upload. Exploiting XML external entity processing in a web application's image upload functionality to read arbitrary server files.</p>
+    <div class="post-tags"><span class="tag">Web</span><span class="tag">SVG</span><span class="tag">XXE</span></div>
+  </a>
+
+  <a href="/tjctf-2026/web/free-cloud-storage/index.html" class="post-card" data-platform="tjctf" data-tags="web,zip-slip,file-upload">
+    <div class="post-top">
+      <span class="platform-badge tjctf">TJCTF</span>
+      <span class="diff-badge medium">Medium</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>Free Cloud Storage</h3>
+    <p class="post-excerpt">Zip Slip directory traversal attack through a file upload service. Crafting a malicious ZIP archive with path traversal symlinks to write files outside the intended directory.</p>
+    <div class="post-tags"><span class="tag">Web</span><span class="tag">Zip Slip</span><span class="tag">File Upload</span></div>
+  </a>
+
+  <a href="/tjctf-2026/crypto/trust-issues/index.html" class="post-card" data-platform="tjctf" data-tags="crypto,dnssec,sqli">
+    <div class="post-top">
+      <span class="platform-badge tjctf">TJCTF</span>
+      <span class="diff-badge hard">Hard</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>Trust Issues</h3>
+    <p class="post-excerpt">DNSSEC validation bypass combined with SQL injection. Chaining cryptographic protocol weaknesses with database exploitation to bypass authentication mechanisms.</p>
+    <div class="post-tags"><span class="tag">Crypto</span><span class="tag">DNSSEC</span><span class="tag">SQLi</span></div>
+  </a>
+
+  <a href="/tjctf-2026/crypto/bit-leak/index.html" class="post-card" data-platform="tjctf" data-tags="crypto,rsa,oracle">
+    <div class="post-top">
+      <span class="platform-badge tjctf">TJCTF</span>
+      <span class="diff-badge hard">Hard</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>Bit Leak</h3>
+    <p class="post-excerpt">RSA partial key exposure attack using LSB oracle. Recovering full plaintext from an RSA encryption oracle that leaks individual bits through a padding oracle side-channel.</p>
+    <div class="post-tags"><span class="tag">Crypto</span><span class="tag">RSA</span><span class="tag">Oracle</span></div>
+  </a>
+
+  <a href="/tjctf-2026/forensics/3-write-up/index.html" class="post-card" data-platform="tjctf" data-tags="forensics,voip,png">
+    <div class="post-top">
+      <span class="platform-badge tjctf">TJCTF</span>
+      <span class="diff-badge medium">Medium</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>3-Write-Up</h3>
+    <p class="post-excerpt">VoIP packet analysis and PNG reconstruction from network capture data. Extracting hidden voice communications and embedded image files from PCAP traffic.</p>
+    <div class="post-tags"><span class="tag">Forensics</span><span class="tag">VoIP</span><span class="tag">PNG</span></div>
+  </a>
+
+  <a href="/tjctf-2026/forensics/invisible-ink/index.html" class="post-card" data-platform="tjctf" data-tags="forensics,polyglot,pdf">
+    <div class="post-top">
+      <span class="platform-badge tjctf">TJCTF</span>
+      <span class="diff-badge medium">Medium</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>Invisible Ink</h3>
+    <p class="post-excerpt">Polyglot file analysis combining PDF and alternate format parsing. Extracting hidden data layers from a document that serves as both a valid PDF and another file format.</p>
+    <div class="post-tags"><span class="tag">Forensics</span><span class="tag">Polyglot</span><span class="tag">PDF</span></div>
+  </a>
+
+  <a href="/tjctf-2026/forensics/loud-packets/index.html" class="post-card" data-platform="tjctf" data-tags="forensics,bitmap,stego">
+    <div class="post-top">
+      <span class="platform-badge tjctf">TJCTF</span>
+      <span class="diff-badge medium">Medium</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>Loud Packets</h3>
+    <p class="post-excerpt">Bitmap image reconstruction and steganographic analysis. Decoding hidden information embedded in packet payload data mapped to bitmap pixel values.</p>
+    <div class="post-tags"><span class="tag">Forensics</span><span class="tag">Bitmap</span><span class="tag">Stego</span></div>
+  </a>
+
+  <a href="/tjctf-2026/forensics/thomas-schools-of-china/index.html" class="post-card" data-platform="tjctf" data-tags="forensics,custom-format,parsing">
+    <div class="post-top">
+      <span class="platform-badge tjctf">TJCTF</span>
+      <span class="diff-badge hard">Hard</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>Thomas Schools of China</h3>
+    <p class="post-excerpt">Reverse engineering a custom binary file format. Parsing proprietary headers, custom compression schemes, and non-standard encoding to extract the hidden flag data.</p>
+    <div class="post-tags"><span class="tag">Forensics</span><span class="tag">Custom Format</span><span class="tag">Parsing</span></div>
+  </a>
+
+  <a href="/tjctf-2026/rev/polaroid/index.html" class="post-card" data-platform="tjctf" data-tags="rev,mach-o,xor,macos">
+    <div class="post-top">
+      <span class="platform-badge tjctf">TJCTF</span>
+      <span class="diff-badge medium">Medium</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>Polaroid</h3>
+    <p class="post-excerpt">Mach-O binary reverse engineering on macOS. XOR-based string obfuscation analysis, Objective-C method tracing, and flag extraction from a native Apple binary.</p>
+    <div class="post-tags"><span class="tag">Rev</span><span class="tag">Mach-O</span><span class="tag">XOR</span></div>
+  </a>
+
+  <a href="/tjctf-2026/rev/remoose/index.html" class="post-card" data-platform="tjctf" data-tags="rev,elf,forensics,anti-debug">
+    <div class="post-top">
+      <span class="platform-badge tjctf">TJCTF</span>
+      <span class="diff-badge hard">Hard</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>Remoose</h3>
+    <p class="post-excerpt">ELF binary analysis with anti-debugging techniques. Bypassing ptrace-based protections, reconstructing obfuscated control flow, and extracting the flag from a hardened Linux executable.</p>
+    <div class="post-tags"><span class="tag">Rev</span><span class="tag">ELF</span><span class="tag">Anti-Debug</span></div>
+  </a>
+
+  <a href="/tjctf-2026/pwn/hunting-field/index.html" class="post-card" data-platform="tjctf" data-tags="pwn,buffer-underflow,linux">
+    <div class="post-top">
+      <span class="platform-badge tjctf">TJCTF</span>
+      <span class="diff-badge hard">Hard</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>Hunting Field</h3>
+    <p class="post-excerpt">Buffer underflow exploitation on a Linux binary. Unconventional memory corruption through negative indexing, hijacking execution flow via stack manipulation and GOT overwrite.</p>
+    <div class="post-tags"><span class="tag">Pwn</span><span class="tag">Buffer Underflow</span><span class="tag">Linux</span></div>
+  </a>
+
+  <a href="/tjctf-2026/misc/glich/index.html" class="post-card" data-platform="tjctf" data-tags="misc,stego,image">
+    <div class="post-top">
+      <span class="platform-badge tjctf">TJCTF</span>
+      <span class="diff-badge medium">Medium</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>Glitch</h3>
+    <p class="post-excerpt">Image steganography challenge. Extracting hidden data from visual artifacts in a glitched image file through pixel-level analysis and channel manipulation.</p>
+    <div class="post-tags"><span class="tag">Misc</span><span class="tag">Stego</span><span class="tag">Image</span></div>
+  </a>
+
+  <a href="/tjctf-2026/misc/calculative-barracuda/index.html" class="post-card" data-platform="tjctf" data-tags="misc,ai,prompt-injection">
+    <div class="post-top">
+      <span class="platform-badge tjctf">TJCTF</span>
+      <span class="diff-badge medium">Medium</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>Calculative Barracuda</h3>
+    <p class="post-excerpt">AI prompt injection and jailbreaking challenge. Manipulating LLM behavior through carefully crafted inputs to bypass safety filters and extract restricted information.</p>
+    <div class="post-tags"><span class="tag">Misc</span><span class="tag">AI</span><span class="tag">Prompt Injection</span></div>
+  </a>
+
+  <!-- ═══ TRYHACKME ═══ -->
+  <div class="section-heading" id="thm-section" style="margin-top:.5rem">TryHackMe</div>
+
+  <a href="/tryhackme/insane/crocc-crew/" class="post-card" data-platform="thm" data-tags="ad,kerberoasting,constrained-delegation,secrets-dump,smb,ldap">
+    <div class="post-top">
+      <span class="platform-badge thm">TryHackMe</span>
+      <span class="diff-badge hard">Hard</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>Crocc Crew</h3>
+    <p class="post-excerpt">Full Active Directory attack chain from web enumeration through SMB and LDAP enumeration, Kerberoasting, Constrained Delegation abuse, and Secrets Dump to achieve Domain Admin on a TryHackMe AD lab.</p>
+    <div class="post-tags"><span class="tag">AD</span><span class="tag">Kerberoasting</span><span class="tag">Constrained Delegation</span><span class="tag">Secrets Dump</span><span class="tag">SMB</span></div>
+  </a>
+
+  <a href="/tryhackme/cct2019/" class="post-card" data-platform="thm" data-tags="forensics,rev,crypto,pcap">
+    <div class="post-top">
+      <span class="platform-badge thm">TryHackMe</span>
+      <span class="diff-badge medium">Medium</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>CCT 2019</h3>
+    <p class="post-excerpt">Cyber Competition Team 2019 challenges including Forensics, Reverse Engineering, PCAP analysis, and Cryptography. Multi-category CTF walkthrough with detailed analysis of each challenge.</p>
+    <div class="post-tags"><span class="tag">Forensics</span><span class="tag">Rev</span><span class="tag">Crypto</span><span class="tag">PCAP</span></div>
+  </a>
+
+  <!-- ═══ RESEARCH ═══ -->
+  <div class="section-heading" id="research-section" style="margin-top:.5rem">Research</div>
+
+  <a href="/research/kernel/dirtydecrypt/" class="post-card" data-platform="research" data-tags="kernel,lpe,page-cache,cow-bypass,rxgk,dirtydecrypt,cve-2026-31635,red-team,detection,hardening">
+    <div class="post-top">
+      <span class="platform-badge research"><i class="bi bi-journal-code"></i> Research</span>
+      <span class="diff-badge insane">Critical</span>
+      <span class="post-date">May 2026</span>
+    </div>
+    <h3>DirtyDecrypt / DirtyCBC — CVE-2026-31635</h3>
+    <p class="post-excerpt">Local privilege escalation to root via rxgk_decrypt_skb — a missing COW guard vulnerability in the Linux kernel rxgk module that allows bypassing Copy-On-Write protection and writing directly into the page cache. Deterministic exploit, no race condition, public PoC available.</p>
+    <div class="post-tags"><span class="tag">CVE-2026-31635</span><span class="tag">LPE</span><span class="tag">Kernel</span><span class="tag">Page Cache</span><span class="tag">COW Bypass</span><span class="tag">Red Team</span><span class="tag">Fedora</span></div>
+  </a>
+
+  <a href="/research/gpo/shadowpolicy/" class="post-card" data-platform="research" data-tags="gpo,scheduled-tasks,sysvol,sacl,dsc,blue-team,lolbin,ad,detection,hardening">
+    <div class="post-top">
+      <span class="platform-badge research"><i class="bi bi-journal-code"></i> Research</span>
+      <span class="diff-badge insane">Critical</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>ShadowPolicy — GPO Preference State-Injection</h3>
+    <p class="post-excerpt">Advanced detection and auditing framework for the ShadowPolicy threat model: GPO Preference Scheduled Task XML injection via SYSVOL state modification in Windows Server 2022 / Active Directory. Full defensive architecture with DSC hardening, SACL auditing, and SIEM detection rules.</p>
+    <div class="post-tags"><span class="tag">GPO Abuse</span><span class="tag">SYSVOL</span><span class="tag">Blue Team</span><span class="tag">DSC</span><span class="tag">SACL</span><span class="tag">SIEM</span><span class="tag">AD</span></div>
+  </a>
+
+</div>
+
+</div><!-- /page-body -->
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-left">&copy; 2026 <span>QA210</span> &mdash; Security Research & CTF Writeups</div>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/htb/">Hack The Box</a>
+      <a href="/tjctf-2026/">TJCTF</a>
+      <a href="/tryhackme/">TryHackMe</a>
+      <a href="/research/">Research</a>
+      <a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
+      <a href="https://w4llz.me/" target="_blank">W4LLZ</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ═══ Mobile Nav ═══
+function toggleMobileNav(){
+  document.getElementById('mobileOverlay').classList.toggle('show');
+  document.getElementById('mobilePanel').classList.toggle('show');
+}
+
+// ═══ Filter ═══
+function setFilter(btn){
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const f=btn.dataset.filter;
+  document.querySelectorAll('.post-card').forEach(card=>{
+    if(f==='all'){card.style.display='';return}
+    const p=card.dataset.platform||'';
+    const t=(card.dataset.tags||'').split(',');
+    if(p===f||t.includes(f)){card.style.display=''}else{card.style.display='none'}
+  });
+  document.querySelectorAll('.section-heading').forEach(heading=>{
+    if(f==='all'){heading.style.display='';return}
+    let el=heading.nextElementSibling;
+    let hasVisible=false;
+    while(el&&!el.classList.contains('section-heading')&&el.tagName!=='ASIDE'){
+      if(el.classList.contains('post-card')&&el.style.display!=='none') hasVisible=true;
+      el=el.nextElementSibling;
+    }
+    heading.style.display=hasVisible?'':'none';
+  });
+}
+
+// ═══ Search ═══
+function filterPosts(){
+  const q=document.getElementById('searchInput').value.toLowerCase().trim();
+  if(!q){document.querySelectorAll('.post-card').forEach(c=>c.style.display='');document.querySelectorAll('.section-heading').forEach(h=>h.style.display='');return}
+  document.querySelectorAll('.post-card').forEach(card=>{
+    const txt=(card.textContent||'').toLowerCase();
+    const tags=(card.dataset.tags||'').toLowerCase();
+    card.style.display=(txt.includes(q)||tags.includes(q))?'':'none';
+  });
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.filter-btn[data-filter="all"]').classList.add('active');
+  document.querySelectorAll('.section-heading').forEach(h=>h.style.display='');
+}
+
+// ═══ Three.js Background ═══
+(function(){
+  const canvas=document.getElementById('bg-canvas');
+  const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:false});
+  renderer.setSize(window.innerWidth,window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.5));
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.1,1000);
+  camera.position.z=5;
+
+  const pCount=1500;
+  const geo=new THREE.BufferGeometry();
+  const pos=new Float32Array(pCount*3);
+  const vel=[];
+  for(let i=0;i<pCount;i++){
+    pos[i*3]=(Math.random()-0.5)*28;
+    pos[i*3+1]=(Math.random()-0.5)*28;
+    pos[i*3+2]=(Math.random()-0.5)*14;
+    vel.push(Math.random()*0.01+0.003);
+  }
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  const mat=new THREE.PointsMaterial({color:0x3b82f6,size:0.03,transparent:true,opacity:0.4});
+  const pts=new THREE.Points(geo,mat);
+  scene.add(pts);
+
+  const sGeo=new THREE.IcosahedronGeometry(2.8,1);
+  const sMat=new THREE.MeshBasicMaterial({color:0x3b82f6,wireframe:true,transparent:true,opacity:0.03});
+  const sphere=new THREE.Mesh(sGeo,sMat);
+  scene.add(sphere);
+
+  const rGeo=new THREE.TorusGeometry(3.5,0.02,8,64);
+  const rMat=new THREE.MeshBasicMaterial({color:0x8b5cf6,wireframe:true,transparent:true,opacity:0.025});
+  const ring=new THREE.Mesh(rGeo,rMat);
+  ring.rotation.x=Math.PI/2.5;
+  scene.add(ring);
+
+  let mx=0,my=0;
+  document.addEventListener('mousemove',e=>{
+    mx=(e.clientX/window.innerWidth-0.5)*2;
+    my=(e.clientY/window.innerHeight-0.5)*2;
+  });
+
+  function animate(){
+    requestAnimationFrame(animate);
+    sphere.rotation.x+=0.0008;
+    sphere.rotation.y+=0.0012;
+    ring.rotation.z+=0.0005;
+    const p=pts.geometry.attributes.position.array;
+    for(let i=0;i<pCount;i++){
+      p[i*3+1]-=vel[i];
+      if(p[i*3+1]<-14){p[i*3+1]=14;p[i*3]=(Math.random()-0.5)*28}
+    }
+    pts.geometry.attributes.position.needsUpdate=true;
+    camera.rotation.y+=(mx*0.03-camera.rotation.y)*0.006;
+    camera.rotation.x+=(my*0.03-camera.rotation.x)*0.006;
+    renderer.render(scene,camera);
+  }
+  animate();
+
+  window.addEventListener('resize',()=>{
+    camera.aspect=window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth,window.innerHeight);
+  });
+})();
+</script>
+</body>
+</html>#bg-canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;pointer-events:none;opacity:.15}
+
+/* ═══ HEADER ═══ */
+.site-header{position:sticky;top:0;z-index:100;background:rgba(6,8,12,0.82);backdrop-filter:blur(20px) saturate(1.2);border-bottom:1px solid var(--border);height:58px;display:flex;align-items:center;padding:0 2.5rem;gap:2rem}
+.site-header .brand{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk','JetBrains Mono',monospace;font-weight:700;font-size:1.1rem;color:var(--text0);white-space:nowrap;letter-spacing:-.03em}
+.site-header .brand .logo-icon{width:28px;height:28px;border-radius:7px;background:var(--gradient-accent);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:#fff}
+.site-header .brand .cursor{display:inline-block;width:2px;height:1em;background:var(--green);margin-left:2px;animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.site-header .nav-main{display:flex;gap:0;align-items:center}
+.site-header .nav-main a{padding:0 1.1rem;height:58px;display:flex;align-items:center;color:var(--text3);font-size:.82rem;font-weight:500;border-bottom:2px solid transparent;transition:all .2s;letter-spacing:.01em}
+.site-header .nav-main a:hover,.site-header .nav-main a.active{color:var(--text0);border-bottom-color:var(--accent)}
+.site-header .nav-right{margin-left:auto;display:flex;align-items:center;gap:1.1rem}
+.search-box{display:flex;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:0 12px;height:34px;gap:7px;transition:all .2s}
+.search-box:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+.search-box i{color:var(--text4);font-size:.8rem}
+.search-box input{background:none;border:none;outline:none;color:var(--text1);font-size:.8rem;font-family:'Inter',sans-serif;width:170px}
+.search-box input::placeholder{color:var(--text4)}
+.social-link{color:var(--text4);font-size:1.05rem;transition:all .2s;padding:4px}
+.social-link:hover{color:var(--accent);transform:translateY(-1px)}
+.mobile-toggle{display:none;background:none;border:none;color:var(--text1);font-size:1.3rem;cursor:pointer}
+
+/* ═══ LAYOUT ═══ */
+.page-body{position:relative;z-index:1;max-width:1320px;margin:0 auto;padding:0 2.5rem}
+
+/* ═══ HERO ═══ */
+.hero-section{padding:3.5rem 0 3rem;border-bottom:1px solid var(--border);display:grid;grid-template-columns:1fr 340px;gap:3.5rem;align-items:center}
+.hero-text .greeting{font-size:.7rem;text-transform:uppercase;letter-spacing:.14em;color:var(--accent);font-weight:600;margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem}
+.hero-text .greeting::before{content:'';display:inline-block;width:24px;height:1px;background:var(--accent)}
+.hero-text h1{font-family:'Space Grotesk','Inter',sans-serif;font-size:2.8rem;font-weight:800;letter-spacing:-.04em;line-height:1.1;margin-bottom:1rem;color:var(--text0)}
+.hero-text h1 span{background:var(--gradient-accent);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-text .tagline{color:var(--text2);font-size:.95rem;line-height:1.8;margin-bottom:1.5rem;max-width:580px}
+.hero-badges{display:flex;flex-wrap:wrap;gap:.6rem}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;font-size:.72rem;font-weight:600;border:1px solid;transition:all .2s;cursor:default}
+.hero-badge:hover{transform:translateY(-1px)}
+.hero-badge.hackthebox{background:var(--red-dim);border-color:rgba(239,68,68,0.25);color:var(--red)}
+.hero-badge.team{background:var(--yellow-dim);border-color:rgba(234,179,8,0.25);color:var(--yellow)}
+.hero-badge.pwn{background:var(--purple-dim);border-color:rgba(168,85,247,0.25);color:var(--purple)}
+.hero-badge.ad{background:var(--cyan-dim);border-color:rgba(6,182,212,0.25);color:var(--cyan)}
+.hero-badge.aptlab{background:var(--rose-dim);border-color:rgba(244,63,94,0.25);color:var(--rose)}
+.hero-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:1.75rem;position:relative;overflow:hidden}
+.hero-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--gradient-accent)}
+.hero-card .card-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text3);font-weight:700;margin-bottom:1.1rem}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem}
+.stat-item .stat-val{font-family:'Space Grotesk','JetBrains Mono',monospace;font-size:1.6rem;font-weight:700;color:var(--text0)}
+.stat-item .stat-lbl{font-size:.68rem;color:var(--text4);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-top:3px}
+.stat-item.highlight .stat-val{background:var(--gradient-accent);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* ═══ INFO STRIP (About + Tags + Techniques at top) ═══ */
+.info-strip{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:1.25rem;padding:2rem 0 2.25rem;border-bottom:1px solid var(--border)}
+.info-card{background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.4rem;transition:border-color .2s}
+.info-card:hover{border-color:var(--border-light)}
+.info-card .ic-title{font-size:.62rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text4);font-weight:700;margin-bottom:1rem;display:flex;align-items:center;gap:7px}
+.info-card .ic-title i{font-size:.78rem;color:var(--accent)}
+
+/* About inside info-strip */
+.about-inline{display:flex;align-items:center;gap:1rem}
+.about-inline .avatar{width:52px;height:52px;border-radius:50%;border:2px solid var(--border);object-fit:cover;flex-shrink:0;transition:border-color .3s}
+.about-inline .avatar:hover{border-color:var(--accent)}
 .about-inline .about-meta .author-name{font-family:'Space Grotesk',sans-serif;font-size:.95rem;font-weight:700;color:var(--text0)}
 .about-inline .about-meta .author-role{font-size:.7rem;color:var(--text3);margin-top:1px}
 .about-inline .about-meta .author-links{display:flex;gap:.6rem;margin-top:4px}
