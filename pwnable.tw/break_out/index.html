@@ -141,6 +141,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--fg);line-height:1.
   </a>
   <nav class="nav-main">
     <a href="/">Home</a>
+    <a href="/writeup/">writeup</a>
     <a href="/htb/">Hack The Box</a>
     <a href="/tryhackme/">TryHackMe</a>
     <a href="/mal-dev/">Malware Dev</a>
@@ -150,7 +151,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--fg);line-height:1.
   </nav>
   <div class="nav-right">
     <a href="https://github.com/Yuri08-QA210" target="_blank" class="social-link" title="GitHub"><i class="bi bi-github"></i></a>
-    <a href="https://w4llz.me/" target="_blank" class="social-link" title="W4LLZ Team" style="color:var(--yellow-accent)"><i class="bi bi-people-fill"></i></a>
+    
     <button class="mobile-toggle" onclick="toggleMobileNav()" aria-label="Menu"><i class="bi bi-list"></i></button>
   </div>
 </header>
@@ -160,6 +161,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--fg);line-height:1.
   <button class="mnp-close" onclick="toggleMobileNav()"><i class="bi bi-x-lg"></i></button>
   <nav>
     <a href="/">Home</a>
+    <a href="/writeup/">writeup</a>
     <a href="/htb/">Hack The Box</a>
     <a href="/tryhackme/">TryHackMe</a>
     <a href="/mal-dev/">Malware Dev</a>
@@ -167,7 +169,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--fg);line-height:1.
     <a href="/tjctf-2026/">TJCTF</a>
     <a href="/research/">Research</a>
     <a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
-    <a href="https://w4llz.me/" target="_blank">W4LLZ Team</a>
+    
   </nav>
 </div>
 
@@ -651,14 +653,7 @@ io.interactive()</code></pre>
 <span class="ok">[*]</span> Triggering unsorted bin attack on _IO_list_all...
 <span class="ok">[*]</span> Triggering malloc → _IO_flush_all_lockp → system("/bin/sh")...
 $ cat /home/break_out/flag
-FLAG{h0us3_0f_0r4ng3_n0_fr33_n0_pr0bl3m_uns0rt3d_b1n_4tt4ck}
 </div>
-
-  <div class="flag-box">
-    <span class="flag-icon"><i class="bi bi-flag-fill"></i></span>
-    <span class="flag-name">FLAG{h0us3_0f_0r4ng3_n0_fr33_n0_pr0bl3m_uns0rt3d_b1n_4tt4ck}</span>
-    <span class="flag-detail">Obtained via UAF + House of Orange (no free() required)</span>
-  </div>
 
   <div class="callout callout-success">
     <div class="callout-title">Why This Challenge Matters</div>
