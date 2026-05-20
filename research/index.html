@@ -268,7 +268,7 @@ img{max-width:100%;display:block}
     <div class="card-label">Research Stats</div>
     <div class="stat-grid">
       <div class="stat-item highlight">
-        <div class="stat-val">3</div>
+        <div class="stat-val">4</div>
         <div class="stat-lbl">Papers</div>
       </div>
       <div class="stat-item">
@@ -385,16 +385,17 @@ img{max-width:100%;display:block}
 <!-- ═══ FILTER BAR ═══ -->
 <div class="filter-bar">
   <span class="filter-label">Filter:</span>
-  <button class="filter-btn active" data-filter="all" onclick="setFilter(this)">All<span class="count">3</span></button>
+  <button class="filter-btn active" data-filter="all" onclick="setFilter(this)">All<span class="count">4</span></button>
   <button class="filter-btn" data-filter="kernel" onclick="setFilter(this)">Kernel<span class="count">1</span></button>
   <button class="filter-btn" data-filter="gpo" onclick="setFilter(this)">GPO<span class="count">1</span></button>
   <button class="filter-btn" data-filter="supply-chain" onclick="setFilter(this)">Supply Chain<span class="count">1</span></button>
   <button class="filter-btn" data-filter="threat-intel" onclick="setFilter(this)">Threat Intel<span class="count">1</span></button>
-  <button class="filter-btn" data-filter="blue-team" onclick="setFilter(this)">Blue Team<span class="count">1</span></button>
+  <button class="filter-btn" data-filter="blue-team" onclick="setFilter(this)">Blue Team<span class="count">2</span></button>
+  <button class="filter-btn" data-filter="roadmap" onclick="setFilter(this)">Roadmap<span class="count">1</span></button>
   <button class="filter-btn" data-filter="ad" onclick="setFilter(this)">Active Directory<span class="count">1</span></button>
   <button class="filter-btn" data-filter="lpe" onclick="setFilter(this)">LPE<span class="count">1</span></button>
-  <button class="filter-btn" data-filter="detection" onclick="setFilter(this)">Detection<span class="count">2</span></button>
-  <button class="filter-btn" data-filter="hardening" onclick="setFilter(this)">Hardening<span class="count">2</span></button>
+  <button class="filter-btn" data-filter="detection" onclick="setFilter(this)">Detection<span class="count">3</span></button>
+  <button class="filter-btn" data-filter="hardening" onclick="setFilter(this)">Hardening<span class="count">3</span></button>
 </div>
 
 <!-- ═══ POSTS ═══ -->
@@ -448,6 +449,23 @@ img{max-width:100%;display:block}
     <p class="post-excerpt">In-depth analysis of the three most impactful supply chain attacks in the first half of 2026: Stryker/Handala Wiper exploiting MDM weaponization via Microsoft Intune to deploy destructive wipers across corporate fleets, Match Group/ShinyHunters breaching SSO through Okta vishing to exfiltrate data from 15+ dating platforms, and Citizens Financial & Frost Bank compromised through Everest RaaS double-extortion operations targeting financial infrastructure. Full IoC tables, MITRE ATT&CK mapping, timeline reconstruction, and defensive hardening recommendations for each incident.</p>
     <div class="post-tags">
       <span class="tag">Supply Chain</span><span class="tag">Threat Intel</span><span class="tag">MDM</span><span class="tag">Intune</span><span class="tag">Okta</span><span class="tag">Vishing</span><span class="tag">RaaS</span><span class="tag">Wiper</span><span class="tag">IoC</span><span class="tag">MITRE ATT&CK</span><span class="tag">Hardening</span>
+    </div>
+  </a>
+
+  <!-- BLUE TEAM & ROADMAP -->
+  <div class="section-heading">Blue Team & Career Roadmap</div>
+
+  <a href="/research/blog/2026/soc-analyst-roadmap-zero-to-l3/" class="post-card pinned" data-platform="blue-team" data-tags="soc-analyst,roadmap,blue-team,siem,splunk,elastic,incident-response,threat-hunting,mitre-attck,volatility,malware-analysis,detection,hardening,career">
+    <div class="post-top">
+      <span class="platform-badge blue-team"><i class="bi bi-shield-check"></i> Blue Team</span>
+      <span class="platform-badge hardening"><i class="bi bi-map"></i> Roadmap</span>
+      <span class="diff-badge high">Deep Dive</span>
+      <span class="post-date">May 2026</span>
+    </div>
+    <h3>SOC Analyst Roadmap: Zero to L3 Senior</h3>
+    <p class="post-excerpt">A real battle map from Newbie to Senior L3 &mdash; four stages, every skill, every specific hit. Wireshark packet capture, Splunk SPL queries, Elastic KQL phishing hunts, MITRE ATT&CK deep-dives, Volatility3 memory forensics, YARA/Sigma rule writing, Python automation, and SOAR playbook design. No dry theory &mdash; hands-on labs, real investigation walkthroughs, and the mindset shifts that separate Seniors from Newbies.</p>
+    <div class="post-tags">
+      <span class="tag">SOC Analyst</span><span class="tag">Roadmap</span><span class="tag">Blue Team</span><span class="tag">SIEM</span><span class="tag">Incident Response</span><span class="tag">Threat Hunting</span><span class="tag">MITRE ATT&CK</span><span class="tag">Detection</span>
     </div>
   </a>
 
