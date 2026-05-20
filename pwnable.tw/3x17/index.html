@@ -140,6 +140,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--fg);line-height:1.
   </a>
   <nav class="nav-main">
     <a href="/">Home</a>
+    <a href="/writeup/">writeup</a>
     <a href="/htb/">Hack The Box</a>
     <a href="/tryhackme/">TryHackMe</a>
     <a href="/mal-dev/">Malware Dev</a>
@@ -149,7 +150,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--fg);line-height:1.
   </nav>
   <div class="nav-right">
     <a href="https://github.com/Yuri08-QA210" target="_blank" class="social-link" title="GitHub"><i class="bi bi-github"></i></a>
-    <a href="https://w4llz.me/" target="_blank" class="social-link" title="W4LLZ Team" style="color:var(--yellow-accent)"><i class="bi bi-people-fill"></i></a>
+    
     <button class="mobile-toggle" onclick="toggleMobileNav()" aria-label="Menu"><i class="bi bi-list"></i></button>
   </div>
 </header>
@@ -159,6 +160,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--fg);line-height:1.
   <button class="mnp-close" onclick="toggleMobileNav()"><i class="bi bi-x-lg"></i></button>
   <nav>
     <a href="/">Home</a>
+    <a href="/writeup/">writeup</a>
     <a href="/htb/">Hack The Box</a>
     <a href="/tryhackme/">TryHackMe</a>
     <a href="/mal-dev/">Malware Dev</a>
@@ -166,7 +168,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--fg);line-height:1.
     <a href="/tjctf-2026/">TJCTF</a>
     <a href="/research/">Research</a>
     <a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
-    <a href="https://w4llz.me/" target="_blank">W4LLZ Team</a>
+    
   </nav>
 </div>
 
@@ -643,14 +645,7 @@ $ ROPgadget --binary 3x17 | grep "leave ; ret"
 $ id
 uid=1000(3x17) gid=1000(3x17) groups=1000(3x17)
 
-$ cat /home/3x17/flag
-<span class="ok">FLAG{fini_array_hijack_rop_stack_pivot}</span></div>
-
-  <div class="flag-box">
-    <span class="flag-icon"><i class="bi bi-flag-fill"></i></span>
-    <span class="flag-name">FLAG{fini_array_hijack_rop_stack_pivot}</span>
-    <span class="flag-detail">pwnable.tw — 3x17 (150 pts)</span>
-  </div>
+$ cat /home/3x17/flag</div>
 
   <div class="callout callout-info">
     <div class="callout-title">Why This Challenge Matters</div>
