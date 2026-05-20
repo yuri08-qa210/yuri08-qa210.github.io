@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QA210 — Writeups</title>
+<meta name="description" content="CTF writeups and security walkthroughs by QA210 — TryHackMe, Hack The Box, pwnable.tw, and TJCTF.">
+<meta name="author" content="QA210">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{
+  --bg0:#06080c;--bg1:#0b0f17;--bg2:#111827;--bg3:#1a2234;--bg4:#222d42;
+  --border:#1e293b;--border-light:#334155;--border-glow:rgba(88,166,255,0.15);
+  --text0:#f1f5f9;--text1:#e2e8f0;--text2:#94a3b8;--text3:#64748b;--text4:#475569;
+  --accent:#3b82f6;--accent-hover:#60a5fa;--accent-dim:rgba(59,130,246,0.1);
+  --green:#22c55e;--green-dim:rgba(34,197,94,0.1);
+  --red:#ef4444;--red-dim:rgba(239,68,68,0.1);
+  --purple:#a855f7;--purple-dim:rgba(168,85,247,0.1);
+  --orange:#f97316;--orange-dim:rgba(249,115,22,0.1);
+  --yellow:#eab308;--yellow-dim:rgba(234,179,8,0.1);
+  --cyan:#06b6d4;--cyan-dim:rgba(6,182,212,0.1);
+  --rose:#f43f5e;--rose-dim:rgba(244,63,94,0.1);
+  --teal:#14b8a6;--teal-dim:rgba(20,184,166,0.1);
+  --gradient-accent:linear-gradient(135deg,#3b82f6,#8b5cf6);
+  --gradient-teal:linear-gradient(135deg,#14b8a6,#06b6d4);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--border) var(--bg1)}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg0);color:var(--text1);line-height:1.65;font-size:15px;overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg1)}::-webkit-scrollbar-thumb{background:var(--border-light);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--text4)}
+a{color:var(--accent);text-decoration:none;transition:all .2s}a:hover{color:var(--accent-hover)}
+img{max-width:100%;display:block}
+::selection{background:rgba(20,184,166,0.3);color:var(--text0)}
+
+#bg-canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;pointer-events:none;opacity:.12}
+
+/* ═══ HEADER ═══ */
+.site-header{position:sticky;top:0;z-index:100;background:rgba(6,8,12,0.82);backdrop-filter:blur(20px) saturate(1.2);border-bottom:1px solid var(--border);height:58px;display:flex;align-items:center;padding:0 2.5rem;gap:2rem}
+.site-header .brand{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk','JetBrains Mono',monospace;font-weight:700;font-size:1.1rem;color:var(--text0);white-space:nowrap;letter-spacing:-.03em}
+.site-header .brand .logo-icon{width:28px;height:28px;border-radius:7px;background:var(--gradient-accent);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:#fff}
+.site-header .brand .cursor{display:inline-block;width:2px;height:1em;background:var(--green);margin-left:2px;animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.site-header .nav-main{display:flex;gap:0;align-items:center}
+.site-header .nav-main a{padding:0 1.1rem;height:58px;display:flex;align-items:center;color:var(--text3);font-size:.82rem;font-weight:500;border-bottom:2px solid transparent;transition:all .2s}
+.site-header .nav-main a:hover,.site-header .nav-main a.active{color:var(--text0);border-bottom-color:var(--accent)}
+.site-header .nav-right{margin-left:auto;display:flex;align-items:center;gap:1.1rem}
+.social-link{color:var(--text4);font-size:1.05rem;transition:all .2s;padding:4px}
+.social-link:hover{color:var(--teal);transform:translateY(-1px)}
+.mobile-toggle{display:none;background:none;border:none;color:var(--text1);font-size:1.3rem;cursor:pointer}
+
+/* ═══ LAYOUT ═══ */
+.page-body{position:relative;z-index:1;max-width:1320px;margin:0 auto;padding:0 2.5rem}
+
+/* ═══ HERO ═══ */
+.hero-section{padding:4rem 0 3rem;text-align:center}
+.hero-section .greeting{font-size:.7rem;text-transform:uppercase;letter-spacing:.14em;color:var(--teal);font-weight:600;margin-bottom:1rem;display:inline-flex;align-items:center;gap:.5rem}
+.hero-section .greeting::before,.hero-section .greeting::after{content:'';display:inline-block;width:24px;height:1px;background:var(--teal)}
+.hero-section h1{font-family:'Space Grotesk','Inter',sans-serif;font-size:3.2rem;font-weight:800;letter-spacing:-.04em;line-height:1.1;margin-bottom:1rem;color:var(--text0)}
+.hero-section h1 span{background:var(--gradient-teal);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-section .tagline{color:var(--text2);font-size:.95rem;line-height:1.8;max-width:620px;margin:0 auto 2rem}
+.hero-stats{display:flex;justify-content:center;gap:2.5rem;flex-wrap:wrap}
+.hero-stat{text-align:center}
+.hero-stat .hs-val{font-family:'Space Grotesk','JetBrains Mono',monospace;font-size:1.8rem;font-weight:700;color:var(--text0)}
+.hero-stat .hs-val.gradient{background:var(--gradient-teal);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-stat .hs-lbl{font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text4);font-weight:600;margin-top:2px}
+
+/* ═══ PLATFORM GRID ═══ */
+.platform-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem;padding:1.5rem 0 3rem}
+
+.platform-card{background:var(--bg1);border:1px solid var(--border);border-radius:16px;padding:2rem 1.75rem;transition:all .3s;position:relative;overflow:hidden;display:flex;flex-direction:column;text-decoration:none;color:inherit;cursor:pointer}
+.platform-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:16px 16px 0 0;opacity:.6;transition:opacity .3s}
+.platform-card:hover{transform:translateY(-6px);border-color:var(--border-light);box-shadow:0 16px 40px rgba(0,0,0,0.5)}
+.platform-card:hover::before{opacity:1}
+
+.platform-card .pc-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:1.25rem;transition:transform .3s}
+.platform-card:hover .pc-icon{transform:scale(1.08)}
+
+.platform-card .pc-name{font-family:'Space Grotesk',sans-serif;font-size:1.2rem;font-weight:700;color:var(--text0);margin-bottom:.35rem;letter-spacing:-.02em}
+.platform-card:hover .pc-name{color:var(--text0)}
+
+.platform-card .pc-desc{font-size:.78rem;color:var(--text2);line-height:1.7;margin-bottom:1.25rem;flex:1}
+.platform-card .pc-meta{display:flex;align-items:center;justify-content:space-between;padding-top:1rem;border-top:1px solid var(--border)}
+.platform-card .pc-count{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--text3)}
+.platform-card .pc-count span{color:var(--text0);font-weight:700;font-size:.85rem}
+.platform-card .pc-arrow{color:var(--text4);font-size:1rem;transition:all .3s}
+.platform-card:hover .pc-arrow{transform:translateX(4px);color:var(--text0)}
+
+/* Card Themes */
+.platform-card.thm::before{background:var(--teal)}
+.platform-card.thm .pc-icon{background:var(--teal-dim);color:var(--teal);border:1px solid rgba(20,184,166,0.2)}
+.platform-card.thm:hover{box-shadow:0 16px 40px rgba(0,0,0,0.5),0 0 0 1px rgba(20,184,166,0.15)}
+
+.platform-card.htb::before{background:var(--green)}
+.platform-card.htb .pc-icon{background:var(--green-dim);color:var(--green);border:1px solid rgba(34,197,94,0.2)}
+.platform-card.htb:hover{box-shadow:0 16px 40px rgba(0,0,0,0.5),0 0 0 1px rgba(34,197,94,0.15)}
+
+.platform-card.pwn::before{background:var(--orange)}
+.platform-card.pwn .pc-icon{background:var(--orange-dim);color:var(--orange);border:1px solid rgba(249,115,22,0.2)}
+.platform-card.pwn:hover{box-shadow:0 16px 40px rgba(0,0,0,0.5),0 0 0 1px rgba(249,115,22,0.15)}
+
+.platform-card.tj::before{background:var(--purple)}
+.platform-card.tj .pc-icon{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(168,85,247,0.2)}
+.platform-card.tj:hover{box-shadow:0 16px 40px rgba(0,0,0,0.5),0 0 0 1px rgba(168,85,247,0.15)}
+
+/* ═══ ABOUT STRIP ═══ */
+.about-strip{display:grid;grid-template-columns:1fr 1.5fr;gap:1.25rem;padding:2rem 0 2.25rem;border-top:1px solid var(--border)}
+.about-card{background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.4rem;transition:border-color .2s}
+.about-card:hover{border-color:var(--border-light)}
+.about-card .ac-title{font-size:.62rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text4);font-weight:700;margin-bottom:1rem;display:flex;align-items:center;gap:7px}
+.about-card .ac-title i{font-size:.78rem;color:var(--teal)}
+
+.about-inline{display:flex;align-items:center;gap:1rem}
+.about-inline .avatar{width:52px;height:52px;border-radius:50%;border:2px solid var(--border);object-fit:cover;flex-shrink:0;transition:border-color .3s}
+.about-inline .avatar:hover{border-color:var(--teal)}
+.about-inline .about-meta .author-name{font-family:'Space Grotesk',sans-serif;font-size:.95rem;font-weight:700;color:var(--text0)}
+.about-inline .about-meta .author-role{font-size:.7rem;color:var(--text3);margin-top:1px}
+.about-inline .about-meta .author-links{display:flex;gap:.6rem;margin-top:4px}
+.about-inline .about-meta .author-links a{color:var(--text4);font-size:.9rem;transition:all .2s}
+.about-inline .about-meta .author-links a:hover{color:var(--teal)}
+.about-bio{font-size:.76rem;color:var(--text2);line-height:1.7;margin-top:.75rem}
+.about-quote{font-size:.7rem;color:var(--text3);font-style:italic;line-height:1.6;padding:.5rem .85rem;border-left:2px solid var(--teal);margin-top:.6rem;background:var(--teal-dim);border-radius:0 6px 6px 0}
+
+.tag-cloud{display:flex;flex-wrap:wrap;gap:.35rem}
+.tag-cloud .tc-tag{font-size:.66rem;padding:3px 10px;border-radius:6px;background:var(--bg2);color:var(--text2);border:1px solid var(--border);cursor:default;transition:all .2s;font-weight:500}
+.tag-cloud .tc-tag:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-dim)}
+.tc-tag.hot{background:var(--teal-dim);border-color:rgba(20,184,166,0.2);color:var(--teal)}
+
+/* ═══ FOOTER ═══ */
+.site-footer{border-top:1px solid var(--border);padding:2.5rem 2.5rem;position:relative;z-index:1}
+.footer-inner{max-width:1320px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.footer-left{font-size:.76rem;color:var(--text4)}
+.footer-left span{color:var(--text2);font-weight:600}
+.footer-links{display:flex;gap:1.5rem;flex-wrap:wrap}
+.footer-links a{color:var(--text4);font-size:.76rem;transition:color .2s}
+.footer-links a:hover{color:var(--text1)}
+
+/* ═══ MOBILE NAV ═══ */
+.mobile-nav-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;backdrop-filter:blur(4px)}
+.mobile-nav-overlay.show{display:block}
+.mobile-nav-panel{display:none;position:fixed;right:0;top:0;bottom:0;width:300px;background:var(--bg1);border-left:1px solid var(--border);z-index:201;padding:1.5rem;overflow-y:auto}
+.mobile-nav-panel.show{display:block}
+.mobile-nav-panel .mnp-close{background:none;border:none;color:var(--text2);font-size:1.2rem;cursor:pointer;float:right}
+.mobile-nav-panel nav{display:flex;flex-direction:column;gap:.5rem;clear:both;margin-top:1rem}
+.mobile-nav-panel nav a{padding:.75rem 0;border-bottom:1px solid var(--border);color:var(--text1);font-size:.9rem;font-weight:500}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:1024px){
+  .platform-grid{grid-template-columns:repeat(2,1fr)}
+  .about-strip{grid-template-columns:1fr}
+}
+@media(max-width:768px){
+  .site-header{padding:0 1rem}
+  .site-header .nav-main{display:none}
+  .mobile-toggle{display:block}
+  .page-body{padding:0 1rem}
+  .hero-section h1{font-size:2rem}
+  .platform-grid{grid-template-columns:1fr}
+  .hero-stats{gap:1.5rem}
+  .footer-inner{flex-direction:column;text-align:center}
+}
+@media(max-width:480px){
+  .hero-section h1{font-size:1.6rem}
+  .platform-card{padding:1.5rem 1.25rem}
+  .about-inline{flex-direction:column;text-align:center}
+  .about-inline .about-meta .author-links{justify-content:center}
+}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<!-- ═══════════ HEADER ═══════════ -->
+<header class="site-header">
+  <a href="/" class="brand">
+    <span class="logo-icon">Q</span>
+    QA210<span class="cursor"></span>
+  </a>
+  <nav class="nav-main">
+    <a href="/" class="active">Home</a>
+    <a href="/htb/">Hack The Box</a>
+    <a href="/tjctf-2026/">TJCTF</a>
+    <a href="/tryhackme/">TryHackMe</a>
+    <a href="/research/">Research</a>
+    <a href="/mal-dev/">Malware Dev</a>
+    <a href="/pwnable.tw/">pwnable.tw</a>
+  </nav>
+  <div class="nav-right">
+    <a href="https://github.com/Yuri08-QA210" target="_blank" class="social-link" title="GitHub"><i class="bi bi-github"></i></a>
+    <a href="https://w4llz.me/" target="_blank" class="social-link" title="W4LLZ Team" style="color:var(--yellow)"><i class="bi bi-people-fill"></i></a>
+    <button class="mobile-toggle" onclick="toggleMobileNav()" aria-label="Menu"><i class="bi bi-list"></i></button>
+  </div>
+</header>
+
+<!-- Mobile Nav -->
+<div class="mobile-nav-overlay" id="mobileOverlay" onclick="toggleMobileNav()"></div>
+<div class="mobile-nav-panel" id="mobilePanel">
+  <button class="mnp-close" onclick="toggleMobileNav()"><i class="bi bi-x-lg"></i></button>
+  <nav>
+    <a href="/">Home</a>
+    <a href="/htb/">Hack The Box</a>
+    <a href="/tjctf-2026/">TJCTF</a>
+    <a href="/tryhackme/">TryHackMe</a>
+    <a href="/research/">Research</a>
+    <a href="/mal-dev/">Malware Dev</a>
+    <a href="/pwnable.tw/">pwnable.tw</a>
+    <a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
+    <a href="https://w4llz.me/" target="_blank">W4LLZ Team</a>
+  </nav>
+</div>
+
+<!-- ═══════════ MAIN ═══════════ -->
+<div class="page-body">
+
+<!-- ═══ HERO ═══ -->
+<section class="hero-section">
+  <div class="greeting">Writeups</div>
+  <h1>Security Walkthroughs<br><span>& CTF Solutions</span></h1>
+  <p class="tagline">Detailed writeups for CTF challenges, Active Directory labs, binary exploitation, and network attack scenarios across multiple platforms. Full methodology, tool usage, and exploitation chains documented step-by-step.</p>
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <div class="hs-val gradient">4</div>
+      <div class="hs-lbl">Platforms</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hs-val">6+</div>
+      <div class="hs-lbl">Writeups</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hs-val">AD</div>
+      <div class="hs-lbl">Exploitation</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hs-val">Pwn</div>
+      <div class="hs-lbl">Challenges</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PLATFORM GRID ═══ -->
+<div class="platform-grid">
+
+  <!-- TryHackMe -->
+  <a href="/tryhackme/" class="platform-card thm">
+    <div class="pc-icon"><i class="bi bi-shield-lock-fill"></i></div>
+    <div class="pc-name">TryHackMe</div>
+    <p class="pc-desc">Active Directory labs, CTF competition rooms, and network exploitation walkthroughs. AD attack chains from enumeration to Domain Admin.</p>
+    <div class="pc-meta">
+      <div class="pc-count"><span>2</span> rooms</div>
+      <i class="bi bi-arrow-right pc-arrow"></i>
+    </div>
+  </a>
+
+  <!-- Hack The Box -->
+  <a href="/htb/" class="platform-card htb">
+    <div class="pc-icon"><i class="bi bi-bug-fill"></i></div>
+    <div class="pc-name">Hack The Box</div>
+    <p class="pc-desc">Machine walkthroughs covering web exploitation, privilege escalation, and advanced penetration testing on HTB active and retired machines.</p>
+    <div class="pc-meta">
+      <div class="pc-count"><span>—</span> machines</div>
+      <i class="bi bi-arrow-right pc-arrow"></i>
+    </div>
+  </a>
+
+  <!-- pwnable.tw -->
+  <a href="/pwnable.tw/" class="platform-card pwn">
+    <div class="pc-icon"><i class="bi bi-cpu-fill"></i></div>
+    <div class="pc-name">pwnable.tw</div>
+    <p class="pc-desc">Binary exploitation and pwn challenges from pwnable.tw. Stack overflows, ROP chains, heap exploitation, and kernel pwn techniques.</p>
+    <div class="pc-meta">
+      <div class="pc-count"><span>—</span> challenges</div>
+      <i class="bi bi-arrow-right pc-arrow"></i>
+    </div>
+  </a>
+
+  <!-- TJCTF -->
+  <a href="/tjctf-2026/" class="platform-card tj">
+    <div class="pc-icon"><i class="bi bi-trophy-fill"></i></div>
+    <div class="pc-name">TJCTF 2026</div>
+    <p class="pc-desc">Thomas Jefferson CTF 2026 competition writeups. Multi-category challenges including web, crypto, rev, forensics, and pwn categories.</p>
+    <div class="pc-meta">
+      <div class="pc-count"><span>—</span> challenges</div>
+      <i class="bi bi-arrow-right pc-arrow"></i>
+    </div>
+  </a>
+
+</div>
+
+<!-- ═══ ABOUT STRIP ═══ -->
+<section class="about-strip">
+
+  <!-- About -->
+  <div class="about-card">
+    <div class="ac-title"><i class="bi bi-person-circle"></i> About</div>
+    <div class="about-inline">
+      <img src="https://files.catbox.moe/755fgv.png" alt="QA210" class="avatar">
+      <div class="about-meta">
+        <div class="author-name">QA210</div>
+        <div class="author-role">10th Grade &bull; Vietnam</div>
+        <div class="author-links">
+          <a href="https://github.com/Yuri08-QA210" target="_blank" title="GitHub"><i class="bi bi-github"></i></a>
+          <a href="https://w4llz.me/" target="_blank" title="W4LLZ"><i class="bi bi-people-fill"></i></a>
+        </div>
+      </div>
+    </div>
+    <p class="about-bio">High school student from Vietnam passionate about offensive security, binary exploitation, and Active Directory attacks. Member of <a href="https://w4llz.me/" target="_blank" style="color:var(--yellow);font-weight:600">W4LLZ</a> CTF team.</p>
+    <div class="about-quote">&ldquo;Nothing is secure, everything has bugs, and humans are the biggest vulnerability.&rdquo;</div>
+  </div>
+
+  <!-- Popular Tags -->
+  <div class="about-card">
+    <div class="ac-title"><i class="bi bi-tags"></i> Popular Tags</div>
+    <div class="tag-cloud">
+      <span class="tc-tag hot">Active Directory</span>
+      <span class="tc-tag hot">Kerberoasting</span>
+      <span class="tc-tag hot">Binary Exploitation</span>
+      <span class="tc-tag">SMB</span>
+      <span class="tc-tag">LDAP</span>
+      <span class="tc-tag">Constrained Delegation</span>
+      <span class="tc-tag">ROP Chain</span>
+      <span class="tc-tag">Heap Exploitation</span>
+      <span class="tc-tag">PCAP</span>
+      <span class="tc-tag">Forensics</span>
+      <span class="tc-tag">Reverse Engineering</span>
+      <span class="tc-tag">Cryptography</span>
+      <span class="tc-tag">BloodHound</span>
+      <span class="tc-tag">Impacket</span>
+      <span class="tc-tag">Privilege Escalation</span>
+      <span class="tc-tag">Web Exploitation</span>
+      <span class="tc-tag">Domain Admin</span>
+      <span class="tc-tag">Lateral Movement</span>
+    </div>
+  </div>
+
+</section>
+
+</div><!-- /page-body -->
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-left">&copy; 2026 <span>QA210</span> &mdash; Security Research & CTF Writeups</div>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/htb/">Hack The Box</a>
+      <a href="/tjctf-2026/">TJCTF</a>
+      <a href="/tryhackme/">TryHackMe</a>
+      <a href="/research/">Research</a>
+      <a href="/mal-dev/">Malware Dev</a>
+      <a href="/pwnable.tw/">pwnable.tw</a>
+      <a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
+      <a href="https://w4llz.me/" target="_blank">W4LLZ</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+function toggleMobileNav(){
+  document.getElementById('mobileOverlay').classList.toggle('show');
+  document.getElementById('mobilePanel').classList.toggle('show');
+}
+
+// Three.js — Icosahedron + Particles
+(function(){
+  const canvas=document.getElementById('bg-canvas');
+  const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:false});
+  renderer.setSize(window.innerWidth,window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.5));
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.1,1000);
+  camera.position.z=5;
+
+  const g=new THREE.Group();scene.add(g);
+
+  const ico=new THREE.IcosahedronGeometry(2.5,1);
+  const icoMat=new THREE.MeshBasicMaterial({color:0x14b8a6,wireframe:true,transparent:true,opacity:0.12});
+  g.add(new THREE.Mesh(ico,icoMat));
+
+  const oct=new THREE.OctahedronGeometry(1.5,0);
+  const octMat=new THREE.MeshBasicMaterial({color:0x06b6d4,wireframe:true,transparent:true,opacity:0.08});
+  g.add(new THREE.Mesh(oct,octMat));
+
+  const ring=new THREE.TorusGeometry(3.2,0.02,8,64);
+  const ringMat=new THREE.MeshBasicMaterial({color:0x14b8a6,wireframe:true,transparent:true,opacity:0.06});
+  const ringMesh=new THREE.Mesh(ring,ringMat);
+  ringMesh.rotation.x=Math.PI/3;
+  g.add(ringMesh);
+
+  const pCount=800;const pGeo=new THREE.BufferGeometry();
+  const pos=new Float32Array(pCount*3);const vel=[];
+  for(let i=0;i<pCount;i++){pos[i*3]=(Math.random()-.5)*24;pos[i*3+1]=(Math.random()-.5)*24;pos[i*3+2]=(Math.random()-.5)*12;vel.push(Math.random()*.008+.002)}
+  pGeo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  const pMat=new THREE.PointsMaterial({color:0x14b8a6,size:0.025,transparent:true,opacity:0.3});
+  const pts=new THREE.Points(pGeo,pMat);scene.add(pts);
+
+  let mx=0,my=0;
+  document.addEventListener('mousemove',e=>{mx=(e.clientX/innerWidth-.5)*2;my=(e.clientY/innerHeight-.5)*2});
+
+  function animate(){
+    requestAnimationFrame(animate);
+    g.rotation.y+=0.002;g.rotation.x+=0.001;
+    ringMesh.rotation.z+=0.0008;
+    const p=pts.geometry.attributes.position.array;
+    for(let i=0;i<pCount;i++){p[i*3+1]-=vel[i];if(p[i*3+1]<-12){p[i*3+1]=12;p[i*3]=(Math.random()-.5)*24}}
+    pts.geometry.attributes.position.needsUpdate=true;
+    camera.rotation.y+=(mx*.03-camera.rotation.y)*.006;
+    camera.rotation.x+=(my*.03-camera.rotation.x)*.006;
+    renderer.render(scene,camera);
+  }
+  animate();
+
+  window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+})();
+</script>
+</body>
+</html>
