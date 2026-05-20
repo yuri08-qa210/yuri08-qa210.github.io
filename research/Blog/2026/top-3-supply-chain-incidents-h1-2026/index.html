@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Top 3 Security Incidents & Supply Chain Attack Trends — H1 2026 | QA210</title>
+<meta name="description" content="Deep technical analysis of the three most significant cybersecurity incidents in H1 2026: Stryker/Handala Wiper, Match Group/ShinyHunters, and Citizens & Frost Bank/Everest. Attack chain reconstruction, TTP analysis, IoCs, and strategic forecast.">
+<meta name="author" content="QA210">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>Q</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root {
+  --bg0:#06080c;--bg:#0a0e17;--bg2:#111827;--card:#151d2e;--border:#1e293b;--border-light:#334155;
+  --fg:#f1f5f9;--text1:#e2e8f0;--muted:#94a3b8;--text3:#64748b;--text4:#475569;
+  --accent:#3b82f6;--accent-hover:#60a5fa;--accent-dim:rgba(59,130,246,0.1);
+  --accent2:#818cf8;--accent2-dim:rgba(129,140,248,0.1);
+  --red:#ef4444;--red-dim:rgba(239,68,68,0.1);
+  --green:#22c55e;--green-dim:rgba(34,197,94,0.1);
+  --yellow:#eab308;--yellow-dim:rgba(234,179,8,0.1);
+  --orange:#f97316;--orange-dim:rgba(249,115,22,0.1);
+  --purple:#a855f7;--purple-dim:rgba(168,85,247,0.1);
+  --cyan:#06b6d4;--cyan-dim:rgba(6,182,212,0.1);
+  --rose:#f43f5e;--rose-dim:rgba(244,63,94,0.1);
+  --gradient-accent:linear-gradient(135deg,#3b82f6,#8b5cf6);
+  --gradient-warm:linear-gradient(135deg,#f97316,#ef4444);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--border) var(--bg)}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg0);color:var(--text1);line-height:1.7;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border-light);border-radius:3px}
+a{color:var(--accent);text-decoration:none;transition:all .2s}a:hover{color:var(--accent-hover)}
+::selection{background:rgba(59,130,246,0.3);color:var(--fg)}
+#particles-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.1}
+
+/* ═══ HEADER ═══ */
+.site-header{position:sticky;top:0;z-index:100;background:rgba(6,8,12,0.85);backdrop-filter:blur(20px) saturate(1.2);border-bottom:1px solid var(--border);height:58px;display:flex;align-items:center;padding:0 2.5rem;gap:2rem}
+.site-header .brand{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk','JetBrains Mono',monospace;font-weight:700;font-size:1.1rem;color:var(--fg);white-space:nowrap;letter-spacing:-.03em;text-decoration:none}
+.site-header .brand .logo-icon{width:28px;height:28px;border-radius:7px;background:var(--gradient-accent);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:#fff}
+.site-header .brand .cursor{display:inline-block;width:2px;height:1em;background:var(--green);margin-left:2px;animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.nav-main{display:flex;gap:0;align-items:center}
+.nav-main a{padding:0 1.1rem;height:58px;display:flex;align-items:center;color:var(--text3);font-size:.82rem;font-weight:500;border-bottom:2px solid transparent;transition:all .2s}
+.nav-main a:hover,.nav-main a.active{color:var(--fg);border-bottom-color:var(--accent)}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:1.1rem}
+.social-link{color:var(--text4);font-size:1.05rem;transition:all .2s;padding:4px}
+.social-link:hover{color:var(--accent);transform:translateY(-1px)}
+.mobile-toggle{display:none;background:none;border:none;color:var(--text1);font-size:1.3rem;cursor:pointer}
+
+/* ═══ BREADCRUMB ═══ */
+.breadcrumb{position:relative;z-index:1;padding:80px 2rem 0;max-width:1400px;margin:0 auto}
+.breadcrumb-inner{display:flex;align-items:center;gap:.5rem;font-size:.8125rem;color:var(--text3)}
+.breadcrumb-inner a{color:var(--text3);text-decoration:none;transition:color .2s}
+.breadcrumb-inner a:hover{color:var(--accent)}
+.breadcrumb-sep{opacity:.4}
+.breadcrumb-current{color:var(--text1);font-weight:600}
+
+/* ═══ HERO ═══ */
+.hero{position:relative;z-index:1;padding:2rem 2rem 1rem;max-width:1400px;margin:0 auto}
+.hero-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.35rem 1rem;background:var(--accent-dim);border:1px solid rgba(59,130,246,0.2);border-radius:999px;font-size:.75rem;font-weight:600;color:var(--accent);margin-bottom:1rem}
+.hero-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--red);animation:pulse-dot 1.5s ease-in-out infinite}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.2}}
+.hero h1{font-family:'Space Grotesk','Inter',sans-serif;font-size:2.75rem;font-weight:800;letter-spacing:-1.5px;margin-bottom:.5rem;background:linear-gradient(135deg,var(--fg),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-subtitle{font-size:1.05rem;color:var(--muted);max-width:720px;margin-bottom:1.5rem;line-height:1.8}
+.hero-meta{display:flex;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem}
+.hero-tag{padding:.3rem .75rem;border-radius:6px;font-size:.75rem;font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-date{background:var(--yellow-dim);color:var(--yellow);border:1px solid rgba(234,179,8,0.25)}
+.tag-scope{background:var(--accent2-dim);color:var(--accent2);border:1px solid rgba(129,140,248,0.25)}
+.tag-crit{background:var(--red-dim);color:var(--red);border:1px solid rgba(239,68,68,0.25)}
+.tag-thr{background:var(--green-dim);color:var(--green);border:1px solid rgba(34,197,94,0.25)}
+.tag-vec{background:var(--orange-dim);color:var(--orange);border:1px solid rgba(249,115,22,0.25)}
+
+/* ═══ MAIN LAYOUT ═══ */
+.main-layout{position:relative;z-index:1;display:flex;max-width:1400px;margin:0 auto;padding:1rem 2rem 4rem;gap:2rem}
+
+/* ═══ TOC SIDEBAR ═══ */
+.toc-sidebar{position:sticky;top:80px;width:260px;flex-shrink:0;height:fit-content;max-height:calc(100vh - 100px);overflow-y:auto}
+.toc-sidebar::-webkit-scrollbar{width:3px}
+.toc-sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.toc-title{font-size:.6875rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text3);margin-bottom:1rem}
+.toc-list{list-style:none}
+.toc-list li{margin-bottom:.25rem}
+.toc-list a{display:flex;align-items:center;gap:.5rem;padding:.4rem .75rem;border-radius:6px;color:var(--muted);text-decoration:none;font-size:.8125rem;font-weight:500;transition:all .2s;border-left:2px solid transparent}
+.toc-list a:hover{color:var(--text1);background:rgba(255,255,255,0.03)}
+.toc-list a.active{color:var(--accent);background:var(--accent-dim);border-left-color:var(--accent)}
+.toc-num{font-family:'JetBrains Mono',monospace;font-size:.6875rem;font-weight:700;color:var(--accent2);min-width:18px}
+
+/* ═══ CONTENT ═══ */
+.content-area{flex:1;min-width:0;max-width:880px}
+.chapter{margin-bottom:3rem;scroll-margin-top:80px}
+.chapter-header{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border)}
+.chapter-num{font-family:'JetBrains Mono',monospace;font-size:.75rem;font-weight:700;color:var(--accent);background:var(--accent-dim);padding:.35rem .7rem;border-radius:6px;border:1px solid rgba(59,130,246,0.2)}
+.chapter-title{font-size:1.5rem;font-weight:700;letter-spacing:-.5px;color:var(--fg)}
+.chapter p{margin-bottom:1rem;color:var(--muted);font-size:.9375rem;line-height:1.8}
+.chapter h3{font-size:1.1rem;font-weight:700;margin:1.75rem 0 .75rem;color:var(--fg)}
+.chapter h4{font-size:.9375rem;font-weight:600;margin:1.25rem 0 .5rem;color:var(--fg)}
+code.inline{font-family:'JetBrains Mono',monospace;font-size:.8125rem;background:var(--accent2-dim);color:var(--accent2);padding:.15rem .45rem;border-radius:4px;font-weight:500}
+
+/* ═══ CALLOUTS ═══ */
+.callout{border-radius:10px;padding:1rem 1.25rem;margin:1rem 0 1.5rem;font-size:.875rem;line-height:1.7;border:1px solid}
+.callout-title{font-weight:700;font-size:.8125rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.35rem;display:flex;align-items:center;gap:.5rem}
+.callout-crit{background:var(--red-dim);border-color:rgba(239,68,68,0.2);color:#fca5a5}
+.callout-crit .callout-title{color:var(--red)}
+.callout-info{background:var(--accent-dim);border-color:rgba(59,130,246,0.2);color:#bfdbfe}
+.callout-info .callout-title{color:var(--accent)}
+.callout-warn{background:var(--yellow-dim);border-color:rgba(234,179,8,0.2);color:#fde68a}
+.callout-warn .callout-title{color:var(--yellow)}
+.callout-key{background:var(--accent2-dim);border-color:rgba(129,140,248,0.2);color:#c7d2fe}
+.callout-key .callout-title{color:var(--accent2)}
+.callout-success{background:var(--green-dim);border-color:rgba(34,197,94,0.2);color:#bbf7d0}
+.callout-success .callout-title{color:var(--green)}
+
+/* ═══ TABLES ═══ */
+.info-table{width:100%;border-collapse:collapse;margin:1rem 0 1.5rem;font-size:.8125rem}
+.info-table th{text-align:left;padding:.6rem 1rem;background:rgba(0,0,0,0.3);color:var(--text3);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+.info-table td{padding:.6rem 1rem;border-bottom:1px solid var(--border);font-size:.8rem}
+.info-table tr:last-child td{border-bottom:none}
+.info-table .label{color:var(--muted)}
+.info-table .value{color:var(--fg);font-family:'JetBrains Mono',monospace}
+.info-table .on{color:var(--red);font-family:'JetBrains Mono',monospace}
+.info-table .hi{color:var(--yellow);font-family:'JetBrains Mono',monospace}
+.info-table .ok{color:var(--green);font-family:'JetBrains Mono',monospace}
+
+/* ═══ ATTACK DIAGRAM ═══ */
+.attack-diagram{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.5rem;margin:1rem 0 1.5rem;font-family:'JetBrains Mono',monospace;font-size:.8rem;overflow-x:auto}
+.atk-row{display:flex;align-items:flex-start;margin-bottom:4px;gap:.75rem}
+.atk-step{color:var(--accent2);min-width:28px;font-weight:700}
+.atk-label{color:var(--red);font-weight:600;min-width:180px}
+.atk-desc{color:var(--muted);flex:1}
+.atk-desc .hi{color:var(--yellow)}
+.atk-desc .gr{color:var(--green)}
+.atk-desc .re{color:var(--red)}
+.atk-sep{border-top:1px solid var(--border);margin:.75rem 0}
+
+/* ═══ STEP LIST ═══ */
+.step-list{list-style:none;margin:1rem 0 1.5rem;counter-reset:step}
+.step-list li{counter-increment:step;padding:.6rem 0 .6rem 2.5rem;position:relative;font-size:.9rem;color:var(--muted);line-height:1.7}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:.65rem;width:22px;height:22px;border-radius:50%;background:var(--accent2-dim);color:var(--accent2);font-size:.6875rem;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace}
+.step-list li strong{color:var(--fg)}
+
+/* ═══ IoC BLOCK ═══ */
+.ioc-block{background:#060810;border:1px solid var(--border);border-left:3px solid var(--red);border-radius:10px;padding:1.25rem 1.5rem;margin:1rem 0 1.5rem;font-family:'JetBrains Mono',monospace;font-size:.78rem;line-height:2;overflow-x:auto}
+.ioc-comment{color:#4b5563}
+.ioc-domain{color:var(--orange)}
+.ioc-hash{color:#60a5fa}
+.ioc-path{color:var(--green)}
+.ioc-cmd{color:var(--red)}
+
+/* ═══ STAT GRID ═══ */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:1rem 0 1.5rem}
+.stat-cell{background:var(--bg2);padding:1.25rem 1rem;text-align:center}
+.stat-num{font-family:'Space Grotesk','JetBrains Mono',monospace;font-size:1.7rem;font-weight:700;display:block;line-height:1;margin-bottom:.35rem}
+.stat-label{font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;display:block}
+.s-red{color:var(--red)}.s-yellow{color:var(--yellow)}.s-blue{color:var(--accent)}.s-green{color:var(--green)}.s-purple{color:var(--accent2)}
+
+/* ═══ TIMELINE ═══ */
+.timeline{margin:1rem 0 1.5rem}
+.tl-item{display:flex;gap:1.25rem;padding-bottom:1.25rem;position:relative}
+.tl-item:not(:last-child)::after{content:'';position:absolute;left:11px;top:24px;bottom:0;width:1px;background:var(--border)}
+.tl-dot{width:24px;height:24px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.tl-dot-red{background:var(--red-dim);border:1px solid rgba(239,68,68,0.4)}
+.tl-dot-yellow{background:var(--yellow-dim);border:1px solid rgba(234,179,8,0.4)}
+.tl-dot-blue{background:var(--accent-dim);border:1px solid rgba(59,130,246,0.4)}
+.tl-dot-green{background:var(--green-dim);border:1px solid rgba(34,197,94,0.4)}
+.tl-dot-inner{width:8px;height:8px;border-radius:50%}
+.tl-dot-red .tl-dot-inner{background:var(--red)}
+.tl-dot-yellow .tl-dot-inner{background:var(--yellow)}
+.tl-dot-blue .tl-dot-inner{background:var(--accent)}
+.tl-dot-green .tl-dot-inner{background:var(--green)}
+.tl-content{flex:1}
+.tl-time{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--text3);margin-bottom:.2rem}
+.tl-title{font-size:.875rem;font-weight:600;color:var(--fg);margin-bottom:.25rem}
+.tl-desc{font-size:.8125rem;color:var(--muted);line-height:1.6}
+
+/* ═══ CODE BLOCK ═══ */
+.code-block{position:relative;margin:1rem 0 1.5rem;border-radius:10px;border:1px solid var(--border);background:var(--bg2);overflow:hidden}
+.code-header{display:flex;align-items:center;justify-content:space-between;padding:.5rem 1rem;background:rgba(0,0,0,0.3);border-bottom:1px solid var(--border);font-size:.75rem}
+.code-lang{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.5px}
+.code-dots{display:flex;gap:5px}
+.code-dots span{width:10px;height:10px;border-radius:50%}
+.code-dots .d1{background:#f87171}.code-dots .d2{background:#fbbf24}.code-dots .d3{background:#4ade80}
+pre{margin:0!important;padding:1rem 1.25rem!important;background:transparent!important;font-family:'JetBrains Mono',monospace!important;font-size:.8125rem!important;line-height:1.7!important;overflow-x:auto;color:var(--muted)}
+
+/* ═══ TLDR ═══ */
+.tldr-box{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem 2rem;margin:1.5rem 0}
+.tldr-box h3{color:var(--accent);font-size:1rem;margin-bottom:.75rem}
+.tldr-box ul{list-style:none;padding:0}
+.tldr-box li{padding:.4rem 0;font-size:.875rem;color:var(--muted)}
+.tldr-box li strong{color:var(--fg)}
+.tldr-box li::before{content:'\25B8 ';color:var(--accent2)}
+
+/* ═══ COMMENT ═══ */
+.comment-section{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:2rem;margin-top:2rem}
+.comment-section h3{color:var(--fg);font-size:1.1rem;margin-bottom:1rem}
+.comment-form{display:flex;flex-direction:column;gap:1rem}
+.comment-form textarea{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:1rem;color:var(--fg);font-family:'Inter',sans-serif;font-size:.9rem;resize:vertical;min-height:100px}
+.comment-form textarea:focus{outline:none;border-color:var(--accent)}
+.comment-form button{align-self:flex-start;background:var(--accent-dim);color:var(--accent);border:1px solid rgba(59,130,246,0.3);padding:.6rem 1.5rem;border-radius:8px;font-family:inherit;font-weight:600;cursor:pointer;transition:all .2s}
+.comment-form button:hover{background:rgba(59,130,246,0.2)}
+
+/* ═══ FOOTER ═══ */
+.site-footer{position:relative;z-index:1;text-align:center;padding:2rem 2.5rem;border-top:1px solid var(--border);color:var(--text3);font-size:.75rem}
+.site-footer a{color:var(--accent);text-decoration:none}
+.footer-inner{max-width:1320px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.footer-left{font-size:.76rem;color:var(--text4)}
+.footer-left span{color:var(--text1);font-weight:600}
+.footer-links{display:flex;gap:1.5rem}
+.footer-links a{color:var(--text4);font-size:.76rem;transition:color .2s}
+.footer-links a:hover{color:var(--text1)}
+
+/* ═══ MOBILE NAV ═══ */
+.mobile-nav-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;backdrop-filter:blur(4px)}
+.mobile-nav-overlay.show{display:block}
+.mobile-nav-panel{display:none;position:fixed;right:0;top:0;bottom:0;width:300px;background:var(--bg2);border-left:1px solid var(--border);z-index:201;padding:1.5rem;overflow-y:auto}
+.mobile-nav-panel.show{display:block}
+.mobile-nav-panel .mnp-close{background:none;border:none;color:var(--text1);font-size:1.2rem;cursor:pointer;float:right}
+.mobile-nav-panel nav{display:flex;flex-direction:column;gap:.5rem;clear:both;margin-top:1rem}
+.mobile-nav-panel nav a{padding:.75rem 0;border-bottom:1px solid var(--border);color:var(--text1);font-size:.9rem;font-weight:500}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:1024px){.toc-sidebar{display:none}.hero h1{font-size:2rem}}
+@media(max-width:768px){
+  .site-header{padding:0 1rem}
+  .nav-main{display:none}
+  .mobile-toggle{display:block}
+  .hero h1{font-size:1.5rem}
+  .main-layout{padding:1rem}
+  .footer-inner{flex-direction:column;text-align:center}
+}
+@media(max-width:480px){.hero h1{font-size:1.3rem}.stat-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<canvas id="particles-canvas"></canvas>
+
+<!-- ═══ HEADER ═══ -->
+<header class="site-header">
+  <a href="/" class="brand">
+    <span class="logo-icon">Q</span>
+    QA210<span class="cursor"></span>
+  </a>
+  <nav class="nav-main">
+    <a href="/">Home</a>
+    <a href="/writeup/">Writeup</a>
+    <a href="/research/" class="active">Research</a>
+  </nav>
+  <div class="nav-right">
+    <a href="https://github.com/Yuri08-QA210" target="_blank" class="social-link" title="GitHub"><i class="bi bi-github"></i></a>
+    <button class="mobile-toggle" onclick="toggleMobileNav()" aria-label="Menu"><i class="bi bi-list"></i></button>
+  </div>
+</header>
+
+<!-- Mobile Nav -->
+<div class="mobile-nav-overlay" id="mobileOverlay" onclick="toggleMobileNav()"></div>
+<div class="mobile-nav-panel" id="mobilePanel">
+  <button class="mnp-close" onclick="toggleMobileNav()"><i class="bi bi-x-lg"></i></button>
+  <nav>
+    <a href="/">Home</a>
+    <a href="/writeup/">Writeup</a>
+    <a href="/research/">Research</a>
+    <a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
+  </nav>
+</div>
+
+<!-- ═══ BREADCRUMB ═══ -->
+<div class="breadcrumb">
+  <div class="breadcrumb-inner">
+    <a href="/">Home</a>
+    <span class="breadcrumb-sep">/</span>
+    <a href="/research/">Research</a>
+    <span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-current">H1 2026 Supply Chain Threat Report</span>
+  </div>
+</div>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero">
+  <div class="hero-badge">
+    <span class="dot"></span>
+    Urgent Threat Intelligence — H1 2026
+  </div>
+  <h1>Supply Chain Under Pressure</h1>
+  <p class="hero-subtitle">Three landmark incidents that reshaped the threat landscape in the first half of 2026 — from state-sponsored MDM weaponization, through SSO compromise via vishing, to ransomware via shared vendor. Deep technical analysis of attack chains, TTPs, and defensive countermeasures.</p>
+  <div class="hero-meta">
+    <span class="hero-tag tag-date">Jan &ndash; May 2026</span>
+    <span class="hero-tag tag-scope">Healthcare &middot; Finance &middot; Consumer SaaS</span>
+    <span class="hero-tag tag-crit">3 Critical Incidents</span>
+    <span class="hero-tag tag-thr">Handala &middot; ShinyHunters &middot; Everest</span>
+    <span class="hero-tag tag-vec">LotC &middot; Vishing &middot; Supply Chain</span>
+  </div>
+</section>
+
+<div class="main-layout">
+
+<!-- ═══ TOC SIDEBAR ═══ -->
+<aside class="toc-sidebar">
+  <div class="toc-title">Contents</div>
+  <ul class="toc-list" id="toc-list">
+    <li><a href="#ch0" class="active"><span class="toc-num">TL</span> Quick Summary</a></li>
+    <li><a href="#ch1"><span class="toc-num">01</span> Executive Overview</a></li>
+    <li><a href="#ch2"><span class="toc-num">02</span> Incident 1 &mdash; Stryker / Handala</a></li>
+    <li><a href="#ch3"><span class="toc-num">03</span> Incident 2 &mdash; Match Group / ShinyHunters</a></li>
+    <li><a href="#ch4"><span class="toc-num">04</span> Incident 3 &mdash; Citizens & Frost Bank</a></li>
+    <li><a href="#ch5"><span class="toc-num">05</span> TTP Analysis & Trends</a></li>
+    <li><a href="#ch6"><span class="toc-num">06</span> IoC Repository</a></li>
+    <li><a href="#ch7"><span class="toc-num">07</span> Strategic Forecast</a></li>
+  </ul>
+</aside>
+
+<main class="content-area">
+
+<!-- ═══ TL;DR ═══ -->
+<section class="chapter" id="ch0">
+  <div class="chapter-header">
+    <span class="chapter-num">TL;DR</span>
+    <h2 class="chapter-title">Quick Summary</h2>
+  </div>
+  <div class="tldr-box">
+    <h3>Key Takeaways in 30 Seconds</h3>
+    <ul>
+      <li><strong>Context:</strong> Cybersecurity in H1 2026 witnessed an explosion of data-destruction campaigns masquerading as ransomware, with three landmark incidents across three distinct industries.</li>
+      <li><strong>Core theme:</strong> Threat actors systematically exploited digital supply chains, targeting centralized management tools and shared service providers (SaaS/Shared Vendor).</li>
+      <li><strong>Incident 1 &mdash; Stryker/Handala:</strong> Iranian-linked group weaponized Microsoft Intune to wipe 200,000+ devices across 79 countries &mdash; <strong>without custom malware</strong>.</li>
+      <li><strong>Incident 2 &mdash; Match Group/ShinyHunters:</strong> Cybercrime group used AI-assisted vishing to compromise Okta SSO, leaking 10M+ dating app user records.</li>
+      <li><strong>Incident 3 &mdash; Citizens & Frost Bank/Everest:</strong> Ransomware group breached a shared vendor, exposing 3.65M+ financial records &mdash; neither bank was directly compromised, yet both bear legal liability.</li>
+      <li><strong>Hot keywords:</strong> Handala Wiper, ShinyHunters, Intune Abuse, LotC (Living-off-the-Cloud), AI Vishing, Supply Chain Risk, ITDR, Zero Trust.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══ CH1: EXECUTIVE SUMMARY ═══ -->
+<section class="chapter" id="ch1">
+  <div class="chapter-header">
+    <span class="chapter-num">01</span>
+    <h2 class="chapter-title">Executive Overview</h2>
+  </div>
+  <p>The first half of 2026 marks a structural inflection point in the cybersecurity threat landscape. Threat actors &mdash; ranging from state-sponsored destructive groups, profit-driven extortionists, to ransomware-as-a-service operators &mdash; converged on a single dominant strategy: <strong style="color:var(--fg)">weaponizing trusted infrastructure</strong> rather than deploying novel malware.</p>
+  <p>The three incidents analyzed in this report collectively demonstrate that the classic security perimeter is no longer the primary attack surface. Instead, adversaries target the <em>trust zone</em> connecting an organization to its tools, vendors, and identity providers. When the weapon is your own MDM platform, your SSO provider, or your shared document processor, perimeter-based defenses are architecturally blind.</p>
+  <div class="stat-grid">
+    <div class="stat-cell"><span class="stat-num s-red">200K+</span><span class="stat-label">Devices Wiped (Stryker)</span></div>
+    <div class="stat-cell"><span class="stat-num s-yellow">10M+</span><span class="stat-label">Records Leaked (Match Group)</span></div>
+    <div class="stat-cell"><span class="stat-num s-blue">3.65M</span><span class="stat-label">Financial Records Exposed (Banks)</span></div>
+    <div class="stat-cell"><span class="stat-num s-purple">$0</span><span class="stat-label">Custom Malware Used (Stryker)</span></div>
+  </div>
+  <div class="callout callout-crit">
+    <div class="callout-title">Defining Characteristic of H1 2026</div>
+    In all three incidents, attackers achieved catastrophic impact <strong>without deploying a single line of custom malware</strong> at the target. The weapons were Microsoft Intune, Okta SSO, and a shared document processing vendor. This represents the full maturation of the Living-off-the-Land (LotL) philosophy extended to the cloud layer &mdash; what researchers now call <strong>Living-off-the-Cloud (LotC)</strong>. As Obsidian Security noted: "The admin account that issued the wipe was, from the perspective of every system involved, a legitimate, authenticated, authorized user."
+  </div>
+  <h3>Incident Overview</h3>
+  <table class="info-table">
+    <thead><tr><th>Incident</th><th>Date</th><th>Threat Actor</th><th>Method</th><th>Severity</th></tr></thead>
+    <tbody>
+      <tr><td class="label">Stryker Corporation</td><td class="value">11 Mar 2026</td><td class="value">Handala (MOIS)</td><td class="value">Intune Wiper</td><td class="on">CRITICAL</td></tr>
+      <tr><td class="label">Match Group</td><td class="value">28 Jan 2026</td><td class="value">ShinyHunters</td><td class="value">SSO Vishing</td><td class="hi">HIGH</td></tr>
+      <tr><td class="label">Citizens & Frost Bank</td><td class="value">20 Apr 2026</td><td class="value">Everest RaaS</td><td class="value">Shared Vendor</td><td class="hi">HIGH</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══ CH2: STRYKER / HANDALA ═══ -->
+<section class="chapter" id="ch2">
+  <div class="chapter-header">
+    <span class="chapter-num">02</span>
+    <h2 class="chapter-title">Incident 1 &mdash; Stryker Corporation / Handala</h2>
+  </div>
+
+  <h3>Context & Attribution</h3>
+  <table class="info-table">
+    <tr><td class="label">Target</td><td class="value">Stryker Corporation (Fortune 500, Medical Technology, $22.6B revenue)</td></tr>
+    <tr><td class="label">Date / Time</td><td class="value">March 11, 2026 &mdash; ~03:30 AM EST</td></tr>
+    <tr><td class="label">Threat Actor</td><td class="value">Handala (aka Void Manticore / Storm-0842 / Banished Kitten)</td></tr>
+    <tr><td class="label">Sponsor</td><td class="value">Iranian Ministry of Intelligence and Security (MOIS)</td></tr>
+    <tr><td class="label">Attack Type</td><td class="value">Destructive Wiper &mdash; Living-off-the-Cloud via Microsoft Intune</td></tr>
+    <tr><td class="label">Scale</td><td class="value">79 countries &middot; 200,000+ endpoints &middot; 50 TB data exfiltrated (claimed)</td></tr>
+    <tr><td class="label">Legal Disclosure</td><td class="value">SEC Form 8-K &mdash; "severe global disruption to Microsoft environment"</td></tr>
+    <tr><td class="label">Motivation</td><td class="value">Geopolitical retaliation &mdash; Israeli company acquisition + $450M U.S. DoD contract</td></tr>
+  </table>
+
+  <p>Stryker Corporation &mdash; the Michigan-based surgical equipment and neurotechnology manufacturer with over 56,000 employees worldwide and $22.6B in 2024 revenue &mdash; became the first confirmed Fortune 500 company to suffer a destructive wiper attack. Employees arriving at offices around the world on March 11 found their devices being wiped in real time. Some login portals were defaced with the attacker's branding. Microsoft Entra login portals were replaced with Handala graphics. Both corporate-issued and BYOD-enrolled personal devices were destroyed simultaneously.</p>
+
+  <div class="callout callout-info">
+    <div class="callout-title">Threat Actor Profile &mdash; Handala / Void Manticore</div>
+    Handala has conducted at least <strong>131 recorded attacks</strong> since December 2023, with activity surging in early 2026 following U.S.&ndash;Israel strikes on Iran (Feb 28, 2026). The group operates under a <strong>dual-actor handoff model</strong>: <code class="inline">Scarred Manticore (Storm-0861)</code> performs long-dwell initial access and espionage, then hands control to <code class="inline">Void Manticore (Storm-0842)</code> for the destructive wiper phase. This division of labor was also observed in the 2022 Albanian government attacks and the 2023&ndash;2024 Israel campaigns. As Securin reported: "MuddyWater did the access work. Handala pulled the trigger." Check Point Research formally attributed Handala to Void Manticore in May 2024, establishing that the hacktivist persona is an operational cover for a destructive cyber unit inside Iran's MOIS.
+  </div>
+
+  <h3>Attack Chain Reconstruction</h3>
+  <p>Unlike typical ransomware incidents, Handala deployed <strong>no custom malware</strong> against Stryker. The entire kill chain leveraged legitimate enterprise tooling &mdash; a textbook Living-off-the-Cloud (LotC) campaign. Censys researchers identified nearly 2,000 Stryker servers exposed to the internet, with over 150 exposing login-capable interfaces &mdash; providing a likely initial reconnaissance surface.</p>
+
+  <div class="attack-diagram">
+    <div style="color:var(--accent);font-weight:700;margin-bottom:12px;font-size:.85rem;">&#9654; ATTACK CHAIN &mdash; Stryker / Handala &middot; March 11, 2026</div>
+    <div class="atk-row"><span class="atk-step">[1]</span><span class="atk-label">INITIAL RECON</span><span class="atk-desc">Scarred Manticore (Storm-0861) conducts long-dwell reconnaissance against Stryker's <span class="hi">~2,000 internet-facing servers</span>. Over 150 exposed login portals identified as initial foothold candidates. Brute-force attempts against VPN infrastructure documented by Check Point.</span></div>
+    <div class="atk-sep"></div>
+    <div class="atk-row"><span class="atk-step">[2]</span><span class="atk-label">IDENTITY COMPROMISE</span><span class="atk-desc">Infostealer infections on Stryker employee endpoints leak credentials for SSO/IDP, ITSM systems, and privileged password management platforms to dark web. Coalition confirmed Stryker credentials were circulating <span class="re">before the attack began</span>. Attackers <span class="re">create new Global Administrator accounts</span> in Stryker's Entra/Intune environment.</span></div>
+    <div class="atk-sep"></div>
+    <div class="atk-row"><span class="atk-step">[3]</span><span class="atk-label">PRIVILEGE ESCALATION</span><span class="atk-desc">Attackers escalate to <span class="re">Global Administrator</span> in Stryker's Azure AD / Entra ID tenant. Deploy malicious files (non-self-replicating) to execute commands and evade detection. Handala branding assets pre-staged on devices. Malicious file later found used to conceal commands in Stryker systems.</span></div>
+    <div class="atk-sep"></div>
+    <div class="atk-row"><span class="atk-step">[4]</span><span class="atk-label">MDM WEAPONIZATION</span><span class="atk-desc">Handala (Storm-0842) receives access handoff. Using Global Administrator privileges, they access <span class="hi">Microsoft Intune</span> &mdash; Stryker's primary MDM platform. Base64-encoded wipe payloads prepared for mass deployment.</span></div>
+    <div class="atk-sep"></div>
+    <div class="atk-row"><span class="atk-step">[5]</span><span class="atk-label">MASS REMOTE WIPE</span><span class="atk-desc">At <span class="re">~03:30 AM EST</span>, remote wipe commands are pushed simultaneously to <span class="re">200,000+</span> enrolled devices across 79 countries. Laptops, servers, mobile devices, and virtual infrastructure all destroyed. No malware binary needed &mdash; Intune's wipe API is the weapon.</span></div>
+    <div class="atk-sep"></div>
+    <div class="atk-row"><span class="atk-step">[6]</span><span class="atk-label">DATA EXFILTRATION</span><span class="atk-desc">Prior to wiping, attackers claim to have exfiltrated <span class="re">50 TB</span> of corporate data. Irish manufacturing facilities shut down. Login portals defaced. SEC 8-K filed same day. FBI seizes four Handala domains on March 19.</span></div>
+  </div>
+
+  <div class="callout callout-warn">
+    <div class="callout-title">The LotC Evasion Problem</div>
+    Because the wipe commands originated from <strong>legitimate Microsoft Intune infrastructure</strong> using valid administrator credentials, traditional endpoint security controls (AV, EDR, DLP) had no capability to detect the attack. Forrester analyst Paddy Harrington confirmed: "The attack does not point to any inherent weakness in Microsoft Intune &mdash; it fundamentally uses living-off-the-land techniques to bypass existing security systems." When the weapon is your own MDM platform, signature-based detection is completely blind. Obsidian Security noted: "Administrative trust is a first-order destructive attack surface."
+  </div>
+
+  <h3>Geopolitical Context</h3>
+  <p>Handala explicitly cited Stryker's acquisition of an Israeli medical technology company (OrthoSpace, 2019) and its $450 million contract with the U.S. Department of Defense as justification for the attack. The campaign was timed within two weeks of U.S.&ndash;Israel strikes on Iran (Feb 28, 2026), signaling that the Israel&ndash;Iran cyber conflict has fully expanded into U.S. commercial infrastructure. NBC News characterized it as "the first significant instance of Iran targeting an American company since the start of the ongoing conflict." Palo Alto Networks noted that Handala simultaneously focused on supply chain footholds &mdash; using IT service providers as pivot points to downstream victims.</p>
+  <p>Coalition's analysis revealed that in the months preceding the attack, <strong>infostealer infections</strong> on Stryker employee devices had leaked credentials controlling SSO/IDP systems, ITSM platforms, and privileged password management vaults to the dark web. This was the fuse for the entire attack chain &mdash; once high-level credentials were exposed, attackers needed no zero-day or sophisticated exploitation technique.</p>
+
+  <h3>Critical Defensive Measures</h3>
+  <ol class="step-list">
+    <li><strong>Enable Multi-Admin Approval on Microsoft Intune.</strong> Microsoft provides this feature out-of-the-box &mdash; it requires a second administrator to approve all bulk device actions (remote wipe, script deployment, policy push). Most organizations have never activated it.</li>
+    <li><strong>Treat Global Administrator as a Tier-0 asset.</strong> Deploy Privileged Identity Management (PIM) with Just-In-Time (JIT) elevation. No account should permanently hold Global Administrator. Every elevation event must trigger alerts and require MFA re-authentication.</li>
+    <li><strong>Enforce phishing-resistant MFA (FIDO2/passkey)</strong> on all admin accounts in Entra ID and Intune. Authenticator app OTPs are insufficient &mdash; real-time vishing and proxy phishing bypass them.</li>
+    <li><strong>Maintain air-gapped, immutable backups</strong> completely isolated from the Microsoft tenant and Active Directory. If the entire Microsoft environment is wiped, recovery depends entirely on having backups the attacker cannot reach.</li>
+    <li><strong>Deploy ITDR (Identity Threat Detection and Response).</strong> Shift monitoring focus from file-based indicators to identity behavior &mdash; sudden Global Administrator creation, bulk Intune policy changes, and mass device enrollment/unenrollment must trigger automated alerts and session suspension.</li>
+  </ol>
+
+  <h3>Indicators of Compromise</h3>
+  <div class="ioc-block">
+<span class="ioc-comment"># ══════════════════════════════════════════════════════════════</span>
+<span class="ioc-comment"># STRYKER / HANDALA &middot; March 11, 2026</span>
+<span class="ioc-comment"># ══════════════════════════════════════════════════════════════</span>
+
+<span class="ioc-comment"># Process & Script Indicators (MDM Abuse Patterns)</span>
+<span class="ioc-path">Path:    C:\Windows\System32\config\systemprofile\AppData\Local\Microsoft\Intune\</span>
+<span class="ioc-cmd">Command: powershell.exe -ExecutionPolicy Bypass -EncodedCommand [base64_wipe_payload]</span>
+<span class="ioc-comment">Monitor:  Sudden bulk Intune policy push from single admin session</span>
+<span class="ioc-comment">Monitor:  Global Administrator role assignment outside change window</span>
+<span class="ioc-comment">Monitor:  Device wipe API calls (/deviceManagement/managedDevices/{id}/wipe) in volume</span>
+<span class="ioc-comment">Monitor:  DeviceRemoteAction audit category volume anomalies in Intune</span>
+
+<span class="ioc-comment"># C2 / Attribution Domains (defanged)</span>
+<span class="ioc-domain">handala-hack[.]to</span>              <span class="ioc-comment"># Seized by FBI March 19, 2026</span>
+<span class="ioc-domain">handala[.]to</span>                    <span class="ioc-comment"># Seized by FBI March 19, 2026</span>
+<span class="ioc-domain">handala-redwanted[.]to</span>          <span class="ioc-comment"># Data leak site; seized by FBI March 19, 2026</span>
+<span class="ioc-domain">api[.]ra-backup[.]com</span>           <span class="ioc-comment"># C2 infrastructure</span>
+
+<span class="ioc-comment"># Network Infrastructure (defanged)</span>
+<span class="ioc-domain">107[.]189[.]19[.]52</span>            <span class="ioc-comment"># Dedicated C2 server (Check Point)</span>
+<span class="ioc-domain">sjc1[.]vultrobjects[.]com</span>      <span class="ioc-comment"># Vultr-hosted malware delivery URL</span>
+
+<span class="ioc-comment"># Hostname Fingerprints (Attacker Infrastructure)</span>
+<span class="ioc-comment">WIN-P1B7V100IIS   DESKTOP-FK1NPHF   DESKTOP-R1FMLQP   VULTR-GUEST</span>
+
+<span class="ioc-comment"># Cloud/Storage Infrastructure</span>
+<span class="ioc-comment">Storj cloud storage (exfil destination) · Vultr/Vultrobjects (payload hosting)</span>
+<span class="ioc-comment">AWS S3-compatible APIs (exfil) · Telegram API/bots (C2 + exfil channel)</span>
+  </div>
+</section>
+
+<!-- ═══ CH3: MATCH GROUP / SHINYHUNTERS ═══ -->
+<section class="chapter" id="ch3">
+  <div class="chapter-header">
+    <span class="chapter-num">03</span>
+    <h2 class="chapter-title">Incident 2 &mdash; Match Group / ShinyHunters</h2>
+  </div>
+
+  <h3>Context & Attribution</h3>
+  <table class="info-table">
+    <tr><td class="label">Target</td><td class="value">Match Group (Tinder, Hinge, OkCupid, Match.com, Meetic)</td></tr>
+    <tr><td class="label">Date</td><td class="value">~Jan 16, 2026 (disclosed: Jan 27&ndash;28, 2026)</td></tr>
+    <tr><td class="label">Threat Actor</td><td class="value">ShinyHunters (financially motivated, active since 2020)</td></tr>
+    <tr><td class="label">Attack Vector</td><td class="value">Vishing &rarr; Okta SSO Compromise &rarr; AppsFlyer Third-Party Access</td></tr>
+    <tr><td class="label">Data Volume</td><td class="value">10M+ records claimed &middot; 1.7 GB compressed &middot; published on dark web</td></tr>
+    <tr><td class="label">Platforms Affected</td><td class="value">Hinge, Match.com, OkCupid (Tinder and PoF reported unaffected)</td></tr>
+    <tr><td class="label">Legal Risk</td><td class="value">Multiple class action lawsuits filed (Bloomberg Law, Feb 3, 2026)</td></tr>
+  </table>
+
+  <p>On January 28, 2026, ShinyHunters posted on their dark web leak site claiming possession of over 10 million records from Match Group &mdash; the parent company of the world's most widely used dating platforms. The claim included a 1.7 GB compressed sample containing user IDs, IP addresses, Hinge transaction records, dating profiles, matched usernames, and hundreds of internal corporate documents. Match Group confirmed "a newly identified cybersecurity incident" and that "a limited amount of user data" had been accessed.</p>
+
+  <div class="callout callout-info">
+    <div class="callout-title">Threat Actor Profile &mdash; ShinyHunters</div>
+    ShinyHunters is a notorious profit-driven extortion group active since 2020, known for high-impact campaigns against insurance, retail, aviation, and now consumer SaaS. During their late-January 2026 campaign, they simultaneously targeted <strong>~100 organizations</strong> with coordinated SSO vishing &mdash; confirmed victims include Panera Bread, Bumble, CarMax, Edmunds, and Canvas (Instructure). The FBI issued an official PSA (ic3.gov/PSA/2026/PSA260515, May 15, 2026) warning about ShinyHunters targeting learning management systems and SaaS platforms.
+  </div>
+
+  <h3>Attack Chain Reconstruction</h3>
+  <p>This incident is a case study in <strong>identity provider compromise cascading to third-party data exposure</strong>. ShinyHunters did not compromise Match Group's core database servers. Instead, they compromised a single SSO credential and inherited lateral access across the SaaS ecosystem.</p>
+
+  <div class="attack-diagram">
+    <div style="color:var(--accent);font-weight:700;margin-bottom:12px;font-size:.85rem;">&#9654; ATTACK CHAIN &mdash; Match Group / ShinyHunters &middot; January 2026</div>
+    <div class="atk-row"><span class="atk-step">[1]</span><span class="atk-label">VISHING CAMPAIGN</span><span class="atk-desc">Attackers impersonate IT help desk via <span class="hi">AI-assisted voice phishing (vishing)</span> &mdash; a technique ShinyHunters refined from the 2022&ndash;2023 Twilio/Okta campaigns. Target employees are socially engineered to reset SSO credentials or accept MFA prompts.</span></div>
+    <div class="atk-sep"></div>
+    <div class="atk-row"><span class="atk-step">[2]</span><span class="atk-label">SSO ACCOUNT TAKEOVER</span><span class="atk-desc">A single <span class="re">Okta SSO account</span> is compromised. Match Group's SSO is the master key to the entire SaaS stack &mdash; phishing domain <span class="hi">matchinternal.com</span> used for credential harvesting.</span></div>
+    <div class="atk-sep"></div>
+    <div class="atk-row"><span class="atk-step">[3]</span><span class="atk-label">SaaS LATERAL MOVEMENT</span><span class="atk-desc">With SSO access, attackers pivot to <span class="hi">AppsFlyer</span> (mobile marketing analytics), and reportedly <span class="hi">Google Drive / Dropbox</span> cloud storage. AppsFlyer holds rich behavioral and transactional data from all Match Group platforms by design.</span></div>
+    <div class="atk-sep"></div>
+    <div class="atk-row"><span class="atk-step">[4]</span><span class="atk-label">DATA EXFILTRATION</span><span class="atk-desc">10M+ records exfiltrated: user IDs, IP addresses, geolocation data, transaction IDs (Hinge premium subscriptions), profile data, match lists, device fingerprints, and internal corporate documents. Match Group disputes Google Drive/Dropbox access.</span></div>
+    <div class="atk-sep"></div>
+    <div class="atk-row"><span class="atk-step">[5]</span><span class="atk-label">DARK WEB EXTORTION</span><span class="atk-desc">Jan 27&ndash;28: ShinyHunters lists the dataset on their dark web portal with data samples. Match Group confirms incident. Class action lawsuits filed within one week.</span></div>
+  </div>
+
+  <h3>Why Dating App Data Is Uniquely Dangerous</h3>
+  <div class="callout callout-warn">
+    <div class="callout-title">Downstream Harm Vectors</div>
+    <strong>Targeted social engineering:</strong> Dating profile data, match lists, and location data derived from IP enable precision extortion ("we know you're on Hinge") or impersonation attacks.<br><br>
+    <strong>De-anonymization:</strong> Cross-referencing user IDs, IPs, and transaction timestamps with external data brokers can re-identify users who intentionally used pseudonyms on dating platforms &mdash; particularly dangerous for users in regions where LGBTQ+ identity carries legal risk.<br><br>
+    <strong>Credential stuffing amplification:</strong> Email addresses combined with platform-linked data allow attackers to target the same users on other services where they may reuse credentials.
+  </div>
+
+  <h3>The AppsFlyer Attribution Dispute</h3>
+  <p>ShinyHunters' dark web post specifically named <code class="inline">AppsFlyer</code> as the data source, describing "over 10 million records of Hinge, Match, and OkCupid usage data from AppsFlyer." AppsFlyer denied this entirely: "The incident did not originate from AppsFlyer, nor is it related to any breach, security incident, or compromise of AppsFlyer's systems." BleepingComputer's investigation concluded the entry point was a compromised Okta SSO account that granted access to Match Group's <em>tenant instance</em> within AppsFlyer &mdash; meaning AppsFlyer's systems were not breached, but Match Group's data <em>inside</em> AppsFlyer was accessed via stolen credentials. This distinction is critical: the identity provider was the attack surface, not the SaaS vendor.</p>
+
+  <h3>Critical Defensive Measures</h3>
+  <ol class="step-list">
+    <li><strong>Treat IdP (Okta, Entra ID, Google Workspace) as Tier-0 assets.</strong> A compromise here is a compromise everywhere. Enforce phishing-resistant MFA (hardware keys or passkeys) for all accounts with SSO admin privileges. Implement strict callback verification protocols for any SSO reset requests from help desk &mdash; voice-based social engineering is now the primary attack vector.</li>
+    <li><strong>Build and maintain a living SaaS catalog with data flow mapping.</strong> Every third-party integration receiving user data should be cataloged, classified by data sensitivity, and enrolled in the vendor risk management program &mdash; including analytics and marketing platforms.</li>
+    <li><strong>Deploy API security gateways with behavioral rate limiting.</strong> Anomalous bulk export activity (thousands of records in minutes from a single session) must trigger automatic suspension and alerts. Normal analytics queries do not resemble bulk data exfiltration patterns.</li>
+    <li><strong>Enforce least-privilege OAuth scopes.</strong> Marketing analytics integrations rarely need read access to PII fields like full names, IP addresses, and transaction IDs. Narrow API permissions to the minimum necessary and conduct quarterly access reviews.</li>
+    <li><strong>Centralize SSO event logging with real-time alerting.</strong> Bulk token generation, cross-SaaS lateral movement patterns, and anomalous API access from an SSO session must generate high-fidelity alerts &mdash; not buried in SIEM without rules.</li>
+  </ol>
+
+  <h3>Indicators of Compromise</h3>
+  <div class="ioc-block">
+<span class="ioc-comment"># ══════════════════════════════════════════════════════════════</span>
+<span class="ioc-comment"># MATCH GROUP / SHINYHUNTERS &middot; January 2026</span>
+<span class="ioc-comment"># ══════════════════════════════════════════════════════════════</span>
+
+<span class="ioc-comment"># Phishing / Vishing Infrastructure</span>
+<span class="ioc-domain">matchinternal[.]com</span>             <span class="ioc-comment"># Confirmed phishing domain</span>
+
+<span class="ioc-comment"># Behavioral Indicators (SSO Anomaly Hunting)</span>
+<span class="ioc-comment">Alert:   Okta session with &gt;500 API calls to connected SaaS apps in 60 minutes</span>
+<span class="ioc-comment">Alert:   Bulk data export from AppsFlyer / analytics platforms via SSO-authenticated session</span>
+<span class="ioc-comment">Alert:   SSO token usage from new ASN in same session as internal IP-originating login</span>
+<span class="ioc-comment">Alert:   MFA factor addition events not preceded by verified help desk ticket</span>
+  </div>
+</section>
+
+<!-- ═══ CH4: CITIZENS & FROST BANK ═══ -->
+<section class="chapter" id="ch4">
+  <div class="chapter-header">
+    <span class="chapter-num">04</span>
+    <h2 class="chapter-title">Incident 3 &mdash; Citizens Financial & Frost Bank</h2>
+  </div>
+
+  <h3>Context & Attribution</h3>
+  <table class="info-table">
+    <tr><td class="label">Target</td><td class="value">Citizens Financial Group ($227.9B assets) + Cullen/Frost Bankers ($53B assets)</td></tr>
+    <tr><td class="label">Date</td><td class="value">Apr 20, 2026 (dark web listing) &middot; Apr 28, 2026 (MA AG disclosure)</td></tr>
+    <tr><td class="label">Threat Actor</td><td class="value">Everest (Russia-linked RaaS, active since 2020)</td></tr>
+    <tr><td class="label">Root Cause</td><td class="value">Shared third-party vendor compromise (statement printing / tax document processing)</td></tr>
+    <tr><td class="label">Data Claimed</td><td class="value">3.4M Citizens records + 250,000 Frost SSNs and tax IDs</td></tr>
+    <tr><td class="label">Legal Risk</td><td class="value">Six class action lawsuits filed in four days (federal RI + state TX courts)</td></tr>
+    <tr><td class="label">Regulatory Risk</td><td class="value">GLBA Safeguards Rule &middot; NYDFS &middot; OCC examination risk</td></tr>
+  </table>
+
+  <p>On April 20, 2026, the Everest ransomware group simultaneously listed both Citizens Financial Group and Frost Bank on their dark web extortion portal &mdash; giving each organization six days before publishing the stolen datasets. The dual listing on the same day and overlapping document metadata in both datasets were immediately identified by ZeroFox analysts as the signature of a <strong>shared vendor compromise</strong> rather than two independent intrusions.</p>
+  <p>Neither bank's network was directly compromised. The breached vendor handled statement printing for Citizens and tax document processing for Frost &mdash; a single third party holding regulated financial data on behalf of two unrelated Tier-1 institutions simultaneously.</p>
+
+  <h3>Attack Chain Reconstruction</h3>
+  <div class="attack-diagram">
+    <div style="color:var(--accent);font-weight:700;margin-bottom:12px;font-size:.85rem;">&#9654; ATTACK CHAIN &mdash; Citizens & Frost Bank / Everest &middot; April 2026</div>
+    <div class="atk-row"><span class="atk-step">[1]</span><span class="atk-label">VENDOR IDENTIFICATION</span><span class="atk-desc">Everest identifies a <span class="hi">shared document processing vendor</span> trusted by both Citizens Financial and Frost Bank. This vendor holds high-value regulated financial data &mdash; statements, tax documents, SSNs &mdash; without the security posture of a Tier-1 bank.</span></div>
+    <div class="atk-sep"></div>
+    <div class="atk-row"><span class="atk-step">[2]</span><span class="atk-label">VENDOR NETWORK COMPROMISE</span><span class="atk-desc">Everest compromises the shared vendor's network. The exact initial access vector has not been publicly disclosed. The vendor's systems were compromised without either bank's security teams having visibility into the event.</span></div>
+    <div class="atk-sep"></div>
+    <div class="atk-row"><span class="atk-step">[3]</span><span class="atk-label">DATA EXFILTRATION</span><span class="atk-desc">Attackers exfiltrate <span class="re">3.4M Citizens customer records</span> and <span class="re">250,000+ Frost Bank records</span> including SSNs, tax IDs, mortgage rates, investment data, and home addresses &mdash; data the vendor legitimately held for printing and tax document fulfillment purposes.</span></div>
+    <div class="atk-sep"></div>
+    <div class="atk-row"><span class="atk-step">[4]</span><span class="atk-label">DUAL LISTING + EXTORTION</span><span class="atk-desc">Apr 20: Both banks listed simultaneously on Everest's dark web portal with a <span class="hi">6-day countdown</span>. Same-day dual listing signals to analysts that one vendor serves both targets &mdash; supply chain attack, not two independent intrusions.</span></div>
+    <div class="atk-sep"></div>
+    <div class="atk-row"><span class="atk-step">[5]</span><span class="atk-label">REGULATORY CASCADE</span><span class="atk-desc">Apr 21: Citizens attributes incident to unnamed third-party vendor. Apr 24: Six class action lawsuits filed. Apr 28: Citizens files with Massachusetts AG. GLBA accountability applies to banks regardless of vendor fault &mdash; <span class="re">"our vendor was compromised" is not a legal defense.</span></span></div>
+  </div>
+
+  <h3>The GLBA Accountability Gap</h3>
+  <p>The Citizens and Frost Bank incident drew significant regulatory attention because it exposed a structural gap in third-party risk accountability. Under the Gramm-Leach-Bliley Act (GLBA), financial institutions bear ultimate responsibility for protecting customer data &mdash; including data processed by their vendors. A class action complaint asks the court to declare Citizens Bank's current data security practices legally insufficient, regardless of the bank's argument that its own network was never breached.</p>
+
+  <div class="callout callout-crit">
+    <div class="callout-title">Legal Precedent &mdash; Vendor Breach &#8800; Liability Shield</div>
+    This incident crystallizes a principle that regulators (NYDFS, OCC, FDIC) have been signaling for years: <strong>regulated institutions cannot outsource their data protection obligations to vendors</strong>. The bank that outsources statement printing still owns the regulatory risk when that vendor is breached. Six class action lawsuits were filed against Citizens and Frost &mdash; not against the unnamed vendor &mdash; reflecting this legal reality. The updated GLBA Safeguards Rule (effective June 2023) explicitly requires periodic vendor assessments and written incident response plans. In 2026, "our vendor was breached" is no longer an adequate response to bank examiners or plaintiffs' attorneys.
+  </div>
+
+  <h3>Incident Timeline</h3>
+  <div class="timeline">
+    <div class="tl-item"><div class="tl-dot tl-dot-red"><div class="tl-dot-inner"></div></div><div class="tl-content"><div class="tl-time">Apr 20, 2026</div><div class="tl-title">Everest lists both banks on dark web portal</div><div class="tl-desc">Simultaneous dual listing with 6-day payment deadline. ZeroFox identifies shared vendor signature in dataset metadata. Citizens Financial and Frost Bank begin internal investigations.</div></div></div>
+    <div class="tl-item"><div class="tl-dot tl-dot-yellow"><div class="tl-dot-inner"></div></div><div class="tl-content"><div class="tl-time">Apr 21, 2026</div><div class="tl-title">Citizens attributes breach to unnamed third-party vendor</div><div class="tl-desc">Citizens publicly states its own network was not compromised. Frost Bank separately confirms notification from the vendor. Neither bank names the specific vendor.</div></div></div>
+    <div class="tl-item"><div class="tl-dot tl-dot-red"><div class="tl-dot-inner"></div></div><div class="tl-content"><div class="tl-time">Apr 24, 2026</div><div class="tl-title">Six class action lawsuits filed in four days</div><div class="tl-desc">Two federal suits against Citizens in U.S. District Court (Rhode Island). Two state court petitions against Frost in Bexar County, Texas. GLBA negligence and fiduciary duty breach among core allegations.</div></div></div>
+    <div class="tl-item"><div class="tl-dot tl-dot-blue"><div class="tl-dot-inner"></div></div><div class="tl-content"><div class="tl-time">Apr 28, 2026</div><div class="tl-title">Citizens files breach notification with Massachusetts AG</div><div class="tl-desc">Official regulatory disclosure. Frost Bank's Texas AG notification window falls ~May 20, 2026 (30-day window from discovery).</div></div></div>
+  </div>
+
+  <h3>Critical Defensive Measures</h3>
+  <ol class="step-list">
+    <li><strong>Deploy Zero Trust Network Access (ZTNA) for all vendor connections.</strong> Replace broad VPN access with application-level, time-limited, least-privilege connections for third parties. A statement printing vendor should not have network-level access to anything beyond the specific API required for that function.</li>
+    <li><strong>Mandate security assessments on all Tier-1 vendors</strong> (those with access to regulated customer data). Assessments should include penetration test results, SOC 2 Type II reports, and incident response plan evaluations &mdash; not just completed questionnaires.</li>
+    <li><strong>Enforce code-signing verification on all software updates and configurations</strong> from third-party vendors before deployment to production environments. Software supply chain attacks (SolarWinds pattern) and vendor-side compromise are now the primary entry vector for financial institutions.</li>
+    <li><strong>Deploy network segmentation for all third-party connections</strong> with strict egress filtering. Even if a vendor is compromised, lateral movement into your environment must be architecturally impossible &mdash; not merely policy-prohibited.</li>
+    <li><strong>Classify vendors by data exposure tier</strong> and apply proportionate security requirements contractually. Vendors holding regulated financial customer data should be contractually obligated to meet the same GLBA Safeguards standards as the bank &mdash; with audit rights and breach notification SLAs.</li>
+  </ol>
+
+  <h3>Indicators of Compromise</h3>
+  <div class="ioc-block">
+<span class="ioc-comment"># ══════════════════════════════════════════════════════════════</span>
+<span class="ioc-comment"># CITIZENS & FROST BANK / EVEREST &middot; April 2026</span>
+<span class="ioc-comment"># ══════════════════════════════════════════════════════════════</span>
+
+<span class="ioc-comment"># Behavioral Indicators (Supply Chain Hunting)</span>
+<span class="ioc-comment">Alert:   Outbound data transfer &gt;1GB from document processing vendor connection</span>
+<span class="ioc-comment">Alert:   Vendor VPN sessions active outside contractual maintenance windows</span>
+<span class="ioc-comment">Alert:   Ransom note file creation (README.txt, !!!HOW_TO_DECRYPT.txt) on vendor-accessible shares</span>
+
+<span class="ioc-comment"># Everest RaaS Infrastructure (defanged)</span>
+<span class="ioc-domain">everest-team[.]onion</span>           <span class="ioc-comment"># Dark web leak/auction site</span>
+<span class="ioc-comment">Contact: everestteam@protonmail.com (previously associated)</span>
+  </div>
+</section>
+
+<!-- ═══ CH5: TTP ANALYSIS ═══ -->
+<section class="chapter" id="ch5">
+  <div class="chapter-header">
+    <span class="chapter-num">05</span>
+    <h2 class="chapter-title">TTP Analysis & Emerging Trends</h2>
+  </div>
+
+  <h3>Red Team Tracking &mdash; Offensive Techniques</h3>
+
+  <div class="callout callout-crit">
+    <div class="callout-title">Trend: Living-off-the-Cloud (LotC)</div>
+    The Stryker incident confirms what threat researchers have been warning since late 2025: adversaries have evolved LotL from abusing local OS binaries (PowerShell, WMI, certutil) to <strong>abusing cloud management planes</strong>. Microsoft Intune, AWS Systems Manager, and Google Cloud Deployment Manager can all be weaponized to push destructive payloads to thousands of endpoints simultaneously &mdash; no malware on disk, no command-and-control infrastructure to detect, and no AV/EDR signature to match. Google's Cloud CISO team confirmed in their March 2026 Threat Horizons report: "This highlights the serious risk posed by living-off-the-cloud (LotC) techniques and the need for strict isolation in cloud runtime environments."
+  </div>
+
+  <div class="callout callout-warn">
+    <div class="callout-title">Trend: Identity Providers as the Universal Attack Surface</div>
+    Both the Match Group and Citizens/Frost incidents exploited the transitivity of trust in modern SaaS architecture. Compromise a single SSO account or vendor relationship, and you inherit access to the entire ecosystem that trusts it. IBM's threat intelligence data confirms that identity-focused attacks and valid credential abuse are among the top threat patterns of 2026. <strong>87% of cloud breaches were facilitated by identity compromise</strong> (Google Cloud Threat Horizons H1 2026). Strategic implication: your effective attack surface is no longer what you own &mdash; it's what you trust.
+  </div>
+
+  <div class="callout callout-info">
+    <div class="callout-title">Trend: AI-Agent Supply Chain Attacks (Emerging)</div>
+    Security researchers have begun documenting early-phase attacks targeting open-source plugins for enterprise AI assistants. Adversaries are experimenting with <strong>prompt injection</strong> delivered via data ingestion pipelines to manipulate AI agents into exfiltrating internal database contents or executing unauthorized actions. The Model Context Protocol (MCP) creates an entirely new supply chain risk layer &mdash; compromised MCP servers could inject malicious instructions, exfiltrate data via tool calls, or manipulate agent behavior. The LiteLLM compromise began with an upstream security scanner (Trivy) breach &mdash; illustrating that AI supply chain attacks "don't start where you expect."
+  </div>
+
+  <h3>Blue Team Alert &mdash; Defensive Priorities</h3>
+  <table class="info-table">
+    <thead><tr><th>Control</th><th>Priority</th><th>Addresses</th></tr></thead>
+    <tbody>
+      <tr><td class="label">ITDR &mdash; Identity Threat Detection & Response</td><td class="hi">Urgent</td><td class="ok">LotC, Credential Abuse</td></tr>
+      <tr><td class="label">Phishing-resistant MFA (FIDO2/passkey) for all admin accounts</td><td class="hi">Urgent</td><td class="ok">Vishing, SSO Compromise</td></tr>
+      <tr><td class="label">Multi-admin approval on MDM/RMM platforms</td><td class="hi">Urgent</td><td class="ok">MDM Weaponization</td></tr>
+      <tr><td class="label">ZTNA for third-party vendor access (replacing VPN)</td><td class="on">High</td><td class="ok">Supply Chain Intrusion</td></tr>
+      <tr><td class="label">Air-gapped immutable backups isolated from cloud tenants</td><td class="on">High</td><td class="ok">Wiper Attacks</td></tr>
+      <tr><td class="label">SaaS catalog + data flow mapping</td><td class="on">High</td><td class="ok">Third-Party Data Exposure</td></tr>
+      <tr><td class="label">Vendor security tiering with contractual audit rights</td><td class="label">Medium</td><td class="ok">Supply Chain Risk</td></tr>
+      <tr><td class="label">LLM/AI agent security assessment in compliance scope</td><td class="label">Medium</td><td class="ok">Emerging AI Attack Surface</td></tr>
+    </tbody>
+  </table>
+
+  <h3>MITRE ATT&CK Mapping</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">MITRE ATT&CK</span><div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div></div>
+    <pre># STRYKER / HANDALA
+T1078.004  Valid Accounts: Cloud Accounts (Entra ID / Global Admin)
+T1098.003  Account Manipulation: Additional Cloud Roles
+T1485      Data Destruction (via Intune Remote Wipe)
+T1530      Data from Cloud Storage Object (pre-wipe exfiltration)
+T1609      Container Administration Command (MDM weaponization)
+T1529      System Shutdown/Reboot (mass device wipe)
+T1565.003  Manipulation of Control: Device Configuration Manipulation
+
+# MATCH GROUP / SHINYHUNTERS
+T1566.004  Phishing: Spearphishing Voice (Vishing)
+T1078.004  Valid Accounts: Cloud Accounts (Okta SSO)
+T1550.001  Use Alternate Authentication Material: Application Access Token
+T1567.002  Exfiltration Over Web Service: Exfiltration to Cloud Storage
+
+# CITIZENS & FROST BANK / EVEREST
+T1195.002  Supply Chain Compromise: Compromise Software Supply Chain
+T1486      Data Encrypted for Impact (ransomware deployment at vendor)
+T1657      Financial Theft (extortion via data)
+T1590      Gather Victim Network Information (vendor relationship mapping)</pre>
+  </div>
+</section>
+
+<!-- ═══ CH6: IoC REPOSITORY ═══ -->
+<section class="chapter" id="ch6">
+  <div class="chapter-header">
+    <span class="chapter-num">06</span>
+    <h2 class="chapter-title">Indicator Repository (IoC)</h2>
+  </div>
+  <p>The following indicators of compromise are consolidated here for SIEM, EDR, and firewall ingestion. All domains use bracket notation for safe display &mdash; defang before use in automated systems. IoCs are also embedded directly within each incident section above for in-context reference. Full IoC datasets with enriched context are available in the <a href="/writeup/">Writeup</a> section.</p>
+  <div class="callout callout-warn">
+    <div class="callout-title">Handling Notes</div>
+    These IoCs are provided for detection and threat hunting purposes. Blocking C2 domains at the network level is recommended. File hash matching should be deployed in EDR platforms. Process name monitoring should be configured in SIEM correlation rules. IoC TTL: verify freshness against threat intelligence feeds before relying on domain-based indicators &mdash; C2 infrastructure rotates frequently.
+  </div>
+  <div class="ioc-block">
+<span class="ioc-comment"># ══════════════════════════════════════════════════════════════</span>
+<span class="ioc-comment"># INCIDENT 1 &mdash; STRYKER / HANDALA &middot; March 11, 2026</span>
+<span class="ioc-comment"># ══════════════════════════════════════════════════════════════</span>
+
+<span class="ioc-comment"># Process & Script Indicators (MDM Abuse Patterns)</span>
+<span class="ioc-path">Path:    C:\Windows\System32\config\systemprofile\AppData\Local\Microsoft\Intune\</span>
+<span class="ioc-cmd">Command: powershell.exe -ExecutionPolicy Bypass -EncodedCommand [base64_wipe_payload]</span>
+<span class="ioc-comment">Monitor:  Sudden bulk Intune policy push from single admin session</span>
+<span class="ioc-comment">Monitor:  Global Administrator role assignment outside change window</span>
+<span class="ioc-comment">Monitor:  Device wipe API calls (/deviceManagement/managedDevices/{id}/wipe) in volume</span>
+<span class="ioc-comment">Monitor:  DeviceRemoteAction audit category volume anomalies in Intune</span>
+
+<span class="ioc-comment"># C2 / Attribution Domains (defanged)</span>
+<span class="ioc-domain">handala-hack[.]to</span>              <span class="ioc-comment"># Seized by FBI March 19, 2026</span>
+<span class="ioc-domain">handala[.]to</span>                    <span class="ioc-comment"># Seized by FBI March 19, 2026</span>
+<span class="ioc-domain">handala-redwanted[.]to</span>          <span class="ioc-comment"># Data leak site; seized by FBI March 19, 2026</span>
+<span class="ioc-domain">api[.]ra-backup[.]com</span>           <span class="ioc-comment"># C2 infrastructure</span>
+
+<span class="ioc-comment"># Network Infrastructure (defanged)</span>
+<span class="ioc-domain">107[.]189[.]19[.]52</span>            <span class="ioc-comment"># Dedicated C2 server (Check Point)</span>
+<span class="ioc-domain">sjc1[.]vultrobjects[.]com</span>      <span class="ioc-comment"># Vultr-hosted malware delivery URL</span>
+
+<span class="ioc-comment"># Hostname Fingerprints (Attacker Infrastructure)</span>
+<span class="ioc-comment">WIN-P1B7V100IIS   DESKTOP-FK1NPHF   DESKTOP-R1FMLQP   VULTR-GUEST</span>
+
+<span class="ioc-comment"># Cloud/Storage Infrastructure</span>
+<span class="ioc-comment">Storj cloud storage (exfil destination) · Vultr/Vultrobjects (payload hosting)</span>
+<span class="ioc-comment">AWS S3-compatible APIs (exfil) · Telegram API/bots (C2 + exfil channel)</span>
+
+<span class="ioc-comment"># ══════════════════════════════════════════════════════════════</span>
+<span class="ioc-comment"># INCIDENT 2 &mdash; MATCH GROUP / SHINYHUNTERS &middot; January 2026</span>
+<span class="ioc-comment"># ══════════════════════════════════════════════════════════════</span>
+
+<span class="ioc-comment"># Phishing / Vishing Infrastructure</span>
+<span class="ioc-domain">matchinternal[.]com</span>             <span class="ioc-comment"># Confirmed phishing domain</span>
+
+<span class="ioc-comment"># Behavioral Indicators (SSO Anomaly Hunting)</span>
+<span class="ioc-comment">Alert:   Okta session with &gt;500 API calls to connected SaaS apps in 60 minutes</span>
+<span class="ioc-comment">Alert:   Bulk data export from AppsFlyer / analytics platforms via SSO-authenticated session</span>
+<span class="ioc-comment">Alert:   SSO token usage from new ASN in same session as internal IP-originating login</span>
+<span class="ioc-comment">Alert:   MFA factor addition events not preceded by verified help desk ticket</span>
+
+<span class="ioc-comment"># ══════════════════════════════════════════════════════════════</span>
+<span class="ioc-comment"># INCIDENT 3 &mdash; CITIZENS & FROST BANK / EVEREST &middot; April 2026</span>
+<span class="ioc-comment"># ══════════════════════════════════════════════════════════════</span>
+
+<span class="ioc-comment"># Behavioral Indicators (Supply Chain Hunting)</span>
+<span class="ioc-comment">Alert:   Outbound data transfer &gt;1GB from document processing vendor connection</span>
+<span class="ioc-comment">Alert:   Vendor VPN sessions active outside contractual maintenance windows</span>
+<span class="ioc-comment">Alert:   Ransom note file creation (README.txt, !!!HOW_TO_DECRYPT.txt) on vendor-accessible shares</span>
+
+<span class="ioc-comment"># Everest RaaS Infrastructure (defanged)</span>
+<span class="ioc-domain">everest-team[.]onion</span>           <span class="ioc-comment"># Dark web leak/auction site</span>
+<span class="ioc-comment">Contact: everestteam@protonmail.com (previously associated)</span>
+  </div>
+</section>
+
+<!-- ═══ CH7: STRATEGIC FORECAST ═══ -->
+<section class="chapter" id="ch7">
+  <div class="chapter-header">
+    <span class="chapter-num">07</span>
+    <h2 class="chapter-title">Strategic Forecast &mdash; H2 2026</h2>
+  </div>
+  <p>Based on the tactical evolution observed through these three incidents and broader threat intelligence from Q1&ndash;Q2 2026, the following near-term developments are assessed with high confidence.</p>
+
+  <div class="callout callout-crit">
+    <div class="callout-title">Forecast 1 &mdash; RMM Platform Targeting Will Accelerate</div>
+    Handala's weaponization of Intune demonstrated the catastrophic leverage available from compromising a Remote Monitoring and Management (RMM) platform. APT groups at every nation-state tier &mdash; not just MOIS-linked actors &mdash; are predicted to invest heavily in acquiring zero-day vulnerabilities in Intune, ConnectWise, NinjaRMM, and similar platforms. A single compromised RMM credential can deliver infrastructure destruction at national scale. Organizations operating critical infrastructure should treat MDM/RMM platforms as crown jewels, not operational conveniences. CISA issued an emergency advisory on March 19, 2026, specifically warning U.S. organizations to immediately strengthen Intune configurations.
+  </div>
+
+  <div class="callout callout-warn">
+    <div class="callout-title">Forecast 2 &mdash; AI/LLM Security Validation Will Enter Compliance Frameworks</div>
+    As organizations deploy LLM-based AI agents across business processes, the attack surface expands into an entirely new domain: prompt injection attacks via data ingestion pipelines, malicious plugin supply chain compromises, and model output manipulation. Regulators &mdash; NYDFS, SEC, and EU AI Act enforcers &mdash; are predicted to require AI security assessments as part of standard compliance evaluations by Q4 2026. Organizations that have not inventoried their AI attack surface are already behind.
+  </div>
+
+  <div class="callout callout-info">
+    <div class="callout-title">Forecast 3 &mdash; Geopolitical Cyber Risk Will Require Board-Level Input</div>
+    The Stryker attack established that commercial companies with supply chain ties to geopolitically sensitive regions now attract the attention of state-aligned threat actors. Any acquisition, contract, or vendor relationship that creates perceived alignment with a hostile nation's targets is now a board-level risk input &mdash; not a security team footnote. Organizations in defense contracting, medical technology, semiconductor manufacturing, and critical infrastructure should conduct explicit geopolitical threat modeling as part of their enterprise risk framework. Forrester specifically recommended "regular (at least once a quarter or more often) geopolitical risk conversations that involve the security team."
+  </div>
+
+  <h3>Concluding Assessment</h3>
+  <p>The defining security principle of H1 2026 is this: <strong style="color:var(--fg)">your blast radius is now defined by what you trust, not what you own.</strong> The weapons in all three incidents examined here were enterprise tools operating exactly as designed &mdash; Microsoft Intune wiping devices, Okta SSO granting access, document processing vendors handling data. Perimeter security, signature-based detection, and network firewalls contributed nothing to preventing any of them.</p>
+  <p>The countermeasure model must shift accordingly. Zero trust architecture, identity threat detection, multi-party approval for privileged operations, and third-party risk treated as first-party liability are not aspirational security goals for 2027 &mdash; they are prerequisites for operating in the current threat environment.</p>
+
+  <div class="callout callout-success">
+    <div class="callout-title">Security Posture Checklist &mdash; H2 2026 Priorities</div>
+    <strong>Identity:</strong> Phishing-resistant MFA on all admin accounts &middot; PIM with JIT elevation &middot; ITDR behavioral monitoring &middot; Formal help desk verification protocol for SSO resets<br><br>
+    <strong>Cloud/MDM:</strong> Multi-admin approval on Intune/RMM &middot; Conditional Access with device compliance &middot; Air-gapped backups outside cloud tenant<br><br>
+    <strong>Third-Party:</strong> Living SaaS catalog with data flow mapping &middot; ZTNA replacing VPN for vendor access &middot; Vendor security tiering with contractual audit rights &middot; Network segmentation for every partner connection<br><br>
+    <strong>Response:</strong> Intune/Entra IR playbook including tenant lockdown and bulk session revocation &middot; Vendor breach notification SLAs in every contract &middot; Pre-approved crisis communication templates for regulatory disclosure
+  </div>
+</section>
+
+</main>
+</div>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-left">&copy; 2026 <span>QA210</span> &mdash; Security Research & Threat Analysis</div>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/writeup/">Writeup</a>
+      <a href="/research/">Research</a>
+      <a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
+    </div>
+  </div>
+  <p style="margin-top:1rem;max-width:900px;margin-left:auto;margin-right:auto;">Sources: Censys, Coalition Security Labs, Forrester, Obsidian Security, Securin, BleepingComputer, The Register, American Banker, ZeroFox, Google Cloud CISO, Palo Alto Unit 42, Check Point Research, FBI IC3, SEC EDGAR, CISA &middot; All IoCs defanged for safe display</p>
+</footer>
+
+<script>
+// ═══ THREE.JS PARTICLES ═══
+(function(){
+  const canvas=document.getElementById('particles-canvas');
+  const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:false});
+  renderer.setSize(window.innerWidth,window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.5));
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.1,1000);
+  camera.position.z=5;
+  const group=new THREE.Group();scene.add(group);
+  const geo=new THREE.IcosahedronGeometry(2.2,2);
+  const mat=new THREE.MeshBasicMaterial({color:0x3b82f6,wireframe:true,transparent:true,opacity:0.08});
+  group.add(new THREE.Mesh(geo,mat));
+  const pCount=600;const pGeo=new THREE.BufferGeometry();
+  const pos=new Float32Array(pCount*3);const vel=[];
+  for(let i=0;i<pCount;i++){pos[i*3]=(Math.random()-.5)*20;pos[i*3+1]=(Math.random()-.5)*20;pos[i*3+2]=(Math.random()-.5)*10;vel.push(Math.random()*.006+.002)}
+  pGeo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  const pMat=new THREE.PointsMaterial({color:0x3b82f6,size:0.03,transparent:true,opacity:0.3});
+  const pts=new THREE.Points(pGeo,pMat);scene.add(pts);
+  let mx=0,my=0;
+  document.addEventListener('mousemove',e=>{mx=(e.clientX/innerWidth-.5)*2;my=(e.clientY/innerHeight-.5)*2});
+  function animate(){
+    requestAnimationFrame(animate);group.rotation.y+=0.001;group.rotation.x+=0.0005;
+    const p=pts.geometry.attributes.position.array;
+    for(let i=0;i<pCount;i++){p[i*3+1]-=vel[i];if(p[i*3+1]<-10){p[i*3+1]=10;p[i*3]=(Math.random()-.5)*20}}
+    pts.geometry.attributes.position.needsUpdate=true;
+    camera.rotation.y+=(mx*.02-camera.rotation.y)*.003;
+    camera.rotation.x+=(my*.02-camera.rotation.x)*.003;
+    renderer.render(scene,camera);
+  }
+  animate();
+  window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+})();
+
+// ═══ TOC ACTIVE TRACKING ═══
+const tocLinks=document.querySelectorAll('.toc-list a');
+const chapters=document.querySelectorAll('.chapter');
+function updateToc(){let current='';chapters.forEach(ch=>{if(window.scrollY>=ch.offsetTop-100)current=ch.id});tocLinks.forEach(a=>{a.classList.toggle('active',a.getAttribute('href')==='#'+current)})}
+window.addEventListener('scroll',updateToc);updateToc();
+
+// ═══ MOBILE NAV ═══
+function toggleMobileNav(){
+  document.getElementById('mobileOverlay').classList.toggle('show');
+  document.getElementById('mobilePanel').classList.toggle('show');
+}
+</script>
+</body>
+</html>
