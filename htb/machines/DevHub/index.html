@@ -3,9 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HTB: DevHub — QA210</title>
-<meta name="description" content="Hack The Box DevHub — Medium difficulty Linux machine walkthrough by QA210. CVE-2026-23744, Jupyter API exploitation, raw WebSocket pivot, no Chisel/Ligolo required.">
+<title>DevHub HackTheBox Writeup | CVE-2026-23744 & Jupyter API - QA210</title>
+<meta name="description" content="A comprehensive walkthrough of the DevHub HTB machine: From exploiting CVE-2026-23744 (MCPJam RCE) to advanced Raw WebSocket techniques for port forwarding bypass, by QA210.">
 <meta name="author" content="QA210">
+<meta name="keywords" content="HackTheBox, DevHub, CVE-2026-23744, MCPJam, Jupyter, WebSocket, privilege escalation, QA210, HTB Medium">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="/htb/medium/devhub/">
+
+<!-- Open Graph -->
+<meta property="og:title" content="DevHub HackTheBox Writeup | CVE-2026-23744 & Jupyter API - QA210">
+<meta property="og:description" content="(Writeup) HTB DevHub - CVE-2026-23744 & Raw WebSocket Pivot (No Port Forwarding)">
+<meta property="og:type" content="article">
+<meta property="og:author" content="QA210">
+
+<!-- Schema Markup -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "DevHub HackTheBox Machine Writeup",
+  "description": "Complete attack chain for DevHub HTB using CVE-2026-23744 MCPJam RCE, Jupyter REST API exploitation via raw WebSocket, and internal API privilege escalation to dump root SSH key.",
+  "author": {
+    "@type": "Person",
+    "name": "QA210"
+  },
+  "dependencies": "Python 3, Netcat, curl",
+  "proficiencyLevel": "Medium",
+  "operatingSystem": "Linux",
+  "datePublished": "2026-05-31",
+  "genre": "CTF Writeup"
+}
+</script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6E0;</text></svg>">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
@@ -242,7 +270,7 @@ p code, li code { background:var(--bg-tertiary); border:1px solid var(--border);
     DevHub
   </div>
   <span class="box-badge">Medium</span>
-  <h1>HTB: DevHub</h1>
+  <h1>DevHub HackTheBox Writeup - QA210</h1>
   <div class="meta">
     <span>QA210</span>
     <span class="sep">&middot;</span>
