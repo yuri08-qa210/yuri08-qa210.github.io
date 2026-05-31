@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hack The Box — Medium Machines | QA210 Writeups</title>
+<meta name="description" content="Hack The Box Medium difficulty machine writeups by QA210 — CVE exploits, web application attacks, privilege escalation, and lateral movement techniques.">
+<meta name="author" content="QA210">
+<meta name="keywords" content="Hack The Box, HTB Medium, CTF writeup, CVE exploit, privilege escalation, QA210">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x26A0;</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<!-- Schema Markup -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "Hack The Box Medium Machines — QA210 Writeups",
+  "description": "Collection of Hack The Box Medium difficulty machine writeups by QA210, covering CVE exploits, web attacks, privilege escalation, and lateral movement.",
+  "author": {
+    "@type": "Person",
+    "name": "QA210"
+  },
+  "url": "/htb/machines/"
+}
+</script>
+
+<style>
+:root{
+  --bg0:#06080c;--bg1:#0b0f17;--bg2:#111827;--bg3:#1a2234;--bg4:#222d42;
+  --border:#1e293b;--border-light:#334155;--border-glow:rgba(234,179,8,0.12);
+  --text0:#f1f5f9;--text1:#e2e8f0;--text2:#94a3b8;--text3:#64748b;--text4:#475569;
+  --accent:#eab308;--accent-hover:#facc15;--accent-dim:rgba(234,179,8,0.1);
+  --green:#22c55e;--green-dim:rgba(34,197,94,0.1);
+  --red:#ef4444;--red-dim:rgba(239,68,68,0.1);
+  --purple:#a855f7;--purple-dim:rgba(168,85,247,0.1);
+  --orange:#f97316;--orange-dim:rgba(249,115,22,0.1);
+  --yellow:#eab308;--yellow-dim:rgba(234,179,8,0.1);
+  --cyan:#06b6d4;--cyan-dim:rgba(6,182,212,0.1);
+  --rose:#f43f5e;--rose-dim:rgba(244,63,94,0.1);
+  --blue:#3b82f6;--blue-dim:rgba(59,130,246,0.1);
+  --gradient-accent:linear-gradient(135deg,#eab308,#f97316);
+  --gradient-warm:linear-gradient(135deg,#f97316,#ef4444);
+  --gradient-htb:linear-gradient(135deg,#eab308,#f97316);
+  --gradient-medium:linear-gradient(135deg,#eab308,#22c55e);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--border) var(--bg1)}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg0);color:var(--text1);line-height:1.65;font-size:15px;overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg1)}::-webkit-scrollbar-thumb{background:var(--border-light);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--text4)}
+a{color:var(--accent);text-decoration:none;transition:all .2s}a:hover{color:var(--accent-hover)}
+img{max-width:100%;display:block}
+::selection{background:rgba(234,179,8,0.3);color:var(--text0)}
+
+#bg-canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;pointer-events:none;opacity:.10}
+
+/* ═══ HEADER ═══ */
+.site-header{position:sticky;top:0;z-index:100;background:rgba(6,8,12,0.82);backdrop-filter:blur(20px) saturate(1.2);border-bottom:1px solid var(--border);height:58px;display:flex;align-items:center;padding:0 2.5rem;gap:2rem}
+.site-header .brand{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk','JetBrains Mono',monospace;font-weight:700;font-size:1.1rem;color:var(--text0);white-space:nowrap;letter-spacing:-.03em}
+.site-header .brand .logo-icon{width:28px;height:28px;border-radius:7px;background:var(--gradient-accent);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:#000}
+.site-header .brand .cursor{display:inline-block;width:2px;height:1em;background:var(--yellow);margin-left:2px;animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.site-header .nav-main{display:flex;gap:0;align-items:center}
+.site-header .nav-main a{padding:0 1.1rem;height:58px;display:flex;align-items:center;color:var(--text3);font-size:.82rem;font-weight:500;border-bottom:2px solid transparent;transition:all .2s}
+.site-header .nav-main a:hover,.site-header .nav-main a.active{color:var(--text0);border-bottom-color:var(--yellow)}
+.site-header .nav-right{margin-left:auto;display:flex;align-items:center;gap:1.1rem}
+.search-box{display:flex;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:0 12px;height:34px;gap:7px;transition:all .2s}
+.search-box:focus-within{border-color:var(--yellow);box-shadow:0 0 0 3px var(--accent-dim)}
+.search-box i{color:var(--text4);font-size:.8rem}
+.search-box input{background:none;border:none;outline:none;color:var(--text1);font-size:.8rem;font-family:'Inter',sans-serif;width:170px}
+.search-box input::placeholder{color:var(--text4)}
+.social-link{color:var(--text4);font-size:1.05rem;transition:all .2s;padding:4px}
+.social-link:hover{color:var(--yellow);transform:translateY(-1px)}
+.mobile-toggle{display:none;background:none;border:none;color:var(--text1);font-size:1.3rem;cursor:pointer}
+
+/* ═══ LAYOUT ═══ */
+.page-body{position:relative;z-index:1;max-width:1320px;margin:0 auto;padding:0 2.5rem}
+
+/* ═══ HERO ═══ */
+.hero-section{padding:3.5rem 0 3rem;border-bottom:1px solid var(--border);display:grid;grid-template-columns:1fr 340px;gap:3.5rem;align-items:center}
+.hero-text .greeting{font-size:.7rem;text-transform:uppercase;letter-spacing:.14em;color:var(--yellow);font-weight:600;margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem}
+.hero-text .greeting::before{content:'';display:inline-block;width:24px;height:1px;background:var(--yellow)}
+.hero-text h1{font-family:'Space Grotesk','Inter',sans-serif;font-size:2.8rem;font-weight:800;letter-spacing:-.04em;line-height:1.1;margin-bottom:1rem;color:var(--text0)}
+.hero-text h1 span{background:var(--gradient-htb);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-text .tagline{color:var(--text2);font-size:.95rem;line-height:1.8;margin-bottom:1.5rem;max-width:580px}
+.hero-badges{display:flex;flex-wrap:wrap;gap:.6rem}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;font-size:.72rem;font-weight:600;border:1px solid;transition:all .2s;cursor:default}
+.hero-badge:hover{transform:translateY(-1px)}
+.hero-badge.linux{background:var(--yellow-dim);border-color:rgba(234,179,8,0.25);color:var(--yellow)}
+.hero-badge.windows{background:var(--blue-dim);border-color:rgba(59,130,246,0.25);color:var(--blue)}
+.hero-badge.cve{background:var(--red-dim);border-color:rgba(239,68,68,0.25);color:var(--red)}
+.hero-badge.web{background:var(--green-dim);border-color:rgba(34,197,94,0.25);color:var(--green)}
+.hero-badge.privesc{background:var(--orange-dim);border-color:rgba(249,115,22,0.25);color:var(--orange)}
+.hero-badge.api{background:var(--purple-dim);border-color:rgba(168,85,247,0.25);color:var(--purple)}
+.hero-badge.container{background:var(--cyan-dim);border-color:rgba(6,182,212,0.25);color:var(--cyan)}
+.hero-badge.crypto{background:var(--rose-dim);border-color:rgba(244,63,94,0.25);color:var(--rose)}
+
+.hero-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:1.75rem;position:relative;overflow:hidden}
+.hero-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--gradient-accent)}
+.hero-card .card-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text3);font-weight:700;margin-bottom:1.1rem}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem}
+.stat-item .stat-val{font-family:'Space Grotesk','JetBrains Mono',monospace;font-size:1.6rem;font-weight:700;color:var(--text0)}
+.stat-item .stat-lbl{font-size:.68rem;color:var(--text4);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-top:3px}
+.stat-item.highlight .stat-val{background:var(--gradient-htb);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* ═══ INFO STRIP ═══ */
+.info-strip{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:1.25rem;padding:2rem 0 2.25rem;border-bottom:1px solid var(--border)}
+.info-card{background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.4rem;transition:border-color .2s}
+.info-card:hover{border-color:var(--border-light)}
+.info-card .ic-title{font-size:.62rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text4);font-weight:700;margin-bottom:1rem;display:flex;align-items:center;gap:7px}
+.info-card .ic-title i{font-size:.78rem;color:var(--yellow)}
+
+.about-inline{display:flex;align-items:center;gap:1rem}
+.about-inline .avatar{width:52px;height:52px;border-radius:50%;border:2px solid var(--border);object-fit:cover;flex-shrink:0;transition:border-color .3s}
+.about-inline .avatar:hover{border-color:var(--yellow)}
+.about-inline .about-meta .author-name{font-family:'Space Grotesk',sans-serif;font-size:.95rem;font-weight:700;color:var(--text0)}
+.about-inline .about-meta .author-role{font-size:.7rem;color:var(--text3);margin-top:1px}
+.about-inline .about-meta .author-links{display:flex;gap:.6rem;margin-top:4px}
+.about-inline .about-meta .author-links a{color:var(--text4);font-size:.9rem;transition:all .2s}
+.about-inline .about-meta .author-links a:hover{color:var(--yellow)}
+.about-bio{font-size:.76rem;color:var(--text2);line-height:1.7;margin-top:.75rem}
+.about-quote{font-size:.7rem;color:var(--text3);font-style:italic;line-height:1.6;padding:.5rem .85rem;border-left:2px solid var(--yellow);margin-top:.6rem;background:var(--yellow-dim);border-radius:0 6px 6px 0}
+
+.tag-cloud{display:flex;flex-wrap:wrap;gap:.35rem}
+.tag-cloud .tc-tag{font-size:.66rem;padding:3px 10px;border-radius:6px;background:var(--bg2);color:var(--text2);border:1px solid var(--border);cursor:pointer;transition:all .2s;font-weight:500}
+.tag-cloud .tc-tag:hover{border-color:var(--yellow);color:var(--yellow);background:var(--yellow-dim)}
+.tc-tag.hot{background:var(--yellow-dim);border-color:rgba(234,179,8,0.2);color:var(--yellow)}
+
+.technique-list{display:flex;flex-direction:column;gap:.45rem}
+.technique-item{display:flex;align-items:center;gap:.6rem;padding:.35rem 0;font-size:.76rem;color:var(--text2);transition:color .2s}
+.technique-item i{color:var(--yellow);font-size:.6rem;width:14px;text-align:center}
+.technique-item:hover{color:var(--text0)}
+.technique-item .tc{margin-left:auto;font-size:.6rem;color:var(--text4);font-family:'JetBrains Mono',monospace}
+
+/* ═══ FILTER BAR ═══ */
+.filter-bar{padding:1.75rem 0 1.25rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+.filter-bar .filter-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text4);font-weight:700;margin-right:.25rem}
+.filter-btn{padding:6px 16px;border-radius:8px;border:1px solid var(--border);background:var(--bg1);color:var(--text2);font-size:.78rem;font-weight:500;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.filter-btn:hover{border-color:var(--border-light);color:var(--text1);background:var(--bg2)}
+.filter-btn.active{background:var(--yellow);border-color:var(--yellow);color:#000;font-weight:600;box-shadow:0 2px 12px rgba(234,179,8,0.3)}
+.filter-btn .count{margin-left:5px;opacity:.5;font-size:.68rem}
+
+/* ═══ POST CARDS ═══ */
+.posts-section .section-heading{font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text4);font-weight:700;margin-bottom:1.5rem;display:flex;align-items:center;gap:.75rem}
+.posts-section .section-heading::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+.post-card{background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:1.35rem 1.6rem;margin-bottom:1rem;transition:all .25s;position:relative;display:block;color:inherit}
+.post-card:hover{border-color:var(--border-light);transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,0.4),0 0 0 1px var(--border-glow)}
+.post-card .post-top{display:flex;align-items:center;gap:.75rem;margin-bottom:.7rem}
+.post-card .platform-badge{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:3px 9px;border-radius:5px;white-space:nowrap}
+.platform-badge.htb{background:var(--red-dim);color:var(--red)}
+.platform-badge.medium{background:var(--yellow-dim);color:var(--yellow)}
+.diff-badge{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:3px 9px;border-radius:5px}
+.diff-badge.easy{background:var(--green-dim);color:var(--green)}
+.diff-badge.medium{background:var(--yellow-dim);color:var(--yellow)}
+.diff-badge.hard{background:var(--orange-dim);color:var(--orange)}
+.diff-badge.insane{background:var(--red-dim);color:var(--red)}
+.os-badge{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:3px 9px;border-radius:5px}
+.os-badge.linux{background:var(--yellow-dim);color:var(--yellow)}
+.os-badge.windows{background:var(--blue-dim);color:var(--blue)}
+.post-card .post-date{margin-left:auto;font-size:.7rem;color:var(--text4);font-family:'JetBrains Mono',monospace}
+.post-card h3{font-size:1.08rem;font-weight:700;margin-bottom:.45rem;color:var(--text0);letter-spacing:-.01em;transition:color .2s}
+.post-card:hover h3{color:var(--yellow)}
+.post-card .post-excerpt{font-size:.82rem;color:var(--text2);line-height:1.65;margin-bottom:.85rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.post-card .post-tags{display:flex;flex-wrap:wrap;gap:.35rem}
+.post-card .tag{font-size:.62rem;padding:2px 9px;border-radius:5px;background:var(--bg3);color:var(--text3);border:1px solid var(--border);font-weight:500;transition:all .2s}
+.post-card:hover .tag{border-color:var(--border-light);color:var(--text2)}
+
+.post-card.pinned{border-color:rgba(234,179,8,0.25);background:linear-gradient(135deg,rgba(234,179,8,0.04),var(--bg1))}
+.post-card.pinned::after{content:'Pinned';position:absolute;top:0;right:1.6rem;background:var(--gradient-accent);color:#000;font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:3px 12px 5px;border-radius:0 0 6px 6px}
+
+/* ═══ FOOTER ═══ */
+.site-footer{border-top:1px solid var(--border);padding:2.5rem 2.5rem;position:relative;z-index:1}
+.footer-inner{max-width:1320px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.footer-left{font-size:.76rem;color:var(--text4)}
+.footer-left span{color:var(--text2);font-weight:600}
+.footer-links{display:flex;gap:1.5rem}
+.footer-links a{color:var(--text4);font-size:.76rem;transition:color .2s}
+.footer-links a:hover{color:var(--text1)}
+
+/* ═══ MOBILE NAV ═══ */
+.mobile-nav-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;backdrop-filter:blur(4px)}
+.mobile-nav-overlay.show{display:block}
+.mobile-nav-panel{display:none;position:fixed;right:0;top:0;bottom:0;width:300px;background:var(--bg1);border-left:1px solid var(--border);z-index:201;padding:1.5rem;overflow-y:auto}
+.mobile-nav-panel.show{display:block}
+.mobile-nav-panel .mnp-close{background:none;border:none;color:var(--text2);font-size:1.2rem;cursor:pointer;float:right}
+.mobile-nav-panel nav{display:flex;flex-direction:column;gap:.5rem;clear:both;margin-top:1rem}
+.mobile-nav-panel nav a{padding:.75rem 0;border-bottom:1px solid var(--border);color:var(--text1);font-size:.9rem;font-weight:500}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:1024px){
+  .hero-section{grid-template-columns:1fr;gap:2rem}
+  .info-strip{grid-template-columns:1fr}
+}
+@media(max-width:768px){
+  .site-header{padding:0 1rem}
+  .site-header .nav-main{display:none}
+  .search-box{display:none}
+  .mobile-toggle{display:block}
+  .page-body{padding:0 1rem}
+  .hero-text h1{font-size:1.85rem}
+  .hero-card{order:-1}
+  .filter-bar{overflow-x:auto;flex-wrap:nowrap;padding-bottom:.5rem}
+  .footer-inner{flex-direction:column;text-align:center}
+}
+@media(max-width:480px){
+  .hero-text h1{font-size:1.5rem}
+  .stat-grid{grid-template-columns:1fr 1fr}
+  .post-card{padding:1rem 1.25rem}
+  .about-inline{flex-direction:column;text-align:center}
+}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<!-- ═══════════ HEADER ═══════════ -->
+<header class="site-header">
+  <a href="/" class="brand">
+    <span class="logo-icon">Q</span>
+    QA210<span class="cursor"></span>
+  </a>
+  <nav class="nav-main">
+    <a href="/">Home</a>
+    <a href="/htb/">Hack The Box</a>
+    <a href="/htb/machines/" class="active">Machines</a>
+    <a href="/writeup/">Write Up</a>
+    <a href="/research/">Research</a>
+    <a href="/mal-dev/">Malware Dev</a>
+  </nav>
+  <div class="nav-right">
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+      <input type="text" placeholder="Search machine writeups..." id="searchInput" oninput="filterPosts()">
+    </div>
+    <a href="https://github.com/Yuri08-QA210" target="_blank" class="social-link" title="GitHub"><i class="bi bi-github"></i></a>
+    <button class="mobile-toggle" onclick="toggleMobileNav()" aria-label="Menu"><i class="bi bi-list"></i></button>
+  </div>
+</header>
+
+<!-- Mobile Nav -->
+<div class="mobile-nav-overlay" id="mobileOverlay" onclick="toggleMobileNav()"></div>
+<div class="mobile-nav-panel" id="mobilePanel">
+  <button class="mnp-close" onclick="toggleMobileNav()"><i class="bi bi-x-lg"></i></button>
+  <nav>
+    <a href="/">Home</a>
+    <a href="/htb/">Hack The Box</a>
+    <a href="/htb/machines/">Machines</a>
+    <a href="/writeup/">Write Up</a>
+    <a href="/research/">Research</a>
+    <a href="/mal-dev/">Malware Dev</a>
+    <a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
+  </nav>
+</div>
+
+<!-- ═══════════ MAIN ═══════════ -->
+<div class="page-body">
+
+<!-- ═══ HERO ═══ -->
+<section class="hero-section">
+  <div class="hero-text">
+    <div class="greeting">Hack The Box</div>
+    <h1>Medium Difficulty<br><span>Machines</span></h1>
+    <p class="tagline">Writeups for Hack The Box Medium difficulty machines — CVE exploitation, API abuse, lateral movement, and privilege escalation techniques.</p>
+    <div class="hero-badges">
+      <span class="hero-badge linux"><i class="bi bi-ubuntu"></i> Linux</span>
+      <span class="hero-badge cve"><i class="bi bi-bug"></i> CVE-2026-23744</span>
+      <span class="hero-badge privesc"><i class="bi bi-arrow-up-circle"></i> PrivEsc</span>
+      <span class="hero-badge api"><i class="bi bi-plug"></i> API Abuse</span>
+    </div>
+  </div>
+  <div class="hero-card">
+    <div class="card-label">Medium Labs Stats</div>
+    <div class="stat-grid">
+      <div class="stat-item highlight">
+        <div class="stat-val">1</div>
+        <div class="stat-lbl">Writeup</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-val">1</div>
+        <div class="stat-lbl">Linux</div>
+      </div>
+      <div class="stat-item highlight">
+        <div class="stat-val">1</div>
+        <div class="stat-lbl">CVE</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-val">0</div>
+        <div class="stat-lbl">Windows</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ INFO STRIP ═══ -->
+<section class="info-strip">
+
+  <!-- About -->
+  <div class="info-card">
+    <div class="ic-title"><i class="bi bi-person-circle"></i> About</div>
+    <div class="about-inline">
+      <img src="https://files.catbox.moe/755fgv.png" alt="QA210" class="avatar">
+      <div class="about-meta">
+        <div class="author-name">QA210</div>
+        <div class="author-role">10th Grade &bull; Vietnam</div>
+        <div class="author-links">
+          <a href="https://github.com/Yuri08-QA210" target="_blank" title="GitHub"><i class="bi bi-github"></i></a>
+        </div>
+      </div>
+    </div>
+    <p class="about-bio">High school student from Vietnam passionate about offensive security, binary exploitation, and Active Directory attacks.</p>
+    <div class="about-quote">&ldquo;Nothing is secure, everything has bugs, and humans are the biggest vulnerability.&rdquo;</div>
+  </div>
+
+  <!-- Popular Tags -->
+  <div class="info-card">
+    <div class="ic-title"><i class="bi bi-tags"></i> Popular Tags</div>
+    <div class="tag-cloud">
+      <span class="tc-tag hot">CVE-2026-23744</span>
+      <span class="tc-tag hot">MCPJam</span>
+      <span class="tc-tag hot">Jupyter API</span>
+      <span class="tc-tag hot">Raw WebSocket</span>
+      <span class="tc-tag">Privilege Escalation</span>
+      <span class="tc-tag">API Key Dump</span>
+      <span class="tc-tag">Reverse Shell</span>
+      <span class="tc-tag">No Port Forward</span>
+      <span class="tc-tag">Hardcoded Creds</span>
+      <span class="tc-tag">SSH Key</span>
+    </div>
+  </div>
+
+  <!-- Key Techniques -->
+  <div class="info-card">
+    <div class="ic-title"><i class="bi bi-lightning-charge"></i> Key Techniques</div>
+    <div class="technique-list">
+      <div class="technique-item"><i class="bi bi-arrow-right"></i> CVE & Public Exploit <span class="tc">1 post</span></div>
+      <div class="technique-item"><i class="bi bi-arrow-right"></i> API & Service Abuse <span class="tc">1 post</span></div>
+      <div class="technique-item"><i class="bi bi-arrow-right"></i> Raw Protocol Exploitation <span class="tc">1 post</span></div>
+      <div class="technique-item"><i class="bi bi-arrow-right"></i> Jupyter API Pivot <span class="tc">1 post</span></div>
+      <div class="technique-item"><i class="bi bi-arrow-right"></i> Hardcoded Credential Dump <span class="tc">1 post</span></div>
+      <div class="technique-item"><i class="bi bi-arrow-right"></i> Lateral Movement <span class="tc">1 post</span></div>
+      <div class="technique-item"><i class="bi bi-arrow-right"></i> Linux Privilege Escalation <span class="tc">1 post</span></div>
+      <div class="technique-item"><i class="bi bi-arrow-right"></i> WebSocket without pip <span class="tc">1 post</span></div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ═══ FILTER BAR ═══ -->
+<div class="filter-bar">
+  <span class="filter-label">Filter:</span>
+  <button class="filter-btn active" data-filter="all" onclick="setFilter(this)">All<span class="count">1</span></button>
+  <button class="filter-btn" data-filter="linux" onclick="setFilter(this)">Linux<span class="count">1</span></button>
+  <button class="filter-btn" data-filter="cve" onclick="setFilter(this)">CVE<span class="count">1</span></button>
+  <button class="filter-btn" data-filter="api" onclick="setFilter(this)">API<span class="count">1</span></button>
+</div>
+
+<!-- ═══ POSTS ═══ -->
+<div class="posts-section">
+
+  <a href="/htb/machines/DevHub/" class="post-card pinned" data-platform="linux" data-tags="cve,api,websocket,jupyter,mcp,privesc,linux">
+    <div class="post-top">
+      <span class="platform-badge htb"><i class="bi bi-hdd-network"></i> HTB</span>
+      <span class="diff-badge medium">Medium</span>
+      <span class="os-badge linux"><i class="bi bi-ubuntu"></i> Linux</span>
+      <span class="post-date">2026</span>
+    </div>
+    <h3>DevHub</h3>
+    <p class="post-excerpt">CVE-2026-23744 exploitation on MCPJam Inspector v1.4.2 for initial RCE, then lateral movement via Jupyter REST API + raw WebSocket (no Chisel/Ligolo needed), and privilege escalation through hardcoded API key on internal server.py endpoint to dump root SSH private key.</p>
+    <div class="post-tags">
+      <span class="tag">CVE-2026-23744</span><span class="tag">MCPJam RCE</span><span class="tag">Jupyter API</span><span class="tag">Raw WebSocket</span><span class="tag">No Port Forward</span><span class="tag">Linux</span>
+    </div>
+  </a>
+
+</div>
+
+</div><!-- /page-body -->
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-left">&copy; 2026 <span>QA210</span> &mdash; Security Research & CTF Writeups</div>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/htb/">Hack The Box</a>
+      <a href="/htb/machines/">Machines</a>
+      <a href="/writeup/">Write Up</a>
+      <a href="https://github.com/Yuri08-QA210" target="_blank">GitHub</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+function toggleMobileNav(){
+  document.getElementById('mobileOverlay').classList.toggle('show');
+  document.getElementById('mobilePanel').classList.toggle('show');
+}
+
+function setFilter(btn){
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const f=btn.dataset.filter;
+  document.querySelectorAll('.post-card').forEach(c=>{
+    if(f==='all'){c.style.display='';return}
+    const tags=(c.dataset.tags||'').toLowerCase();
+    const platform=(c.dataset.platform||'').toLowerCase();
+    c.style.display=(tags.includes(f)||platform===f)?'':'none';
+  });
+  document.querySelectorAll('.section-heading').forEach(h=>{
+    let el=h.nextElementSibling;let hasVisible=false;
+    while(el&&!el.classList.contains('section-heading')){
+      if(el.classList.contains('post-card')&&el.style.display!=='none')hasVisible=true;
+      el=el.nextElementSibling;
+    }
+    h.style.display=hasVisible?'':'none';
+  });
+}
+
+function filterPosts(){
+  const q=document.getElementById('searchInput').value.toLowerCase().trim();
+  if(!q){document.querySelectorAll('.post-card').forEach(c=>c.style.display='');document.querySelectorAll('.section-heading').forEach(h=>h.style.display='');return}
+  document.querySelectorAll('.post-card').forEach(card=>{
+    const txt=(card.textContent||'').toLowerCase();
+    const tags=(card.dataset.tags||'').toLowerCase();
+    card.style.display=(txt.includes(q)||tags.includes(q))?'':'none';
+  });
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.filter-btn[data-filter="all"]').classList.add('active');
+  document.querySelectorAll('.section-heading').forEach(h=>h.style.display='');
+}
+
+// Three.js — Octahedron + Torus for Medium theme (yellow/amber)
+(function(){
+  const canvas=document.getElementById('bg-canvas');
+  const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:false});
+  renderer.setSize(window.innerWidth,window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.5));
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.1,1000);
+  camera.position.z=5;
+
+  const g=new THREE.Group();scene.add(g);
+  const geo=new THREE.OctahedronGeometry(2,0);
+  const mat=new THREE.MeshBasicMaterial({color:0xeab308,wireframe:true,transparent:true,opacity:0.18});
+  g.add(new THREE.Mesh(geo,mat));
+  const geo2=new THREE.TorusGeometry(3,0.15,8,60);
+  const mat2=new THREE.MeshBasicMaterial({color:0xf97316,wireframe:true,transparent:true,opacity:0.05});
+  g.add(new THREE.Mesh(geo2,mat2));
+
+  // Particles
+  const pCount=700;const pGeo=new THREE.BufferGeometry();
+  const pos=new Float32Array(pCount*3);const vel=[];
+  for(let i=0;i<pCount;i++){pos[i*3]=(Math.random()-.5)*22;pos[i*3+1]=(Math.random()-.5)*22;pos[i*3+2]=(Math.random()-.5)*10;vel.push(Math.random()*.007+.002)}
+  pGeo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  const pMat=new THREE.PointsMaterial({color:0xeab308,size:0.022,transparent:true,opacity:0.3});
+  const pts=new THREE.Points(pGeo,pMat);scene.add(pts);
+
+  let mx=0,my=0;
+  document.addEventListener('mousemove',e=>{mx=(e.clientX/innerWidth-.5)*2;my=(e.clientY/innerHeight-.5)*2});
+
+  function animate(){
+    requestAnimationFrame(animate);
+    g.rotation.y+=0.003;g.rotation.x+=0.002;
+    const p=pts.geometry.attributes.position.array;
+    for(let i=0;i<pCount;i++){p[i*3+1]-=vel[i];if(p[i*3+1]<-11){p[i*3+1]=11;p[i*3]=(Math.random()-.5)*22}}
+    pts.geometry.attributes.position.needsUpdate=true;
+    camera.rotation.y+=(mx*.03-camera.rotation.y)*.006;
+    camera.rotation.x+=(my*.03-camera.rotation.x)*.006;
+    renderer.render(scene,camera);
+  }
+  animate();
+
+  window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+})();
+</script>
+</body>
+</html>
